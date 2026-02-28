@@ -245,7 +245,7 @@ export default function CotizacionesPage() {
                         <Search size={14} className="text-retarder-gray-400" />
                         <input type="text" placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-transparent border-none outline-none text-sm w-40" />
                     </div>
-                    <Link href="/ventas/nueva" className="flex items-center gap-2 px-4 py-2 bg-retarder-red text-white rounded-lg text-sm font-medium hover:bg-retarder-red-700 transition-colors shadow-md shadow-retarder-red/20">
+                    <Link href="/ventas/nueva" className="flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
                         <Plus size={16} /><span className="hidden sm:inline">Nueva Cotización</span>
                     </Link>
                 </div>
