@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@theme {
+  /* RETARDER MÉXICO Brand Colors */
+  --color-retarder-white: #FFFFFF;
+  --color-retarder-yellow: #FACC15;
+  --color-retarder-yellow-light: #FEF9C3;
+  --color-retarder-yellow-50: #FEFCE8;
+  --color-retarder-yellow-600: #CA8A04;
+  --color-retarder-red: #DC2626;
+  --color-retarder-red-light: #FEE2E2;
+  --color-retarder-red-50: #FEF2F2;
+  --color-retarder-red-700: #B91C1C;
+  --color-retarder-black: #0A0A0A;
+  --color-retarder-gray-50: #F9FAFB;
+  --color-retarder-gray-100: #F3F4F6;
+  --color-retarder-gray-200: #E5E7EB;
+  --color-retarder-gray-300: #D1D5DB;
+  --color-retarder-gray-400: #9CA3AF;
+  --color-retarder-gray-500: #6B7280;
+  --color-retarder-gray-600: #4B5563;
+  --color-retarder-gray-700: #374151;
+  --color-retarder-gray-800: #1F2937;
+  --color-retarder-gray-900: #111827;
+
+  /* Semantic Colors */
+  --color-primary: #DC2626;
+  /* Red for buttons/actions */
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #FACC15;
+  /* Yellow for highlights/secondary */
+  --color-secondary-foreground: #0A0A0A;
+  --color-accent: #FEF9C3;
+  --color-accent-foreground: #0A0A0A;
+  --color-destructive: #B91C1C;
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280;
+  --color-background: #FFFFFF;
+  /* White background */
+  --color-foreground: #0A0A0A;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0A0A0A;
+  --color-border: #E5E7EB;
+  --color-input: #E5E7EB;
+  --color-ring: #FACC15;
+  /* Yellow ring focus */
+
+  /* Ticket Status Colors */
+  --color-status-solicitud: #6B7280;
+  --color-status-cotizacion: #2563EB;
+  --color-status-aceptada: #16A34A;
+  --color-status-programado: #9333EA;
+  --color-status-documentacion: #0891B2;
+  --color-status-tecnico: #EA580C;
+  --color-status-proceso: #FACC15;
+  --color-status-autorizacion: #DC2626;
+  --color-status-concluido: #16A34A;
+  --color-status-evidencia: #0D9488;
+  --color-status-entregada: #2563EB;
+  --color-status-encuesta: #7C3AED;
+  --color-status-facturado: #CA8A04;
+  --color-status-pagado: #15803D;
+
+  /* Typography */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-retarder-gray-100);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-retarder-gray-300);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-retarder-gray-400);
+  }
+
+  /* Kanban horizontal scroll */
+  .kanban-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .kanban-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 0 8px;
+  }
+
+  .kanban-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-retarder-gray-300);
+    border-radius: 4px;
+  }
+
+  .kanban-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--color-retarder-gray-400);
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .text-gradient-red {
+    background: linear-gradient(to right, var(--color-retarder-red), #F87171);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .bg-gradient-premium {
+    background: linear-gradient(135deg, var(--color-retarder-red) 0%, #B91C1C 100%);
+  }
+
+  .shadow-premium {
+    box-shadow: 0 20px 25px -5px rgb(220 38 38 / 0.15), 0 8px 10px -6px rgb(220 38 38 / 0.15);
+  }
+}
