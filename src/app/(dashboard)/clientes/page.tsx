@@ -335,7 +335,7 @@ export default function ClientesPage() {
                     <div className="flex items-center gap-3">
                         {/* View toggle removed to force card view */}
                         {(isAdmin || isVendedor) && (
-                            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-bold hover:bg-retarder-red-700 transition-all shadow-lg shadow-retarder-red/25 active:scale-95">
+                            <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#FACC15] text-black rounded-xl text-sm font-bold hover:bg-[#EAB308] transition-all shadow-lg shadow-yellow-500/25 active:scale-95">
                                 <Plus size={18} />
                                 <span>Nuevo Cliente</span>
                             </button>

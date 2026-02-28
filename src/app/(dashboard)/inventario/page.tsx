@@ -76,7 +76,7 @@ export default function InventarioPage() {
                             Alertas ({alertCount})
                         </button>
                     )}
-                    <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-retarder-red text-white rounded-lg text-sm font-medium hover:bg-retarder-red-700 transition-colors shadow-md shadow-retarder-red/20">
+                    <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
                         <Plus size={16} /><span className="hidden sm:inline">Nuevo Movimiento</span>
                     </button>
                 </div>
