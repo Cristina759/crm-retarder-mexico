@@ -542,13 +542,10 @@ export default function DashboardPage() {
             const today = new Date().toISOString().split('T')[0];
             const ordenesHoy = (ordData as OrdenMini[])?.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
 
-            // Target Statistics from WhatsApp Image (Ene - Mar 2026) - Keep as comment for reference
-            // const totalVentasTarget = 1287965.14;
-            // const totalCobradoTarget = 970967.90;
-
+            // Live Statistics from Supabase
             setStats({
-                totalVentas: totalVentas || 1287965.14,
-                totalCobrado: totalVentas * 0.75 || 970967.90, // Approx until we have payment tracking
+                totalVentas: totalVentas,
+                totalCobrado: totalVentas * 0.75, // Simplified: assume 75% collection for now
                 ordenesActivas,
                 cotizacionesActivas,
                 ordenesTecnico,
@@ -566,19 +563,13 @@ export default function DashboardPage() {
         fetchDashboardData();
     }, [fetchDashboardData]);
 
-    // Filtered ordenes for the UI components
+    // Removed hardcoded VENTAS_REALES mapping for a clean, dynamic dashboard
     const dashboardVentas = useMemo(() => {
-        return VENTAS_REALES.map(v => ({
-            total: v.total,
-            estado: v.pagado ? 'aceptada' : 'enviada', // Map real data to pipeline stages
-            id: v.id,
-            numero: v.factura,
-            empresa: v.cliente,
-            tipo: v.refacciones > 0 ? 'refacciones' : 'servicios',
-            fecha_creado: '2026-02-19',
-            prioridad: 'media'
+        return ordenes.map(o => ({
+            ...o,
+            total: (o as any).monto || 0,
         }));
-    }, []);
+    }, [ordenes]);
 
     if (loading) {
         return (
@@ -673,7 +664,7 @@ export default function DashboardPage() {
                         porCobrar={stats.totalVentas - stats.totalCobrado}
                     />
                     <div className="lg:col-span-1">
-                        <SalesPipelineChart cotizaciones={dashboardVentas} />
+                        <SalesPipelineChart cotizaciones={cotizaciones} />
                     </div>
                 </div>
             )}
@@ -683,8 +674,8 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
                         title="Órdenes Reales"
-                        value={VENTAS_REALES.filter(v => v.orden_servicio).length}
-                        subtitle="Con folio de servicio"
+                        value={ordenes.length}
+                        subtitle="Registradas en sistema"
                         icon={<Ticket size={22} />}
                         color="bg-retarder-gray-800"
                         delay={0.4}
@@ -704,14 +695,14 @@ export default function DashboardPage() {
             {!isCliente && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                        <PipelineChart ordenes={dashboardVentas as any} />
+                        <PipelineChart ordenes={ordenes} />
                     </div>
                     <div className="lg:col-span-1 hidden lg:block" />
                 </div>
             )}
 
             {/* Recent Activity */}
-            <RecentOrdenes ordenes={dashboardVentas as any} />
+            <RecentOrdenes ordenes={ordenes} />
         </div>
     );
 }
