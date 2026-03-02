@@ -375,7 +375,7 @@ export default function CotizadorServiciosPage() {
 
     const subtotal = useMemo(() => {
         if (!selectedService) return 0;
-        if (selectedService.id === 'preventivo') return cantidad * PRECIO_PREVENTIVO;
+        if (selectedService.id === 'preventivo') return (cantidad * PRECIO_PREVENTIVO) + traslado;
         if (selectedService.id === 'correctivo') return totalManoObra + totalRefacciones + traslado;
         return 0;
     }, [selectedService, cantidad, totalManoObra, traslado, totalRefacciones]);
@@ -657,19 +657,25 @@ export default function CotizadorServiciosPage() {
                                         <div><h3 className="font-bold text-retarder-black">Personalizar Servicio</h3><p className="text-xs text-retarder-gray-500">Ajusta los valores para este cliente</p></div>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        {selectedService.id === 'preventivo' ? (
-                                            <div className="space-y-1.5 flex flex-col justify-end">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-retarder-gray-400">Cantidad de Unidades</label>
-                                                <div className="flex items-center gap-3 border border-retarder-gray-200 rounded-xl px-4 py-3 focus-within:border-retarder-red transition-all"><Truck size={18} className="text-retarder-gray-400" /><input type="number" min={1} value={cantidad} onChange={e => setCantidad(Math.max(1, parseInt(e.target.value) || 1))} className="flex-1 outline-none font-bold text-lg" /></div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-retarder-gray-400">Gastos Traslado (MXN)</label>
-                                                    <div className="flex items-center gap-3 border border-retarder-gray-200 rounded-xl px-4 py-3 focus-within:border-retarder-red transition-all"><Truck size={18} className="text-retarder-gray-400" /><input type="number" value={traslado || ''} onChange={e => setTraslado(parseFloat(e.target.value) || 0)} placeholder="0.00" className="flex-1 outline-none font-bold text-lg" /></div>
-                                                </div>
-                                            </>
-                                        )}
+                                        <div className="space-y-1.5 flex flex-col justify-end">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-retarder-gray-400">Cantidad de Unidades</label>
+                                            <div className="flex items-center gap-3 border border-retarder-gray-200 rounded-xl px-4 py-3 focus-within:border-retarder-red transition-all"><Truck size={18} className="text-retarder-gray-400" /><input type="number" min={1} value={cantidad} onChange={e => setCantidad(Math.max(1, parseInt(e.target.value) || 1))} className="flex-1 outline-none font-bold text-lg" /></div>
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-retarder-gray-400">Gastos Traslado (MXN)</label>
+                                            <div className="flex items-center gap-3 border border-retarder-gray-200 rounded-xl px-4 py-3 focus-within:border-retarder-red transition-all"><Truck size={18} className="text-retarder-gray-400" /><input type="number" value={traslado || ''} onChange={e => setTraslado(parseFloat(e.target.value) || 0)} placeholder="0.00" className="flex-1 outline-none font-bold text-lg" /></div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5 pt-4">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-retarder-gray-400">Notas Adicionales / Observaciones</label>
+                                        <textarea
+                                            value={observaciones}
+                                            onChange={e => setObservaciones(e.target.value)}
+                                            placeholder="Detalles específicos del servicio para este cliente..."
+                                            className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-2xl px-5 py-4 text-sm outline-none focus:border-retarder-red min-h-[100px] transition-all"
+                                        />
                                     </div>
                                 </div>
 
@@ -745,7 +751,10 @@ export default function CotizadorServiciosPage() {
                                     <h5 className="text-[9px] font-black uppercase border-b-2 border-retarder-gray-800 pb-1 mb-3 tracking-widest">Desglose Económico:</h5>
                                     <div className="space-y-1">
                                         {selectedService.id === 'preventivo' ? (
-                                            <PriceLine label={`Mano de Obra (${cantidad} unidad/es)`} mxn={cantidad * PRECIO_PREVENTIVO} />
+                                            <>
+                                                <PriceLine label={`Mano de Obra (${cantidad} unidad/es)`} mxn={cantidad * PRECIO_PREVENTIVO} />
+                                                {traslado > 0 && <PriceLine label="Desplazamiento / Traslado" mxn={traslado} />}
+                                            </>
                                         ) : (
                                             <>
                                                 {manoObraItems.map(item => (
