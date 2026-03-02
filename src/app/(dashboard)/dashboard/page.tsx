@@ -172,6 +172,107 @@ function SalesPipelineChart({ cotizaciones }: { cotizaciones: CotizacionMini[] }
     );
 }
 
+// ── Ingresos Chart (Donut) ──────────────────────────
+
+function IngresosChart({ total, cobrado, porCobrar }: { total: number; cobrado: number; porCobrar: number }) {
+    const cobradoPct = (cobrado / total) * 100;
+    const porCobrarPct = (porCobrar / total) * 100;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-white rounded-2xl border border-retarder-gray-200 p-6 col-span-full lg:col-span-2 shadow-sm"
+        >
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h3 className="font-black text-lg text-retarder-black tracking-tight uppercase">Ingresos por Período</h3>
+                    <p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest">Ene - Mar 2026</p>
+                </div>
+                <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-retarder-gray-400 uppercase">
+                        <Clock size={12} className="animate-spin-slow" />
+                        <span>Actualizado a las {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                {/* Main Donut */}
+                <div className="relative flex justify-center items-center">
+                    <svg viewBox="0 0 100 100" className="w-48 h-48 transform -rotate-90">
+                        {/* Background Circle */}
+                        <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="12" />
+                        {/* Cobrado Arc */}
+                        <circle
+                            cx="50" cy="50" r="40" fill="transparent"
+                            stroke="#0ea5e9" strokeWidth="12"
+                            strokeDasharray={`${cobradoPct * 2.51} 251`}
+                            strokeLinecap="round"
+                        />
+                        {/* Por Cobrar Arc */}
+                        <circle
+                            cx="50" cy="50" r="40" fill="transparent"
+                            stroke="#f43f5e" strokeWidth="12"
+                            strokeDasharray={`${porCobrarPct * 2.51} 251`}
+                            strokeDashoffset={`-${cobradoPct * 2.51}`}
+                            strokeLinecap="round"
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-xl font-black text-retarder-black tracking-tighter">{formatMXN(total)}</span>
+                        <span className="text-[10px] font-bold text-retarder-gray-400 uppercase tracking-widest">Total Q1</span>
+                    </div>
+                </div>
+
+                {/* Legend & Historical */}
+                <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-sky-500" />
+                                <span className="text-[10px] font-bold text-retarder-gray-500 uppercase">Cobrado</span>
+                            </div>
+                            <p className="text-sm font-black text-retarder-black">{formatMXN(cobrado)}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-rose-500" />
+                                <span className="text-[10px] font-bold text-retarder-gray-500 uppercase">Por Cobrar</span>
+                            </div>
+                            <p className="text-sm font-black text-retarder-black">{formatMXN(porCobrar)}</p>
+                        </div>
+                    </div>
+
+                    <div className="pt-6 border-t border-retarder-gray-100 flex gap-6">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="relative w-12 h-12">
+                                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="15" />
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0ea5e9" strokeWidth="15" strokeDasharray="180 251" />
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f43f5e" strokeWidth="15" strokeDasharray="40 251" strokeDashoffset="-180" />
+                                </svg>
+                            </div>
+                            <span className="text-[9px] font-black text-retarder-gray-400 uppercase whitespace-nowrap">Oct - Dic 2025</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="relative w-12 h-12 opacity-60">
+                                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="15" />
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#7dd3fc" strokeWidth="15" strokeDasharray="200 251" />
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#fda4af" strokeWidth="15" strokeDasharray="20 251" strokeDashoffset="-200" />
+                                </svg>
+                            </div>
+                            <span className="text-[9px] font-black text-retarder-gray-400 uppercase whitespace-nowrap">Jul - Sep 2025</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
 // ── Pipeline Mini Chart ─────────────────────────────
 
 function PipelineChart({ ordenes }: { ordenes: OrdenMini[] }) {
@@ -441,9 +542,13 @@ export default function DashboardPage() {
             const today = new Date().toISOString().split('T')[0];
             const ordenesHoy = (ordData as OrdenMini[])?.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
 
+            // Real Base Statistics from VENTAS_REALES
+            const totalVentasReales = VENTAS_REALES.reduce((s, v) => s + v.total, 0);
+            const totalCobradoReales = VENTAS_REALES.filter(v => v.pagado).reduce((s, v) => s + v.total, 0);
+
             setStats({
-                totalVentas: totalVentas || 1346010.34,
-                totalCobrado: 220523.37,
+                totalVentas: totalVentasReales,
+                totalCobrado: totalCobradoReales,
                 ordenesActivas,
                 cotizacionesActivas,
                 ordenesTecnico,
@@ -499,16 +604,16 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         title="Facturación Cobrada"
-                        value={formatMXN(220523.37)}
+                        value={formatMXN(stats.totalCobrado)}
                         subtitle="MXN — Total Pagado"
                         icon={<DollarSign size={22} />}
                         color="bg-emerald-600"
-                        trend={{ value: 'Bajo control', positive: true }}
+                        trend={{ value: 'Actualizado', positive: true }}
                         delay={0.1}
                     />
                     <KpiCard
                         title="Cuentas por Cobrar"
-                        value={formatMXN(1346010.34 - 220523.37)}
+                        value={formatMXN(stats.totalVentas - stats.totalCobrado)}
                         subtitle="Pendiente de pago"
                         icon={<Target size={22} />}
                         color="bg-purple-600"
@@ -556,10 +661,15 @@ export default function DashboardPage() {
                 </div>
             )}
 
-            {/* Sales Section (Admin/Vendedor/Cliente) */}
+            {/* Financial Analysis Section (Admin/Vendedor) */}
             {(isAdmin || isVendedor) && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-3">
+                    <IngresosChart
+                        total={stats.totalVentas}
+                        cobrado={stats.totalCobrado}
+                        porCobrar={stats.totalVentas - stats.totalCobrado}
+                    />
+                    <div className="lg:col-span-1">
                         <SalesPipelineChart cotizaciones={cotizaciones} />
                     </div>
                 </div>
