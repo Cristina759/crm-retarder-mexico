@@ -699,7 +699,7 @@ export default function CotizadorServiciosPage() {
                         <div className="max-w-[800px] mx-auto bg-white overflow-hidden">
                             {/* PDF Header */}
                             <div className="flex items-center justify-between px-8 py-6 border-b-4 border-retarder-red">
-                                <div><img src="/logo-retarder.png" alt="Retarder México Logo" className="h-16 object-contain" /></div>
+                                <div><img src="/logo-retarder.png" alt="Retarder México Logo" className="h-24 object-contain" /></div>
                                 <div className="text-right">
                                     <h2 className="text-xl font-black text-retarder-black tracking-tight uppercase">RETARDER MÉXICO</h2>
                                     <p className="text-xs text-retarder-gray-500 font-medium">Cotización de Servicios</p>

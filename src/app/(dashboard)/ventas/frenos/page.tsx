@@ -789,8 +789,8 @@ export default function CotizadorFrenosPage() {
                             {/* Header (Visible on Screen & Print) */}
                             <div className="flex items-center justify-between px-8 py-8 border-b-2 border-retarder-gray-100 font-sans bg-white">
                                 <div className="flex items-center gap-6">
-                                    <div className="bg-white p-2 border border-retarder-gray-100 rounded-lg shadow-sm">
-                                        <img src="/logo-retarder.png" alt="Retarder México" className="h-16 w-auto object-contain" />
+                                    <div className="bg-white p-3 border border-retarder-gray-100 rounded-xl shadow-sm">
+                                        <img src="/logo-retarder.png" alt="Retarder México" className="h-24 w-auto object-contain" />
                                     </div>
                                     <div className="h-14 w-[1px] bg-retarder-gray-200 mx-1" />
                                     <div className="space-y-0.5">
