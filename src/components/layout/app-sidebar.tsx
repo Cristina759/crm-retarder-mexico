@@ -97,7 +97,7 @@ export function AppSidebar() {
                     collapsed && 'justify-center px-2'
                 )}
             >
-                <div className="relative w-10 h-10 flex-shrink-0">
+                <div className="relative w-16 h-16 flex-shrink-0">
                     <Image
                         src="/logo-retarder.png"
                         alt="Retarder Mexico Logo"

@@ -138,6 +138,7 @@ export default function CotizadorRefaccionesPage() {
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
     const [clientSearch, setClientSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [traslado, setTraslado] = useState<number>(0);
 
     // Editable Observations and Notes
     const [observaciones, setObservaciones] = useState(
@@ -300,9 +301,9 @@ export default function CotizadorRefaccionesPage() {
             let osNumero = `OS-LOCAL-${Math.floor(Math.random() * 1000)}`;
             let cotId = "local-cot-" + Math.random();
 
-            const subtotal = cartTotal;
-            const iva = cartTotal * 0.16;
-            const total = cartTotal * 1.16;
+            const subtotal = cartTotal + traslado;
+            const iva = subtotal * 0.16;
+            const total = subtotal + iva;
 
             try {
                 const { count: cotCount, error: countErr1 } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
@@ -655,12 +656,44 @@ export default function CotizadorRefaccionesPage() {
                                 </div>
 
                                 <div className="p-4 border-t-2 border-dashed border-retarder-gray-200 space-y-3">
-                                    <div className="space-y-1">
-                                        <div className="flex justify-between text-xs text-retarder-gray-500"><span>Subtotal</span><span>{formatMXN(cartTotal)}</span></div>
-                                        <div className="flex justify-between text-xs text-retarder-gray-500"><span>IVA (16%)</span><span>{formatMXN(cartTotal * 0.16)}</span></div>
+                                    <div className="space-y-3 pt-3 border-t border-retarder-gray-100">
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Gastos de Traslado (MXN)</label>
+                                            <input
+                                                type="number"
+                                                value={traslado || ''}
+                                                onChange={e => setTraslado(parseFloat(e.target.value) || 0)}
+                                                placeholder="0.00"
+                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-sm font-bold outline-none focus:border-retarder-red transition-all"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Observaciones</label>
+                                            <textarea
+                                                value={observaciones}
+                                                onChange={e => setObservaciones(e.target.value)}
+                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[60px]"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Notas Vigencia/Garantía</label>
+                                            <textarea
+                                                value={notas}
+                                                onChange={e => setNotas(e.target.value)}
+                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[40px]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1 pt-3 border-t-2 border-dashed border-retarder-gray-200">
+                                        <div className="flex justify-between text-xs text-retarder-gray-500"><span>Subtotal Refacciones</span><span>{formatMXN(cartTotal)}</span></div>
+                                        {traslado > 0 && <div className="flex justify-between text-xs text-retarder-gray-500"><span>Gastos Traslado</span><span>{formatMXN(traslado)}</span></div>}
+                                        <div className="flex justify-between text-xs text-retarder-gray-500"><span>IVA (16%)</span><span>{formatMXN((cartTotal + traslado) * 0.16)}</span></div>
                                         <div className="flex justify-between pt-2 border-t border-retarder-gray-200">
                                             <span className="font-bold text-sm text-retarder-gray-700">Total</span>
-                                            <span className="font-bold text-lg text-retarder-red">{formatMXN(cartTotal * 1.16)}</span>
+                                            <span className="font-bold text-lg text-retarder-red">{formatMXN((cartTotal + traslado) * 1.16)}</span>
                                         </div>
                                     </div>
                                     <button
@@ -745,6 +778,15 @@ export default function CotizadorRefaccionesPage() {
                                                 <td className="py-2 px-3 text-right font-bold">{formatMXN(item.refaccion.precio_venta * item.cantidad)}</td>
                                             </tr>
                                         ))}
+                                        {traslado > 0 && (
+                                            <tr className="bg-retarder-gray-50/30">
+                                                <td className="py-2 px-3 font-bold text-retarder-red">SERV-TRAS</td>
+                                                <td className="py-2 px-3 uppercase font-bold">Gastos de Traslado / Desplazamiento Técnico</td>
+                                                <td className="py-2 px-3 text-center">1</td>
+                                                <td className="py-2 px-3 text-right">{formatMXN(traslado)}</td>
+                                                <td className="py-2 px-3 text-right font-bold">{formatMXN(traslado)}</td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
@@ -754,15 +796,15 @@ export default function CotizadorRefaccionesPage() {
                                 <div className="w-64 space-y-1">
                                     <div className="flex justify-between text-[11px] text-retarder-gray-600">
                                         <span>Subtotal</span>
-                                        <span>{formatMXN(cartTotal)}</span>
+                                        <span>{formatMXN(cartTotal + traslado)}</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] text-retarder-gray-600">
                                         <span>IVA (16.0%)</span>
-                                        <span>{formatMXN(cartTotal * 0.16)}</span>
+                                        <span>{formatMXN((cartTotal + traslado) * 0.16)}</span>
                                     </div>
                                     <div className="flex justify-between pt-2 border-t-2 border-retarder-red">
                                         <span className="font-bold text-sm text-retarder-black uppercase">Total Neto</span>
-                                        <span className="font-bold text-sm text-retarder-red">{formatMXN(cartTotal * 1.16)}</span>
+                                        <span className="font-bold text-sm text-retarder-red">{formatMXN((cartTotal + traslado) * 1.16)}</span>
                                     </div>
                                 </div>
                             </div>
