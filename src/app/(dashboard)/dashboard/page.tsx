@@ -567,15 +567,18 @@ export default function DashboardPage() {
     }, [fetchDashboardData]);
 
     // Filtered ordenes for the UI components
-    const filteredOrdenes = useMemo(() => {
-        let result = ordenes;
-        if (isTecnico && !isAdmin && currentUserName) {
-            result = result.filter(o => o.tecnico?.trim().toLocaleLowerCase() === currentUserName);
-        } else if (isVendedor && !isAdmin && currentUserName) {
-            result = result.filter(o => o.vendedor?.trim().toLocaleLowerCase() === currentUserName);
-        }
-        return result;
-    }, [ordenes, isTecnico, isVendedor, isAdmin, currentUserName]);
+    const dashboardVentas = useMemo(() => {
+        return VENTAS_REALES.map(v => ({
+            total: v.total,
+            estado: v.pagado ? 'aceptada' : 'enviada', // Map real data to pipeline stages
+            id: v.id,
+            numero: v.factura,
+            empresa: v.cliente,
+            tipo: v.refacciones > 0 ? 'refacciones' : 'servicios',
+            fecha_creado: '2026-02-19',
+            prioridad: 'media'
+        }));
+    }, []);
 
     if (loading) {
         return (
@@ -670,7 +673,7 @@ export default function DashboardPage() {
                         porCobrar={stats.totalVentas - stats.totalCobrado}
                     />
                     <div className="lg:col-span-1">
-                        <SalesPipelineChart cotizaciones={cotizaciones} />
+                        <SalesPipelineChart cotizaciones={dashboardVentas} />
                     </div>
                 </div>
             )}
@@ -701,14 +704,14 @@ export default function DashboardPage() {
             {!isCliente && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
-                        <PipelineChart ordenes={filteredOrdenes} />
+                        <PipelineChart ordenes={dashboardVentas as any} />
                     </div>
                     <div className="lg:col-span-1 hidden lg:block" />
                 </div>
             )}
 
             {/* Recent Activity */}
-            <RecentOrdenes ordenes={filteredOrdenes} />
+            <RecentOrdenes ordenes={dashboardVentas as any} />
         </div>
     );
 }
