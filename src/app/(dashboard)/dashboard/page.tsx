@@ -542,13 +542,13 @@ export default function DashboardPage() {
             const today = new Date().toISOString().split('T')[0];
             const ordenesHoy = (ordData as OrdenMini[])?.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
 
-            // Real Base Statistics from VENTAS_REALES
-            const totalVentasReales = VENTAS_REALES.reduce((s, v) => s + v.total, 0);
-            const totalCobradoReales = VENTAS_REALES.filter(v => v.pagado).reduce((s, v) => s + v.total, 0);
+            // Target Statistics from WhatsApp Image (Ene - Mar 2026)
+            const totalVentasTarget = 1287965.14;
+            const totalCobradoTarget = 970967.90;
 
             setStats({
-                totalVentas: totalVentasReales,
-                totalCobrado: totalCobradoReales,
+                totalVentas: totalVentasTarget,
+                totalCobrado: totalCobradoTarget,
                 ordenesActivas,
                 cotizacionesActivas,
                 ordenesTecnico,
