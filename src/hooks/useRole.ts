@@ -7,7 +7,10 @@ export function useRole() {
     const { user, isLoaded } = useUser();
 
     // Default to 'vendedor' as requested if no role is found
-    const rawRole = (user?.publicMetadata?.role as string) || 'vendedor';
+    // Override: Cristina Velasco is now Admin per request
+    const userEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
+    const isCristina = userEmail === 'ventas@retardermexico.com';
+    const rawRole = isCristina ? 'admin' : ((user?.publicMetadata?.role as string) || 'vendedor');
     const role = rawRole.toLowerCase() as Rol;
 
     const isAdmin = role === 'admin' || role === 'direccion';

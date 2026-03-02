@@ -606,7 +606,7 @@ export default function CotizadorFrenosPage() {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="bg-white rounded-2xl border border-retarder-gray-200 shadow-sm overflow-hidden"
+                        className="bg-white rounded-2xl border border-retarder-gray-200 shadow-sm overflow-hidden lg:col-span-1 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto pb-10"
                     >
                         <div className="px-5 py-4 border-b border-retarder-gray-100">
                             <div className="flex items-center justify-between mb-3">

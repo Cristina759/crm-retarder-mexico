@@ -592,7 +592,7 @@ export default function CotizadorRefaccionesPage() {
                             transition={{ duration: 0.3 }}
                             className="hidden lg:block flex-shrink-0 print:hidden"
                         >
-                            <div className="bg-white rounded-xl border border-retarder-gray-200 shadow-lg overflow-hidden sticky top-4">
+                            <div className="bg-white rounded-xl border border-retarder-gray-200 shadow-lg overflow-hidden sticky top-4 max-h-[calc(100vh-2rem)] flex flex-col">
                                 <div className="bg-gradient-to-r from-retarder-black to-retarder-gray-800 px-4 py-3 flex items-center justify-between">
                                     <div>
                                         <p className="text-white font-bold text-sm">Cotización</p>
@@ -604,7 +604,7 @@ export default function CotizadorRefaccionesPage() {
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-blue-50/50 border-b border-blue-100">
+                                <div className="p-4 bg-blue-50/50 border-b border-blue-100 shrink-0">
                                     <div className="flex flex-col gap-2">
                                         <label className="text-[10px] font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1">
                                             <Building2 size={10} /> Cliente / Empresa
@@ -632,9 +632,9 @@ export default function CotizadorRefaccionesPage() {
                                     </div>
                                 </div>
 
-                                <div className="max-h-[40vh] overflow-y-auto divide-y divide-retarder-gray-50">
+                                <div className="flex-1 overflow-y-auto min-h-0 divide-y divide-retarder-gray-50 bg-retarder-gray-50/30">
                                     {cart.map(item => (
-                                        <div key={item.refaccion.codigo} className="px-4 py-3 hover:bg-retarder-gray-50 transition-colors">
+                                        <div key={item.refaccion.codigo} className="px-4 py-3 bg-white hover:bg-retarder-gray-50 transition-colors">
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-mono text-[10px] font-bold text-retarder-red">{item.refaccion.codigo}</p>
@@ -653,10 +653,8 @@ export default function CotizadorRefaccionesPage() {
                                             </div>
                                         </div>
                                     ))}
-                                </div>
 
-                                <div className="p-4 border-t-2 border-dashed border-retarder-gray-200 space-y-3">
-                                    <div className="space-y-3 pt-3 border-t border-retarder-gray-100">
+                                    <div className="p-4 space-y-4 border-t border-retarder-gray-100">
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Gastos de Traslado (MXN)</label>
                                             <input
@@ -673,21 +671,25 @@ export default function CotizadorRefaccionesPage() {
                                             <textarea
                                                 value={observaciones}
                                                 onChange={e => setObservaciones(e.target.value)}
-                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[60px]"
+                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[60px] resize-none"
+                                                placeholder="Notas internas o técnicas..."
                                             />
                                         </div>
 
-                                        <div className="flex flex-col gap-1.5">
+                                        <div className="flex flex-col gap-1.5 pb-2">
                                             <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Notas Vigencia/Garantía</label>
                                             <textarea
                                                 value={notas}
                                                 onChange={e => setNotas(e.target.value)}
-                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[40px]"
+                                                className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[40px] resize-none"
+                                                placeholder="Ej: Precios sujetos a cambio..."
                                             />
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="space-y-1 pt-3 border-t-2 border-dashed border-retarder-gray-200">
+                                <div className="p-4 border-t border-retarder-gray-100 bg-white space-y-3 shrink-0">
+                                    <div className="space-y-1">
                                         <div className="flex justify-between text-xs text-retarder-gray-500"><span>Subtotal Refacciones</span><span>{formatMXN(cartTotal)}</span></div>
                                         {traslado > 0 && <div className="flex justify-between text-xs text-retarder-gray-500"><span>Gastos Traslado</span><span>{formatMXN(traslado)}</span></div>}
                                         <div className="flex justify-between text-xs text-retarder-gray-500"><span>IVA (16%)</span><span>{formatMXN((cartTotal + traslado) * 0.16)}</span></div>
@@ -696,17 +698,19 @@ export default function CotizadorRefaccionesPage() {
                                             <span className="font-bold text-lg text-retarder-red">{formatMXN((cartTotal + traslado) * 1.16)}</span>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={handleFinalize}
-                                        disabled={!selectedClienteId || isCreating || cart.length === 0}
-                                        className={cn(
-                                            "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all shadow-md",
-                                            !selectedClienteId || isCreating || cart.length === 0 ? "bg-retarder-gray-200 text-retarder-gray-400" : "bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
-                                        )}
-                                    >
-                                        {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
-                                        Oficializar y Imprimir
-                                    </button>
+                                    <div className="pt-1 pb-4">
+                                        <button
+                                            onClick={handleFinalize}
+                                            disabled={!selectedClienteId || isCreating || cart.length === 0}
+                                            className={cn(
+                                                "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg active:scale-95",
+                                                !selectedClienteId || isCreating || cart.length === 0 ? "bg-retarder-gray-200 text-retarder-gray-400 shadow-none cursor-not-allowed" : "bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
+                                            )}
+                                        >
+                                            {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                                            Oficializar y Imprimir
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
@@ -867,6 +871,6 @@ export default function CotizadorRefaccionesPage() {
                     textarea { border: none !important; overflow: hidden !important; }
                 }
             `}</style>
-        </div>
+        </div >
     );
 }

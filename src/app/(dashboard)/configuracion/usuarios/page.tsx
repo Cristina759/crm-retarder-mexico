@@ -7,19 +7,16 @@ import { cn } from '@/lib/utils';
 import { ROL_LABELS, Rol } from '@/lib/utils/constants';
 
 const DEMO_USERS = [
-    { id: '1', nombre: 'Ing. Juan Carlos', email: 'direccion@retardermexico.com', role: 'admin' as Rol, active: true },
-    { id: '2', nombre: 'Cristina Velasco', email: 'ventas@retardermexico.com', role: 'vendedor' as Rol, active: true },
-    { id: '3', nombre: 'Nahum Garcia', email: 'nahum@retardermexico.com', role: 'tecnico' as Rol, active: true },
-    { id: '4', nombre: 'Carlos Abraham Espinosa', email: 'espinosa@retardermexico.com', role: 'tecnico' as Rol, active: true },
+    { id: '1', nombre: 'Ing. Juan Carlos (Admin)', email: 'direccion@retardermexico.com', role: 'admin' as Rol, active: true },
+    { id: '2', nombre: 'Cristina Velasco (Admin)', email: 'ventas@retardermexico.com', role: 'admin' as Rol, active: true },
+    { id: '3', nombre: 'Nahum Garcia (Técnico)', email: 'nahum@retardermexico.com', role: 'tecnico' as Rol, active: true },
+    { id: '4', nombre: 'Carlos Abraham Espinosa (Técnico)', email: 'espinosa@retardermexico.com', role: 'tecnico' as Rol, active: true },
 ];
 
 export default function UsuariosPage() {
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadedDocs, setUploadedDocs] = useState<Record<string, string[]>>({
-        '1': ['INE', 'Comprobante de Domicilio'],
-        '3': ['Licencia de Conducir', 'Certificado Médico']
-    });
+    const [uploadedDocs, setUploadedDocs] = useState<Record<string, string[]>>({});
 
     const handleUploadClick = (user: any) => {
         setSelectedUser(user);
@@ -42,7 +39,7 @@ export default function UsuariosPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-retarder-black">Gestión de Usuarios</h1>
+                    <h1 className="text-2xl font-bold text-retarder-black">Gestión de Usuarios (Actualizado - {new Date().toLocaleTimeString()})</h1>
                     <p className="text-sm text-retarder-gray-500">Administra accesos y expedientes de colaboradores</p>
                 </div>
                 <button className="flex items-center gap-2 px-5 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-all shadow-md shadow-retarder-red/20">
