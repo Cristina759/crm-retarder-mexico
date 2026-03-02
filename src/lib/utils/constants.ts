@@ -382,7 +382,7 @@ export const MANO_OBRA_CATEGORIAS = {
 
 // ── Catálogo de Frenos — Precios en USD ─────────────
 
-export const DEFAULT_TIPO_CAMBIO = 17.2563;
+export const DEFAULT_TIPO_CAMBIO = 17.2193;
 
 export interface CatalogoFreno {
     modelo: string;          // Pentar model name (primary)

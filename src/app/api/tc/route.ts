@@ -30,7 +30,7 @@ export async function GET() {
 
     // Ultimate Fallback: el valor exacto del DOF reportado por el usuario
     return NextResponse.json({
-        rate: 17.2563,
+        rate: 17.2193,
         source: 'DOF (Manual/Fallback)',
         fecha: new Date().toLocaleDateString('es-MX')
     });
