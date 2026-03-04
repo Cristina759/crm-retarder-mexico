@@ -51,6 +51,16 @@ export default function OrdenesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activePhaseFilter, setActivePhaseFilter] = useState<OrdenPhase | 'all'>('all');
     const [ordenes, setOrdenes] = useState<DemoOrden[]>([]);
+    // Track deleted demo order IDs so they don't reappear from DEMO_ORDENES
+    const [deletedDemoIds, setDeletedDemoIds] = useState<Set<string>>(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('deletedOrdenIds');
+                return saved ? new Set(JSON.parse(saved)) : new Set();
+            } catch { return new Set(); }
+        }
+        return new Set();
+    });
     const [loading, setLoading] = useState(true);
     const [selectedOrden, setSelectedOrden] = useState<DemoOrden | null>(null);
     const [showNewOrden, setShowNewOrden] = useState(false);
@@ -83,11 +93,11 @@ export default function OrdenesPage() {
             if (data && data.length > 0) {
                 // Merge: Supabase data takes priority, then append DEMO_ORDENES not in Supabase
                 const supabaseIds = new Set(data.map((d: any) => d.id));
-                const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id));
+                const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id) && !deletedDemoIds.has(d.id));
                 setOrdenes([...(data as DemoOrden[]), ...missingDemo]);
             } else {
-                // No Supabase data at all — use hardcoded billing data
-                setOrdenes(DEMO_ORDENES);
+                // No Supabase data at all — use hardcoded billing data (filter out deleted)
+                setOrdenes(DEMO_ORDENES.filter(d => !deletedDemoIds.has(d.id)));
             }
         } catch (error) {
             console.error('Error fetching ordenes:', error);
@@ -142,16 +152,25 @@ export default function OrdenesPage() {
         if (!confirm('¿Estás seguro de que deseas eliminar esta orden?')) return;
         try {
             if (isValidUUID(id)) {
+                // Try to delete from Supabase
                 const { error } = await supabase
                     .from('ordenes_servicio')
                     .delete()
                     .eq('id', id);
 
                 if (error) throw error;
-            } else {
-                console.warn('ID no es UUID (dato demo), simulando eliminación:', id);
             }
-            fetchOrdenes();
+
+            // Track this ID as deleted (for demo data persistence)
+            const newDeletedIds = new Set(deletedDemoIds);
+            newDeletedIds.add(id);
+            setDeletedDemoIds(newDeletedIds);
+            try {
+                localStorage.setItem('deletedOrdenIds', JSON.stringify([...newDeletedIds]));
+            } catch { /* ignore localStorage errors */ }
+
+            // Remove from local state immediately (no need to refetch)
+            setOrdenes(prev => prev.filter(o => o.id !== id));
         } catch (error) {
             console.error('Error deleting orden:', error);
             alert('Error al eliminar la orden');
