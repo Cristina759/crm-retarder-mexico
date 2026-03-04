@@ -44,25 +44,37 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
     const [isLoadingSurvey, setIsLoadingSurvey] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
     const [numeroOrdenFisica, setNumeroOrdenFisica] = useState(orden?.numero_orden_fisica || '');
+    const [numeroOrdenCompra, setNumeroOrdenCompra] = useState(orden?.numero_orden_compra || '');
     const [isSavingNumero, setIsSavingNumero] = useState(false);
     const [numeroSaved, setNumeroSaved] = useState(false);
+    const [ocSaved, setOCSaved] = useState(false);
 
     // Sync local state when orden changes
     useEffect(() => {
         if (orden) {
             setLocalTecnico(orden.tecnico || '');
             setNumeroOrdenFisica(orden.numero_orden_fisica || '');
+            setNumeroOrdenCompra(orden.numero_orden_compra || '');
             setNumeroSaved(false);
+            setOCSaved(false);
             fetchEvidencias();
             fetchSurvey();
         }
     }, [orden]);
 
+    // Helper to validate UUID
+    const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
     const fetchSurvey = async () => {
-        if (!orden) return;
+        if (!orden || !isValidUUID(orden.id)) return;
         setIsLoadingSurvey(true);
-        const { data, error: surveyError } = await SurveyService.getOrCreateSurvey(orden.id);
-        if (!surveyError) setSurvey(data);
+        try {
+            const { data, error: surveyError } = await SurveyService.getOrCreateSurvey(orden.id);
+            if (!surveyError && data) setSurvey(data);
+        } catch (e) {
+            // Tabla encuestas puede no existir aún — no bloquear el panel
+            console.warn('Survey fetch failed (tabla puede no existir):', e);
+        }
         setIsLoadingSurvey(false);
     };
 
@@ -76,6 +88,15 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
 
     const fetchEvidencias = async () => {
         if (!orden) return;
+
+        // Validar UUID para evitar error de sintaxis en DB
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orden.id);
+        if (!isUUID) {
+            console.warn('ID de orden no es UUID, omitiendo fetch de evidencias reales.');
+            setEvidencias([]);
+            return;
+        }
+
         setIsLoadingEvidencias(true);
         const { data, error: fetchError } = await StorageService.getEvidences(orden.id);
         if (!fetchError) {
@@ -92,22 +113,39 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         setError(null);
 
         try {
+            // Validar UUID antes de cualquier operación de DB
+            const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orden.id);
+
             const bucket = tipo === 'documento' ? 'documentos' : 'evidencias';
             const fileName = `${orden.id}/${tipo}_${Date.now()}_${file.name}`;
 
             const { url, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
             if (uploadError) throw uploadError;
 
-            const { error: regError } = await StorageService.registerEvidence({
-                orden_id: orden.id,
-                tipo: tipo as any,
-                archivo_url: url,
-                descripcion: tipo === 'documento' ? 'Orden de Compra' : tipo === 'foto_antes' ? 'Evidencia Antes' : 'Evidencia Después',
-            });
+            if (isUUID) {
+                const { error: regError } = await StorageService.registerEvidence({
+                    orden_id: orden.id,
+                    tipo: tipo as any,
+                    archivo_url: url,
+                    descripcion: tipo === 'documento' ? 'Orden de Compra' : tipo === 'foto_antes' ? 'Evidencia Antes' : 'Evidencia Después',
+                });
 
-            if (regError) throw regError;
-
-            await fetchEvidencias();
+                if (regError) throw regError;
+                await fetchEvidencias();
+            } else {
+                console.warn('ID demo detectado, simulando registro de evidencia local.');
+                // Simular para la UI
+                const demoEvidencia: Evidencia = {
+                    id: Math.random().toString(),
+                    orden_id: orden.id,
+                    tipo: tipo as any,
+                    archivo_url: url,
+                    descripcion: tipo === 'documento' ? 'Orden de Compra (Demo)' : tipo === 'foto_antes' ? 'Evidencia Antes (Demo)' : 'Evidencia Después (Demo)',
+                    subido_por: 'demo',
+                    created_at: new Date().toISOString()
+                };
+                setEvidencias(prev => [demoEvidencia, ...prev]);
+            }
         } catch (err: any) {
             console.error('Error uploading file:', err);
             setError(`Error al subir archivo: ${err.message}`);
@@ -128,20 +166,24 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         setIsUpdatingTecnico(true);
         setError(null);
         try {
-            const { data, error: updateError } = await supabase
-                .from('ordenes_servicio')
-                .update({ tecnico: newTecnico })
-                .eq('id', orden.id)
-                .select();
+            if (isValidUUID(orden.id)) {
+                const { data, error: updateError } = await supabase
+                    .from('ordenes_servicio')
+                    .update({ tecnico: newTecnico })
+                    .eq('id', orden.id)
+                    .select();
 
-            if (updateError) {
-                // Revert on error
-                setLocalTecnico(orden.tecnico || '');
-                console.error('Error de Supabase:', updateError);
-                throw updateError;
+                if (updateError) {
+                    // Revert on error
+                    setLocalTecnico(orden.tecnico || '');
+                    console.error('Error de Supabase:', updateError);
+                    throw updateError;
+                }
+                console.log('Técnico actualizado con éxito:', data);
+            } else {
+                console.warn('Simulando asignación de técnico para orden demo');
+                // No necesitamos llamar a la DB si no es UUID
             }
-
-            console.log('Técnico actualizado con éxito:', data);
             if (onUpdate) onUpdate();
         } catch (err: any) {
             console.error('Error updating tecnico:', err);
@@ -163,61 +205,119 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
 
         try {
             // --- Business Validations ---
+            // Determinar si esta orden ya está en una fase avanzada (datos reales importados)
+            // Estas órdenes ya completaron su proceso real y no necesitan evidencias digitales
+            const advancedStates: string[] = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', 'encuesta_enviada', 'facturado', 'pagado'];
+            const isAlreadyAdvanced = advancedStates.includes(orden.estado);
 
-            // 1. Cotización Aceptada requires OC PDF - COMMMENTED OUT AS PER USER REQUEST
-            /*
-            if (nextState === 'cotizacion_aceptada') {
-                const hasOC = evidencias.some(e => e.tipo === 'documento');
-                if (!hasOC) {
-                    throw new Error('Se requiere adjuntar el PDF de la Orden de Compra para aceptar la cotización.');
+            // Solo aplicar validaciones estrictas a órdenes que están en fases tempranas
+            if (!isAlreadyAdvanced) {
+                // 2. Para avanzar a fase operativa: requiere técnico + Nº OS física + foto
+                const operativeStates = ['asignacion_tecnico', 'servicio_programado', 'documentacion_enviada', 'tecnico_en_contacto', 'servicio_en_proceso', 'autorizacion_adicional'];
+                if (operativeStates.includes(nextState)) {
+                    if (!localTecnico) {
+                        throw new Error('Se requiere asignar un técnico antes de avanzar.');
+                    }
+                    if (!numeroOrdenFisica.trim()) {
+                        throw new Error('Se requiere capturar el Nº de Orden de Servicio Física (papel) antes de avanzar.');
+                    }
+                    const hasFotoOrden = evidencias.some(e => e.tipo === 'foto_antes');
+                    if (!hasFotoOrden) {
+                        throw new Error('Se requiere subir la foto de la Orden de Servicio Física (papel) antes de avanzar.');
+                    }
+                }
+
+                // 3. Evidencia Cargada requires photos
+                if (nextState === 'evidencia_cargada') {
+                    const photosCount = evidencias.filter(e => e.tipo === 'foto_antes' || e.tipo === 'foto_despues').length;
+                    if (photosCount < 2) {
+                        throw new Error('Se requiere cargar fotos de "Antes" y "Después" para avanzar.');
+                    }
                 }
             }
-            */
 
-            // 2. Para avanzar a fase operativa o más allá: requiere técnico + Nº OS física + foto
-            const operativeStates = ['asignacion_tecnico', 'servicio_programado', 'documentacion_enviada', 'tecnico_en_contacto', 'servicio_en_proceso', 'autorizacion_adicional'];
-            if (operativeStates.includes(nextState)) {
-                if (!localTecnico) {
-                    throw new Error('Se requiere asignar un técnico antes de avanzar.');
-                }
-                if (!numeroOrdenFisica.trim()) {
-                    throw new Error('Se requiere capturar el Nº de Orden de Servicio Física (papel) antes de avanzar.');
-                }
+            // 4. Validaciones para estado PAGADO
+            // Solo validar estrictamente si la orden NO viene ya de facturado (dato real importado)
+            if (nextState === 'pagado' && !isAlreadyAdvanced) {
                 const hasFotoOrden = evidencias.some(e => e.tipo === 'foto_antes');
                 if (!hasFotoOrden) {
-                    throw new Error('Se requiere subir la foto de la Orden de Servicio Física (papel) antes de avanzar.');
+                    throw new Error('No se puede pasar a Pagado sin subir las FOTOS DE LA ORDEN física.');
                 }
-            }
-
-            // 3. Evidencia Cargada requires photos
-            if (nextState === 'evidencia_cargada') {
-                const photosCount = evidencias.filter(e => e.tipo === 'foto_antes' || e.tipo === 'foto_despues').length;
-                if (photosCount < 2) {
-                    throw new Error('Se requiere cargar fotos de "Antes" y "Después" para avanzar.');
+                const hasOC = evidencias.some(e => e.tipo === 'documento');
+                if (!hasOC) {
+                    throw new Error('No se puede pasar a Pagado sin subir el documento de la ORDEN DE COMPRA (OC).');
+                }
+                if (!numeroOrdenCompra.trim()) {
+                    throw new Error('No se puede pasar a Pagado sin capturar el número de la ORDEN DE COMPRA (OC).');
                 }
             }
 
             // --- Inventory Triggers ---
 
-            if (nextState === 'servicio_en_proceso') {
+            if (nextState === 'servicio_en_proceso' && isValidUUID(orden.id)) {
                 await InventoryService.reserveForOrder(orden.id);
             }
 
-            if (nextState === 'encuesta_enviada') {
-                await SurveyService.getOrCreateSurvey(orden.id);
+            if (nextState === 'encuesta_enviada' && isValidUUID(orden.id)) {
+                try {
+                    await SurveyService.getOrCreateSurvey(orden.id);
+                } catch (e) {
+                    console.warn('No se pudo crear encuesta (tabla puede no existir):', e);
+                }
             }
 
-            if (nextState === 'servicio_concluido') {
+            if (nextState === 'servicio_concluido' && isValidUUID(orden.id)) {
                 await InventoryService.deductForOrder(orden.id);
             }
 
             // --- DB Update ---
-            const { error: updateError } = await supabase
-                .from('ordenes_servicio')
-                .update({ estado: nextState })
-                .eq('id', orden.id);
+            // Validar si el ID es un UUID antes de intentar actualizar la DB
+            const isUUID = isValidUUID(orden.id);
 
-            if (updateError) throw updateError;
+            if (isUUID) {
+                // Intentar update primero
+                const { data: existing } = await supabase
+                    .from('ordenes_servicio')
+                    .select('id')
+                    .eq('id', orden.id)
+                    .maybeSingle();
+
+                if (existing) {
+                    // La orden ya existe en Supabase — solo actualizar estado
+                    const { error: updateError } = await supabase
+                        .from('ordenes_servicio')
+                        .update({ estado: nextState })
+                        .eq('id', orden.id);
+                    if (updateError) throw updateError;
+                } else {
+                    // La orden viene de DEMO_ORDENES y no existe en Supabase — insertarla
+                    const insertData: any = {
+                        id: orden.id,
+                        numero: orden.numero,
+                        empresa: orden.empresa,
+                        tipo: orden.tipo,
+                        estado: nextState,
+                        prioridad: orden.prioridad,
+                        tecnico: orden.tecnico,
+                        vendedor: orden.vendedor,
+                        descripcion: orden.descripcion,
+                        fecha_creado: orden.fecha_creado,
+                        monto: orden.monto,
+                    };
+                    if (orden.cotizacion_id) insertData.cotizacion_id = orden.cotizacion_id;
+                    if (orden.cotizacion_numero) insertData.cotizacion_numero = orden.cotizacion_numero;
+                    if (orden.numero_orden_fisica) insertData.numero_orden_fisica = orden.numero_orden_fisica;
+                    if (orden.numero_orden_compra) insertData.numero_orden_compra = orden.numero_orden_compra;
+
+                    const { error: insertError } = await supabase
+                        .from('ordenes_servicio')
+                        .insert([insertData]);
+                    if (insertError) throw insertError;
+                }
+            } else {
+                console.warn('ID de orden no es UUID (posible dato demo):', orden.id);
+                // Si es demo, simulamos el éxito para el flujo de la UI
+            }
 
             if (onUpdate) onUpdate();
             onClose(); // Close panel after successful advance
@@ -237,12 +337,16 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         setIsAdvancing(true);
         setError(null);
         try {
-            const { error: deleteError } = await supabase
-                .from('ordenes_servicio')
-                .delete()
-                .eq('id', orden.id);
+            if (isValidUUID(orden.id)) {
+                const { error: deleteError } = await supabase
+                    .from('ordenes_servicio')
+                    .delete()
+                    .eq('id', orden.id);
 
-            if (deleteError) throw deleteError;
+                if (deleteError) throw deleteError;
+            } else {
+                console.warn('ID de orden no es UUID (dato demo), simulando eliminación:', orden.id);
+            }
 
             if (onUpdate) onUpdate();
             onClose();
@@ -469,11 +573,17 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     if (!orden || !numeroOrdenFisica.trim()) return;
                                                     setIsSavingNumero(true);
                                                     try {
-                                                        const { error: saveErr } = await supabase
-                                                            .from('ordenes_servicio')
-                                                            .update({ numero_orden_fisica: numeroOrdenFisica.trim() })
-                                                            .eq('id', orden.id);
-                                                        if (saveErr) throw saveErr;
+                                                        if (isValidUUID(orden.id)) {
+                                                            const { error: saveErr } = await supabase
+                                                                .from('ordenes_servicio')
+                                                                .update({ numero_orden_fisica: numeroOrdenFisica.trim() })
+                                                                .eq('id', orden.id);
+                                                            if (saveErr) throw saveErr;
+                                                        } else {
+                                                            console.warn('Simulando guardado para orden demo');
+                                                            // Simulamos un delay
+                                                            await new Promise(resolve => setTimeout(resolve, 500));
+                                                        }
                                                         setNumeroSaved(true);
                                                         if (onUpdate) onUpdate();
                                                     } catch (err: any) {
@@ -517,7 +627,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                     </div>
 
                                     {/* Show uploaded order photos */}
-                                    {evidencias.filter(e => e.descripcion?.includes('Antes') || e.tipo === 'foto_antes').length > 0 && (
+                                    {evidencias.filter(e => e.tipo === 'foto_antes').length > 0 && (
                                         <div className="space-y-1.5">
                                             <p className="text-[9px] font-bold text-amber-800 uppercase">Fotos cargadas:</p>
                                             {evidencias.filter(e => e.tipo === 'foto_antes').map(e => (
@@ -530,6 +640,117 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                             ))}
                                         </div>
                                     )}
+                                </div>
+                            </div>
+
+                            {/* Orden de Compra (Comercial/Admin) */}
+                            <div>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
+                                    <FileText size={12} className="inline mr-1" />
+                                    Orden de Compra (OC)
+                                </h3>
+                                <div className="bg-blue-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
+                                    <p className="text-[10px] text-blue-700 font-medium">
+                                        Captura el número de la OC del cliente y sube el documento PDF/Imagen.
+                                    </p>
+
+                                    {/* Número de orden de compra */}
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-1 block">Número de Orden de Compra (OC)</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Ej: OC-4500-2026"
+                                                value={numeroOrdenCompra}
+                                                onChange={(e) => { setNumeroOrdenCompra(e.target.value); setOCSaved(false); }}
+                                                className="flex-1 bg-white border border-blue-200 rounded-lg px-3 py-2 text-sm font-mono font-bold text-retarder-gray-800 focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none placeholder:text-retarder-gray-300"
+                                            />
+                                            <button
+                                                onClick={async () => {
+                                                    if (!orden || !numeroOrdenCompra.trim()) return;
+                                                    setIsSavingNumero(true);
+                                                    try {
+                                                        if (isValidUUID(orden.id)) {
+                                                            const { error: saveErr } = await supabase
+                                                                .from('ordenes_servicio')
+                                                                .update({ numero_orden_compra: numeroOrdenCompra.trim() })
+                                                                .eq('id', orden.id);
+
+                                                            if (saveErr) throw saveErr;
+                                                        } else {
+                                                            console.warn('Simulando guardado OC para orden demo');
+                                                            await new Promise(resolve => setTimeout(resolve, 500));
+                                                        }
+                                                        setOCSaved(true);
+                                                        if (onUpdate) onUpdate();
+                                                    } catch (err: any) {
+                                                        setError(`Error al guardar OC: ${err.message}`);
+                                                    } finally {
+                                                        setIsSavingNumero(false);
+                                                    }
+                                                }}
+                                                disabled={isSavingNumero || !numeroOrdenCompra.trim()}
+                                                className={cn(
+                                                    "px-3 py-2 rounded-lg text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 shrink-0",
+                                                    ocSaved ? "bg-emerald-500 text-white" :
+                                                        "bg-blue-600 text-white hover:bg-blue-700 shadow-md"
+                                                )}
+                                            >
+                                                {isSavingNumero ? <Loader2 size={12} className="animate-spin" /> :
+                                                    ocSaved ? <FileCheck size={12} /> : <Save size={12} />}
+                                                {ocSaved ? 'Guardado' : 'Guardar'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Upload documento OC */}
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-1 block">Documento de la OC (PDF/Foto)</label>
+                                        <div className="space-y-2">
+                                            {/* List of uploaded documents (OC) */}
+                                            {evidencias.filter(e => e.tipo === 'documento').map(e => (
+                                                <div key={e.id} className="flex items-center justify-between p-2.5 bg-white border border-blue-200 rounded-xl shadow-sm">
+                                                    <div className="flex items-center gap-2 overflow-hidden">
+                                                        <FileText size={16} className="text-blue-500 shrink-0" />
+                                                        <span className="text-xs font-bold text-retarder-gray-800 truncate">
+                                                            {e.archivo_url.split('/').pop()?.split('_').slice(2).join('_') || 'Orden de Compra'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <a href={e.archivo_url} target="_blank" rel="noopener noreferrer"
+                                                            className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Ver archivo">
+                                                            <EyeIcon size={14} />
+                                                        </a>
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!confirm('¿Eliminar este documento?')) return;
+                                                                const { error: delErr } = await supabase.from('evidencias').delete().eq('id', e.id);
+                                                                if (!delErr) fetchEvidencias();
+                                                                else setError(`Error al eliminar: ${delErr.message}`);
+                                                            }}
+                                                            className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Eliminar">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            <label className={cn(
+                                                "flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-blue-300 bg-white hover:border-retarder-red hover:bg-retarder-red/5 transition-all cursor-pointer",
+                                                isUploading && "opacity-50 cursor-not-allowed"
+                                            )}>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept=".pdf,image/*"
+                                                    onChange={(e) => handleFileUpload(e, 'documento')}
+                                                    disabled={isUploading}
+                                                />
+                                                <Upload size={18} className="text-blue-600" />
+                                                <span className="text-xs font-bold text-blue-700">Subir Documento OC</span>
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -772,8 +993,9 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                         </div>
                     </motion.div>
                 </>
-            )}
-        </AnimatePresence>
+            )
+            }
+        </AnimatePresence >
     );
 }
 

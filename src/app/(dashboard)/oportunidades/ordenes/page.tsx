@@ -80,16 +80,17 @@ export default function OrdenesPage() {
 
             if (error) throw error;
 
-            // If Supabase has data, use it; otherwise fallback to constants (real billing data)
             if (data && data.length > 0) {
-                setOrdenes((data as DemoOrden[]) || []);
+                // Merge: Supabase data takes priority, then append DEMO_ORDENES not in Supabase
+                const supabaseIds = new Set(data.map((d: any) => d.id));
+                const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id));
+                setOrdenes([...(data as DemoOrden[]), ...missingDemo]);
             } else {
-                // Use real billing data from constants.ts as fallback
+                // No Supabase data at all — use hardcoded billing data
                 setOrdenes(DEMO_ORDENES);
             }
         } catch (error) {
             console.error('Error fetching ordenes:', error);
-            // Fallback to real billing data from constants.ts
             setOrdenes(DEMO_ORDENES);
         } finally {
             setLoading(false);
@@ -135,15 +136,21 @@ export default function OrdenesPage() {
         }
     };
 
+    const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
     const handleDeleteOrden = async (id: string) => {
         if (!confirm('¿Estás seguro de que deseas eliminar esta orden?')) return;
         try {
-            const { error } = await supabase
-                .from('ordenes_servicio')
-                .delete()
-                .eq('id', id);
+            if (isValidUUID(id)) {
+                const { error } = await supabase
+                    .from('ordenes_servicio')
+                    .delete()
+                    .eq('id', id);
 
-            if (error) throw error;
+                if (error) throw error;
+            } else {
+                console.warn('ID no es UUID (dato demo), simulando eliminación:', id);
+            }
             fetchOrdenes();
         } catch (error) {
             console.error('Error deleting orden:', error);
