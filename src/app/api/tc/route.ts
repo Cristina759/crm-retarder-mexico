@@ -2,36 +2,62 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+const SERIE = 'SF43718'; // Tipo de cambio FIX USD/MXN (DOF)
+const BANXICO_URL = `https://www.banxico.org.mx/SieAPIRest/service/v1/series/${SERIE}/datos/oportuno`;
+
 export async function GET() {
-    // SF43718: Tipo de cambio para solventar obligaciones (DOF)
-    const BANXICO_TOKEN = 'c42c3c2819e3e3af8e5b2978a2ff7d36a580b3d75b3d8e7f89b55b6e1e17f76e';
-    const BANXICO_URL = `https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno?token=${BANXICO_TOKEN}`;
+    const BANXICO_TOKEN = process.env.BANXICO_TOKEN;
+
+    if (!BANXICO_TOKEN) {
+        console.error('BANXICO_TOKEN no está definido en .env.local');
+        return NextResponse.json({
+            rate: 20.50,
+            source: 'Fallback (sin token)',
+            fecha: new Date().toLocaleDateString('es-MX'),
+        });
+    }
 
     try {
         const res = await fetch(BANXICO_URL, {
-            headers: { 'Accept': 'application/json' },
-            next: { revalidate: 3600 } // Cache for 1 hour to avoid excessive hits
+            headers: {
+                'Bmx-Token': BANXICO_TOKEN,
+                'Accept': 'application/json',
+            },
+            next: { revalidate: 3600 }, // Cache por 1 hora
         });
 
-        if (res.ok) {
-            const data = await res.json();
-            const valor = data?.bmx?.series?.[0]?.datos?.[0]?.dato;
-            if (valor && !isNaN(parseFloat(valor))) {
-                return NextResponse.json({
-                    rate: parseFloat(valor),
-                    source: 'Banxico / DOF Oficial',
-                    fecha: data.bmx.series[0].datos[0].fecha
-                });
-            }
+        if (!res.ok) {
+            throw new Error(`Banxico respondió con status ${res.status}`);
         }
-    } catch (err) {
-        console.error('Banxico Fetch Error:', err);
-    }
 
-    // Ultimate Fallback: el valor exacto del DOF reportado por el usuario
-    return NextResponse.json({
-        rate: 17.2193,
-        source: 'DOF (Manual/Fallback)',
-        fecha: new Date().toLocaleDateString('es-MX')
-    });
+        const data = await res.json();
+        const dato = data?.bmx?.series?.[0]?.datos?.[0];
+
+        if (!dato) {
+            throw new Error('No se pudo leer el dato de Banxico');
+        }
+
+        const valor = parseFloat(dato.dato);
+        if (isNaN(valor)) {
+            throw new Error(`Valor inválido de Banxico: ${dato.dato}`);
+        }
+
+        return NextResponse.json({
+            rate: valor,
+            tipoCambio: valor,
+            source: 'Banxico / DOF Oficial',
+            fecha: dato.fecha,
+        });
+    } catch (error) {
+        console.error('Banxico Fetch Error:', error);
+
+        // Fallback con valor conservador
+        return NextResponse.json({
+            rate: 20.50,
+            tipoCambio: 20.50,
+            source: 'Fallback (error de conexión)',
+            fecha: new Date().toLocaleDateString('es-MX'),
+            error: (error as Error).message,
+        });
+    }
 }

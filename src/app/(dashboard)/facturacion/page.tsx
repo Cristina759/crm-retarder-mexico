@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
@@ -31,7 +31,8 @@ const ESTADO_CONFIG: Record<FactEstado, { label: string; color: string; icon: ty
     vencida: { label: 'Vencida', color: 'bg-red-100 text-red-700', icon: AlertCircle },
 };
 
-const REAL_FACTURAS: Factura[] = VENTAS_REALES.map(v => ({
+// Build the base factura list from ventas reales
+const ALL_FACTURAS: Factura[] = VENTAS_REALES.map(v => ({
     id: v.id,
     numero_orden: v.orden_servicio || 'N/A',
     numero_factura: v.factura,
@@ -41,7 +42,7 @@ const REAL_FACTURAS: Factura[] = VENTAS_REALES.map(v => ({
     iva: v.iva,
     total: v.total,
     estado: v.pagado ? 'pagada' : 'enviada',
-    fecha_emision: '2026-02-19', // Default to current or recent
+    fecha_emision: '2026-02-19',
     fecha_vencimiento: '2026-03-19',
     metodo_pago: 'Transferencia',
 }));
@@ -50,6 +51,43 @@ export default function FacturacionPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterEstado, setFilterEstado] = useState<FactEstado | 'all'>('all');
     const [showForm, setShowForm] = useState(false);
+    const [deletedFacturas, setDeletedFacturas] = useState<Set<string>>(new Set());
+
+    // Load deleted factura numbers from localStorage (saved by ordenes page when deleting)
+    const syncDeletedFacturas = useCallback(() => {
+        try {
+            const stored = localStorage.getItem('deletedFacturaNumbers');
+            if (stored) {
+                const nums: string[] = JSON.parse(stored);
+                setDeletedFacturas(new Set(nums));
+            }
+        } catch { /* ignore */ }
+    }, []);
+
+    useEffect(() => {
+        syncDeletedFacturas();
+
+        // Listen for storage changes (in case another tab deletes an order)
+        const handleStorage = (e: StorageEvent) => {
+            if (e.key === 'deletedFacturaNumbers') {
+                syncDeletedFacturas();
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+
+        // Also poll every 2 seconds to catch same-tab changes
+        const interval = setInterval(syncDeletedFacturas, 2000);
+
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            clearInterval(interval);
+        };
+    }, [syncDeletedFacturas]);
+
+    // Filter out facturas whose numero_factura was deleted from ordenes
+    const REAL_FACTURAS = useMemo(() => {
+        return ALL_FACTURAS.filter(f => !deletedFacturas.has(f.numero_factura));
+    }, [deletedFacturas]);
 
     const filtered = useMemo(() => {
         let result = REAL_FACTURAS;
@@ -59,7 +97,7 @@ export default function FacturacionPage() {
             result = result.filter(f => f.numero_orden.toLowerCase().includes(q) || f.empresa.toLowerCase().includes(q) || f.numero_factura.toLowerCase().includes(q));
         }
         return result;
-    }, [searchQuery, filterEstado]);
+    }, [searchQuery, filterEstado, REAL_FACTURAS]);
 
     const stats = {
         totalFacturado: REAL_FACTURAS.filter(f => f.estado !== 'pendiente_facturar').reduce((s, f) => s + f.total, 0),

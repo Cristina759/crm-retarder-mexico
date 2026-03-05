@@ -92,16 +92,19 @@ export default function OrdenesPage() {
 
             if (data && data.length > 0) {
                 // Merge: Supabase data takes priority, then append DEMO_ORDENES not in Supabase
+                // IMPORTANT: Filter out deleted IDs from BOTH sources
                 const supabaseIds = new Set(data.map((d: any) => d.id));
+                const supabaseFiltered = (data as DemoOrden[]).filter(d => !deletedDemoIds.has(d.id));
                 const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id) && !deletedDemoIds.has(d.id));
-                setOrdenes([...(data as DemoOrden[]), ...missingDemo]);
+                setOrdenes([...supabaseFiltered, ...missingDemo]);
             } else {
                 // No Supabase data at all — use hardcoded billing data (filter out deleted)
                 setOrdenes(DEMO_ORDENES.filter(d => !deletedDemoIds.has(d.id)));
             }
         } catch (error) {
             console.error('Error fetching ordenes:', error);
-            setOrdenes(DEMO_ORDENES);
+            // Even on error, respect deleted IDs
+            setOrdenes(DEMO_ORDENES.filter(d => !deletedDemoIds.has(d.id)));
         } finally {
             setLoading(false);
         }
@@ -152,7 +155,13 @@ export default function OrdenesPage() {
         if (!confirm('¿Estás seguro de que deseas eliminar esta orden?')) return;
         try {
             if (isValidUUID(id)) {
-                // Try to delete from Supabase
+                // PRIMERO: Borrar evidencias para evitar error FK
+                await supabase
+                    .from('evidencias')
+                    .delete()
+                    .eq('orden_id', id);
+
+                // SEGUNDO: Borrar de Supabase
                 const { error } = await supabase
                     .from('ordenes_servicio')
                     .delete()
@@ -161,12 +170,22 @@ export default function OrdenesPage() {
                 if (error) throw error;
             }
 
+            // Find the orden to get its factura number before removing
+            const ordenToDelete = ordenes.find(o => o.id === id);
+
             // Track this ID as deleted (for demo data persistence)
             const newDeletedIds = new Set(deletedDemoIds);
             newDeletedIds.add(id);
             setDeletedDemoIds(newDeletedIds);
             try {
                 localStorage.setItem('deletedOrdenIds', JSON.stringify([...newDeletedIds]));
+
+                // Also track the factura number so facturación page can filter it out
+                if (ordenToDelete?.numero_factura) {
+                    const existingFacturas = JSON.parse(localStorage.getItem('deletedFacturaNumbers') || '[]');
+                    const updatedFacturas = [...new Set([...existingFacturas, ordenToDelete.numero_factura])];
+                    localStorage.setItem('deletedFacturaNumbers', JSON.stringify(updatedFacturas));
+                }
             } catch { /* ignore localStorage errors */ }
 
             // Remove from local state immediately (no need to refetch)

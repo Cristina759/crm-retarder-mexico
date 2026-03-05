@@ -338,6 +338,13 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         setError(null);
         try {
             if (isValidUUID(orden.id)) {
+                // PRIMERO: Borrar evidencias para evitar error de Foreign Key
+                await supabase
+                    .from('evidencias')
+                    .delete()
+                    .eq('orden_id', orden.id);
+
+                // SEGUNDO: Borrar la orden
                 const { error: deleteError } = await supabase
                     .from('ordenes_servicio')
                     .delete()

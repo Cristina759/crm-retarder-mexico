@@ -71,6 +71,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
         title: 'Admin',
         items: [
             { label: 'Facturación', href: '/facturacion', icon: <Receipt size={20} />, roles: ['admin', 'direccion'] },
+            { label: 'Notas de Crédito', href: '/facturacion/notas-credito', icon: <CreditCard size={20} />, roles: ['admin', 'direccion'] },
             { label: 'Usuarios', href: '/configuracion/usuarios', icon: <Users size={20} />, roles: ['admin', 'direccion'] },
         ],
     },
@@ -136,7 +137,14 @@ export function AppSidebar() {
                             )}
                             <div className="space-y-0.5">
                                 {visibleItems.map((item) => {
-                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                                    // Check for exact match first, then prefix match
+                                    // But don't prefix-match if another sibling has a more specific match
+                                    const exactMatch = pathname === item.href;
+                                    const prefixMatch = pathname.startsWith(item.href + '/');
+                                    const hasSiblingExactOrBetterMatch = visibleItems.some(
+                                        sibling => sibling.href !== item.href && (pathname === sibling.href || pathname.startsWith(sibling.href + '/')) && sibling.href.length > item.href.length
+                                    );
+                                    const isActive = exactMatch || (prefixMatch && !hasSiblingExactOrBetterMatch);
                                     return (
                                         <Link
                                             key={item.href}

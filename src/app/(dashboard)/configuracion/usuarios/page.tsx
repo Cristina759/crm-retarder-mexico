@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, UserPlus, Search, Edit2, Shield, Mail, Upload, FileText, CheckCircle2, X, Eye, Download, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,22 @@ interface StoredDoc {
     size: number;
 }
 
+const LS_USERS_KEY = 'crmCustomUsers';
+
+function loadCustomUsers(): typeof DEMO_USERS {
+    if (typeof window === 'undefined') return [];
+    try {
+        const raw = localStorage.getItem(LS_USERS_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+}
+
+function saveCustomUsers(users: typeof DEMO_USERS) {
+    try { localStorage.setItem(LS_USERS_KEY, JSON.stringify(users)); } catch { /* ignore */ }
+}
+
 export default function UsuariosPage() {
+    const [customUsers, setCustomUsers] = useState<typeof DEMO_USERS>([]);
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [userDocs, setUserDocs] = useState<StoredDoc[]>([]);
@@ -35,10 +50,56 @@ export default function UsuariosPage() {
     const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<string | null>(null);
     const [docCounts, setDocCounts] = useState<Record<string, number>>({});
 
+    // Add user form state
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [formNombre, setFormNombre] = useState('');
+    const [formEmail, setFormEmail] = useState('');
+    const [formRole, setFormRole] = useState<Rol>('tecnico');
+
+    // Load custom users from localStorage on mount
+    useEffect(() => {
+        setCustomUsers(loadCustomUsers());
+    }, []);
+
+    // All users = demo + custom
+    const allUsers = [...DEMO_USERS, ...customUsers];
+
+    // Add new user
+    const handleAddUser = () => {
+        if (!formNombre.trim() || !formEmail.trim()) return;
+
+        const newUser = {
+            id: `custom-${Date.now()}`,
+            nombre: formNombre.trim(),
+            email: formEmail.trim().toLowerCase(),
+            role: formRole,
+            active: true,
+        };
+
+        const updated = [...customUsers, newUser];
+        setCustomUsers(updated);
+        saveCustomUsers(updated);
+
+        // Reset form
+        setFormNombre('');
+        setFormEmail('');
+        setFormRole('tecnico');
+        setShowAddForm(false);
+    };
+
+    // Delete custom user
+    const handleDeleteUser = (userId: string) => {
+        if (!userId.startsWith('custom-')) return; // Can't delete demo users
+        if (!confirm('¿Estás seguro de eliminar este colaborador?')) return;
+        const updated = customUsers.filter(u => u.id !== userId);
+        setCustomUsers(updated);
+        saveCustomUsers(updated);
+    };
+
     // Fetch doc counts for all users on mount
     const fetchAllDocCounts = useCallback(async () => {
         const counts: Record<string, number> = {};
-        for (const user of DEMO_USERS) {
+        for (const user of allUsers) {
             try {
                 const { data, error } = await supabase.storage
                     .from(STORAGE_BUCKET)
@@ -54,7 +115,8 @@ export default function UsuariosPage() {
             }
         }
         setDocCounts(counts);
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [allUsers.length]);
 
     useEffect(() => {
         fetchAllDocCounts();
@@ -195,26 +257,47 @@ export default function UsuariosPage() {
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
-    // Delete file — two-step inline confirmation (no native confirm dialog)
-    const handleDelete = async (doc: StoredDoc) => {
-        // First click: ask for confirmation
-        if (confirmDeleteDoc !== doc.name) {
-            setConfirmDeleteDoc(doc.name);
-            // Auto-cancel after 3 seconds
-            setTimeout(() => setConfirmDeleteDoc(prev => prev === doc.name ? null : prev), 3000);
-            return;
-        }
+    // Delete file — two-step: first click sets confirmation, second executes
+    const confirmTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-        // Second click: actually delete
+    const handleDeleteStep1 = (doc: StoredDoc) => {
+        // Clear any existing timeout
+        if (confirmTimeoutRef.current) {
+            clearTimeout(confirmTimeoutRef.current);
+            confirmTimeoutRef.current = null;
+        }
+        setConfirmDeleteDoc(doc.name);
+        // Auto-cancel after 4 seconds
+        confirmTimeoutRef.current = setTimeout(() => {
+            setConfirmDeleteDoc(prev => prev === doc.name ? null : prev);
+            confirmTimeoutRef.current = null;
+        }, 4000);
+    };
+
+    const handleDeleteConfirm = async (doc: StoredDoc) => {
+        // Clear timeout
+        if (confirmTimeoutRef.current) {
+            clearTimeout(confirmTimeoutRef.current);
+            confirmTimeoutRef.current = null;
+        }
         setConfirmDeleteDoc(null);
         setDeletingDoc(doc.name);
         setUploadError(null);
+        console.log('[DELETE] Deleting file via API:', doc.fullPath);
         try {
-            const { data, error } = await supabase.storage
-                .from(STORAGE_BUCKET)
-                .remove([doc.fullPath]);
+            // Use server API route with admin privileges to bypass RLS
+            const response = await fetch('/api/storage/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filePath: doc.fullPath }),
+            });
 
-            if (error) throw error;
+            const result = await response.json();
+            console.log('[DELETE] API response:', result);
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Error al eliminar el archivo');
+            }
 
             // Optimistically remove from local state immediately
             setUserDocs(prev => prev.filter(d => d.name !== doc.name));
@@ -226,10 +309,10 @@ export default function UsuariosPage() {
                     [selectedUser.id]: Math.max(0, (prev[selectedUser.id] || 0) - 1),
                 }));
 
-                // Re-fetch to confirm
+                // Re-fetch to confirm deletion persisted
                 setTimeout(() => {
                     if (selectedUser) fetchUserDocs(selectedUser.id);
-                }, 500);
+                }, 800);
             }
         } catch (err: any) {
             console.error('[DELETE] Error:', err);
@@ -265,8 +348,11 @@ export default function UsuariosPage() {
                     <h1 className="text-2xl font-bold text-retarder-black">Gestión de Usuarios</h1>
                     <p className="text-sm text-retarder-gray-500">Administra accesos y expedientes de colaboradores</p>
                 </div>
-                <button className="flex items-center gap-2 px-5 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-all shadow-md shadow-retarder-red/20">
-                    <UserPlus size={18} /> Invitar Usuario
+                <button
+                    onClick={() => setShowAddForm(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-all shadow-md shadow-retarder-red/20"
+                >
+                    <UserPlus size={18} /> Nuevo Colaborador
                 </button>
             </div>
 
@@ -290,7 +376,7 @@ export default function UsuariosPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-retarder-gray-50">
-                            {DEMO_USERS.map((user, i) => {
+                            {allUsers.map((user, i) => {
                                 const count = docCounts[user.id] || 0;
                                 return (
                                     <motion.tr
@@ -349,9 +435,15 @@ export default function UsuariosPage() {
                                                 >
                                                     <Upload size={14} />
                                                 </button>
-                                                <button className="p-2 text-retarder-gray-400 hover:text-retarder-black hover:bg-retarder-gray-100 rounded-lg transition-all">
-                                                    <Edit2 size={14} />
-                                                </button>
+                                                {user.id.startsWith('custom-') && (
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        className="p-2 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                        title="Eliminar colaborador"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </motion.tr>
@@ -362,7 +454,7 @@ export default function UsuariosPage() {
                 </div>
 
                 <div className="p-4 bg-retarder-gray-50 border-t border-retarder-gray-100 flex items-center justify-between">
-                    <p className="text-[10px] text-retarder-gray-400 font-medium">Mostrando {DEMO_USERS.length} usuarios registrados</p>
+                    <p className="text-[10px] text-retarder-gray-400 font-medium">Mostrando {allUsers.length} colaboradores registrados</p>
                     <div className="p-2 bg-blue-50 rounded-lg border border-blue-100 flex items-center gap-2 hidden sm:flex">
                         <Shield size={12} className="text-blue-600" />
                         <p className="text-[10px] text-blue-700 font-semibold">Usa el panel para actualizar documentos de colaboradores.</p>
@@ -474,25 +566,39 @@ export default function UsuariosPage() {
                                                         >
                                                             <Download size={14} />
                                                         </button>
-                                                        <button
-                                                            onClick={() => handleDelete(doc)}
-                                                            disabled={deletingDoc === doc.name}
-                                                            className={cn(
-                                                                "p-1.5 rounded-lg transition-all disabled:opacity-50",
-                                                                confirmDeleteDoc === doc.name
-                                                                    ? "text-white bg-red-500 hover:bg-red-600 animate-pulse"
-                                                                    : "text-retarder-gray-400 hover:text-red-600 hover:bg-red-50"
-                                                            )}
-                                                            title={confirmDeleteDoc === doc.name ? "Clic para confirmar" : "Eliminar documento"}
-                                                        >
-                                                            {deletingDoc === doc.name ? (
-                                                                <Loader2 size={14} className="animate-spin" />
-                                                            ) : confirmDeleteDoc === doc.name ? (
-                                                                <span className="text-[10px] font-bold px-1">¿?</span>
-                                                            ) : (
-                                                                <Trash2 size={14} />
-                                                            )}
-                                                        </button>
+                                                        {confirmDeleteDoc === doc.name ? (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteConfirm(doc);
+                                                                }}
+                                                                disabled={deletingDoc === doc.name}
+                                                                className="p-1.5 rounded-lg transition-all disabled:opacity-50 text-white bg-red-500 hover:bg-red-600"
+                                                                title="Clic para confirmar eliminación"
+                                                            >
+                                                                {deletingDoc === doc.name ? (
+                                                                    <Loader2 size={14} className="animate-spin" />
+                                                                ) : (
+                                                                    <span className="text-[10px] font-bold px-1">¿Sí?</span>
+                                                                )}
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteStep1(doc);
+                                                                }}
+                                                                disabled={deletingDoc === doc.name}
+                                                                className="p-1.5 rounded-lg transition-all disabled:opacity-50 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50"
+                                                                title="Eliminar documento"
+                                                            >
+                                                                {deletingDoc === doc.name ? (
+                                                                    <Loader2 size={14} className="animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 size={14} />
+                                                                )}
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </motion.div>
                                             ))
@@ -523,6 +629,118 @@ export default function UsuariosPage() {
                                         </div>
                                     </label>
                                 </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Add User Modal */}
+            <AnimatePresence>
+                {showAddForm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowAddForm(false)}
+                            className="absolute inset-0 bg-retarder-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="px-6 py-5 border-b border-retarder-gray-100 bg-gradient-to-r from-retarder-red to-red-700 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                                        <UserPlus size={18} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Nuevo Colaborador</h3>
+                                        <p className="text-[10px] text-white/70">Registra un nuevo miembro del equipo</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowAddForm(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                    <X size={18} className="text-white" />
+                                </button>
+                            </div>
+
+                            {/* Form */}
+                            <div className="p-6 space-y-4">
+                                {/* Nombre */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 mb-1.5 block">Nombre Completo *</label>
+                                    <input
+                                        type="text"
+                                        value={formNombre}
+                                        onChange={e => setFormNombre(e.target.value)}
+                                        placeholder="Ej: Carolina López García"
+                                        className="w-full border border-retarder-gray-200 rounded-xl px-4 py-3 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none"
+                                    />
+                                </div>
+
+                                {/* Email */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 mb-1.5 block">Email *</label>
+                                    <input
+                                        type="email"
+                                        value={formEmail}
+                                        onChange={e => setFormEmail(e.target.value)}
+                                        placeholder="Ej: carolina@retardermexico.com"
+                                        className="w-full border border-retarder-gray-200 rounded-xl px-4 py-3 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none"
+                                    />
+                                </div>
+
+                                {/* Rol */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 mb-1.5 block">Rol</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {(Object.entries(ROL_LABELS) as [Rol, string][]).filter(([key]) => key !== 'direccion').map(([key, label]) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => setFormRole(key)}
+                                                className={cn(
+                                                    'px-3 py-2.5 rounded-xl text-xs font-semibold transition-all border text-center',
+                                                    formRole === key
+                                                        ? 'bg-retarder-red text-white border-retarder-red shadow-md shadow-retarder-red/20'
+                                                        : 'bg-white border-retarder-gray-200 text-retarder-gray-600 hover:bg-retarder-gray-50'
+                                                )}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="px-6 py-4 border-t border-retarder-gray-200 bg-retarder-gray-50 flex gap-2">
+                                <button
+                                    onClick={() => setShowAddForm(false)}
+                                    className="flex-1 px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-600 hover:bg-white transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleAddUser}
+                                    disabled={!formNombre.trim() || !formEmail.trim()}
+                                    className={cn(
+                                        'flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md',
+                                        formNombre.trim() && formEmail.trim()
+                                            ? 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20'
+                                            : 'bg-retarder-gray-200 text-retarder-gray-400 cursor-not-allowed shadow-none'
+                                    )}
+                                >
+                                    <span className="flex items-center justify-center gap-2">
+                                        <UserPlus size={16} />
+                                        Registrar Colaborador
+                                    </span>
+                                </button>
                             </div>
                         </motion.div>
                     </div>

@@ -498,7 +498,10 @@ export default function DashboardPage() {
             if (ordData) setOrdenes(ordData as OrdenMini[]);
 
             // Calculate metrics
-            const totalVentas = (cotData as CotizacionMini[])?.reduce((s: number, c: CotizacionMini) => s + (c.total || 0), 0) || 0;
+            // El Total Vendido ahora se calcula sumando los montos de las Órdenes de Servicio
+            // Así, si se borra una OS, automáticamente se descuenta del total.
+            const totalVentas = (ordData as any[])?.reduce((s: number, o: any) => s + (Number(o.monto) || 0), 0) || 0;
+
             const cotizacionesActivas = (cotData as CotizacionMini[])?.filter((c: CotizacionMini) => ['enviada', 'negociacion'].includes(c.estado)).length || 0;
             const ordenesActivas = (ordData as OrdenMini[])?.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
 
