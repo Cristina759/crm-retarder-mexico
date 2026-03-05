@@ -48,6 +48,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
     const [isSavingNumero, setIsSavingNumero] = useState(false);
     const [numeroSaved, setNumeroSaved] = useState(false);
     const [ocSaved, setOCSaved] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Sync local state when orden changes
     useEffect(() => {
@@ -332,29 +333,48 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
 
     const handleDeleteOrden = async () => {
         if (!orden) return;
-        if (!confirm('¿Estás seguro de que deseas eliminar esta orden de servicio? Esta acción no se puede deshacer.')) return;
 
+        // Si no está en modo confirmación, activarlo
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            // Auto-cancelar después de 5 segundos
+            setTimeout(() => setShowDeleteConfirm(false), 5000);
+            return;
+        }
+
+        // Segundo clic: ejecutar borrado real
         setIsAdvancing(true);
         setError(null);
         try {
             if (isValidUUID(orden.id)) {
-                // PRIMERO: Borrar evidencias para evitar error de Foreign Key
-                await supabase
-                    .from('evidencias')
-                    .delete()
-                    .eq('orden_id', orden.id);
-
+                // PRIMERO: Borrar evidencias para evitar error FK
+                await supabase.from('evidencias').delete().eq('orden_id', orden.id);
                 // SEGUNDO: Borrar la orden
                 const { error: deleteError } = await supabase
                     .from('ordenes_servicio')
                     .delete()
                     .eq('id', orden.id);
-
-                if (deleteError) throw deleteError;
-            } else {
-                console.warn('ID de orden no es UUID (dato demo), simulando eliminación:', orden.id);
+                if (deleteError) {
+                    console.error('Error Supabase al borrar:', deleteError);
+                }
             }
 
+            // Guardar ID eliminado en localStorage para persistencia
+            try {
+                const saved = localStorage.getItem('deletedOrdenIds');
+                const deletedIds: string[] = saved ? JSON.parse(saved) : [];
+                if (!deletedIds.includes(orden.id)) deletedIds.push(orden.id);
+                localStorage.setItem('deletedOrdenIds', JSON.stringify(deletedIds));
+
+                // También guardar numero_factura para sincronizar facturación
+                if ((orden as any).numero_factura) {
+                    const existingFacturas = JSON.parse(localStorage.getItem('deletedFacturaNumbers') || '[]');
+                    const updatedFacturas = [...new Set([...existingFacturas, (orden as any).numero_factura])];
+                    localStorage.setItem('deletedFacturaNumbers', JSON.stringify(updatedFacturas));
+                }
+            } catch { /* ignore */ }
+
+            setShowDeleteConfirm(false);
             if (onUpdate) onUpdate();
             onClose();
         } catch (err: any) {
@@ -987,14 +1007,25 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                     <FileText size={16} />
                                 </button>
                                 {isAdmin && (
-                                    <button
-                                        onClick={handleDeleteOrden}
-                                        disabled={isAdvancing}
-                                        className="px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 transition-all"
-                                        title="Eliminar Orden"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    showDeleteConfirm ? (
+                                        <button
+                                            onClick={handleDeleteOrden}
+                                            disabled={isAdvancing}
+                                            className="flex items-center gap-1.5 px-4 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-bold animate-pulse hover:bg-red-700 transition-all shadow-lg"
+                                        >
+                                            <Trash2 size={16} />
+                                            {isAdvancing ? 'Borrando...' : '¿Confirmar borrado?'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleDeleteOrden}
+                                            disabled={isAdvancing}
+                                            className="px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 transition-all"
+                                            title="Eliminar Orden"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )
                                 )}
                             </div>
                         </div>

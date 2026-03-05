@@ -66,6 +66,8 @@ export default function OrdenesPage() {
     const [showNewOrden, setShowNewOrden] = useState(false);
     const [step, setStep] = useState(1);
     const [isSaving, setIsSaving] = useState(false);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [newOrden, setNewOrden] = useState<{ empresa: string; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
 
     const { user } = useUser();
@@ -151,48 +153,53 @@ export default function OrdenesPage() {
 
     const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
+    // Paso 1: primer clic en el bote de basura → pone el ID en confirmDeleteId
+    // Paso 2: segundo clic (botón rojo "Confirmar") → ejecuta el borrado real
     const handleDeleteOrden = async (id: string) => {
-        if (!confirm('¿Estás seguro de que deseas eliminar esta orden?')) return;
-        try {
-            if (isValidUUID(id)) {
-                // PRIMERO: Borrar evidencias para evitar error FK
-                await supabase
-                    .from('evidencias')
-                    .delete()
-                    .eq('orden_id', id);
-
-                // SEGUNDO: Borrar de Supabase
-                const { error } = await supabase
-                    .from('ordenes_servicio')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) throw error;
-            }
-
-            // Find the orden to get its factura number before removing
-            const ordenToDelete = ordenes.find(o => o.id === id);
-
-            // Track this ID as deleted (for demo data persistence)
-            const newDeletedIds = new Set(deletedDemoIds);
-            newDeletedIds.add(id);
-            setDeletedDemoIds(newDeletedIds);
+        // Si ya está en modo confirmar para este ID, ejecutar el borrado
+        if (confirmDeleteId === id) {
+            setIsDeleting(true);
             try {
-                localStorage.setItem('deletedOrdenIds', JSON.stringify([...newDeletedIds]));
-
-                // Also track the factura number so facturación page can filter it out
-                if (ordenToDelete?.numero_factura) {
-                    const existingFacturas = JSON.parse(localStorage.getItem('deletedFacturaNumbers') || '[]');
-                    const updatedFacturas = [...new Set([...existingFacturas, ordenToDelete.numero_factura])];
-                    localStorage.setItem('deletedFacturaNumbers', JSON.stringify(updatedFacturas));
+                // Borrar de Supabase si es UUID válido
+                if (isValidUUID(id)) {
+                    // PRIMERO: Borrar evidencias para evitar error FK
+                    await supabase.from('evidencias').delete().eq('orden_id', id);
+                    // SEGUNDO: Borrar la orden
+                    const { error } = await supabase.from('ordenes_servicio').delete().eq('id', id);
+                    if (error) {
+                        console.error('Error Supabase al borrar:', error);
+                    }
                 }
-            } catch { /* ignore localStorage errors */ }
 
-            // Remove from local state immediately (no need to refetch)
-            setOrdenes(prev => prev.filter(o => o.id !== id));
-        } catch (error) {
-            console.error('Error deleting orden:', error);
-            alert('Error al eliminar la orden');
+                // Guardar el numero_factura para sincronizar facturación
+                const ordenToDelete = ordenes.find(o => o.id === id);
+
+                // Marcar como eliminado en localStorage
+                const newDeletedIds = new Set(deletedDemoIds);
+                newDeletedIds.add(id);
+                setDeletedDemoIds(newDeletedIds);
+                try {
+                    localStorage.setItem('deletedOrdenIds', JSON.stringify([...newDeletedIds]));
+                    if (ordenToDelete?.numero_factura) {
+                        const existingFacturas = JSON.parse(localStorage.getItem('deletedFacturaNumbers') || '[]');
+                        const updatedFacturas = [...new Set([...existingFacturas, ordenToDelete.numero_factura])];
+                        localStorage.setItem('deletedFacturaNumbers', JSON.stringify(updatedFacturas));
+                    }
+                } catch { /* ignore */ }
+
+                // Quitar de la lista inmediatamente
+                setOrdenes(prev => prev.filter(o => o.id !== id));
+                setConfirmDeleteId(null);
+            } catch (error) {
+                console.error('Error deleting orden:', error);
+            } finally {
+                setIsDeleting(false);
+            }
+        } else {
+            // Primer clic: poner en modo confirmación
+            setConfirmDeleteId(id);
+            // Auto-cancelar después de 4 segundos si no confirma
+            setTimeout(() => setConfirmDeleteId(prev => prev === id ? null : prev), 4000);
         }
     };
 
@@ -476,16 +483,30 @@ export default function OrdenesPage() {
                                                 <td className="py-3 px-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
                                                         {isAdmin && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleDeleteOrden(o.id);
-                                                                }}
-                                                                className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
-                                                                title="Eliminar"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </button>
+                                                            confirmDeleteId === o.id ? (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteOrden(o.id);
+                                                                    }}
+                                                                    disabled={isDeleting}
+                                                                    className="flex items-center gap-1 px-2 py-1 bg-retarder-red text-white text-[10px] font-bold rounded-lg animate-pulse hover:bg-red-700 transition-colors"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                    {isDeleting ? 'Borrando...' : '¿Confirmar?'}
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeleteOrden(o.id);
+                                                                    }}
+                                                                    className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
+                                                                    title="Eliminar"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            )
                                                         )}
                                                     </div>
                                                 </td>
