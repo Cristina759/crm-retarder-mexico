@@ -25,22 +25,8 @@ interface StoredDoc {
     size: number;
 }
 
-const LS_USERS_KEY = 'crmCustomUsers';
-
-function loadCustomUsers(): typeof DEMO_USERS {
-    if (typeof window === 'undefined') return [];
-    try {
-        const raw = localStorage.getItem(LS_USERS_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
-}
-
-function saveCustomUsers(users: typeof DEMO_USERS) {
-    try { localStorage.setItem(LS_USERS_KEY, JSON.stringify(users)); } catch { /* ignore */ }
-}
-
 export default function UsuariosPage() {
-    const [customUsers, setCustomUsers] = useState<typeof DEMO_USERS>([]);
+    const [dbUsers, setDbUsers] = useState<typeof DEMO_USERS>([]);
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [userDocs, setUserDocs] = useState<StoredDoc[]>([]);
@@ -55,45 +41,83 @@ export default function UsuariosPage() {
     const [formNombre, setFormNombre] = useState('');
     const [formEmail, setFormEmail] = useState('');
     const [formRole, setFormRole] = useState<Rol>('tecnico');
+    const [isSavingUser, setIsSavingUser] = useState(false);
 
-    // Load custom users from localStorage on mount
-    useEffect(() => {
-        setCustomUsers(loadCustomUsers());
+    // Load custom users from Supabase on mount
+    const fetchUsuarios = useCallback(async () => {
+        try {
+            const { data, error } = await supabase.from('usuarios').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            if (data) {
+                const mapped = data.map(u => ({
+                    id: u.id,
+                    nombre: u.nombre + (u.apellido ? ' ' + u.apellido : ''),
+                    email: u.email,
+                    role: (u.rol || 'tecnico') as Rol,
+                    active: u.activo ?? true,
+                    clerk_user_id: u.clerk_user_id
+                }));
+                setDbUsers(mapped);
+            }
+        } catch (e) {
+            console.error('Error fetching usuarios:', e);
+        }
     }, []);
 
-    // All users = demo + custom
-    const allUsers = [...DEMO_USERS, ...customUsers];
+    useEffect(() => {
+        fetchUsuarios();
+    }, [fetchUsuarios]);
+
+    // All users = demo (not repeated) + dbUsers
+    const allUsers = [
+        ...DEMO_USERS.filter(du => !dbUsers.some(dbu => dbu.email === du.email)),
+        ...dbUsers
+    ];
 
     // Add new user
-    const handleAddUser = () => {
+    const handleAddUser = async () => {
         if (!formNombre.trim() || !formEmail.trim()) return;
 
-        const newUser = {
-            id: `custom-${Date.now()}`,
-            nombre: formNombre.trim(),
-            email: formEmail.trim().toLowerCase(),
-            role: formRole,
-            active: true,
-        };
+        setIsSavingUser(true);
+        try {
+            const { error } = await supabase.from('usuarios').insert([{
+                clerk_user_id: `custom-${Date.now()}`, // Dummy clerk ID so we satisfy schema constraint
+                nombre: formNombre.trim(),
+                email: formEmail.trim().toLowerCase(),
+                rol: formRole,
+                activo: true
+            }]);
 
-        const updated = [...customUsers, newUser];
-        setCustomUsers(updated);
-        saveCustomUsers(updated);
+            if (error) throw error;
 
-        // Reset form
-        setFormNombre('');
-        setFormEmail('');
-        setFormRole('tecnico');
-        setShowAddForm(false);
+            await fetchUsuarios();
+
+            // Reset form
+            setFormNombre('');
+            setFormEmail('');
+            setFormRole('tecnico');
+            setShowAddForm(false);
+        } catch (err: any) {
+            console.error('Error adding user:', err);
+            alert('Error al registrar colaborador: ' + err.message);
+        } finally {
+            setIsSavingUser(false);
+        }
     };
 
     // Delete custom user
-    const handleDeleteUser = (userId: string) => {
-        if (!userId.startsWith('custom-')) return; // Can't delete demo users
+    const handleDeleteUser = async (userId: string) => {
+        if (DEMO_USERS.some(du => du.id === userId)) return; // Can't delete hardcoded demo users
         if (!confirm('¿Estás seguro de eliminar este colaborador?')) return;
-        const updated = customUsers.filter(u => u.id !== userId);
-        setCustomUsers(updated);
-        saveCustomUsers(updated);
+
+        try {
+            const { error } = await supabase.from('usuarios').delete().eq('id', userId);
+            if (error) throw error;
+            await fetchUsuarios();
+        } catch (err: any) {
+            console.error('Error deleting user:', err);
+            alert('Error al eliminar colaborador');
+        }
     };
 
     // Fetch doc counts for all users on mount
@@ -435,7 +459,7 @@ export default function UsuariosPage() {
                                                 >
                                                     <Upload size={14} />
                                                 </button>
-                                                {user.id.startsWith('custom-') && (
+                                                {!DEMO_USERS.some(du => du.id === user.id) && (
                                                     <button
                                                         onClick={() => handleDeleteUser(user.id)}
                                                         className="p-2 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -728,17 +752,17 @@ export default function UsuariosPage() {
                                 </button>
                                 <button
                                     onClick={handleAddUser}
-                                    disabled={!formNombre.trim() || !formEmail.trim()}
+                                    disabled={!formNombre.trim() || !formEmail.trim() || isSavingUser}
                                     className={cn(
                                         'flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md',
-                                        formNombre.trim() && formEmail.trim()
+                                        formNombre.trim() && formEmail.trim() && !isSavingUser
                                             ? 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20'
                                             : 'bg-retarder-gray-200 text-retarder-gray-400 cursor-not-allowed shadow-none'
                                     )}
                                 >
                                     <span className="flex items-center justify-center gap-2">
-                                        <UserPlus size={16} />
-                                        Registrar Colaborador
+                                        {isSavingUser ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                                        {isSavingUser ? 'Guardando...' : 'Registrar Colaborador'}
                                     </span>
                                 </button>
                             </div>
