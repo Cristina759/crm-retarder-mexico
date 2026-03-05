@@ -161,7 +161,7 @@ export const CATALOGO_REFACCIONES: Refaccion[] = [
     { codigo: "115004", descripcion: "CRIRCLIP I-70X2 5", area: "SOPORTERIA", modelo_freno: "", precio_compra: 54.5, precio_venta: 68.13 },
     { codigo: "ASPL170X", descripcion: "CRUCETA  SPL-170", area: "CARDANES", modelo_freno: "F16200-F16300 SPL250", precio_compra: 4343.94, precio_venta: 5429.92 },
     { codigo: "ASPL1810-250", descripcion: "CRUCETA  SPL250", area: "CARDANES", modelo_freno: "", precio_compra: 3050, precio_venta: 3812.5 },
-    { codigo: "FM281X", descripcion: "CRUCETA 1810", area: "CARDANES", modelo_freno: "F16200, F16280, F16300, P11.1", precio_compra: 700, precio_venta: 875 },
+    { codigo: "FM281X", descripcion: "CRUCETA 1810", area: "CARDANES", modelo_freno: "F16200, F16280, F16300, P11.1", precio_compra: 750, precio_venta: 937.50 },
     { codigo: "FM5-280X02", descripcion: "CRUCETA AUTOPAR 1710", area: "CARDANES", modelo_freno: "F16140,P5, P7.1, P8", precio_compra: 500, precio_venta: 875 },
     { codigo: "ASPL1810-", descripcion: "CRUCETA MIXTA 1810", area: "SIN CATEGORÍA", modelo_freno: "", precio_compra: 9030.82, precio_venta: 11288.53 },
     { codigo: "FM5-281X", descripcion: "CRUCETA MIXTA S-1760", area: "SIN CATEGORÍA", modelo_freno: "", precio_compra: 1646.12, precio_venta: 2057.65 },
