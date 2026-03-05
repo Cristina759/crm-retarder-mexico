@@ -32,6 +32,7 @@ export default function UsuariosPage() {
     const [isLoadingDocs, setIsLoadingDocs] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
+    const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<string | null>(null);
     const [docCounts, setDocCounts] = useState<Record<string, number>>({});
 
     // Fetch doc counts for all users on mount
@@ -194,29 +195,48 @@ export default function UsuariosPage() {
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
-    // Delete file
+    // Delete file — two-step inline confirmation (no native confirm dialog)
     const handleDelete = async (doc: StoredDoc) => {
-        if (!confirm(`¿Eliminar "${doc.name}"? Esta acción no se puede deshacer.`)) return;
+        // First click: ask for confirmation
+        if (confirmDeleteDoc !== doc.name) {
+            setConfirmDeleteDoc(doc.name);
+            // Auto-cancel after 3 seconds
+            setTimeout(() => setConfirmDeleteDoc(prev => prev === doc.name ? null : prev), 3000);
+            return;
+        }
 
+        // Second click: actually delete
+        setConfirmDeleteDoc(null);
         setDeletingDoc(doc.name);
+        setUploadError(null);
         try {
-            const { error } = await supabase.storage
+            const { data, error } = await supabase.storage
                 .from(STORAGE_BUCKET)
                 .remove([doc.fullPath]);
 
             if (error) throw error;
 
-            // Refresh docs list
+            // Optimistically remove from local state immediately
+            setUserDocs(prev => prev.filter(d => d.name !== doc.name));
+
+            // Update count
             if (selectedUser) {
-                await fetchUserDocs(selectedUser.id);
                 setDocCounts(prev => ({
                     ...prev,
                     [selectedUser.id]: Math.max(0, (prev[selectedUser.id] || 0) - 1),
                 }));
+
+                // Re-fetch to confirm
+                setTimeout(() => {
+                    if (selectedUser) fetchUserDocs(selectedUser.id);
+                }, 500);
             }
         } catch (err: any) {
-            console.error('Error deleting file:', err);
+            console.error('[DELETE] Error:', err);
             setUploadError(`Error al eliminar: ${err.message}`);
+            if (selectedUser) {
+                await fetchUserDocs(selectedUser.id);
+            }
         } finally {
             setDeletingDoc(null);
         }
@@ -457,11 +477,18 @@ export default function UsuariosPage() {
                                                         <button
                                                             onClick={() => handleDelete(doc)}
                                                             disabled={deletingDoc === doc.name}
-                                                            className="p-1.5 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
-                                                            title="Eliminar documento"
+                                                            className={cn(
+                                                                "p-1.5 rounded-lg transition-all disabled:opacity-50",
+                                                                confirmDeleteDoc === doc.name
+                                                                    ? "text-white bg-red-500 hover:bg-red-600 animate-pulse"
+                                                                    : "text-retarder-gray-400 hover:text-red-600 hover:bg-red-50"
+                                                            )}
+                                                            title={confirmDeleteDoc === doc.name ? "Clic para confirmar" : "Eliminar documento"}
                                                         >
                                                             {deletingDoc === doc.name ? (
                                                                 <Loader2 size={14} className="animate-spin" />
+                                                            ) : confirmDeleteDoc === doc.name ? (
+                                                                <span className="text-[10px] font-bold px-1">¿?</span>
                                                             ) : (
                                                                 <Trash2 size={14} />
                                                             )}
