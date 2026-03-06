@@ -51,16 +51,6 @@ export default function OrdenesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [activePhaseFilter, setActivePhaseFilter] = useState<OrdenPhase | 'all'>('all');
     const [ordenes, setOrdenes] = useState<DemoOrden[]>([]);
-    // Track deleted demo order IDs so they don't reappear from DEMO_ORDENES
-    const [deletedDemoIds, setDeletedDemoIds] = useState<Set<string>>(() => {
-        if (typeof window !== 'undefined') {
-            try {
-                const saved = localStorage.getItem('deletedOrdenIds');
-                return saved ? new Set(JSON.parse(saved)) : new Set();
-            } catch { return new Set(); }
-        }
-        return new Set();
-    });
     const [loading, setLoading] = useState(true);
     const [selectedOrden, setSelectedOrden] = useState<DemoOrden | null>(null);
     const [showNewOrden, setShowNewOrden] = useState(false);
@@ -93,20 +83,17 @@ export default function OrdenesPage() {
             if (error) throw error;
 
             if (data && data.length > 0) {
-                // Merge: Supabase data takes priority, then append DEMO_ORDENES not in Supabase
-                // IMPORTANT: Filter out deleted IDs from BOTH sources
+                // Supabase data takes priority, then append DEMO_ORDENES not already in Supabase
                 const supabaseIds = new Set(data.map((d: any) => d.id));
-                const supabaseFiltered = (data as DemoOrden[]).filter(d => !deletedDemoIds.has(d.id));
-                const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id) && !deletedDemoIds.has(d.id));
-                setOrdenes([...supabaseFiltered, ...missingDemo]);
+                const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id));
+                setOrdenes([...(data as DemoOrden[]), ...missingDemo]);
             } else {
-                // No Supabase data at all — use hardcoded billing data (filter out deleted)
-                setOrdenes(DEMO_ORDENES.filter(d => !deletedDemoIds.has(d.id)));
+                // No Supabase data at all — use DEMO_ORDENES as fallback
+                setOrdenes([...DEMO_ORDENES]);
             }
         } catch (error) {
             console.error('Error fetching ordenes:', error);
-            // Even on error, respect deleted IDs
-            setOrdenes(DEMO_ORDENES.filter(d => !deletedDemoIds.has(d.id)));
+            setOrdenes([...DEMO_ORDENES]);
         } finally {
             setLoading(false);
         }
@@ -168,26 +155,11 @@ export default function OrdenesPage() {
                     const { error } = await supabase.from('ordenes_servicio').delete().eq('id', id);
                     if (error) {
                         console.error('Error Supabase al borrar:', error);
+                        return;
                     }
                 }
 
-                // Guardar el numero_factura para sincronizar facturación
-                const ordenToDelete = ordenes.find(o => o.id === id);
-
-                // Marcar como eliminado en localStorage
-                const newDeletedIds = new Set(deletedDemoIds);
-                newDeletedIds.add(id);
-                setDeletedDemoIds(newDeletedIds);
-                try {
-                    localStorage.setItem('deletedOrdenIds', JSON.stringify([...newDeletedIds]));
-                    if (ordenToDelete?.numero_factura) {
-                        const existingFacturas = JSON.parse(localStorage.getItem('deletedFacturaNumbers') || '[]');
-                        const updatedFacturas = [...new Set([...existingFacturas, ordenToDelete.numero_factura])];
-                        localStorage.setItem('deletedFacturaNumbers', JSON.stringify(updatedFacturas));
-                    }
-                } catch { /* ignore */ }
-
-                // Quitar de la lista inmediatamente
+                // Quitar de la lista local inmediatamente (optimistic update)
                 setOrdenes(prev => prev.filter(o => o.id !== id));
                 setConfirmDeleteId(null);
             } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
@@ -51,59 +51,22 @@ export default function FacturacionPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterEstado, setFilterEstado] = useState<FactEstado | 'all'>('all');
     const [showForm, setShowForm] = useState(false);
-    const [deletedFacturas, setDeletedFacturas] = useState<Set<string>>(new Set());
-
-    // Load deleted factura numbers from localStorage (saved by ordenes page when deleting)
-    const syncDeletedFacturas = useCallback(() => {
-        try {
-            const stored = localStorage.getItem('deletedFacturaNumbers');
-            if (stored) {
-                const nums: string[] = JSON.parse(stored);
-                setDeletedFacturas(new Set(nums));
-            }
-        } catch { /* ignore */ }
-    }, []);
-
-    useEffect(() => {
-        syncDeletedFacturas();
-
-        // Listen for storage changes (in case another tab deletes an order)
-        const handleStorage = (e: StorageEvent) => {
-            if (e.key === 'deletedFacturaNumbers') {
-                syncDeletedFacturas();
-            }
-        };
-        window.addEventListener('storage', handleStorage);
-
-        // Also poll every 2 seconds to catch same-tab changes
-        const interval = setInterval(syncDeletedFacturas, 2000);
-
-        return () => {
-            window.removeEventListener('storage', handleStorage);
-            clearInterval(interval);
-        };
-    }, [syncDeletedFacturas]);
-
-    // Filter out facturas whose numero_factura was deleted from ordenes
-    const REAL_FACTURAS = useMemo(() => {
-        return ALL_FACTURAS.filter(f => !deletedFacturas.has(f.numero_factura));
-    }, [deletedFacturas]);
 
     const filtered = useMemo(() => {
-        let result = REAL_FACTURAS;
+        let result = ALL_FACTURAS;
         if (filterEstado !== 'all') result = result.filter(f => f.estado === filterEstado);
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter(f => f.numero_orden.toLowerCase().includes(q) || f.empresa.toLowerCase().includes(q) || f.numero_factura.toLowerCase().includes(q));
         }
         return result;
-    }, [searchQuery, filterEstado, REAL_FACTURAS]);
+    }, [searchQuery, filterEstado]);
 
     const stats = {
-        totalFacturado: REAL_FACTURAS.filter(f => f.estado !== 'pendiente_facturar').reduce((s, f) => s + f.total, 0),
-        totalPagado: REAL_FACTURAS.filter(f => f.estado === 'pagada').reduce((s, f) => s + f.total, 0),
-        pendientes: REAL_FACTURAS.filter(f => f.estado === 'pendiente_facturar').length,
-        vencidas: REAL_FACTURAS.filter(f => f.estado === 'vencida').length,
+        totalFacturado: ALL_FACTURAS.filter(f => f.estado !== 'pendiente_facturar').reduce((s, f) => s + f.total, 0),
+        totalPagado: ALL_FACTURAS.filter(f => f.estado === 'pagada').reduce((s, f) => s + f.total, 0),
+        pendientes: ALL_FACTURAS.filter(f => f.estado === 'pendiente_facturar').length,
+        vencidas: ALL_FACTURAS.filter(f => f.estado === 'vencida').length,
     };
 
     return (
@@ -112,7 +75,7 @@ export default function FacturacionPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black">Facturación</h2>
-                    <p className="text-xs text-retarder-gray-500">{REAL_FACTURAS.length} facturas registradas</p>
+                    <p className="text-xs text-retarder-gray-500">{ALL_FACTURAS.length} facturas registradas</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 bg-retarder-gray-100 rounded-lg px-3 py-2">
@@ -147,7 +110,7 @@ export default function FacturacionPage() {
             <div className="flex gap-2 overflow-x-auto pb-1">
                 {(['all', ...Object.keys(ESTADO_CONFIG)] as const).map(key => {
                     const isAll = key === 'all';
-                    const count = isAll ? REAL_FACTURAS.length : REAL_FACTURAS.filter(f => f.estado === key).length;
+                    const count = isAll ? ALL_FACTURAS.length : ALL_FACTURAS.filter(f => f.estado === key).length;
                     return (
                         <button key={key} onClick={() => setFilterEstado(key as FactEstado | 'all')} className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border', filterEstado === key ? 'bg-retarder-black text-white border-retarder-black' : 'bg-white text-retarder-gray-600 border-retarder-gray-200 hover:bg-retarder-gray-50')}>
                             {isAll ? 'Todas' : ESTADO_CONFIG[key as FactEstado].label} ({count})

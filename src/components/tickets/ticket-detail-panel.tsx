@@ -356,30 +356,16 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     .eq('id', orden.id);
                 if (deleteError) {
                     console.error('Error Supabase al borrar:', deleteError);
+                    throw deleteError;
                 }
             }
-
-            // Guardar ID eliminado en localStorage para persistencia
-            try {
-                const saved = localStorage.getItem('deletedOrdenIds');
-                const deletedIds: string[] = saved ? JSON.parse(saved) : [];
-                if (!deletedIds.includes(orden.id)) deletedIds.push(orden.id);
-                localStorage.setItem('deletedOrdenIds', JSON.stringify(deletedIds));
-
-                // También guardar numero_factura para sincronizar facturación
-                if ((orden as any).numero_factura) {
-                    const existingFacturas = JSON.parse(localStorage.getItem('deletedFacturaNumbers') || '[]');
-                    const updatedFacturas = [...new Set([...existingFacturas, (orden as any).numero_factura])];
-                    localStorage.setItem('deletedFacturaNumbers', JSON.stringify(updatedFacturas));
-                }
-            } catch { /* ignore */ }
 
             setShowDeleteConfirm(false);
             if (onUpdate) onUpdate();
             onClose();
         } catch (err: any) {
-            console.error('Error deleting orden:', err);
-            setError(`Error al eliminar: ${err.message}`);
+            setError('Error al eliminar la orden');
+            console.error(err);
         } finally {
             setIsAdvancing(false);
         }
