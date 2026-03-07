@@ -132,7 +132,7 @@ export const ORDEN_ESTADO_COLORS: Record<OrdenEstado, string> = {
 
 // ── Roles ──────────────────────────────────────────
 
-export type Rol = 'admin' | 'vendedor' | 'tecnico' | 'cliente' | 'direccion';
+export type Rol = 'admin' | 'vendedor' | 'tecnico' | 'cliente' | 'direccion' | 'administracion';
 
 export const ROL_LABELS: Record<Rol, string> = {
     admin: 'Admin/Dirección',
@@ -140,6 +140,7 @@ export const ROL_LABELS: Record<Rol, string> = {
     tecnico: 'Técnico',
     cliente: 'Cliente',
     direccion: 'Admin/Dirección',
+    administracion: 'Área Administrativa',
 };
 
 // ── Other Types ────────────────────────────────────
