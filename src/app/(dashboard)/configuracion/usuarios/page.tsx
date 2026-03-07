@@ -68,6 +68,24 @@ export default function UsuariosPage() {
 
     useEffect(() => {
         fetchUsuarios();
+
+        const channel = supabase.channel('usuarios-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'usuarios'
+                },
+                () => {
+                    fetchUsuarios();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [fetchUsuarios]);
 
     // All users = result from DB
