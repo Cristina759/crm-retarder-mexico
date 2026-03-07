@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
     DndContext,
     DragOverlay,
@@ -34,7 +34,13 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete }: KanbanBoardProps) {
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
+    const [isMounted, setIsMounted] = useState(false);
     const { isTecnico, isAdmin } = useRole();
+
+    // Prevent hydration mismatch
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Filter phases: Technical role doesn't see 'comercial' nor 'administrativa' phases
     const visiblePhases = useMemo(() => {
@@ -121,6 +127,10 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete }
             }
         }
     }, [ordenes, onOrdenesChange]);
+
+    if (!isMounted) {
+        return <div className="p-8 text-center text-retarder-gray-500 text-sm">Cargando tablero...</div>;
+    }
 
     return (
         <DndContext

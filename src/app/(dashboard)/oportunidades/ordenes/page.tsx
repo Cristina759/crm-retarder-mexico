@@ -19,7 +19,7 @@ import {
     Ticket,
     Trash2,
 } from 'lucide-react';
-import { cn, formatMXN } from '@/lib/utils';
+import { cn, formatMXN, formatUserName } from '@/lib/utils';
 import {
     ORDEN_ESTADOS,
     ORDEN_ESTADO_LABELS,
@@ -27,9 +27,6 @@ import {
     ORDEN_PHASES,
     PRIORIDAD_COLORS,
     TIPO_SERVICIO_LABELS,
-    DEMO_ORDENES,
-    type DemoOrden,
-    type DemoCotizacion,
     type OrdenEstado,
     type OrdenPhase,
     getPhaseForEstado,
@@ -50,9 +47,9 @@ export default function OrdenesPage() {
     const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
     const [searchQuery, setSearchQuery] = useState('');
     const [activePhaseFilter, setActivePhaseFilter] = useState<OrdenPhase | 'all'>('all');
-    const [ordenes, setOrdenes] = useState<DemoOrden[]>([]);
+    const [ordenes, setOrdenes] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedOrden, setSelectedOrden] = useState<DemoOrden | null>(null);
+    const [selectedOrden, setSelectedOrden] = useState<any | null>(null);
     const [showNewOrden, setShowNewOrden] = useState(false);
     const [step, setStep] = useState(1);
     const [isSaving, setIsSaving] = useState(false);
@@ -69,7 +66,7 @@ export default function OrdenesPage() {
             (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : null) ||
             user?.firstName ||
             null;
-        return name?.trim().toLocaleLowerCase() || null;
+        return formatUserName(name).toLowerCase();
     }, [user]);
 
     const fetchOrdenes = async () => {
@@ -81,19 +78,10 @@ export default function OrdenesPage() {
                 .order('fecha_creado', { ascending: false });
 
             if (error) throw error;
-
-            if (data && data.length > 0) {
-                // Supabase data takes priority, then append DEMO_ORDENES not already in Supabase
-                const supabaseIds = new Set(data.map((d: any) => d.id));
-                const missingDemo = DEMO_ORDENES.filter(d => !supabaseIds.has(d.id));
-                setOrdenes([...(data as DemoOrden[]), ...missingDemo]);
-            } else {
-                // No Supabase data at all — use DEMO_ORDENES as fallback
-                setOrdenes([...DEMO_ORDENES]);
-            }
+            setOrdenes(data || []);
         } catch (error) {
             console.error('Error fetching ordenes:', error);
-            setOrdenes([...DEMO_ORDENES]);
+            setOrdenes([]);
         } finally {
             setLoading(false);
         }
@@ -143,8 +131,12 @@ export default function OrdenesPage() {
     // Paso 1: primer clic en el bote de basura → pone el ID en confirmDeleteId
     // Paso 2: segundo clic (botón rojo "Confirmar") → ejecuta el borrado real
     const handleDeleteOrden = async (id: string) => {
+        console.log('🗑️ handleDeleteOrden llamado con id:', id);
+        console.log('🔍 confirmDeleteId actual:', confirmDeleteId);
+
         // Si ya está en modo confirmar para este ID, ejecutar el borrado
         if (confirmDeleteId === id) {
+            console.log('✅ Ejecutando DELETE en Supabase...');
             setIsDeleting(true);
             try {
                 // Borrar de Supabase si es UUID válido
@@ -155,6 +147,7 @@ export default function OrdenesPage() {
                     const { error } = await supabase.from('ordenes_servicio').delete().eq('id', id);
                     if (error) {
                         console.error('Error Supabase al borrar:', error);
+                        console.log('Detalle completo del error:', JSON.stringify(error, null, 2));
                         return;
                     }
                 }
@@ -429,14 +422,14 @@ export default function OrdenesPage() {
                                                 <td className="py-3 px-4 hidden md:table-cell">
                                                     <div className="flex items-center gap-1.5">
                                                         <Wrench size={12} className="text-retarder-gray-400" />
-                                                        <span className="text-retarder-gray-600">{TIPO_SERVICIO_LABELS[o.tipo]}</span>
+                                                        <span className="text-retarder-gray-600">{TIPO_SERVICIO_LABELS[o.tipo as keyof typeof TIPO_SERVICIO_LABELS]}</span>
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4">
                                                     <div className="flex items-center gap-1.5">
-                                                        <div className={cn('w-2 h-2 rounded-full', ORDEN_ESTADO_COLORS[o.estado])} />
+                                                        <div className={cn('w-2 h-2 rounded-full', ORDEN_ESTADO_COLORS[o.estado as keyof typeof ORDEN_ESTADO_COLORS])} />
                                                         <span className="text-xs font-medium text-retarder-gray-700">
-                                                            {ORDEN_ESTADO_LABELS[o.estado]}
+                                                            {ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}
                                                         </span>
                                                     </div>
                                                 </td>
@@ -444,7 +437,7 @@ export default function OrdenesPage() {
                                                 <td className="py-3 px-4 hidden sm:table-cell">
                                                     <span className={cn(
                                                         'px-2 py-0.5 rounded-full text-[10px] font-semibold',
-                                                        PRIORIDAD_COLORS[o.prioridad],
+                                                        PRIORIDAD_COLORS[o.prioridad as keyof typeof PRIORIDAD_COLORS],
                                                     )}>
                                                         {o.prioridad}
                                                     </span>

@@ -16,15 +16,15 @@ export async function POST(req: NextRequest) {
                 const nombre = [first_name, last_name].filter(Boolean).join(' ') || '';
 
                 const { error } = await supabaseAdmin
-                    .from('users')
+                    .from('usuarios')
                     .upsert(
                         {
-                            clerk_id: id,
+                            clerk_user_id: id,
                             email: email,
                             nombre: nombre,
-                            role: role,
+                            rol: role,
                         },
-                        { onConflict: 'clerk_id' }
+                        { onConflict: 'clerk_user_id' }
                     );
 
                 if (error) {
@@ -38,9 +38,9 @@ export async function POST(req: NextRequest) {
             case 'user.deleted': {
                 const { id } = data;
                 const { error } = await supabaseAdmin
-                    .from('users')
+                    .from('usuarios')
                     .update({ activo: false })
-                    .eq('clerk_id', id);
+                    .eq('clerk_user_id', id);
 
                 if (error) {
                     console.error('Error deactivating user:', error);

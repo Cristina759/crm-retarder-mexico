@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, FileText, Building2, DollarSign, Calendar, Eye, X, User, ArrowRight, Ticket, Trash2, Edit2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn, formatMXN, formatDate, formatUserName } from '@/lib/utils';
-import { DemoCotizacion, DEMO_ORDENES, type OrdenEstado } from '@/lib/utils/constants';
+import { DemoCotizacion, type OrdenEstado } from '@/lib/utils/constants';
 import { useUser } from '@clerk/nextjs';
 import { useRole } from '@/hooks/useRole';
 import { createClient } from '@/lib/supabase/client';

@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Package, DollarSign, Eye, Settings2, X, Check, RefreshCw, Building2, Filter } from 'lucide-react';
 import { cn, formatMXN, formatUSD } from '@/lib/utils';
-import { CATALOGO_FRENOS, DEMO_ORDENES, type CatalogoFreno } from '@/lib/utils/constants';
+import { CATALOGO_FRENOS, type CatalogoFreno } from '@/lib/utils/constants';
 import { useRole } from '@/hooks/useRole';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { createClient } from '@/lib/supabase/client';
@@ -19,6 +19,7 @@ export default function FrenosPage() {
     const [selectedBrandFilter, setSelectedBrandFilter] = useState<'todas' | 'pentar' | 'frenelsa' | 'cofremex'>('todas');
     const [clientes, setClientes] = useState<{ id: string; nombre_comercial: string }[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
+    const [clientOrders, setClientOrders] = useState<any[]>([]);
 
     const activeFremos = CATALOGO_FRENOS.filter(f => f.activo);
 
@@ -28,19 +29,35 @@ export default function FrenosPage() {
         if (data && data.length > 0) {
             setClientes(data);
         } else {
-            // Fallback: extract unique client names from DEMO_ORDENES
-            const names = [...new Set(DEMO_ORDENES.map(o => o.empresa))];
-            setClientes(names.map((n, i) => ({ id: `demo-${i}`, nombre_comercial: n })));
+            // Si la tabla empresas está vacía, intentamos sacar nombres únicos de ordenes_servicio
+            const { data: ordData } = await supabase.from('ordenes_servicio').select('empresa');
+            if (ordData) {
+                const names = [...new Set(ordData.map(o => o.empresa))];
+                setClientes(names.map((n, i) => ({ id: `org-${i}`, nombre_comercial: n })));
+            }
         }
     }, []);
 
     useEffect(() => { fetchClientes(); }, [fetchClientes]);
 
-    // Get orders for selected client
-    const clientOrders = useMemo(() => {
-        if (!selectedClienteId) return [];
-        const clientName = clientes.find(c => c.id === selectedClienteId)?.nombre_comercial || '';
-        return DEMO_ORDENES.filter(o => o.empresa.toLowerCase().includes(clientName.toLowerCase()));
+    // Fetch orders for selected client from Supabase
+    useEffect(() => {
+        const fetchClientOrders = async () => {
+            if (!selectedClienteId) {
+                setClientOrders([]);
+                return;
+            }
+            const clientName = clientes.find(c => c.id === selectedClienteId)?.nombre_comercial;
+            if (!clientName) return;
+
+            const { data, error } = await supabase
+                .from('ordenes_servicio')
+                .select('*')
+                .ilike('empresa', `%${clientName}%`);
+
+            if (data) setClientOrders(data);
+        };
+        fetchClientOrders();
     }, [selectedClienteId, clientes]);
 
     const filtered = useMemo(() => {

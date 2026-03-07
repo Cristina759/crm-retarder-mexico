@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar } from 'lucide-react';
+import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar, Loader2, RefreshCcw } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
-import { VENTAS_REALES } from '@/lib/data/ventas-reales';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 
 type FactEstado = 'pendiente_facturar' | 'facturada' | 'enviada' | 'pagada' | 'vencida';
 
@@ -31,43 +33,73 @@ const ESTADO_CONFIG: Record<FactEstado, { label: string; color: string; icon: ty
     vencida: { label: 'Vencida', color: 'bg-red-100 text-red-700', icon: AlertCircle },
 };
 
-// Build the base factura list from ventas reales
-const ALL_FACTURAS: Factura[] = VENTAS_REALES.map(v => ({
-    id: v.id,
-    numero_orden: v.orden_servicio || 'N/A',
-    numero_factura: v.factura,
-    empresa: v.cliente,
-    concepto: v.refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra',
-    subtotal: v.subtotal,
-    iva: v.iva,
-    total: v.total,
-    estado: v.pagado ? 'pagada' : 'enviada',
-    fecha_emision: '2026-02-19',
-    fecha_vencimiento: '2026-03-19',
-    metodo_pago: 'Transferencia',
-}));
-
 export default function FacturacionPage() {
+    const [facturas, setFacturas] = useState<Factura[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterEstado, setFilterEstado] = useState<FactEstado | 'all'>('all');
     const [showForm, setShowForm] = useState(false);
+    const [isPending, startTransition] = useTransition();
+
+    const fetchFacturas = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Buscamos órdenes que tengan número de factura (estén facturadas o pagadas)
+            const { data, error } = await supabase
+                .from('ordenes_servicio')
+                .select('*')
+                .not('numero_factura', 'is', null)
+                .order('fecha_creado', { ascending: false });
+
+            if (error) throw error;
+
+            const mapped: Factura[] = (data || []).map(o => ({
+                id: o.id,
+                numero_orden: o.numero || 'OS-N/A',
+                numero_factura: o.numero_factura,
+                empresa: o.empresa,
+                concepto: o.descripcion || (o.monto_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),
+                subtotal: o.subtotal || 0,
+                iva: o.iva || 0,
+                total: o.monto || 0,
+                estado: o.estado === 'pagado' ? 'pagada' : 'enviada', // Simplificación basada en el estado de la OS
+                fecha_emision: o.fecha_creado,
+                fecha_vencimiento: o.fecha_creado, // Falta campo real de vencimiento, usamos fecha_creado como fallback
+                metodo_pago: o.metodo_pago || 'Transferencia',
+            }));
+
+            setFacturas(mapped);
+        } catch (error) {
+            console.error('Error fetching facturas:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchFacturas();
+    }, [fetchFacturas]);
 
     const filtered = useMemo(() => {
-        let result = ALL_FACTURAS;
+        let result = facturas;
         if (filterEstado !== 'all') result = result.filter(f => f.estado === filterEstado);
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
-            result = result.filter(f => f.numero_orden.toLowerCase().includes(q) || f.empresa.toLowerCase().includes(q) || f.numero_factura.toLowerCase().includes(q));
+            result = result.filter(f =>
+                f.numero_orden.toLowerCase().includes(q) ||
+                f.empresa.toLowerCase().includes(q) ||
+                f.numero_factura.toLowerCase().includes(q)
+            );
         }
         return result;
-    }, [searchQuery, filterEstado]);
+    }, [facturas, searchQuery, filterEstado]);
 
-    const stats = {
-        totalFacturado: ALL_FACTURAS.filter(f => f.estado !== 'pendiente_facturar').reduce((s, f) => s + f.total, 0),
-        totalPagado: ALL_FACTURAS.filter(f => f.estado === 'pagada').reduce((s, f) => s + f.total, 0),
-        pendientes: ALL_FACTURAS.filter(f => f.estado === 'pendiente_facturar').length,
-        vencidas: ALL_FACTURAS.filter(f => f.estado === 'vencida').length,
-    };
+    const stats = useMemo(() => ({
+        totalFacturado: facturas.filter(f => f.estado !== 'pendiente_facturar').reduce((s, f) => s + f.total, 0),
+        totalPagado: facturas.filter(f => f.estado === 'pagada').reduce((s, f) => s + f.total, 0),
+        pendientes: facturas.filter(f => f.estado === 'pendiente_facturar').length,
+        vencidas: facturas.filter(f => f.estado === 'vencida').length,
+    }), [facturas]);
 
     return (
         <div className="space-y-4">
@@ -75,7 +107,7 @@ export default function FacturacionPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black">Facturación</h2>
-                    <p className="text-xs text-retarder-gray-500">{ALL_FACTURAS.length} facturas registradas</p>
+                    <p className="text-xs text-retarder-gray-500">{facturas.length} facturas registradas</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 bg-retarder-gray-100 rounded-lg px-3 py-2">
@@ -110,7 +142,7 @@ export default function FacturacionPage() {
             <div className="flex gap-2 overflow-x-auto pb-1">
                 {(['all', ...Object.keys(ESTADO_CONFIG)] as const).map(key => {
                     const isAll = key === 'all';
-                    const count = isAll ? ALL_FACTURAS.length : ALL_FACTURAS.filter(f => f.estado === key).length;
+                    const count = isAll ? facturas.length : facturas.filter(f => f.estado === key).length;
                     return (
                         <button key={key} onClick={() => setFilterEstado(key as FactEstado | 'all')} className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border', filterEstado === key ? 'bg-retarder-black text-white border-retarder-black' : 'bg-white text-retarder-gray-600 border-retarder-gray-200 hover:bg-retarder-gray-50')}>
                             {isAll ? 'Todas' : ESTADO_CONFIG[key as FactEstado].label} ({count})
@@ -135,25 +167,34 @@ export default function FacturacionPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((f, i) => {
-                                const cfg = ESTADO_CONFIG[f.estado];
-                                return (
-                                    <motion.tr key={f.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
-                                        className={cn('border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors', f.estado === 'vencida' && 'bg-red-50/30')}>
-                                        <td className="py-3 px-4 font-mono text-xs font-bold text-retarder-red">{f.numero_orden}</td>
-                                        <td className="py-3 px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{f.numero_factura}</td>
-                                        <td className="py-3 px-4 font-medium text-retarder-gray-800">{f.empresa}</td>
-                                        <td className="py-3 px-4 text-retarder-gray-500 text-xs truncate max-w-[200px] hidden lg:table-cell">{f.concepto}</td>
-                                        <td className="py-3 px-4">
-                                            <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg.color)}>{cfg.label}</span>
-                                        </td>
-                                        <td className="py-3 px-4 text-right font-bold text-retarder-gray-800">{formatMXN(f.total)}</td>
-                                        <td className="py-3 px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
-                                            {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : '—'}
-                                        </td>
-                                    </motion.tr>
-                                );
-                            })}
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="py-12 text-center">
+                                        <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
+                                        <p className="text-xs text-retarder-gray-400">Cargando facturas...</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filtered.map((f, i) => {
+                                    const cfg = ESTADO_CONFIG[f.estado];
+                                    return (
+                                        <motion.tr key={f.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
+                                            className={cn('border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors', f.estado === 'vencida' && 'bg-red-50/30')}>
+                                            <td className="py-3 px-4 font-mono text-xs font-bold text-retarder-red">{f.numero_orden}</td>
+                                            <td className="py-3 px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{f.numero_factura}</td>
+                                            <td className="py-3 px-4 font-medium text-retarder-gray-800">{f.empresa}</td>
+                                            <td className="py-3 px-4 text-retarder-gray-500 text-xs truncate max-w-[200px] hidden lg:table-cell">{f.concepto}</td>
+                                            <td className="py-3 px-4">
+                                                <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg.color)}>{cfg.label}</span>
+                                            </td>
+                                            <td className="py-3 px-4 text-right font-bold text-retarder-gray-800">{formatMXN(f.total)}</td>
+                                            <td className="py-3 px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
+                                                {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : '—'}
+                                            </td>
+                                        </motion.tr>
+                                    );
+                                })
+                            )}
                         </tbody>
                     </table>
                 </div>

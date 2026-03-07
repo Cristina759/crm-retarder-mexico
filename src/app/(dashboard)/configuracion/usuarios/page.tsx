@@ -11,12 +11,14 @@ const supabase = createClient();
 
 const STORAGE_BUCKET = 'documentos';
 
-const DEMO_USERS = [
-    { id: '1', nombre: 'Ing. Juan Carlos (Admin)', email: 'direccion@retardermexico.com', role: 'admin' as Rol, active: true },
-    { id: '2', nombre: 'Cristina Velasco (Admin)', email: 'ventas@retardermexico.com', role: 'admin' as Rol, active: true },
-    { id: '3', nombre: 'Nahum Garcia (Técnico)', email: 'nahum@retardermexico.com', role: 'tecnico' as Rol, active: true },
-    { id: '4', nombre: 'Carlos Abraham Espinosa (Técnico)', email: 'espinosa@retardermexico.com', role: 'tecnico' as Rol, active: true },
-];
+interface User {
+    id: string;
+    nombre: string;
+    email: string;
+    role: Rol;
+    active: boolean;
+    clerk_user_id?: string;
+}
 
 interface StoredDoc {
     name: string;
@@ -26,7 +28,7 @@ interface StoredDoc {
 }
 
 export default function UsuariosPage() {
-    const [dbUsers, setDbUsers] = useState<typeof DEMO_USERS>([]);
+    const [dbUsers, setDbUsers] = useState<User[]>([]);
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [userDocs, setUserDocs] = useState<StoredDoc[]>([]);
@@ -59,7 +61,7 @@ export default function UsuariosPage() {
                 }));
                 setDbUsers(mapped);
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error('Error fetching usuarios:', e);
         }
     }, []);
@@ -68,11 +70,8 @@ export default function UsuariosPage() {
         fetchUsuarios();
     }, [fetchUsuarios]);
 
-    // All users = demo (not repeated) + dbUsers
-    const allUsers = [
-        ...DEMO_USERS.filter(du => !dbUsers.some(dbu => dbu.email === du.email)),
-        ...dbUsers
-    ];
+    // All users = result from DB
+    const allUsers = dbUsers;
 
     // Add new user
     const handleAddUser = async () => {
@@ -107,7 +106,6 @@ export default function UsuariosPage() {
 
     // Delete custom user
     const handleDeleteUser = async (userId: string) => {
-        if (DEMO_USERS.some(du => du.id === userId)) return; // Can't delete hardcoded demo users
         if (!confirm('¿Estás seguro de eliminar este colaborador?')) return;
 
         try {
@@ -459,15 +457,13 @@ export default function UsuariosPage() {
                                                 >
                                                     <Upload size={14} />
                                                 </button>
-                                                {!DEMO_USERS.some(du => du.id === user.id) && (
-                                                    <button
-                                                        onClick={() => handleDeleteUser(user.id)}
-                                                        className="p-2 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                        title="Eliminar colaborador"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    className="p-2 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Eliminar colaborador"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </td>
                                     </motion.tr>

@@ -24,7 +24,6 @@ import {
     COTIZACION_ESTADO_COLORS,
     CotizacionEstado
 } from '@/lib/utils/constants';
-import { VENTAS_REALES } from '@/lib/data/ventas-reales';
 import { useRole } from '@/hooks/useRole';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';

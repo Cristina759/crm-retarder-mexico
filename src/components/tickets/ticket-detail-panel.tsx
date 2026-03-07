@@ -49,6 +49,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
     const [numeroSaved, setNumeroSaved] = useState(false);
     const [ocSaved, setOCSaved] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [tecnicosFromDb, setTecnicosFromDb] = useState<string[]>([]);
 
     // Sync local state when orden changes
     useEffect(() => {
@@ -60,8 +61,24 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             setOCSaved(false);
             fetchEvidencias();
             fetchSurvey();
+            fetchTecnicos();
         }
     }, [orden]);
+
+    const fetchTecnicos = async () => {
+        try {
+            const { data } = await supabase
+                .from('usuarios')
+                .select('nombre')
+                .eq('rol', 'tecnico');
+
+            if (data && data.length > 0) {
+                setTecnicosFromDb(data.map(t => t.nombre));
+            }
+        } catch (e) {
+            console.error('Error fetching tecnicos:', e);
+        }
+    };
 
     // Helper to validate UUID
     const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -155,7 +172,15 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         }
     };
 
-    const TECNICOS = ['Nahum Garcia', 'Carlos Abraham Espinosa'];
+    const baseTecnicos = tecnicosFromDb.length > 0
+        ? tecnicosFromDb
+        : ['Nahum Garcia', 'Carlos Abraham Espinosa'];
+
+    // Add current technician if missing from the fetched list
+    const TECNICOS = [...baseTecnicos];
+    if (localTecnico && !TECNICOS.includes(localTecnico)) {
+        TECNICOS.push(localTecnico);
+    }
 
     const handleUpdateTecnico = async (newTecnico: string) => {
         if (!orden || !newTecnico) return;
@@ -334,14 +359,19 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
     const handleDeleteOrden = async () => {
         if (!orden) return;
 
+        console.log('🗑️ handleDeleteOrden llamado con id:', orden.id);
+        console.log('🔍 showDeleteConfirm actual:', showDeleteConfirm);
+
         // Si no está en modo confirmación, activarlo
         if (!showDeleteConfirm) {
+            console.log('⏳ Primer clic: activando modo de confirmación');
             setShowDeleteConfirm(true);
             // Auto-cancelar después de 5 segundos
             setTimeout(() => setShowDeleteConfirm(false), 5000);
             return;
         }
 
+        console.log('✅ Ejecutando DELETE en Supabase para el panel de detalles...');
         // Segundo clic: ejecutar borrado real
         setIsAdvancing(true);
         setError(null);
@@ -356,6 +386,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     .eq('id', orden.id);
                 if (deleteError) {
                     console.error('Error Supabase al borrar:', deleteError);
+                    console.log('Detalle completo del error:', JSON.stringify(deleteError, null, 2));
                     throw deleteError;
                 }
             }

@@ -1,21 +1,128 @@
 'use client';
 
-import { Bell, Search, Building2 } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Bell, Search, Building2, Check, CheckCheck } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useRole } from '@/hooks/useRole';
 import { useUser } from '@clerk/nextjs';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 
 interface HeaderProps {
     title?: string;
     subtitle?: string;
 }
 
+interface Notification {
+    id: string;
+    clerk_user_id: string | null;
+    titulo: string;
+    mensaje: string;
+    leida: boolean;
+    tipo: 'info' | 'success' | 'warning' | 'error';
+    link_url: string | null;
+    created_at: string;
+}
+
+const TIPO_COLORS = {
+    info: 'bg-blue-500',
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    error: 'bg-retarder-red',
+};
+
+function formatTimeAgo(dateString: string) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+
+    if (diff < 0) return 'Justo ahora';
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `Hace ${days} d`;
+    if (hours > 0) return `Hace ${hours} h`;
+    if (minutes > 0) return `Hace ${minutes} m`;
+    return 'Justo ahora';
+}
+
 export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
     const [showNotifications, setShowNotifications] = useState(false);
-    const { role, isCliente } = useRole();
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const { isCliente } = useRole();
     const { user } = useUser();
+
+    const fetchNotifications = useCallback(async () => {
+        if (!user?.id) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('notificaciones')
+                .select('*')
+                .eq('leida', false)
+                .or(`clerk_user_id.eq.${user.id},clerk_user_id.is.null`)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (!error && data) {
+                setNotifications(data);
+            }
+        } catch (error) {
+            console.error('Error fetching real notifications:', error);
+        }
+    }, [user?.id]);
+
+    useEffect(() => {
+        if (!user?.id) return;
+
+        fetchNotifications();
+
+        const channel = supabase.channel('realtime_notifs_' + user.id)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notificaciones'
+            }, (payload) => {
+                const newNotif = payload.new as Notification;
+                if (newNotif.clerk_user_id === user.id || newNotif.clerk_user_id === null) {
+                    setNotifications(prev => [newNotif, ...prev]);
+                }
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'notificaciones'
+            }, (payload) => {
+                const updated = payload.new as Notification;
+                if (updated.leida) {
+                    setNotifications(prev => prev.filter(n => n.id !== updated.id));
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [user?.id, fetchNotifications]);
+
+    const markAsRead = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        await supabase.from('notificaciones').update({ leida: true }).eq('id', id);
+    };
+
+    const markAllAsRead = async () => {
+        const ids = notifications.map(n => n.id);
+        setNotifications([]);
+        if (ids.length > 0) {
+            await supabase.from('notificaciones').update({ leida: true }).in('id', ids);
+        }
+    };
 
     const clientCompany = useMemo(() => {
         if (!isCliente) return null;
@@ -65,7 +172,9 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                             className="relative p-2 rounded-lg hover:bg-retarder-gray-100 transition-colors"
                         >
                             <Bell size={20} className="text-retarder-gray-600" />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-retarder-red rounded-full" />
+                            {notifications.length > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-retarder-red border-2 border-white rounded-full animate-pulse" />
+                            )}
                         </button>
 
                         <AnimatePresence>
@@ -75,28 +184,42 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     exit={{ opacity: 0, y: 8, scale: 0.95 }}
                                     transition={{ duration: 0.15 }}
-                                    className="absolute right-0 top-12 w-80 bg-white border border-retarder-gray-200 rounded-xl shadow-xl p-4"
+                                    className="absolute right-0 top-12 w-80 bg-white border border-retarder-gray-200 rounded-xl shadow-xl p-4 max-h-[80vh] flex flex-col"
                                 >
-                                    <h3 className="font-semibold text-sm mb-3">Notificaciones</h3>
-                                    <div className="space-y-3">
-                                        <NotificationItem
-                                            title="Nueva orden recibida"
-                                            description="OS-00042 — TRANSPORTES DEL NORTE"
-                                            time="Hace 5 min"
-                                            color="bg-blue-500"
-                                        />
-                                        <NotificationItem
-                                            title="Pago vencido"
-                                            description="Factura FAC-0015 — 32 días sin pago"
-                                            time="Hace 1 hora"
-                                            color="bg-retarder-red"
-                                        />
-                                        <NotificationItem
-                                            title="Stock bajo"
-                                            description="Crucetas — 3 unidades restantes"
-                                            time="Hace 3 horas"
-                                            color="bg-retarder-yellow"
-                                        />
+                                    <div className="flex items-center justify-between mb-3 border-b border-retarder-gray-100 pb-2 shrink-0">
+                                        <h3 className="font-semibold text-sm">Notificaciones ({notifications.length})</h3>
+                                        {notifications.length > 0 && (
+                                            <button
+                                                onClick={markAllAsRead}
+                                                className="text-[10px] flex items-center gap-1 font-bold text-retarder-gray-400 hover:text-blue-600 transition-colors"
+                                                title="Marcar todas como leídas"
+                                            >
+                                                <CheckCheck size={14} /> Leídas
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1 overflow-y-auto pr-1 kanban-scroll flex-1 -mr-2">
+                                        {notifications.length > 0 ? (
+                                            notifications.map(n => (
+                                                <div key={n.id} className="group flex gap-3 p-2.5 rounded-lg hover:bg-retarder-gray-50 transition-colors relative">
+                                                    <div className={cn('w-2 h-2 rounded-full mt-1.5 flex-shrink-0', TIPO_COLORS[n.tipo] || 'bg-blue-500')} />
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs font-bold text-retarder-gray-800 break-words">{n.titulo}</p>
+                                                        <p className="text-[10px] text-retarder-gray-500 break-words mt-0.5 leading-snug">{n.mensaje}</p>
+                                                        <p className="text-[9px] font-mono text-retarder-gray-400 mt-1">{formatTimeAgo(n.created_at)}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={(e) => markAsRead(e, n.id)}
+                                                        className="absolute right-2 top-2 p-1.5 rounded-lg text-retarder-gray-300 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
+                                                        title="Marcar leída"
+                                                    >
+                                                        <Check size={14} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-xs text-retarder-gray-400 text-center py-6">Estás al día.<br />No hay notificaciones nuevas.</p>
+                                        )}
                                     </div>
                                 </motion.div>
                             )}
@@ -106,28 +229,5 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                 </div>
             </div>
         </header>
-    );
-}
-
-function NotificationItem({
-    title,
-    description,
-    time,
-    color,
-}: {
-    title: string;
-    description: string;
-    time: string;
-    color: string;
-}) {
-    return (
-        <div className="flex gap-3 p-2 rounded-lg hover:bg-retarder-gray-50 cursor-pointer transition-colors">
-            <div className={cn('w-2 h-2 rounded-full mt-1.5 flex-shrink-0', color)} />
-            <div className="min-w-0">
-                <p className="text-sm font-medium text-retarder-gray-800 truncate">{title}</p>
-                <p className="text-xs text-retarder-gray-500 truncate">{description}</p>
-                <p className="text-[10px] text-retarder-gray-400 mt-0.5">{time}</p>
-            </div>
-        </div>
     );
 }
