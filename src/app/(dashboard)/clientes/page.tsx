@@ -45,7 +45,7 @@ interface Cliente {
 }
 
 export default function ClientesPage() {
-    const { isAdmin, isVendedor } = useRole();
+    const { isAdmin, isVendedor, isAdministrativo } = useRole();
     const supabase = createClient();
     const [clientes, setClientes] = useState<Cliente[]>([]);
     const [loading, setLoading] = useState(true);
@@ -334,7 +334,7 @@ export default function ClientesPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         {/* View toggle removed to force card view */}
-                        {(isAdmin || isVendedor) && (
+                        {(isAdmin || isVendedor || isAdministrativo) && (
                             <button onClick={() => setShowForm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-[#FACC15] text-black rounded-xl text-sm font-bold hover:bg-[#EAB308] transition-all shadow-lg shadow-yellow-500/25 active:scale-95">
                                 <Plus size={18} />
                                 <span>Nuevo Cliente</span>
@@ -667,7 +667,7 @@ export default function ClientesPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        {(isAdmin || isVendedor) && (
+                                        {(isAdmin || isVendedor || isAdministrativo) && (
                                             <button className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-white border border-dashed border-retarder-gray-300 rounded-xl text-xs font-bold text-retarder-gray-500 hover:border-retarder-red hover:text-retarder-red transition-all">
                                                 <Plus size={14} />
                                                 <span>Añadir Sucursal</span>
@@ -678,7 +678,7 @@ export default function ClientesPage() {
 
                                 {/* Actions */}
                                 <div className="mt-12 flex items-center gap-4">
-                                    {(isAdmin || isVendedor) && (
+                                    {(isAdmin || isVendedor || isAdministrativo) && (
                                         <>
                                             <button
                                                 onClick={() => handleOpenEdit(selectedCliente)}
@@ -687,15 +687,17 @@ export default function ClientesPage() {
                                                 <Edit2 size={18} />
                                                 <span>Editar Cliente</span>
                                             </button>
-                                            <button
-                                                onClick={() => handleDelete(selectedCliente.id)}
-                                                className="flex items-center justify-center p-4 bg-white border border-retarder-gray-200 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-2xl transition-all active:scale-95"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => handleDelete(selectedCliente.id)}
+                                                    className="flex items-center justify-center p-4 bg-white border border-retarder-gray-200 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-2xl transition-all active:scale-95"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </>
                                     )}
-                                    {!isAdmin && !isVendedor && (
+                                    {!isAdmin && !isVendedor && !isAdministrativo && (
                                         <button onClick={() => setSelectedCliente(null)} className="w-full py-4 bg-retarder-black text-white rounded-2xl font-bold shadow-xl transition-all active:scale-95">Cerrar Detalle</button>
                                     )}
                                 </div>

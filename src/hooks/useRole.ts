@@ -17,6 +17,7 @@ export function useRole() {
     const isVendedor = role === 'vendedor';
     const isTecnico = role === 'tecnico';
     const isCliente = role === 'cliente';
+    const isAdministrativo = role === 'administracion';
 
     return {
         role,
@@ -25,6 +26,7 @@ export function useRole() {
         isVendedor,
         isTecnico,
         isCliente,
+        isAdministrativo,
         /** Check if the user has any of the specified roles */
         hasRole: (roles: Rol[]) => roles.includes(role)
     };
