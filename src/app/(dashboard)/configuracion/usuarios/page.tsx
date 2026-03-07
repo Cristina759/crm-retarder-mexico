@@ -40,6 +40,8 @@ export default function UsuariosPage() {
 
     // Add user form state
     const [showAddForm, setShowAddForm] = useState(false);
+    const [showEditForm, setShowEditForm] = useState(false);
+    const [editingUserId, setEditingUserId] = useState<string | null>(null);
     const [formNombre, setFormNombre] = useState('');
     const [formEmail, setFormEmail] = useState('');
     const [formRole, setFormRole] = useState<Rol>('tecnico');
@@ -117,6 +119,43 @@ export default function UsuariosPage() {
         } catch (err: any) {
             console.error('Error adding user:', err);
             alert('Error al registrar colaborador: ' + err.message);
+        } finally {
+            setIsSavingUser(false);
+        }
+    };
+
+    // Update custom user
+    const openEditForm = (user: User) => {
+        setFormNombre(user.nombre);
+        setFormEmail(user.email);
+        setFormRole(user.role);
+        setEditingUserId(user.id);
+        setShowEditForm(true);
+    };
+
+    const handleUpdateUser = async () => {
+        if (!formNombre.trim() || !formEmail.trim() || !editingUserId) return;
+
+        setIsSavingUser(true);
+        try {
+            const { error } = await supabase.from('usuarios').update({
+                nombre: formNombre.trim(),
+                email: formEmail.trim().toLowerCase(),
+                rol: formRole,
+            }).eq('id', editingUserId);
+
+            if (error) throw error;
+
+            await fetchUsuarios();
+
+            setFormNombre('');
+            setFormEmail('');
+            setFormRole('tecnico');
+            setShowEditForm(false);
+            setEditingUserId(null);
+        } catch (err: any) {
+            console.error('Error updating user:', err);
+            alert('Error al actualizar colaborador: ' + err.message);
         } finally {
             setIsSavingUser(false);
         }
@@ -469,6 +508,13 @@ export default function UsuariosPage() {
                                         <td className="py-4 px-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button
+                                                    onClick={() => openEditForm(user)}
+                                                    className="p-2 text-retarder-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                    title="Editar datos"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                                <button
                                                     onClick={() => handleUploadClick(user)}
                                                     className="p-2 text-retarder-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                                                     title="Ver expediente"
@@ -777,6 +823,120 @@ export default function UsuariosPage() {
                                     <span className="flex items-center justify-center gap-2">
                                         {isSavingUser ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
                                         {isSavingUser ? 'Guardando...' : 'Registrar Colaborador'}
+                                    </span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            {/* Edit User Modal */}
+            <AnimatePresence>
+                {showEditForm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => {
+                                setShowEditForm(false);
+                                setEditingUserId(null);
+                            }}
+                            className="absolute inset-0 bg-retarder-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            {/* Header */}
+                            <div className="px-6 py-5 border-b border-retarder-gray-100 bg-gradient-to-r from-emerald-500 to-emerald-700 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                                        <Edit2 size={18} className="text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">Editar Colaborador</h3>
+                                        <p className="text-[10px] text-white/70">Actualiza los datos del usuario</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => { setShowEditForm(false); setEditingUserId(null); }} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                    <X size={18} className="text-white" />
+                                </button>
+                            </div>
+
+                            {/* Form */}
+                            <div className="p-6 space-y-4">
+                                {/* Nombre */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 mb-1.5 block">Nombre Completo *</label>
+                                    <input
+                                        type="text"
+                                        value={formNombre}
+                                        onChange={e => setFormNombre(e.target.value)}
+                                        placeholder="Ej: Carolina López García"
+                                        className="w-full border border-retarder-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none"
+                                    />
+                                </div>
+
+                                {/* Email */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 mb-1.5 block">Email *</label>
+                                    <input
+                                        type="email"
+                                        value={formEmail}
+                                        onChange={e => setFormEmail(e.target.value)}
+                                        placeholder="Ej: carolina@retardermexico.com"
+                                        className="w-full border border-retarder-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none"
+                                    />
+                                </div>
+
+                                {/* Rol */}
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 mb-1.5 block">Rol</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {(Object.entries(ROL_LABELS) as [Rol, string][]).filter(([key]) => key !== 'direccion').map(([key, label]) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => setFormRole(key)}
+                                                className={cn(
+                                                    'px-3 py-2.5 rounded-xl text-xs font-semibold transition-all border text-center',
+                                                    formRole === key
+                                                        ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20'
+                                                        : 'bg-white border-retarder-gray-200 text-retarder-gray-600 hover:bg-retarder-gray-50'
+                                                )}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="px-6 py-4 border-t border-retarder-gray-200 bg-retarder-gray-50 flex gap-2">
+                                <button
+                                    onClick={() => { setShowEditForm(false); setEditingUserId(null); }}
+                                    className="flex-1 px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-600 hover:bg-white transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleUpdateUser}
+                                    disabled={!formNombre.trim() || !formEmail.trim() || isSavingUser}
+                                    className={cn(
+                                        'flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-md',
+                                        formNombre.trim() && formEmail.trim() && !isSavingUser
+                                            ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-500/20'
+                                            : 'bg-retarder-gray-200 text-retarder-gray-400 cursor-not-allowed shadow-none'
+                                    )}
+                                >
+                                    <span className="flex items-center justify-center gap-2">
+                                        {isSavingUser ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                                        {isSavingUser ? 'Guardando...' : 'Guardar Cambios'}
                                     </span>
                                 </button>
                             </div>
