@@ -20,7 +20,6 @@ import {
     Trash2,
 } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
-import { VENTAS_REALES } from '@/lib/data/ventas-reales';
 
 // ── Types ──
 
@@ -76,12 +75,8 @@ function saveNotasToStorage(notas: NotaCredito[]) {
     } catch { /* ignore */ }
 }
 
-// Build factura options from VENTAS_REALES for the form select
-const FACTURA_OPTIONS = VENTAS_REALES.map(v => ({
-    factura: v.factura,
-    empresa: v.cliente,
-    total: v.total,
-}));
+// Provide empty array for now since they are dynamic
+const FACTURA_OPTIONS: { factura: string, empresa: string, total: number }[] = [];
 
 export default function NotasCreditoPage() {
     const [notas, setNotas] = useState<NotaCredito[]>([]);
