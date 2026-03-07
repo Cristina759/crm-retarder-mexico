@@ -6,6 +6,7 @@ import { Users, UserPlus, Search, Edit2, Shield, Mail, Upload, FileText, CheckCi
 import { cn } from '@/lib/utils';
 import { ROL_LABELS, Rol } from '@/lib/utils/constants';
 import { createClient } from '@/lib/supabase/client';
+import { useRole } from '@/hooks/useRole';
 
 const supabase = createClient();
 
@@ -37,6 +38,8 @@ export default function UsuariosPage() {
     const [deletingDoc, setDeletingDoc] = useState<string | null>(null);
     const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<string | null>(null);
     const [docCounts, setDocCounts] = useState<Record<string, number>>({});
+
+    const { isAdmin } = useRole();
 
     // Add user form state
     const [showAddForm, setShowAddForm] = useState(false);
@@ -427,12 +430,14 @@ export default function UsuariosPage() {
                     <h1 className="text-2xl font-bold text-retarder-black">Gestión de Usuarios</h1>
                     <p className="text-sm text-retarder-gray-500">Administra accesos y expedientes de colaboradores</p>
                 </div>
-                <button
-                    onClick={() => setShowAddForm(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-all shadow-md shadow-retarder-red/20"
-                >
-                    <UserPlus size={18} /> Nuevo Colaborador
-                </button>
+                {isAdmin && (
+                    <button
+                        onClick={() => setShowAddForm(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-all shadow-md shadow-retarder-red/20"
+                    >
+                        <UserPlus size={18} /> Nuevo Colaborador
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-2xl border border-retarder-gray-200 shadow-sm overflow-hidden">
@@ -507,13 +512,15 @@ export default function UsuariosPage() {
                                         </td>
                                         <td className="py-4 px-6 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => openEditForm(user)}
-                                                    className="p-2 text-retarder-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
-                                                    title="Editar datos"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={() => openEditForm(user)}
+                                                        className="p-2 text-retarder-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                                        title="Editar datos"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => handleUploadClick(user)}
                                                     className="p-2 text-retarder-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
@@ -521,13 +528,15 @@ export default function UsuariosPage() {
                                                 >
                                                     <Upload size={14} />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDeleteUser(user.id)}
-                                                    className="p-2 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                    title="Eliminar colaborador"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user.id)}
+                                                        className="p-2 text-retarder-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                        title="Eliminar colaborador"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </motion.tr>

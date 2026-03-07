@@ -333,26 +333,28 @@ export default function CotizacionesPage() {
                                                         <Plus size={14} />
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(c.id);
-                                                    }}
-                                                    disabled={isProcessing || deletingId === c.id}
-                                                    className={cn(
-                                                        "p-1.5 bg-white border border-retarder-gray-200 rounded-lg transition-all",
-                                                        deletingId === c.id
-                                                            ? "text-retarder-red animate-pulse"
-                                                            : "text-retarder-gray-400 hover:text-retarder-red hover:border-retarder-red/20"
-                                                    )}
-                                                    title="Eliminar Cotización"
-                                                >
-                                                    {deletingId === c.id ? (
-                                                        <Loader2 size={14} className="animate-spin" />
-                                                    ) : (
-                                                        <Trash2 size={14} />
-                                                    )}
-                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(c.id);
+                                                        }}
+                                                        disabled={isProcessing || deletingId === c.id}
+                                                        className={cn(
+                                                            "p-1.5 bg-white border border-retarder-gray-200 rounded-lg transition-all",
+                                                            deletingId === c.id
+                                                                ? "text-retarder-red animate-pulse"
+                                                                : "text-retarder-gray-400 hover:text-retarder-red hover:border-retarder-red/20"
+                                                        )}
+                                                        title="Eliminar Cotización"
+                                                    >
+                                                        {deletingId === c.id ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <Trash2 size={14} />
+                                                        )}
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </motion.tr>
@@ -424,18 +426,20 @@ export default function CotizacionesPage() {
                                     </div>
 
                                     <div className="pt-6 border-t border-retarder-gray-100 flex gap-3">
-                                        <button
-                                            onClick={() => handleDelete(selectedCot.id)}
-                                            disabled={isProcessing}
-                                            className="flex items-center justify-center gap-2 px-6 py-3 border border-retarder-gray-200 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
-                                        >
-                                            {isProcessing && deletingId === selectedCot.id ? (
-                                                <Loader2 size={16} className="animate-spin" />
-                                            ) : (
-                                                <Trash2 size={16} />
-                                            )}
-                                            {isProcessing && deletingId === selectedCot.id ? 'Eliminando...' : 'Eliminar'}
-                                        </button>
+                                        {isAdmin && (
+                                            <button
+                                                onClick={() => handleDelete(selectedCot.id)}
+                                                disabled={isProcessing}
+                                                className="flex items-center justify-center gap-2 px-6 py-3 border border-retarder-gray-200 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                            >
+                                                {isProcessing && deletingId === selectedCot.id ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <Trash2 size={16} />
+                                                )}
+                                                {isProcessing && deletingId === selectedCot.id ? 'Eliminando...' : 'Eliminar'}
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => setSelectedCot(null)}
                                             className="flex-1 py-3 bg-retarder-black text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-retarder-black/20 hover:scale-[1.02] active:scale-95 transition-all"
