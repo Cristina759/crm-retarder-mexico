@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
+import { SignaturePad } from '@/components/ui/signature-pad';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Building2, Wrench, User, CalendarDays, DollarSign, FileText, ArrowRight, Clock, Ticket, Loader2, AlertCircle, Upload, Image as ImageIcon, FileCheck, Eye as EyeIcon, Trash2, Camera, Save, ClipboardList } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
@@ -1076,50 +1077,58 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                     </h3>
                                     <div className="bg-white border border-retarder-gray-200 rounded-xl p-4 space-y-3">
                                         {evidencias.find(e => e.tipo === 'firma') ? (
-                                            <div className="flex flex-col items-center justify-center p-4 border border-emerald-100 rounded-lg bg-emerald-50">
-                                                <div className="flex items-center gap-2 mb-3 text-emerald-700 font-bold">
-                                                    <FileCheck size={18} />
-                                                    <span className="text-xs uppercase">Firma Registrada</span>
-                                                </div>
-                                                <img
-                                                    src={evidencias.find(e => e.tipo === 'firma')?.archivo_url}
-                                                    alt="Firma del cliente"
-                                                    className="w-full max-w-[200px] bg-white border border-gray-200 rounded p-2 mb-2"
-                                                />
-                                                <span className="text-[10px] text-gray-500 font-mono">
-                                                    Firmado el: {new Date(evidencias.find(e => e.tipo === 'firma')!.created_at).toLocaleString()}
-                                                </span>
-                                            </div>
+                                            <SignaturePad
+                                                defaultValue={evidencias.find(e => e.tipo === 'firma')?.archivo_url}
+                                                onSave={() => { }}
+                                            />
                                         ) : (
-                                            <div className="flex flex-col">
-                                                <div className="border-2 border-dashed border-gray-300 rounded-lg overflow-hidden bg-gray-50 mb-3">
-                                                    <SignatureCanvas
-                                                        ref={sigCanvas}
-                                                        canvasProps={{ className: 'sigCanvas w-full h-32 md:h-40 cursor-crosshair touch-none' }}
-                                                        penColor="black"
-                                                    />
-                                                </div>
-                                                <div className="flex justify-between items-center gap-2">
-                                                    <button
-                                                        onClick={() => sigCanvas.current?.clear()}
-                                                        disabled={isUploadingFirma}
-                                                        className="px-4 py-2 text-xs font-bold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-                                                    >
-                                                        Limpiar
-                                                    </button>
-                                                    <button
-                                                        onClick={handleSaveSignature}
-                                                        disabled={isUploadingFirma}
-                                                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                                                    >
-                                                        {isUploadingFirma ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                                        Guardar Firma
-                                                    </button>
-                                                </div>
-                                                {error && error.includes('firma') && (
-                                                    <p className="mt-2 text-xs text-red-500">{error}</p>
-                                                )}
-                                            </div>
+                                            <SignaturePad
+                                                isLoading={isUploadingFirma}
+                                                onSave={async (blob) => {
+                                                    setIsUploadingFirma(true);
+                                                    try {
+                                                        const file = new File([blob], 'firma_cliente.png', { type: 'image/png' });
+                                                        // La lógica de guardado sigue igual pero usando el blob del componente
+                                                        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orden.id);
+                                                        const bucket = 'firmas';
+                                                        const fileName = `${orden.id}/firma_cliente.png`;
+
+                                                        const { url, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
+                                                        if (uploadError) throw uploadError;
+
+                                                        if (isUUID) {
+                                                            const { error: regError } = await StorageService.registerEvidence({
+                                                                orden_id: orden.id,
+                                                                tipo: 'firma',
+                                                                archivo_url: url,
+                                                                descripcion: 'Firma del Cliente',
+                                                            });
+                                                            if (regError) throw regError;
+                                                            await fetchEvidencias();
+                                                        } else {
+                                                            console.warn('ID demo, simulando guardar firma');
+                                                            const demoEvidencia: Evidencia = {
+                                                                id: Math.random().toString(),
+                                                                orden_id: orden.id,
+                                                                tipo: 'firma',
+                                                                archivo_url: url,
+                                                                descripcion: 'Firma del Cliente (Demo)',
+                                                                subido_por: 'demo',
+                                                                created_at: new Date().toISOString()
+                                                            };
+                                                            setEvidencias(prev => [demoEvidencia, ...prev]);
+                                                        }
+                                                    } catch (err: any) {
+                                                        setError(`Error al guardar firma: ${err.message}`);
+                                                    } finally {
+                                                        setIsUploadingFirma(false);
+                                                    }
+                                                }}
+                                                onClear={() => {
+                                                    sigCanvas.current?.clear();
+                                                    setError(null);
+                                                }}
+                                            />
                                         )}
                                     </div>
                                 </div>

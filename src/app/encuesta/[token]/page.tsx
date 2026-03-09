@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Send, CheckCircle2, MessageSquare, Clock, Wrench, ShieldCheck, Loader2 } from 'lucide-react';
+import { Star, Send, CheckCircle2, MessageSquare, Clock, Wrench, ShieldCheck, Loader2, PenTool } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { SurveyService } from '@/lib/services/survey-service';
+import { SignaturePad } from '@/components/ui/signature-pad';
 
 interface OrderInfo {
     numero: string;
@@ -32,6 +33,8 @@ export default function PublicSurveyPage() {
     const [ratingTecnico, setRatingTecnico] = useState(0);
     const [ratingTiempo, setRatingTiempo] = useState(0);
     const [comment, setComment] = useState('');
+    const [signatureBlob, setSignatureBlob] = useState<Blob | null>(null);
+    const [isUploadingFirma, setIsUploadingFirma] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -57,6 +60,11 @@ export default function PublicSurveyPage() {
         }
 
         setSubmitting(true);
+
+        // Si hay firma, subirla primero (simulado o a storage si tenemos el ID de la orden)
+        // En este caso, el service submitSurvey solo guarda calificaciones. 
+        // Idealmente guardaríamos la firma vinculada a la orden.
+
         const { error } = await SurveyService.submitSurvey(token as string, {
             calificacion_general: ratingGeneral,
             calificacion_tecnico: ratingTecnico,
@@ -243,6 +251,20 @@ export default function PublicSurveyPage() {
                                     />
                                 </section>
 
+                                {/* Firma Digital */}
+                                <section>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="w-8 h-8 rounded-lg bg-retarder-black/5 flex items-center justify-center text-retarder-black">
+                                            <PenTool size={18} />
+                                        </div>
+                                        <h3 className="font-bold text-retarder-black uppercase tracking-wider text-sm">Firma de Conformidad</h3>
+                                    </div>
+                                    <SignaturePad
+                                        onSave={(blob: Blob) => setSignatureBlob(blob)}
+                                        isLoading={submitting}
+                                    />
+                                </section>
+
                                 <button
                                     onClick={handleSubmit}
                                     disabled={submitting}
@@ -266,6 +288,6 @@ export default function PublicSurveyPage() {
                     )}
                 </AnimatePresence>
             </div>
-        </div>
+        </div >
     );
 }
