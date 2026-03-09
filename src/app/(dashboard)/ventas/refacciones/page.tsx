@@ -15,6 +15,8 @@ import {
     Loader2,
     Wrench,
     TrendingUp,
+    Settings2,
+    Check,
     DollarSign,
     RefreshCw,
 } from 'lucide-react';
@@ -24,12 +26,10 @@ import {
     REFACCION_CATEGORIAS,
     type Refaccion,
 } from '@/lib/data/catalogo-refacciones';
-import {
-    DEFAULT_TIPO_CAMBIO
-} from '@/lib/utils/constants';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 const supabase = createClient();
 
@@ -132,7 +132,7 @@ export default function CotizadorRefaccionesPage() {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [showCart, setShowCart] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [tipoCambio, setTipoCambio] = useState(DEFAULT_TIPO_CAMBIO);
+    const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
 
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
@@ -161,28 +161,6 @@ export default function CotizadorRefaccionesPage() {
         }
     }, [supabase]);
 
-    // Fetch del Tipo de Cambio
-    const fetchTipoCambio = useCallback(async () => {
-        try {
-            const res = await fetch('https://api.exchangerate-api.com/v4/latest/USD', {
-                cache: 'no-store'
-            });
-            const data = await res.json();
-            if (data?.rates?.MXN) {
-                setTipoCambio(data.rates.MXN);
-            }
-        } catch (error) {
-            try {
-                const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
-                    cache: 'no-store'
-                });
-                const data = await res.json();
-                if (data?.rates?.MXN) setTipoCambio(data.rates.MXN);
-            } catch {
-                console.error('Todas las fuentes fallaron');
-            }
-        }
-    }, []);
 
     const fetchRefacciones = useCallback(async () => {
         setLoadingRefacciones(true);
@@ -208,8 +186,7 @@ export default function CotizadorRefaccionesPage() {
     useEffect(() => {
         fetchClientes();
         fetchRefacciones();
-        fetchTipoCambio();
-    }, [fetchClientes, fetchRefacciones, fetchTipoCambio]);
+    }, [fetchClientes, fetchRefacciones]);
 
     // Filtered + paginated results
     const filtered = useMemo(() => {
@@ -328,7 +305,9 @@ export default function CotizadorRefaccionesPage() {
                         total: total,
                         estado: 'enviada',
                         fecha: fechaActual,
-                        vigencia_dias: 15
+                        vigencia_dias: 15,
+                        tipo_cambio: tipoCambio,
+                        tipo_cambio_fecha: tcFecha || ''
                     })
                     .select()
                     .single();
@@ -389,23 +368,42 @@ export default function CotizadorRefaccionesPage() {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-retarder-yellow-50 rounded-lg">
-                            <DollarSign size={16} className="text-retarder-yellow" />
-                        </div>
-                        <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">T.C. USD</p>
-                            <p className="text-[10px] text-retarder-gray-400">{tipoCambio.toFixed(2)}</p>
+                <div className="flex flex-col items-start gap-1 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm">
+                    <div className="flex items-center gap-2 w-full justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-retarder-yellow-50 rounded-lg">
+                                <DollarSign size={16} className="text-retarder-yellow" />
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">T.C. USD</p>
+                                <p className="text-[10px] font-bold text-retarder-gray-700">{formatMXN(tipoCambio)}</p>
+                            </div>
                         </div>
                         <button
                             onClick={() => fetchTipoCambio()}
+                            disabled={isLoadingTC}
                             className="p-2 rounded-lg hover:bg-retarder-gray-100 transition-colors ml-1"
-                            title="Actualizar tipo de cambio desde red"
+                            title="Actualizar tipo de cambio"
                         >
-                            <RefreshCw size={14} className="text-retarder-gray-400" />
+                            {isLoadingTC ? <RefreshCw size={14} className="animate-spin text-retarder-gray-400" /> : <RefreshCw size={14} className="text-retarder-gray-400 hover:text-retarder-red" />}
                         </button>
                     </div>
+                    {tcSource && (
+                        <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-bold tracking-wider mt-1 inline-flex items-center gap-1",
+                            tcSource?.includes('DOF') ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                tcSource?.includes('Mercado') ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                                    "bg-amber-50 text-amber-700 border border-amber-200"
+                        )}>
+                            {tcSource?.includes('DOF') ? (
+                                <><Check size={10} className="text-emerald-600" /> DOF Oficial ({tcFecha})</>
+                            ) : tcSource?.includes('Mercado') ? (
+                                <><TrendingUp size={10} className="text-blue-600" /> Mercado ({tcFecha})</>
+                            ) : (
+                                <><Settings2 size={10} className="text-amber-600" /> Por defecto ({tcFecha})</>
+                            )}
+                        </span>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2">

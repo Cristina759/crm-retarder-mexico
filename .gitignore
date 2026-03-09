@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# temp and logs
+/tmp/
+*.log
+out.txt
+push_err.txt

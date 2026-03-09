@@ -236,11 +236,12 @@ function ModelCard({
 export default function CotizadorFrenosPage() {
     const router = useRouter();
     const { user } = useUser();
-    const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource } = useExchangeRate();
+    const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
     const [selectedModelo, setSelectedModelo] = useState<CatalogoFreno | null>(null);
     const [selectedMarca, setSelectedMarca] = useState<'pentar' | 'frenelsa' | 'cofremex'>('pentar');
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
+    const [cantidadUnidades, setCantidadUnidades] = useState<number>(1);
     const [gastosTrasladoMXN, setGastosTrasladoMXN] = useState<number>(0);
     const [isCreating, setIsCreating] = useState(false);
     const cotizacionRef = useRef<HTMLDivElement>(null);
@@ -326,27 +327,27 @@ export default function CotizadorFrenosPage() {
         return brands;
     }, [selectedModelo]);
 
+    // Compute breakdown with units multiplier
     const breakdown = useMemo(() => {
         if (!selectedModelo) return null;
 
-        const freno_usd = precioFrenoUSD;
-        const freno_mxn = freno_usd * tipoCambio;
-        const cardanes_mxn = selectedModelo.cardanes_usd * tipoCambio;
-        const soporteria_mxn = selectedModelo.soporteria_usd * tipoCambio;
-        const material_mxn = selectedModelo.material_electrico_usd * tipoCambio;
-        const total_usd = freno_usd + selectedModelo.cardanes_usd + selectedModelo.soporteria_usd + selectedModelo.material_electrico_usd;
-        const total_mxn = total_usd * tipoCambio + gastosTrasladoMXN + manoObraInstalacionMXN;
+        const units = cantidadUnidades || 1;
+        const totalTraslado = gastosTrasladoMXN * units;
+
+        const precioFrenoUSD = selectedModelo.precio_freno_usd * units;
+        const total_usd = (precioFrenoUSD + (selectedModelo.cardanes_usd * units) + (selectedModelo.soporteria_usd * units) + (selectedModelo.material_electrico_usd * units));
+        const total_mxn = (total_usd * tipoCambio) + totalTraslado + (manoObraInstalacionMXN * units);
 
         return {
-            freno: { usd: freno_usd, mxn: freno_mxn },
-            cardanes: { usd: selectedModelo.cardanes_usd, mxn: cardanes_mxn },
-            soporteria: { usd: selectedModelo.soporteria_usd, mxn: soporteria_mxn },
-            material: { usd: selectedModelo.material_electrico_usd, mxn: material_mxn },
-            traslado: { mxn: gastosTrasladoMXN },
-            manoObra: { mxn: manoObraInstalacionMXN },
-            total: { usd: total_usd, mxn: total_mxn },
+            freno: { usd: precioFrenoUSD, mxn: precioFrenoUSD * tipoCambio },
+            cardanes: { usd: selectedModelo.cardanes_usd * units, mxn: (selectedModelo.cardanes_usd * units) * tipoCambio },
+            soporteria: { usd: selectedModelo.soporteria_usd * units, mxn: (selectedModelo.soporteria_usd * units) * tipoCambio },
+            material: { usd: selectedModelo.material_electrico_usd * units, mxn: (selectedModelo.material_electrico_usd * units) * tipoCambio },
+            traslado: { mxn: totalTraslado },
+            manoObra: { mxn: manoObraInstalacionMXN * units },
+            total: { usd: total_usd, mxn: total_mxn }
         };
-    }, [selectedModelo, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, precioFrenoUSD]);
+    }, [selectedModelo, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades]);
 
     const handleFinalize = async () => {
         if (!selectedModelo || !selectedClienteId) {
@@ -391,7 +392,9 @@ export default function CotizadorFrenosPage() {
                         total: breakdown.total.mxn,
                         estado: 'enviada',
                         fecha: fechaActual,
-                        vigencia_dias: 15
+                        vigencia_dias: 15,
+                        tipo_cambio: tipoCambio,
+                        tipo_cambio_fecha: tcFecha || ''
                     })
                     .select()
                     .single();
@@ -488,25 +491,24 @@ export default function CotizadorFrenosPage() {
                             disabled={isLoadingTC}
                             className={cn(
                                 "p-2 rounded-lg hover:bg-retarder-gray-100 transition-colors",
-                                isLoadingTC && "animate-spin"
                             )}
                             title={`Actualizar tipo de cambio`}
                         >
-                            <RefreshCw size={14} className={cn("text-retarder-gray-400", isLoadingTC && "text-retarder-red")} />
+                            {isLoadingTC ? <RefreshCw size={14} className="animate-spin text-retarder-gray-400" /> : <RefreshCw size={14} className="text-retarder-gray-400 hover:text-retarder-red" />}
                         </button>
                         {tcSource && (
                             <span className={cn(
-                                "text-[9px] font-semibold px-2.5 py-1 rounded-full whitespace-nowrap flex items-center gap-1",
-                                tcSource.includes('DOF') ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                    tcSource.includes('Mercado') ? "bg-blue-50 text-blue-700 border border-blue-200" :
+                                "px-2 py-0.5 rounded text-[10px] font-bold tracking-wider mt-1 inline-flex items-center gap-1",
+                                tcSource?.includes('DOF') ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                    tcSource?.includes('Mercado') ? "bg-blue-50 text-blue-700 border border-blue-200" :
                                         "bg-amber-50 text-amber-700 border border-amber-200"
                             )}>
-                                {tcSource.includes('DOF') ? (
-                                    <><Check size={10} className="text-emerald-600" /> DOF Oficial</>
-                                ) : tcSource.includes('Mercado') ? (
-                                    <><TrendingUp size={10} className="text-blue-600" /> Mercado</>
+                                {tcSource?.includes('DOF') ? (
+                                    <><Check size={10} className="text-emerald-600" /> DOF Oficial ({tcFecha})</>
+                                ) : tcSource?.includes('Mercado') ? (
+                                    <><TrendingUp size={10} className="text-blue-600" /> Mercado ({tcFecha})</>
                                 ) : (
-                                    <><Settings2 size={10} className="text-amber-600" /> Por defecto</>
+                                    <><Settings2 size={10} className="text-amber-600" /> Por defecto ({tcFecha})</>
                                 )}
                             </span>
                         )}
@@ -539,6 +541,34 @@ export default function CotizadorFrenosPage() {
                         </select>
                     </motion.div>
 
+                    {/* Unidades a Instalar */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm"
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-retarder-red/10 rounded-lg">
+                                <Truck size={16} className="text-retarder-red" />
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Unidades</p>
+                                <p className="text-[10px] text-retarder-gray-400">Vehículos a instalar</p>
+                            </div>
+                        </div>
+                        <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={cantidadUnidades || ''}
+                            onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                setCantidadUnidades(isNaN(val) ? 1 : Math.max(1, val));
+                            }}
+                            className="w-24 text-sm font-bold text-retarder-black border border-retarder-gray-200 rounded-xl px-3 py-1.5 focus:border-retarder-red outline-none"
+                        />
+                    </motion.div>
+
                     {/* Gastos de Traslado */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
@@ -550,7 +580,7 @@ export default function CotizadorFrenosPage() {
                                 <Building2 size={16} className="text-emerald-600" />
                             </div>
                             <div>
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Gastos de Traslado</p>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Gastos de Traslado (U.)</p>
                                 <p className="text-[10px] text-retarder-gray-400">Opcional (MXN)</p>
                             </div>
                         </div>
@@ -887,19 +917,19 @@ export default function CotizadorFrenosPage() {
                                 />
                                 {gastosTrasladoMXN > 0 && (
                                     <PriceLine
-                                        label="Gastos de Traslado / Viáticos"
+                                        label={`Gastos de Traslado / Viáticos (${cantidadUnidades} u.)`}
                                         icon={<Package size={16} className="text-purple-500" />}
-                                        usd={gastosTrasladoMXN / tipoCambio}
-                                        mxn={gastosTrasladoMXN}
+                                        usd={breakdown.traslado.mxn / tipoCambio}
+                                        mxn={breakdown.traslado.mxn}
                                         delay={0.28}
                                     />
                                 )}
                                 {manoObraInstalacionMXN > 0 && (
                                     <PriceLine
-                                        label="Mano de Obra Instalación"
+                                        label={`Mano de Obra Instalación (${cantidadUnidades} u.)`}
                                         icon={<Wrench size={16} className="text-orange-500" />}
-                                        usd={manoObraInstalacionMXN / tipoCambio}
-                                        mxn={manoObraInstalacionMXN}
+                                        usd={breakdown.manoObra.mxn / tipoCambio}
+                                        mxn={breakdown.manoObra.mxn}
                                         delay={0.30}
                                     />
                                 )}

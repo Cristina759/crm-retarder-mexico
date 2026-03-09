@@ -11,6 +11,7 @@ export function useExchangeRate() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [source, setSource] = useState<string | null>(null);
+    const [fecha, setFecha] = useState<string | null>(null);
 
     const fetchTipoCambio = useCallback(async () => {
         setIsLoading(true);
@@ -24,6 +25,7 @@ export function useExchangeRate() {
                 if (data?.rate) {
                     setTipoCambio(data.rate);
                     setSource(data.source || 'DOF Oficial');
+                    setFecha(data.fecha || new Date().toISOString().split('T')[0]);
                     setIsLoading(false);
                     return;
                 }
@@ -34,6 +36,7 @@ export function useExchangeRate() {
 
         // Si falla la red, mantenemos el valor DOF conocido (17.2193)
         setSource('DOF (Manual)');
+        setFecha(new Date().toISOString().split('T')[0]);
         setIsLoading(false);
     }, []);
 
@@ -47,6 +50,7 @@ export function useExchangeRate() {
         isLoading,
         error,
         source,
+        fecha,
         refresh: fetchTipoCambio
     };
 }

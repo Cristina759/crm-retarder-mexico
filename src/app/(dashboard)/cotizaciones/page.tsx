@@ -402,6 +402,18 @@ export default function CotizacionesPage() {
                                                 {ESTADO_CONFIG[selectedCot.estado as CotEstado].label}
                                             </span>
                                         </div>
+                                        {selectedCot.tipo_cambio && (
+                                            <div className="col-span-2 bg-retarder-gray-50 rounded-xl p-3 border border-orange-100 flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Tipo de Cambio DOF</p>
+                                                    <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedCot.tipo_cambio} MXN</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Publicación</p>
+                                                    <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedCot.tipo_cambio_fecha || 'N/A'}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="space-y-3">

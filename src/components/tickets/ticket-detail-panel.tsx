@@ -820,10 +820,13 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                         </a>
                                                         <button
                                                             onClick={async () => {
-                                                                if (!confirm('¿Eliminar este documento?')) return;
-                                                                const { error: delErr } = await supabase.from('evidencias').delete().eq('id', e.id);
-                                                                if (!delErr) fetchEvidencias();
-                                                                else setError(`Error al eliminar: ${delErr.message}`);
+                                                                try {
+                                                                    const { error: delErr } = await supabase.from('evidencias').delete().eq('id', e.id);
+                                                                    if (delErr) throw delErr;
+                                                                    fetchEvidencias();
+                                                                } catch (err: any) {
+                                                                    setError(`Error al eliminar: ${err.message}`);
+                                                                }
                                                             }}
                                                             className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg transition-colors" title="Eliminar">
                                                             <Trash2 size={14} />
@@ -915,14 +918,32 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                             <p className="text-[10px] text-retarder-gray-400 uppercase font-mono">{new Date(e.created_at).toLocaleDateString()}</p>
                                                         </div>
                                                     </div>
-                                                    <a
-                                                        href={e.archivo_url}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="p-1.5 rounded-lg hover:bg-retarder-gray-100 text-retarder-gray-400 hover:text-retarder-red transition-colors"
-                                                    >
-                                                        <EyeIcon size={16} />
-                                                    </a>
+                                                    <div className="flex items-center gap-1">
+                                                        <a
+                                                            href={e.archivo_url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="p-1.5 rounded-lg hover:bg-retarder-gray-100 text-retarder-gray-400 hover:text-blue-500 transition-colors"
+                                                            title="Ver archivo"
+                                                        >
+                                                            <EyeIcon size={16} />
+                                                        </a>
+                                                        <button
+                                                            onClick={async () => {
+                                                                try {
+                                                                    const { error: delErr } = await supabase.from('evidencias').delete().eq('id', e.id);
+                                                                    if (delErr) throw delErr;
+                                                                    fetchEvidencias();
+                                                                } catch (err: any) {
+                                                                    setError(`Error al eliminar: ${err.message}`);
+                                                                }
+                                                            }}
+                                                            className="p-1.5 rounded-lg hover:bg-red-50 text-retarder-gray-400 hover:text-red-500 transition-colors"
+                                                            title="Eliminar archivo"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))
                                         )}

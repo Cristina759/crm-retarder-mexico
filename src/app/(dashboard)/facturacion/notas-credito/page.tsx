@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { useExchangeRate } from '@/hooks/useExchangeRate';
 
 const supabase = createClient();
 // ── Types ──
@@ -39,6 +40,8 @@ interface NotaCredito {
     estado: NCEstado;
     fecha_emision: string;
     created_at: string;
+    tipo_cambio?: number;
+    tipo_cambio_fecha?: string;
 }
 
 // ── Constants ──
@@ -79,6 +82,7 @@ function saveNotasToStorage(notas: NotaCredito[]) {
 
 
 export default function NotasCreditoPage() {
+    const { tipoCambio, fecha: fechaTC, isLoading: isLoadingTC } = useExchangeRate();
     const [notas, setNotas] = useState<NotaCredito[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterEstado, setFilterEstado] = useState<NCEstado | 'all'>('all');
@@ -99,7 +103,7 @@ export default function NotasCreditoPage() {
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
-                .select('*')
+                .select('id, numero, empresa, numero_factura, monto, estado, fecha_creado')
                 .not('numero_factura', 'is', null)
                 .neq('numero_factura', '')
                 .order('fecha_creado', { ascending: false });
@@ -169,6 +173,8 @@ export default function NotasCreditoPage() {
             estado: formEstado,
             fecha_emision: new Date().toISOString().split('T')[0],
             created_at: new Date().toISOString(),
+            tipo_cambio: tipoCambio,
+            tipo_cambio_fecha: fechaTC || '',
         };
 
         const updated = [nuevaNota, ...notas];
@@ -240,7 +246,7 @@ export default function NotasCreditoPage() {
                         <div>
                             <h2 className="text-xl font-bold text-retarder-black">Notas de Crédito</h2>
                             <p className="text-xs text-retarder-gray-500">
-                                {notas.length} notas registradas · No suman al total facturado
+                                {notas.length} notas registradas
                             </p>
                         </div>
                     </div>
@@ -487,6 +493,18 @@ export default function NotasCreditoPage() {
                                         <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Emisión</p>
                                         <p className="text-sm font-bold text-retarder-black mt-0.5">{formatDate(selectedNota.fecha_emision)}</p>
                                     </div>
+                                    {selectedNota.tipo_cambio && (
+                                        <div className="col-span-2 bg-retarder-gray-50 rounded-xl p-3 border border-orange-100 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Tipo de Cambio DOF</p>
+                                                <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedNota.tipo_cambio} MXN</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Publicación</p>
+                                                <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedNota.tipo_cambio_fecha || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="bg-retarder-gray-50 rounded-xl p-3">
@@ -566,7 +584,15 @@ export default function NotasCreditoPage() {
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-white">Nueva Nota de Crédito</h3>
-                                        <p className="text-[10px] text-white/70">{nextNCNumber}</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <p className="text-[10px] text-white/70">{nextNCNumber}</p>
+                                            <span className="text-white/30 text-[10px]">|</span>
+                                            {isLoadingTC ? (
+                                                <p className="text-[10px] text-white/80 animate-pulse">Obteniendo T.C...</p>
+                                            ) : (
+                                                <p className="text-[10px] text-white/90">T.C. DOF: {tipoCambio} MXN ({fechaTC})</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-white/10 text-white">
@@ -639,9 +665,7 @@ export default function NotasCreditoPage() {
                                             placeholder="0.00"
                                             value={formSubtotal}
                                             onChange={e => setFormSubtotal(e.target.value)}
-                                            className="flex-1 outline-none text-sm"
-                                            min="0"
-                                            step="0.01"
+                                            className="bg-transparent border-none outline-none text-sm w-full font-semibold text-retarder-black"
                                         />
                                     </div>
                                     {formSubtotal && parseFloat(formSubtotal) > 0 && (
