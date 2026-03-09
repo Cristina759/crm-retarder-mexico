@@ -30,9 +30,11 @@ interface KanbanBoardProps {
     onOrdenesChange: (ordenes: DemoOrden[]) => void;
     onOrdenClick: (orden: DemoOrden) => void;
     onDelete: (id: string) => void;
+    confirmDeleteId?: string | null;
+    isDeleting?: boolean;
 }
 
-export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete }: KanbanBoardProps) {
+export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, confirmDeleteId, isDeleting }: KanbanBoardProps) {
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const { isTecnico, isAdmin } = useRole();
@@ -172,6 +174,8 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete }
                                         index={ORDEN_ESTADOS.indexOf(estado)}
                                         onOrdenClick={onOrdenClick}
                                         onDelete={onDelete}
+                                        confirmDeleteId={confirmDeleteId}
+                                        isDeleting={isDeleting}
                                     />
                                 ))}
                             </div>

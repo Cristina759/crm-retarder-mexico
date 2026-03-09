@@ -375,8 +375,9 @@ export default function CotizadorServiciosPage() {
 
     const subtotal = useMemo(() => {
         if (!selectedService) return 0;
-        if (selectedService.id === 'preventivo') return (cantidad * PRECIO_PREVENTIVO) + traslado;
-        if (selectedService.id === 'correctivo') return totalManoObra + totalRefacciones + traslado;
+        const totalTraslado = traslado * cantidad;
+        if (selectedService.id === 'preventivo') return (cantidad * PRECIO_PREVENTIVO) + totalTraslado;
+        if (selectedService.id === 'correctivo') return totalManoObra + totalRefacciones + totalTraslado;
         return 0;
     }, [selectedService, cantidad, totalManoObra, traslado, totalRefacciones]);
 
@@ -753,7 +754,7 @@ export default function CotizadorServiciosPage() {
                                         {selectedService.id === 'preventivo' ? (
                                             <>
                                                 <PriceLine label={`Mano de Obra (${cantidad} unidad/es)`} mxn={cantidad * PRECIO_PREVENTIVO} />
-                                                {traslado > 0 && <PriceLine label="Desplazamiento / Traslado" mxn={traslado} />}
+                                                {traslado > 0 && <PriceLine label={`Desplazamiento / Traslado (${cantidad} unidad/es)`} mxn={traslado * cantidad} />}
                                             </>
                                         ) : (
                                             <>
@@ -761,7 +762,7 @@ export default function CotizadorServiciosPage() {
                                                     <PriceLine key={item.concepto.concepto} label={`${item.concepto.concepto} (x${item.cantidad})`} mxn={item.concepto.precio_mxn * item.cantidad} />
                                                 ))}
                                                 {refacciones.length > 0 && <PriceLine label={`Refacciones (${refacciones.length} items)`} mxn={totalRefacciones} />}
-                                                {traslado > 0 && <PriceLine label="Desplazamiento / Traslado" mxn={traslado} />}
+                                                {traslado > 0 && <PriceLine label={`Desplazamiento / Traslado (${cantidad} unidad/es)`} mxn={traslado * cantidad} />}
                                             </>
                                         )}
                                         <div className="py-2" />

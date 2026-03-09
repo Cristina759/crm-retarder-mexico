@@ -365,6 +365,8 @@ export default function OrdenesPage() {
                             onOrdenesChange={setOrdenes}
                             onOrdenClick={setSelectedOrden}
                             onDelete={handleDeleteOrden}
+                            confirmDeleteId={confirmDeleteId}
+                            isDeleting={isDeleting}
                         />
                     </motion.div>
                 )}

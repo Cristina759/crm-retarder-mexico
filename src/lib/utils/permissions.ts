@@ -65,6 +65,16 @@ const PERMISSIONS: Record<Rol, Partial<Record<Resource, Permission[]>>> = {
         ordenes_servicio: ['read'],
         cotizaciones: ['read', 'update'],
     },
+    administracion: {
+        empresas: ['create', 'read', 'update'],
+        contactos: ['create', 'read', 'update'],
+        ordenes_servicio: ['create', 'read', 'update'],
+        cotizaciones: ['create', 'read', 'update'],
+        oportunidades: ['create', 'read', 'update'],
+        catalogos: ['read'],
+        dashboards: ['read'],
+        facturacion: ['create', 'read', 'update'],
+    },
 };
 
 // States a role can transition órdenes TO
@@ -86,6 +96,11 @@ const ESTADO_TRANSITIONS: Record<Rol, OrdenEstado[]> = {
     vendedor: ['solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada'],
     tecnico: ['tecnico_en_contacto', 'servicio_en_proceso', 'autorizacion_adicional', 'servicio_concluido', 'evidencia_cargada'],
     cliente: [],
+    administracion: [
+        'solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada',
+        'documentacion_enviada', 'evidencia_cargada', 'documentacion_entregada',
+        'encuesta_enviada', 'facturado', 'pagado',
+    ],
 };
 
 export function canUserDo(role: Rol, resource: Resource, action: Permission): boolean {
@@ -103,6 +118,7 @@ export function getDefaultDashboard(role: Rol): string {
         vendedor: '/dashboard',
         tecnico: '/ordenes',
         cliente: '/cotizaciones',
+        administracion: '/dashboard',
     };
     return map[role];
 }

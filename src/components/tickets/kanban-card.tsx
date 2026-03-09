@@ -18,9 +18,11 @@ interface KanbanCardProps {
     onClick: (orden: DemoOrden) => void;
     onDelete?: (id: string) => void;
     isDragOverlay?: boolean;
+    confirmDeleteId?: string | null;
+    isDeleting?: boolean;
 }
 
-export function KanbanCard({ orden, onClick, onDelete, isDragOverlay }: KanbanCardProps) {
+export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDeleteId, isDeleting }: KanbanCardProps) {
     const {
         attributes,
         listeners,
@@ -64,16 +66,32 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay }: KanbanCa
 
             {/* Delete button (Admin only) */}
             {!isDragOverlay && onDelete && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(orden.id);
-                    }}
-                    className="absolute top-2 right-8 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5"
-                    title="Eliminar Orden"
-                >
-                    <Trash2 size={14} />
-                </button>
+                <div className="absolute top-1.5 right-8 z-20 flex gap-1">
+                    {confirmDeleteId === orden.id ? (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(orden.id);
+                            }}
+                            disabled={isDeleting}
+                            className="flex items-center gap-1 px-1.5 py-0.5 bg-retarder-red text-white text-[9px] font-bold rounded shadow-md animate-pulse hover:bg-red-700 transition-colors"
+                        >
+                            <Trash2 size={10} />
+                            {isDeleting ? '...' : '?'}
+                        </button>
+                    ) : (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(orden.id);
+                            }}
+                            className="p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 bg-white shadow-sm"
+                            title="Eliminar Orden"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    )}
+                </div>
             )}
 
             {/* Orden number + Priority */}

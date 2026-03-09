@@ -2,8 +2,7 @@ import { createClient } from '@/lib/supabase/client';
 
 const supabase = createClient();
 
-export type StorageBucket = 'evidencias' | 'documentos';
-
+export type StorageBucket = 'evidencias' | 'documentos' | 'firmas';
 export const StorageService = {
     /**
      * Uploads a file to a specific Supabase Storage bucket.

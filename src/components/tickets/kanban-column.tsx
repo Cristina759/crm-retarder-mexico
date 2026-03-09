@@ -20,9 +20,11 @@ interface KanbanColumnProps {
     index: number;
     onOrdenClick: (orden: DemoOrden) => void;
     onDelete: (id: string) => void;
+    confirmDeleteId?: string | null;
+    isDeleting?: boolean;
 }
 
-export function KanbanColumn({ estado, ordenes, phase, index, onOrdenClick, onDelete }: KanbanColumnProps) {
+export function KanbanColumn({ estado, ordenes, phase, index, onOrdenClick, onDelete, confirmDeleteId, isDeleting }: KanbanColumnProps) {
     const { setNodeRef, isOver } = useDroppable({
         id: estado,
         data: { type: 'column', estado },
@@ -69,12 +71,14 @@ export function KanbanColumn({ estado, ordenes, phase, index, onOrdenClick, onDe
                 )}
             >
                 <SortableContext items={ordenIds} strategy={verticalListSortingStrategy}>
-                    {ordenes.map(orden => (
+                    {ordenes.map((orden) => (
                         <KanbanCard
                             key={orden.id}
                             orden={orden}
                             onClick={onOrdenClick}
                             onDelete={onDelete}
+                            confirmDeleteId={confirmDeleteId}
+                            isDeleting={isDeleting}
                         />
                     ))}
                 </SortableContext>

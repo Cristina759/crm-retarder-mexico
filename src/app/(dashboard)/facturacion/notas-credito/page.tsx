@@ -20,7 +20,9 @@ import {
     Trash2,
 } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 
+const supabase = createClient();
 // ── Types ──
 
 type NCEstado = 'emitida' | 'aplicada' | 'cancelada';
@@ -75,8 +77,6 @@ function saveNotasToStorage(notas: NotaCredito[]) {
     } catch { /* ignore */ }
 }
 
-// Provide empty array for now since they are dynamic
-const FACTURA_OPTIONS: { factura: string, empresa: string, total: number }[] = [];
 
 export default function NotasCreditoPage() {
     const [notas, setNotas] = useState<NotaCredito[]>([]);
@@ -92,15 +92,45 @@ export default function NotasCreditoPage() {
     const [formSubtotal, setFormSubtotal] = useState('');
     const [formEstado, setFormEstado] = useState<NCEstado>('emitida');
 
-    // Load from localStorage on mount
+    const [facturasDisponibles, setFacturasDisponibles] = useState<{ factura: string, empresa: string, total: number }[]>([]);
+
+    // Fetch facturas from Supabase
+    const fetchFacturas = useCallback(async () => {
+        try {
+            const { data, error } = await supabase
+                .from('ordenes_servicio')
+                .select('numero_factura, empresa, monto')
+                .not('numero_factura', 'is', null)
+                .order('fecha_creado', { ascending: false });
+
+            if (!error && data) {
+                const uniqueFacturas = new Map<string, { factura: string, empresa: string, total: number }>();
+                data.forEach(o => {
+                    if (o.numero_factura && !uniqueFacturas.has(o.numero_factura)) {
+                        uniqueFacturas.set(o.numero_factura, {
+                            factura: o.numero_factura,
+                            empresa: o.empresa || 'N/A',
+                            total: o.monto || 0
+                        });
+                    }
+                });
+                setFacturasDisponibles(Array.from(uniqueFacturas.values()));
+            }
+        } catch (error) {
+            console.error('Error fetching facturas:', error);
+        }
+    }, [supabase]);
+
+    // Load from localStorage on mount and fetch facturas
     useEffect(() => {
         setNotas(loadNotasFromStorage());
-    }, []);
+        fetchFacturas();
+    }, [fetchFacturas]);
 
     // Get empresa from selected factura
     const selectedFacturaInfo = useMemo(() => {
-        return FACTURA_OPTIONS.find(f => f.factura === formFactura);
-    }, [formFactura]);
+        return facturasDisponibles.find(f => f.factura === formFactura);
+    }, [formFactura, facturasDisponibles]);
 
     // Generate next NC number
     const nextNCNumber = useMemo(() => {
@@ -548,7 +578,7 @@ export default function NotasCreditoPage() {
                                         className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 outline-none bg-white"
                                     >
                                         <option value="">Seleccionar factura...</option>
-                                        {FACTURA_OPTIONS.map(f => (
+                                        {facturasDisponibles.map(f => (
                                             <option key={f.factura} value={f.factura}>
                                                 {f.factura} — {f.empresa} ({formatMXN(f.total)})
                                             </option>
