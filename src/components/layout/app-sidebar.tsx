@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { UserButton, useUser } from '@clerk/nextjs';
 import {
     LayoutDashboard,
-    Ticket,
+    Ticket as OrdenIcon,
     Building2,
     FileText,
     TrendingUp,
@@ -55,7 +55,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Operaciones',
         items: [
-            { label: 'Órdenes de Servicio', href: '/ordenes', icon: <Ticket size={20} />, roles: ['admin', 'vendedor', 'tecnico', 'cliente'] },
+            { label: 'Órdenes de Servicio', href: '/ordenes', icon: <OrdenIcon size={20} />, roles: ['admin', 'vendedor', 'tecnico', 'cliente'] },
             { label: 'Clientes', href: '/clientes', icon: <Building2 size={20} />, roles: ['admin', 'vendedor'] },
         ],
     },

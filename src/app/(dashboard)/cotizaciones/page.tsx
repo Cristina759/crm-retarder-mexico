@@ -3,7 +3,7 @@
 import { useState, useMemo, useTransition, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, FileText, Building2, DollarSign, Calendar, Eye, X, User, ArrowRight, Ticket, Trash2, Edit2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, Search, FileText, Building2, DollarSign, Calendar, Eye, X, User, ArrowRight, Ticket as OrdenIcon, Trash2, Edit2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn, formatMXN, formatDate, formatUserName } from '@/lib/utils';
 import { DemoCotizacion, type OrdenEstado } from '@/lib/utils/constants';
 import { useUser } from '@clerk/nextjs';
@@ -312,7 +312,7 @@ export default function CotizacionesPage() {
                                         <td className="py-3 px-2 sm:px-4 hidden md:table-cell">
                                             {c.orden_numero ? (
                                                 <Link href="/ordenes" className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium">
-                                                    <Ticket size={12} />
+                                                    <OrdenIcon size={12} />
                                                     {c.orden_numero}
                                                 </Link>
                                             ) : (

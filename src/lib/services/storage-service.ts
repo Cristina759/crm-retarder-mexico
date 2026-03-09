@@ -59,7 +59,7 @@ export const StorageService = {
     },
 
     /**
-     * Gets all evidences for a specific ticket.
+     * Gets all evidences for a specific orden.
      */
     async getEvidences(ordenId: string) {
         try {

@@ -45,7 +45,7 @@
   --color-ring: #FACC15;
   /* Yellow ring focus */
 
-  /* Ticket Status Colors */
+  /* Orden Status Colors */
   --color-status-solicitud: #6B7280;
   --color-status-cotizacion: #2563EB;
   --color-status-aceptada: #16A34A;
@@ -130,7 +130,7 @@
     backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
-  
+
   .glass-dark {
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(16px);

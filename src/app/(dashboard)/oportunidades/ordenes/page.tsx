@@ -16,7 +16,7 @@ import {
     FileText,
     DollarSign,
     User,
-    Ticket,
+    Ticket as OrdenIcon,
     Trash2,
 } from 'lucide-react';
 import { cn, formatMXN, formatUserName } from '@/lib/utils';
@@ -31,8 +31,8 @@ import {
     type OrdenPhase,
     getPhaseForEstado,
 } from '@/lib/utils/constants';
-import { KanbanBoard } from '@/components/tickets/kanban-board';
-import { OrdenDetailPanel } from '@/components/tickets/ticket-detail-panel';
+import { KanbanBoard } from '@/components/ordenes/kanban-board';
+import { OrdenDetailPanel } from '@/components/ordenes/orden-detail-panel';
 import { useUser } from '@clerk/nextjs';
 import { useRole } from '@/hooks/useRole';
 import { createClient } from '@/lib/supabase/client';

@@ -4,10 +4,10 @@ import { DEFAULT_TIPO_CAMBIO } from '@/lib/utils/constants';
 /**
  * Hook definitivo para el Tipo de Cambio.
  * Prioriza el API interno (/api/tc) que conecta a Banxico/DOF.
- * Valor actual DOF: 17.2193
+ * Valor actual sugerido: 17.7962
  */
 export function useExchangeRate() {
-    const [tipoCambio, setTipoCambio] = useState<number>(17.2193); // Base DOF
+    const [tipoCambio, setTipoCambio] = useState<number>(DEFAULT_TIPO_CAMBIO); // Usar constante centralizada
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [source, setSource] = useState<string | null>(null);
@@ -34,7 +34,8 @@ export function useExchangeRate() {
             console.warn('Fallo al conectar con Banxico/DOF');
         }
 
-        // Si falla la red, mantenemos el valor DOF conocido (17.2193)
+        // Si falla la red, mantenemos el valor DOF conocido (DEFAULT_TIPO_CAMBIO)
+        setTipoCambio(DEFAULT_TIPO_CAMBIO);
         setSource('DOF (Manual)');
         setFecha(new Date().toISOString().split('T')[0]);
         setIsLoading(false);

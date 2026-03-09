@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import {
-    Ticket,
+    Ticket as OrdenIcon,
     DollarSign,
     Users,
     TrendingUp,
@@ -634,7 +634,7 @@ export default function DashboardPage() {
                         title="Órdenes Asignadas"
                         value={stats.ordenesTecnico}
                         subtitle="Pendientes de atención"
-                        icon={<Ticket size={22} />}
+                        icon={<OrdenIcon size={22} />}
                         color="bg-retarder-gray-800"
                         delay={0}
                     />
@@ -678,7 +678,7 @@ export default function DashboardPage() {
                         title="Órdenes Reales"
                         value={ordenes.length}
                         subtitle="Registradas en sistema"
-                        icon={<Ticket size={22} />}
+                        icon={<OrdenIcon size={22} />}
                         color="bg-retarder-gray-800"
                         delay={0.4}
                     />
