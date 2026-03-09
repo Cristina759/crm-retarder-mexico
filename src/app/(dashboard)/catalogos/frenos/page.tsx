@@ -110,34 +110,36 @@ export default function FrenosPage() {
             </div>
 
             {/* Brand Filters */}
-            <div className="flex items-center gap-2">
-                {([
-                    { id: 'todas' as const, label: 'Todas las marcas', color: 'bg-retarder-gray-800 text-white' },
-                    { id: 'pentar' as const, label: 'Pentar', color: 'bg-red-100 text-red-700 border-red-300' },
-                    { id: 'frenelsa' as const, label: 'Frenelsa', color: 'bg-blue-100 text-blue-700 border-blue-300' },
-                    { id: 'cofremex' as const, label: 'Cofremex', color: 'bg-amber-100 text-amber-700 border-amber-300' },
-                ]).map(brand => (
-                    <button
-                        key={brand.id}
-                        onClick={() => setSelectedBrandFilter(brand.id)}
-                        className={cn(
-                            'px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all',
-                            selectedBrandFilter === brand.id
-                                ? `${brand.color} shadow-sm scale-105`
-                                : 'bg-white text-retarder-gray-500 border-retarder-gray-200 hover:border-retarder-gray-300'
-                        )}
-                    >
-                        {brand.label}
-                    </button>
-                ))}
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    {([
+                        { id: 'todas' as const, label: 'Todas las marcas', color: 'bg-retarder-gray-800 text-white' },
+                        { id: 'pentar' as const, label: 'Pentar', color: 'bg-red-100 text-red-700 border-red-300' },
+                        { id: 'frenelsa' as const, label: 'Frenelsa', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+                        { id: 'cofremex' as const, label: 'Cofremex', color: 'bg-amber-100 text-amber-700 border-amber-300' },
+                    ]).map(brand => (
+                        <button
+                            key={brand.id}
+                            onClick={() => setSelectedBrandFilter(brand.id)}
+                            className={cn(
+                                'px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all',
+                                selectedBrandFilter === brand.id
+                                    ? `${brand.color} shadow-sm scale-105`
+                                    : 'bg-white text-retarder-gray-500 border-retarder-gray-200 hover:border-retarder-gray-300'
+                            )}
+                        >
+                            {brand.label}
+                        </button>
+                    ))}
+                </div>
 
                 {/* Client filter */}
-                <div className="ml-auto flex items-center gap-2 bg-white rounded-full border border-retarder-gray-200 pl-3 pr-1 py-1">
+                <div className="flex-1 min-w-[200px] flex items-center gap-2 bg-white rounded-full border border-retarder-gray-200 pl-3 pr-1 py-1 sm:ml-auto sm:flex-initial">
                     <Building2 size={12} className="text-retarder-gray-400 flex-shrink-0" />
                     <select
                         value={selectedClienteId}
                         onChange={e => setSelectedClienteId(e.target.value)}
-                        className="bg-transparent border-none outline-none text-[10px] font-semibold text-retarder-gray-600 min-w-[140px] cursor-pointer"
+                        className="bg-transparent border-none outline-none text-[10px] font-semibold text-retarder-gray-600 w-full min-w-[140px] cursor-pointer"
                     >
                         <option value="">Todos los clientes</option>
                         {clientes.map(c => (

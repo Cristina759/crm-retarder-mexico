@@ -343,14 +343,14 @@ export default function NotasCreditoPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-retarder-gray-50">
                             <tr className="border-b border-retarder-gray-200">
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Nota</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Factura Rel.</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Motivo</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Fecha</th>
-                                <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Nota</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Factura Rel.</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Motivo</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
+                                <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Fecha</th>
+                                <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -390,19 +390,19 @@ export default function NotasCreditoPage() {
                                             )}
                                             onClick={() => setSelectedNota(n)}
                                         >
-                                            <td className="py-3 px-4 font-mono text-xs font-bold text-orange-600">{n.numero_nc}</td>
-                                            <td className="py-3 px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{n.factura_relacionada}</td>
-                                            <td className="py-3 px-4 font-medium text-retarder-gray-800">{n.empresa}</td>
-                                            <td className="py-3 px-4 text-retarder-gray-500 text-xs truncate max-w-[200px] hidden lg:table-cell">{n.motivo}</td>
-                                            <td className="py-3 px-4">
+                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs font-bold text-orange-600">{n.numero_nc}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{n.factura_relacionada}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[100px] sm:max-w-[140px]">{n.empresa}</td>
+                                            <td className="py-3 px-2 sm:px-4 text-retarder-gray-500 text-xs truncate max-w-[120px] sm:max-w-[200px] hidden lg:table-cell">{n.motivo}</td>
+                                            <td className="py-3 px-2 sm:px-4">
                                                 <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg.color)}>
                                                     {cfg.label}
                                                 </span>
                                             </td>
-                                            <td className="py-3 px-4 text-right font-bold text-retarder-gray-800">
+                                            <td className="py-3 px-2 sm:px-4 text-right font-bold text-retarder-gray-800 whitespace-nowrap">
                                                 <span className="text-orange-600">-</span>{formatMXN(n.total)}
                                             </td>
-                                            <td className="py-3 px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
+                                            <td className="py-3 px-2 sm:px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
                                                 {formatDate(n.fecha_emision)}
                                             </td>
                                             <td className="py-3 px-4 text-right">

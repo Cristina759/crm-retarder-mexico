@@ -199,8 +199,8 @@ export function AppSidebar() {
                 })}
             </div>
 
-            {/* Collapse toggle — desktop only */}
-            <div className="hidden lg:block border-t border-retarder-gray-200 p-2 space-y-2">
+            {/* User Info & Collapse — desktop only section adjusted for mobile */}
+            <div className="border-t border-retarder-gray-200 p-2 space-y-2">
                 <div className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg bg-retarder-gray-50 border border-retarder-gray-100",
                     collapsed && "justify-center px-0 bg-transparent border-none"
@@ -219,7 +219,7 @@ export function AppSidebar() {
                 </div>
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-retarder-gray-500 hover:bg-retarder-gray-100 hover:text-retarder-black transition-colors text-sm"
+                    className="hidden lg:flex w-full items-center justify-center gap-2 py-2 px-3 rounded-lg text-retarder-gray-500 hover:bg-retarder-gray-100 hover:text-retarder-black transition-colors text-sm"
                 >
                     {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                     {!collapsed && <span>Colapsar</span>}

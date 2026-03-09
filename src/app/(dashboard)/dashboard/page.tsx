@@ -356,18 +356,18 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
                                 transition={{ delay: 0.5 + i * 0.05 }}
                                 className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors"
                             >
-                                <td className="py-3 px-3 font-mono font-semibold text-retarder-red">{o.numero}</td>
-                                <td className="py-3 px-3 font-medium text-retarder-gray-800">{o.empresa}</td>
-                                <td className="py-3 px-3 text-retarder-gray-600 capitalize hidden md:table-cell">{o.tipo}</td>
-                                <td className="py-3 px-3">
+                                <td className="py-3 px-2 sm:px-3 font-mono font-semibold text-retarder-red">{o.numero}</td>
+                                <td className="py-3 px-2 sm:px-3 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{o.empresa}</td>
+                                <td className="py-3 px-2 sm:px-3 text-retarder-gray-600 capitalize hidden md:table-cell">{o.tipo}</td>
+                                <td className="py-3 px-2 sm:px-3">
                                     <span className={cn(
-                                        'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white',
+                                        'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white whitespace-nowrap',
                                         ORDEN_ESTADO_COLORS[o.estado as keyof typeof ORDEN_ESTADO_COLORS]
                                     )}>
-                                        {ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}
+                                        <span className="truncate max-w-[60px] sm:max-w-none">{ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}</span>
                                     </span>
                                 </td>
-                                <td className="py-3 px-3 text-retarder-gray-600 hidden lg:table-cell">{o.tecnico}</td>
+                                <td className="py-3 px-2 sm:px-3 text-retarder-gray-600 hidden lg:table-cell truncate max-w-[100px]">{o.tecnico}</td>
                                 <td className="py-3 px-3 hidden sm:table-cell">
                                     <span className={cn(
                                         'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold',

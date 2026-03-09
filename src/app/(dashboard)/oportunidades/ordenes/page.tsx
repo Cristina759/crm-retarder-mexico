@@ -381,108 +381,110 @@ export default function OrdenesPage() {
                         transition={{ duration: 0.2 }}
                         className="bg-white rounded-xl border border-retarder-gray-200 overflow-hidden shadow-sm"
                     >
-                        <table className="w-full text-sm">
-                            <thead className="bg-retarder-gray-50">
-                                <tr className="border-b border-retarder-gray-200">
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Orden</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Tipo</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Técnico</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Prioridad</th>
-                                    <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden xl:table-cell">Monto</th>
-                                    <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
-                                    <tr>
-                                        <td colSpan={7} className="py-12 text-center">
-                                            <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
-                                            <p className="text-xs text-retarder-gray-400">Cargando órdenes...</p>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-retarder-gray-50">
+                                    <tr className="border-b border-retarder-gray-200">
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Orden</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Tipo</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Técnico</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Prioridad</th>
+                                        <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden xl:table-cell">Monto</th>
+                                        <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
                                     </tr>
-                                ) : (
-                                    filteredOrdenes.map((o, i) => {
-                                        const phase = getPhaseForEstado(o.estado);
-                                        return (
-                                            <motion.tr
-                                                key={o.id}
-                                                initial={{ opacity: 0, x: -10 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: i * 0.02 }}
-                                                className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors"
-                                                onClick={() => setSelectedOrden(o)}
-                                            >
-                                                <td className="py-3 px-4 font-mono text-xs font-bold text-retarder-red">{o.numero}</td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <Building2 size={14} className="text-retarder-gray-400 hidden sm:block" />
-                                                        <span className="font-medium text-retarder-gray-800">{o.empresa}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4 hidden md:table-cell">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Wrench size={12} className="text-retarder-gray-400" />
-                                                        <span className="text-retarder-gray-600">{TIPO_SERVICIO_LABELS[o.tipo as keyof typeof TIPO_SERVICIO_LABELS]}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className={cn('w-2 h-2 rounded-full', ORDEN_ESTADO_COLORS[o.estado as keyof typeof ORDEN_ESTADO_COLORS])} />
-                                                        <span className="text-xs font-medium text-retarder-gray-700">
-                                                            {ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={7} className="py-12 text-center">
+                                                <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
+                                                <p className="text-xs text-retarder-gray-400">Cargando órdenes...</p>
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        filteredOrdenes.map((o, i) => {
+                                            const phase = getPhaseForEstado(o.estado);
+                                            return (
+                                                <motion.tr
+                                                    key={o.id}
+                                                    initial={{ opacity: 0, x: -10 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    transition={{ delay: i * 0.02 }}
+                                                    className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors"
+                                                    onClick={() => setSelectedOrden(o)}
+                                                >
+                                                    <td className="py-3 px-2 sm:px-4 font-mono text-xs font-bold text-retarder-red">{o.numero}</td>
+                                                    <td className="py-3 px-2 sm:px-4">
+                                                        <div className="flex items-center gap-2">
+                                                            <Building2 size={14} className="text-retarder-gray-400 hidden sm:block" />
+                                                            <span className="font-medium text-retarder-gray-800 truncate max-w-[100px] sm:max-w-[160px]">{o.empresa}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-2 sm:px-4 hidden md:table-cell">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Wrench size={12} className="text-retarder-gray-400" />
+                                                            <span className="text-retarder-gray-600 truncate max-w-[100px]">{TIPO_SERVICIO_LABELS[o.tipo as keyof typeof TIPO_SERVICIO_LABELS]}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-2 sm:px-4">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className={cn('w-2 h-2 rounded-full shrink-0', ORDEN_ESTADO_COLORS[o.estado as keyof typeof ORDEN_ESTADO_COLORS])} />
+                                                            <span className="text-[10px] sm:text-xs font-medium text-retarder-gray-700 truncate max-w-[80px] sm:max-w-none">
+                                                                {ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3 px-2 sm:px-4 text-retarder-gray-600 hidden lg:table-cell truncate max-w-[120px]">{o.tecnico || '—'}</td>
+                                                    <td className="py-3 px-2 sm:px-4 hidden sm:table-cell">
+                                                        <span className={cn(
+                                                            'px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap',
+                                                            PRIORIDAD_COLORS[o.prioridad as keyof typeof PRIORIDAD_COLORS],
+                                                        )}>
+                                                            {o.prioridad}
                                                         </span>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4 text-retarder-gray-600 hidden lg:table-cell">{o.tecnico || '—'}</td>
-                                                <td className="py-3 px-4 hidden sm:table-cell">
-                                                    <span className={cn(
-                                                        'px-2 py-0.5 rounded-full text-[10px] font-semibold',
-                                                        PRIORIDAD_COLORS[o.prioridad as keyof typeof PRIORIDAD_COLORS],
-                                                    )}>
-                                                        {o.prioridad}
-                                                    </span>
-                                                </td>
-                                                <td className="py-3 px-4 text-right text-retarder-gray-600 font-medium hidden xl:table-cell">
-                                                    {o.monto ? formatMXN(o.monto) : '—'}
-                                                </td>
-                                                <td className="py-3 px-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {isAdmin && (
-                                                            confirmDeleteId === o.id ? (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDeleteOrden(o.id);
-                                                                    }}
-                                                                    disabled={isDeleting}
-                                                                    className="flex items-center gap-1 px-2 py-1 bg-retarder-red text-white text-[10px] font-bold rounded-lg animate-pulse hover:bg-red-700 transition-colors"
-                                                                >
-                                                                    <Trash2 size={12} />
-                                                                    {isDeleting ? 'Borrando...' : '¿Confirmar?'}
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleDeleteOrden(o.id);
-                                                                    }}
-                                                                    className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
-                                                                    title="Eliminar"
-                                                                >
-                                                                    <Trash2 size={14} />
-                                                                </button>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </motion.tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                                    </td>
+                                                    <td className="py-3 px-2 sm:px-4 text-right text-retarder-gray-600 font-medium hidden xl:table-cell whitespace-nowrap">
+                                                        {o.monto ? formatMXN(o.monto) : '—'}
+                                                    </td>
+                                                    <td className="py-3 px-4 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            {isAdmin && (
+                                                                confirmDeleteId === o.id ? (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteOrden(o.id);
+                                                                        }}
+                                                                        disabled={isDeleting}
+                                                                        className="flex items-center gap-1 px-2 py-1 bg-retarder-red text-white text-[10px] font-bold rounded-lg animate-pulse hover:bg-red-700 transition-colors"
+                                                                    >
+                                                                        <Trash2 size={12} />
+                                                                        {isDeleting ? 'Borrando...' : '¿Confirmar?'}
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteOrden(o.id);
+                                                                        }}
+                                                                        className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
+                                                                        title="Eliminar"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </motion.tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>

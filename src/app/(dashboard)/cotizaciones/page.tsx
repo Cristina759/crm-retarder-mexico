@@ -270,12 +270,12 @@ export default function CotizacionesPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-retarder-gray-50">
                             <tr className="border-b border-retarder-gray-200">
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Cotización</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Vínculo</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Acción</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Cotización</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
+                                <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Vínculo</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Acción</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -296,20 +296,20 @@ export default function CotizacionesPage() {
                                         onClick={() => setSelectedCot(c)}
                                         className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors group"
                                     >
-                                        <td className="py-3 px-4">
+                                        <td className="py-3 px-2 sm:px-4">
                                             <div className="flex items-center gap-2">
                                                 <FileText size={14} className="text-retarder-gray-400" />
                                                 <span className="font-mono text-xs font-bold text-retarder-red">{c.numero || c.numero_cotizacion}</span>
                                             </div>
                                         </td>
-                                        <td className="py-3 px-4 font-medium text-retarder-gray-800">{c.empresa}</td>
-                                        <td className="py-3 px-4">
-                                            <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', ESTADO_CONFIG[c.estado].color)}>
+                                        <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{c.empresa}</td>
+                                        <td className="py-3 px-2 sm:px-4">
+                                            <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', ESTADO_CONFIG[c.estado].color)}>
                                                 {ESTADO_CONFIG[c.estado].label}
                                             </span>
                                         </td>
-                                        <td className="py-3 px-4 text-right font-semibold text-retarder-gray-800">{formatMXN(c.total)}</td>
-                                        <td className="py-3 px-4 hidden md:table-cell">
+                                        <td className="py-3 px-2 sm:px-4 text-right font-semibold text-retarder-gray-800 whitespace-nowrap">{formatMXN(c.total)}</td>
+                                        <td className="py-3 px-2 sm:px-4 hidden md:table-cell">
                                             {c.orden_numero ? (
                                                 <Link href="/ordenes" className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium">
                                                     <Ticket size={12} />

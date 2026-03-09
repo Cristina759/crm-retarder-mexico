@@ -157,13 +157,13 @@ export default function FacturacionPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-retarder-gray-50">
                             <tr className="border-b border-retarder-gray-200">
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Orden</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Factura</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Concepto</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Vencimiento</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Orden</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Factura</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Concepto</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
+                                <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Vencimiento</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -180,15 +180,15 @@ export default function FacturacionPage() {
                                     return (
                                         <motion.tr key={f.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
                                             className={cn('border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors', f.estado === 'vencida' && 'bg-red-50/30')}>
-                                            <td className="py-3 px-4 font-mono text-xs font-bold text-retarder-red">{f.numero_orden}</td>
-                                            <td className="py-3 px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{f.numero_factura}</td>
-                                            <td className="py-3 px-4 font-medium text-retarder-gray-800">{f.empresa}</td>
-                                            <td className="py-3 px-4 text-retarder-gray-500 text-xs truncate max-w-[200px] hidden lg:table-cell">{f.concepto}</td>
-                                            <td className="py-3 px-4">
+                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs font-bold text-retarder-red">{f.numero_orden}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{f.numero_factura}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{f.empresa}</td>
+                                            <td className="py-3 px-2 sm:px-4 text-retarder-gray-500 text-xs truncate max-w-[150px] hidden lg:table-cell">{f.concepto}</td>
+                                            <td className="py-3 px-2 sm:px-4">
                                                 <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg.color)}>{cfg.label}</span>
                                             </td>
-                                            <td className="py-3 px-4 text-right font-bold text-retarder-gray-800">{formatMXN(f.total)}</td>
-                                            <td className="py-3 px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
+                                            <td className="py-3 px-2 sm:px-4 text-right font-bold text-retarder-gray-800 whitespace-nowrap">{formatMXN(f.total)}</td>
+                                            <td className="py-3 px-2 sm:px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
                                                 {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : '—'}
                                             </td>
                                         </motion.tr>

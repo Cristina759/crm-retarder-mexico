@@ -465,8 +465,8 @@ export default function CotizadorServiciosPage() {
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-start gap-1 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    <div className="flex flex-col items-start gap-1 bg-white rounded-2xl border border-retarder-gray-200 px-4 py-3 shadow-sm w-full sm:w-auto">
                         <div className="flex items-center gap-2 w-full justify-between">
                             <div className="flex items-center gap-2">
                                 <div className="p-2 bg-retarder-yellow-50 rounded-lg">
@@ -504,20 +504,20 @@ export default function CotizadorServiciosPage() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-4 py-3 shadow-sm w-full sm:w-auto">
+                        <div className="flex items-center gap-2 shrink-0">
                             <div className="p-2 bg-blue-50 rounded-lg">
                                 <Building2 size={16} className="text-blue-600" />
                             </div>
-                            <div>
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Cliente / Empresa</p>
-                                <p className="text-[10px] text-retarder-gray-400">Seleccionar para O.S.</p>
+                            <div className="hidden xs:block">
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Cliente</p>
+                                <p className="text-[10px] text-retarder-gray-400">O.S.</p>
                             </div>
                         </div>
                         <select
                             value={selectedClienteId}
                             onChange={(e) => setSelectedClienteId(e.target.value)}
-                            className="bg-transparent border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-retarder-red min-w-[200px]"
+                            className="bg-transparent border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-retarder-red flex-1 min-w-0"
                         >
                             <option value="">-- Seleccionar Cliente --</option>
                             {clientes.map(c => (
@@ -684,10 +684,10 @@ export default function CotizadorServiciosPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-gradient-to-br from-retarder-black to-retarder-gray-800 rounded-3xl p-8 text-white shadow-xl shadow-retarder-black/20">
-                                    <div className="flex justify-between items-end border-b border-white/10 pb-6 mb-6">
-                                        <div><p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Total a Pagar</p><h4 className="text-4xl font-black">{formatMXN(total)}</h4></div>
-                                        <div className="text-right text-xs text-white/40"><p>Subtotal: {formatMXN(subtotal)}</p><p>IVA 16%: {formatMXN(iva)}</p></div>
+                                <div className="bg-gradient-to-br from-retarder-black to-retarder-gray-800 rounded-3xl p-5 md:p-8 text-white shadow-xl shadow-retarder-black/20">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-white/10 pb-6 mb-6 gap-4">
+                                        <div><p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Total a Pagar</p><h4 className="text-3xl md:text-4xl font-black">{formatMXN(total)}</h4></div>
+                                        <div className="text-left sm:text-right text-xs text-white/40"><p>Subtotal: {formatMXN(subtotal)}</p><p>IVA 16%: {formatMXN(iva)}</p></div>
                                     </div>
                                     <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}Oficializar y Imprimir Cotización</button>
                                 </div>

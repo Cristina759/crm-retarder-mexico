@@ -133,13 +133,13 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-retarder-gray-200">
             <div className="flex items-center justify-between h-16 px-4 lg:px-8">
                 {/* Title section */}
-                <div className="ml-12 lg:ml-0 flex flex-col">
+                <div className="ml-14 lg:ml-0 flex flex-col">
                     <div className="flex items-center gap-2">
                         <h1 className="text-lg font-bold text-retarder-black">{title}</h1>
                         {isCliente && (
                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-retarder-red/10 rounded-full border border-retarder-red/20 shadow-sm">
                                 <Building2 size={10} className="text-retarder-red" />
-                                <span className="text-[10px] font-black text-retarder-red uppercase tracking-wider">
+                                <span className="text-[10px] font-black text-retarder-red uppercase tracking-wider truncate max-w-[120px] sm:max-w-[200px]">
                                     {clientCompany}
                                 </span>
                             </div>
