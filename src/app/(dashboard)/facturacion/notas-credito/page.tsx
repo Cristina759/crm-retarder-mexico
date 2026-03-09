@@ -99,25 +99,34 @@ export default function NotasCreditoPage() {
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
-                .select('numero_factura, empresa, monto')
+                .select('*')
                 .not('numero_factura', 'is', null)
+                .neq('numero_factura', '')
                 .order('fecha_creado', { ascending: false });
 
-            if (!error && data) {
+            if (error) {
+                console.error('Error fetching facturas:', error);
+                return;
+            }
+
+            if (data) {
                 const uniqueFacturas = new Map<string, { factura: string, empresa: string, total: number }>();
                 data.forEach(o => {
-                    if (o.numero_factura && !uniqueFacturas.has(o.numero_factura)) {
-                        uniqueFacturas.set(o.numero_factura, {
-                            factura: o.numero_factura,
+                    const nf = String(o.numero_factura || '').trim();
+                    if (nf && !uniqueFacturas.has(nf)) {
+                        uniqueFacturas.set(nf, {
+                            factura: nf,
                             empresa: o.empresa || 'N/A',
-                            total: o.monto || 0
+                            total: Number(o.monto) || 0
                         });
                     }
                 });
-                setFacturasDisponibles(Array.from(uniqueFacturas.values()));
+                const arr = Array.from(uniqueFacturas.values());
+                console.log(`[NotasCredito] Cargadas ${arr.length} facturas únicas desde Supabase.`, arr.slice(0, 3));
+                setFacturasDisponibles(arr);
             }
-        } catch (error) {
-            console.error('Error fetching facturas:', error);
+        } catch (err) {
+            console.error('Error inesperado fetching facturas:', err);
         }
     }, [supabase]);
 
