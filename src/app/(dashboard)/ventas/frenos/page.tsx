@@ -256,24 +256,13 @@ export default function CotizadorFrenosPage() {
         '*PRECIO SUJETO A CAMBIO SIN PREVIO AVISO\n*COTIZACIÓN VÁLIDA POR 8 DÍAS\n*EQUIPO NUEVO CON GARANTÍA DE UN AÑO'
     );
 
-    // Mano de Obra — selección del tabulador
-    const [selectedManoObraIds, setSelectedManoObraIds] = useState<string[]>([]);
-    const [showTabulador, setShowTabulador] = useState(false);
-    const [tabuladorCategoria, setTabuladorCategoria] = useState<string>('todos');
+    // Mano de Obra (por unidad manual)
+    const [manoObraPorUnidadMXN, setManoObraPorUnidadMXN] = useState<number>(0);
 
-    // Computed total mano de obra
+    // Computed total mano de obra (multiplicado por unidades)
     const manoObraInstalacionMXN = useMemo(() => {
-        return selectedManoObraIds.reduce((sum, id) => {
-            const item = TABULADOR_MANO_OBRA.find(t => t.id === id);
-            return sum + (item?.precio_mxn || 0);
-        }, 0);
-    }, [selectedManoObraIds]);
-
-    const toggleManoObra = (id: string) => {
-        setSelectedManoObraIds(prev =>
-            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-        );
-    };
+        return manoObraPorUnidadMXN * (cantidadUnidades || 1);
+    }, [manoObraPorUnidadMXN, cantidadUnidades]);
 
     // Fetch de Clientes
     const fetchClientes = useCallback(async () => {
@@ -433,9 +422,14 @@ export default function CotizadorFrenosPage() {
             }
 
             // 3. Imprimir PDF (SIEMPRE se ejecuta, haya o no errores de BD)
+            const documentOriginalTitle = document.title;
+            const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
+            document.title = `${cotNumero}_Frenos_${cleanEmpresa}`;
+
             // Usamos onafterprint para navegar solo después de que se cierre el diálogo de impresión
             const handleAfterPrint = () => {
                 window.removeEventListener('afterprint', handleAfterPrint);
+                document.title = documentOriginalTitle;
                 router.push('/ordenes');
             };
             window.addEventListener('afterprint', handleAfterPrint);
@@ -611,132 +605,40 @@ export default function CotizadorFrenosPage() {
                         </div>
                     </motion.div>
 
-                    {/* Mano de Obra — Tabulador */}
+                    {/* Mano de Obra — Manual */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm cursor-pointer hover:border-orange-300 transition-colors"
-                        onClick={() => setShowTabulador(!showTabulador)}
+                        className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm"
                     >
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-orange-50 rounded-lg">
                                 <Wrench size={16} className="text-orange-600" />
                             </div>
                             <div>
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Mano de Obra</p>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Mano de Obra (U.)</p>
                                 <p className="text-[10px] text-retarder-gray-400">
-                                    {selectedManoObraIds.length > 0
-                                        ? `${selectedManoObraIds.length} concepto(s) seleccionado(s)`
-                                        : 'Click para seleccionar del tabulador'}
+                                    Opcional (MXN)
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-retarder-black">{formatMXN(manoObraInstalacionMXN)}</span>
-                            {showTabulador ? <ChevronUp size={14} className="text-retarder-gray-400" /> : <ChevronDown size={14} className="text-retarder-gray-400" />}
+                        <div className="flex items-center gap-1">
+                            <span className="text-sm font-bold text-retarder-gray-400">$</span>
+                            <input
+                                type="number"
+                                step="1"
+                                placeholder="0"
+                                value={manoObraPorUnidadMXN || ''}
+                                onChange={(e) => {
+                                    const val = parseInt(e.target.value);
+                                    setManoObraPorUnidadMXN(isNaN(val) ? 0 : val);
+                                }}
+                                className="w-24 text-sm font-bold text-retarder-black border border-retarder-gray-200 rounded-xl px-3 py-1.5 focus:border-retarder-red outline-none"
+                            />
                         </div>
                     </motion.div>
                 </div>
             </div>
-
-            {/* ── Tabulador de Mano de Obra (expandible) ── */}
-            <AnimatePresence>
-                {showTabulador && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="bg-white rounded-2xl border border-retarder-gray-200 shadow-sm overflow-hidden lg:col-span-1 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto pb-10"
-                    >
-                        <div className="px-5 py-4 border-b border-retarder-gray-100">
-                            <div className="flex items-center justify-between mb-3">
-                                <div>
-                                    <h3 className="text-sm font-bold text-retarder-gray-800">Tabulador de Mano de Obra</h3>
-                                    <p className="text-[10px] text-retarder-gray-400">Selecciona los conceptos que aplican</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-retarder-red">Total: {formatMXN(manoObraInstalacionMXN)}</span>
-                                    <button onClick={(e) => { e.stopPropagation(); setShowTabulador(false); }} className="p-1 hover:bg-retarder-gray-100 rounded-lg transition-colors">
-                                        <X size={14} className="text-retarder-gray-400" />
-                                    </button>
-                                </div>
-                            </div>
-                            {/* Category filters */}
-                            <div className="flex flex-wrap gap-2">
-                                <button
-                                    onClick={() => setTabuladorCategoria('todos')}
-                                    className={cn(
-                                        'px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors',
-                                        tabuladorCategoria === 'todos' ? 'bg-retarder-red text-white border-retarder-red' : 'bg-retarder-gray-50 text-retarder-gray-500 border-retarder-gray-200 hover:border-retarder-gray-300'
-                                    )}
-                                >
-                                    Todos ({TABULADOR_MANO_OBRA.length})
-                                </button>
-                                {(Object.entries(MANO_OBRA_CATEGORIAS) as [string, { label: string; color: string }][]).map(([key, cat]) => {
-                                    const count = TABULADOR_MANO_OBRA.filter(t => t.categoria === key).length;
-                                    return (
-                                        <button
-                                            key={key}
-                                            onClick={() => setTabuladorCategoria(key)}
-                                            className={cn(
-                                                'px-3 py-1 rounded-full text-[10px] font-semibold border transition-colors',
-                                                tabuladorCategoria === key ? `${cat.color} border-current` : 'bg-retarder-gray-50 text-retarder-gray-500 border-retarder-gray-200 hover:border-retarder-gray-300'
-                                            )}
-                                        >
-                                            {cat.label} ({count})
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                        <div className="max-h-[400px] overflow-y-auto divide-y divide-retarder-gray-50">
-                            {TABULADOR_MANO_OBRA
-                                .filter(item => tabuladorCategoria === 'todos' || item.categoria === tabuladorCategoria)
-                                .map(item => {
-                                    const isSelected = selectedManoObraIds.includes(item.id);
-                                    const catInfo = MANO_OBRA_CATEGORIAS[item.categoria];
-                                    return (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => toggleManoObra(item.id)}
-                                            className={cn(
-                                                'w-full flex items-center gap-3 px-5 py-2.5 text-left transition-colors',
-                                                isSelected ? 'bg-orange-50' : 'hover:bg-retarder-gray-50'
-                                            )}
-                                        >
-                                            <div className={cn(
-                                                'w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors',
-                                                isSelected ? 'bg-orange-500 border-orange-500' : 'border-retarder-gray-300'
-                                            )}>
-                                                {isSelected && <Check size={12} className="text-white" />}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className={cn('text-xs', isSelected ? 'font-semibold text-retarder-gray-800' : 'text-retarder-gray-600')}>
-                                                    {item.concepto}
-                                                </p>
-                                            </div>
-                                            <span className={cn(
-                                                'text-xs font-bold flex-shrink-0',
-                                                isSelected ? 'text-orange-600' : 'text-retarder-gray-500'
-                                            )}>
-                                                {item.precio_mxn > 0 ? formatMXN(item.precio_mxn) : 'Por cotizar'}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                        </div>
-                        {selectedManoObraIds.length > 0 && (
-                            <div className="px-5 py-3 bg-orange-50 border-t border-orange-200 flex items-center justify-between">
-                                <div className="text-[10px] text-retarder-gray-500">
-                                    {selectedManoObraIds.length} concepto(s) · <button onClick={() => setSelectedManoObraIds([])} className="text-retarder-red hover:underline">Limpiar todo</button>
-                                </div>
-                                <span className="text-sm font-bold text-orange-700">Total Mano de Obra: {formatMXN(manoObraInstalacionMXN)}</span>
-                            </div>
-                        )}
-                    </motion.div>
-                )}
-            </AnimatePresence>
             {/* ── Model Grid ─────────────────────────── */}
             <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-3">

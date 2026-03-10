@@ -438,11 +438,21 @@ export default function CotizadorServiciosPage() {
                 console.warn("Hubo un problema con la base de datos, procediendo a impresión únicamente.", dbErr);
             }
 
+            const documentOriginalTitle = document.title;
+            const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
+            document.title = `${cotNumero}_Servicios_${cleanEmpresa}`;
+
+            const handleAfterPrint = () => {
+                window.removeEventListener('afterprint', handleAfterPrint);
+                document.title = documentOriginalTitle;
+                router.push('/ordenes');
+            };
+            window.addEventListener('afterprint', handleAfterPrint);
             window.print();
 
             setTimeout(() => {
                 router.push('/ordenes');
-            }, 1500);
+            }, 10000);
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
