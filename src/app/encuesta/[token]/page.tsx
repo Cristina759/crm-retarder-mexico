@@ -154,13 +154,13 @@ export default function PublicSurveyPage() {
                                         </div>
                                         <h3 className="font-bold text-retarder-black uppercase tracking-wider text-sm">Experiencia General (1-10)</h3>
                                     </div>
-                                    <div className="flex justify-between items-center gap-1 sm:gap-2">
+                                    <div className="grid grid-cols-5 sm:flex sm:justify-between items-center gap-2 sm:gap-2">
                                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                                             <button
                                                 key={num}
                                                 onClick={() => setRatingGeneral(num)}
                                                 className={cn(
-                                                    "w-full aspect-square text-xs font-bold rounded-lg transition-all border",
+                                                    "aspect-square text-xs font-bold rounded-lg transition-all border",
                                                     ratingGeneral === num
                                                         ? "bg-retarder-red text-white border-retarder-red scale-110 shadow-lg shadow-retarder-red/30"
                                                         : "bg-white text-retarder-gray-500 border-retarder-gray-200 hover:border-retarder-red/50"

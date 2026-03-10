@@ -9,7 +9,7 @@ import { Rol } from '@/lib/utils/constants';
 
 // Define which roles have access to which route prefixes
 const ROUTE_PERMISSIONS: Record<string, Rol[]> = {
-    '/ventas/nueva': ['admin', 'vendedor'],
+    '/ventas': ['admin', 'vendedor'],
     '/clientes': ['admin', 'vendedor'],
     '/facturacion': ['admin', 'direccion'],
     '/cobranza': ['admin', 'direccion'],

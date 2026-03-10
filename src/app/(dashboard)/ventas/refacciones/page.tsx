@@ -584,12 +584,17 @@ export default function CotizadorRefaccionesPage() {
                 <AnimatePresence>
                     {showCart && (
                         <motion.div
-                            initial={{ opacity: 0, width: 0 }}
-                            animate={{ opacity: 1, width: 380 }}
-                            exit={{ opacity: 0, width: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="hidden lg:block flex-shrink-0 print:hidden"
+                            initial={{ opacity: 0, x: 380 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 380 }}
+                            transition={{ duration: 0.3, type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 right-0 w-full sm:w-[380px] bg-white z-50 shadow-2xl lg:relative lg:inset-auto lg:block lg:shadow-none print:hidden"
                         >
+                            {/* Mobile overlay backdrop */}
+                            <div
+                                className="lg:hidden fixed inset-0 bg-black/40 -z-10"
+                                onClick={() => setShowCart(false)}
+                            />
                             <div className="bg-white rounded-xl border border-retarder-gray-200 shadow-lg overflow-hidden sticky top-4 max-h-[calc(100vh-2rem)] flex flex-col">
                                 <div className="bg-gradient-to-r from-retarder-black to-retarder-gray-800 px-4 py-3 flex items-center justify-between">
                                     <div>

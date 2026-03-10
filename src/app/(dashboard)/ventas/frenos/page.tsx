@@ -20,6 +20,7 @@ import {
     ChevronDown,
     ChevronUp,
     X,
+    Truck,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, formatMXN, formatUSD, formatUserName } from '@/lib/utils';
@@ -817,7 +818,7 @@ export default function CotizadorFrenosPage() {
                     >
                         <div className="bg-white rounded-2xl border border-retarder-gray-200 overflow-hidden shadow-xl print:border-none print:shadow-none">
                             {/* Header (Visible on Screen & Print) */}
-                            <div className="flex items-center justify-between px-8 py-8 border-b-2 border-retarder-gray-100 font-sans bg-white">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-6 sm:px-8 sm:py-8 border-b-2 border-retarder-gray-100 font-sans bg-white gap-6">
                                 <div className="flex items-center gap-6">
                                     <div className="bg-white p-3 border border-retarder-gray-100 rounded-xl shadow-sm">
                                         <img src="/logo-retarder.png" alt="Retarder México" className="h-24 w-auto object-contain" />

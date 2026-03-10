@@ -58,9 +58,15 @@ export async function GET() {
         // Si Banxico ya publicó el FIX de hoy (después de las 12pm), ese dato NO es el del DOF de hoy.
 
         // Invertimos para empezar por el más reciente
-        const sortedDatos = [...datos].reverse();
+        const sortedDatos = [...datos].sort((a, b) => {
+            const [da, ma, ya] = a.fecha.split('/');
+            const [db, mb, yb] = b.fecha.split('/');
+            const timeA = new Date(parseInt(ya), parseInt(ma) - 1, parseInt(da)).getTime();
+            const timeB = new Date(parseInt(yb), parseInt(mb) - 1, parseInt(db)).getTime();
+            return timeB - timeA; // Descendente (más reciente primero)
+        });
 
-        // Buscamos el primero que sea anterior a hoy
+        // Buscamos el primero que sea estrictamente anterior a hoy (Fórmulas DOF)
         let datoOficial = sortedDatos.find(d => {
             const [dD, dM, dY] = d.fecha.split('/');
             const [tD, tM, tY] = nowMx.split('/');
@@ -80,7 +86,8 @@ export async function GET() {
             rate: valor,
             tipoCambio: valor,
             source: 'Banxico / DOF Oficial',
-            fecha: datoOficial.fecha,
+            fecha: nowMx, // Retornamos HOY como la fecha de validez DOF
+            debug_determination_date: datoOficial.fecha,
             debug_today: nowMx
         });
     } catch (error) {

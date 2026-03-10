@@ -57,7 +57,7 @@ export function SignaturePad({ onSave, onClear, isLoading, defaultValue }: Signa
                     </div>
 
                     {/* Canvas Area */}
-                    <div className="relative h-48 md:h-64 bg-white cursor-crosshair">
+                    <div className="relative h-64 sm:h-80 md:h-96 bg-white cursor-crosshair">
                         {!defaultValue ? (
                             <SignatureCanvas
                                 ref={sigCanvas}

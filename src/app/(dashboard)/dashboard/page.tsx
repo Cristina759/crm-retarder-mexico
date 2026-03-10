@@ -53,6 +53,7 @@ interface InventoryMini {
     id: string;
     nombre: string;
     stock_actual: number;
+    stock_minimo: number;
 }
 
 // ── Animated KPI Card ───────────────────────────────
@@ -111,7 +112,7 @@ function KpiCard({
 
 // ── Sales Pipeline Chart (Cotizaciones) ────────────────
 
-function SalesPipelineChart({ cotizaciones }: { cotizaciones: CotizacionMini[] }) {
+function SalesPipelineChart({ cotizaciones, className }: { cotizaciones: CotizacionMini[]; className?: string }) {
     // Real data from Supabase grouped by estado
     const estados = ['aceptada', 'enviada', 'negociacion', 'borrador', 'rechazada', 'vencida'];
     const salesData = estados.map(estado => ({
@@ -127,7 +128,7 @@ function SalesPipelineChart({ cotizaciones }: { cotizaciones: CotizacionMini[] }
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-white rounded-xl border border-retarder-gray-200 p-5 col-span-full lg:col-span-2"
+            className={cn("bg-white rounded-xl border border-retarder-gray-200 p-5 w-full h-full", className)}
         >
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-sm text-retarder-black">Pipeline de Ventas (Cotizaciones)</h3>
@@ -173,7 +174,7 @@ function SalesPipelineChart({ cotizaciones }: { cotizaciones: CotizacionMini[] }
 
 // ── Ingresos Chart (Donut) ──────────────────────────
 
-function IngresosChart({ total, cobrado, porCobrar }: { total: number; cobrado: number; porCobrar: number }) {
+function IngresosChart({ total, cobrado, porCobrar, className }: { total: number; cobrado: number; porCobrar: number; className?: string }) {
     const cobradoPct = (cobrado / total) * 100;
     const porCobrarPct = (porCobrar / total) * 100;
 
@@ -182,7 +183,7 @@ function IngresosChart({ total, cobrado, porCobrar }: { total: number; cobrado: 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-white rounded-2xl border border-retarder-gray-200 p-6 col-span-full lg:col-span-2 shadow-sm"
+            className={cn("bg-white rounded-2xl border border-retarder-gray-200 p-6 shadow-sm w-full h-full", className)}
         >
             <div className="flex items-center justify-between mb-8">
                 <div>
@@ -274,7 +275,7 @@ function IngresosChart({ total, cobrado, porCobrar }: { total: number; cobrado: 
 
 // ── Pipeline Mini Chart ─────────────────────────────
 
-function PipelineChart({ ordenes }: { ordenes: OrdenMini[] }) {
+function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className?: string }) {
     // Group orders by state
     const pipelineData = ORDEN_ESTADOS.map(estado => ({
         estado,
@@ -290,7 +291,7 @@ function PipelineChart({ ordenes }: { ordenes: OrdenMini[] }) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="bg-white rounded-xl border border-retarder-gray-200 p-5 col-span-full lg:col-span-2"
+            className={cn("bg-white rounded-xl border border-retarder-gray-200 p-5 w-full h-full", className)}
         >
             <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de Órdenes de Servicio</h3>
             <div className="space-y-2.5">
@@ -485,12 +486,14 @@ export default function DashboardPage() {
             const [
                 { data: cotData },
                 { data: ordData },
-                { data: invData },
+                { data: invDataRaw },
             ] = await Promise.all([
                 supabase.from('cotizaciones').select('total, estado'),
                 supabase.from('ordenes_servicio').select('*'),
-                supabase.from('inventario').select('*').lt('stock_actual', 'stock_minimo'),
+                supabase.from('inventario').select('id, nombre, stock_actual, stock_minimo'),
             ]);
+
+            const invData = (invDataRaw as InventoryMini[] || []).filter(item => item.stock_actual < item.stock_minimo);
 
             setCotizaciones((cotData as CotizacionMini[]) || []);
 
@@ -664,10 +667,12 @@ export default function DashboardPage() {
                         total={stats.totalVentas}
                         cobrado={stats.totalCobrado}
                         porCobrar={stats.totalVentas - stats.totalCobrado}
+                        className="lg:col-span-2"
                     />
-                    <div className="lg:col-span-1">
-                        <SalesPipelineChart cotizaciones={cotizaciones} />
-                    </div>
+                    <SalesPipelineChart
+                        cotizaciones={cotizaciones}
+                        className="lg:col-span-1"
+                    />
                 </div>
             )}
 
@@ -696,9 +701,10 @@ export default function DashboardPage() {
             {/* Operations Section (Tecnico/Admin/Vendedor) */}
             {!isCliente && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                        <PipelineChart ordenes={ordenes} />
-                    </div>
+                    <PipelineChart
+                        ordenes={ordenes}
+                        className="lg:col-span-2"
+                    />
                     <div className="lg:col-span-1 hidden lg:block" />
                 </div>
             )}

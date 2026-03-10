@@ -49,6 +49,9 @@ const navGroups: { title: string; items: NavItem[] }[] = [
         title: 'Ventas',
         items: [
             { label: 'Nueva Cotización', href: '/ventas/nueva', icon: <ShoppingCart size={20} />, roles: ['admin', 'vendedor'] },
+            { label: 'Cotizador de Frenos', href: '/ventas/frenos', icon: <Package size={20} />, roles: ['admin', 'vendedor'] },
+            { label: 'Cotizador de Refacciones', href: '/ventas/refacciones', icon: <Wrench size={20} />, roles: ['admin', 'vendedor'] },
+            { label: 'Cotizador de Servicios', href: '/ventas/servicios', icon: <ClipboardCheck size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Mis Cotizaciones', href: '/cotizaciones', icon: <FileText size={20} />, roles: ['admin', 'vendedor', 'cliente'] },
         ],
     },
