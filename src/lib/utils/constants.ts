@@ -395,7 +395,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         pentar_serie: 'P5-1', pentar_nm: 1200, pentar_precio_usd: 7250,
         frenelsa_serie: 'F16-80', frenelsa_nm: 840, frenelsa_precio_usd: 6156,
         cofremex_serie: 'CFL-90', cofremex_nm: 900, cofremex_precio_usd: 0,
-        cardanes_usd: 625.80, soporteria_usd: 498.00, material_electrico_usd: 779.03,
+        cardanes_usd: 779.35, soporteria_usd: 498.00, material_electrico_usd: 779.03, // $13,869.25 MXN ÷ 17.7962
         aplicacion: 'Vehículos 6 a 10 Ton', tonelaje: '6 a 10', activo: true,
         precio_freno_usd: 7250, torque_max: '1200 NM', peso: '38 kg',
     },
@@ -404,7 +404,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         pentar_serie: 'P5', pentar_nm: 1500, pentar_precio_usd: 7500,
         frenelsa_serie: 'F16-140', frenelsa_nm: 1350, frenelsa_precio_usd: 7236,
         cofremex_serie: 'CFK-140', cofremex_nm: 1400, cofremex_precio_usd: 0,
-        cardanes_usd: 710.96, soporteria_usd: 498.00, material_electrico_usd: 779.03,
+        cardanes_usd: 685.87, soporteria_usd: 498.00, material_electrico_usd: 779.03, // $12,206.00 MXN ÷ 17.7962
         aplicacion: 'Vehículos 10 a 15 Ton', tonelaje: '10 a 15', activo: true,
         precio_freno_usd: 7500, torque_max: '1500 NM', peso: '36 kg',
     },
@@ -413,7 +413,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         pentar_serie: 'P7-1', pentar_nm: 1750, pentar_precio_usd: 8500,
         frenelsa_serie: 'F16-200', frenelsa_nm: 2150, frenelsa_precio_usd: 8316,
         cofremex_serie: 'CFK-200', cofremex_nm: 1650, cofremex_precio_usd: 0,
-        cardanes_usd: 1005.20, soporteria_usd: 569.85, material_electrico_usd: 779.03,
+        cardanes_usd: 1018.53, soporteria_usd: 569.85, material_electrico_usd: 779.03, // $18,125.63 MXN ÷ 17.7962
         aplicacion: 'Vehículos 15 a 20 Ton', tonelaje: '15 a 20', activo: true,
         precio_freno_usd: 8500, torque_max: '1750 NM', peso: '52 kg',
     },
@@ -422,7 +422,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         pentar_serie: 'P7', pentar_nm: 2050, pentar_precio_usd: 9500,
         frenelsa_serie: 'F16-280', frenelsa_nm: 1950, frenelsa_precio_usd: 9180,
         cofremex_serie: 'CFK-250', cofremex_nm: 1950, cofremex_precio_usd: 6900,
-        cardanes_usd: 1005.20, soporteria_usd: 569.85, material_electrico_usd: 779.03,
+        cardanes_usd: 1018.53, soporteria_usd: 569.85, material_electrico_usd: 779.03, // $18,125.63 MXN ÷ 17.7962
         aplicacion: 'Vehículos 20 a 25 Ton', tonelaje: '20 a 25', activo: true,
         precio_freno_usd: 9500, torque_max: '2050 NM', peso: '50 kg',
     },
@@ -431,7 +431,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         pentar_serie: 'P11-1', pentar_nm: 2850, pentar_precio_usd: 0,
         frenelsa_serie: 'F16-300', frenelsa_nm: 3000, frenelsa_precio_usd: 10260,
         cofremex_serie: 'CFK-300', cofremex_nm: 2140, cofremex_precio_usd: 0,
-        cardanes_usd: 844.76, soporteria_usd: 533.48, material_electrico_usd: 779.03,
+        cardanes_usd: 1018.53, soporteria_usd: 533.48, material_electrico_usd: 779.03, // F16-300 usa mismo cardan 1810 que P7 — $18,125.63 MXN ÷ 17.7962
         aplicacion: 'Vehículos 25 a 32 Ton', tonelaje: '25 a 32', activo: true,
         precio_freno_usd: 10260, torque_max: '2850 NM', peso: '60 kg',
     },
@@ -449,7 +449,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         pentar_serie: 'P10', pentar_nm: 3300, pentar_precio_usd: 11000,
         frenelsa_serie: '', frenelsa_nm: 0, frenelsa_precio_usd: 0,
         cofremex_serie: 'CFK-360', cofremex_nm: 2605, cofremex_precio_usd: 0,
-        cardanes_usd: 844.76, soporteria_usd: 533.48, material_electrico_usd: 779.03,
+        cardanes_usd: 927.17, soporteria_usd: 533.48, material_electrico_usd: 779.03, // SPL250 cardanes — $16,500.00 MXN ÷ 17.7962
         aplicacion: 'Vehículos 32 a 50 Ton', tonelaje: '32 a 50', activo: true,
         precio_freno_usd: 11000, torque_max: '3300 NM', peso: '65 kg',
     },
