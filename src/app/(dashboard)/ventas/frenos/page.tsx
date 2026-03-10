@@ -328,19 +328,29 @@ export default function CotizadorFrenosPage() {
         return brands;
     }, [selectedModelo]);
 
-    // Compute breakdown with units multiplier
+    // Compute breakdown with units multiplier — usa el precio correcto por marca seleccionada
     const breakdown = useMemo(() => {
         if (!selectedModelo) return null;
 
         const units = cantidadUnidades || 1;
         const totalTraslado = gastosTrasladoMXN * units;
 
-        const precioFrenoUSD = selectedModelo.precio_freno_usd * units;
-        const total_usd = (precioFrenoUSD + (selectedModelo.cardanes_usd * units) + (selectedModelo.soporteria_usd * units) + (selectedModelo.material_electrico_usd * units));
+        // Precio del FRENO según la marca seleccionada (no el campo legacy)
+        const precioFrenoUnitarioUSD = (() => {
+            switch (selectedMarca) {
+                case 'pentar': return selectedModelo.pentar_precio_usd;
+                case 'frenelsa': return selectedModelo.frenelsa_precio_usd;
+                case 'cofremex': return selectedModelo.cofremex_precio_usd;
+                default: return selectedModelo.precio_freno_usd;
+            }
+        })();
+
+        const frenoTotalUSD = precioFrenoUnitarioUSD * units;
+        const total_usd = frenoTotalUSD + (selectedModelo.cardanes_usd * units) + (selectedModelo.soporteria_usd * units) + (selectedModelo.material_electrico_usd * units);
         const total_mxn = (total_usd * tipoCambio) + totalTraslado + (manoObraInstalacionMXN * units);
 
         return {
-            freno: { usd: precioFrenoUSD, mxn: precioFrenoUSD * tipoCambio },
+            freno: { usd: frenoTotalUSD, mxn: frenoTotalUSD * tipoCambio },
             cardanes: { usd: selectedModelo.cardanes_usd * units, mxn: (selectedModelo.cardanes_usd * units) * tipoCambio },
             soporteria: { usd: selectedModelo.soporteria_usd * units, mxn: (selectedModelo.soporteria_usd * units) * tipoCambio },
             material: { usd: selectedModelo.material_electrico_usd * units, mxn: (selectedModelo.material_electrico_usd * units) * tipoCambio },
@@ -348,7 +358,7 @@ export default function CotizadorFrenosPage() {
             manoObra: { mxn: manoObraInstalacionMXN * units },
             total: { usd: total_usd, mxn: total_mxn }
         };
-    }, [selectedModelo, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades]);
+    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades]);
 
     const handleFinalize = async () => {
         if (!selectedModelo || !selectedClienteId) {

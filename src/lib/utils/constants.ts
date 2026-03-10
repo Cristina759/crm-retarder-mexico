@@ -428,7 +428,7 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
     },
     {
         modelo: 'P11-1', descripcion: 'Freno Retarder para Vehículos 25 a 32 Ton',
-        pentar_serie: 'P11-1', pentar_nm: 2850, pentar_precio_usd: 10260,
+        pentar_serie: 'P11-1', pentar_nm: 2850, pentar_precio_usd: 0,
         frenelsa_serie: 'F16-300', frenelsa_nm: 3000, frenelsa_precio_usd: 10260,
         cofremex_serie: 'CFK-300', cofremex_nm: 2140, cofremex_precio_usd: 0,
         cardanes_usd: 844.76, soporteria_usd: 533.48, material_electrico_usd: 779.03,
