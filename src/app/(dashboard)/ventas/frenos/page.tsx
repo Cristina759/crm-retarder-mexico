@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, formatMXN, formatUSD, formatUserName } from '@/lib/utils';
+import { numeroALetras } from '@/lib/utils/numeroALetras';
 import {
     CATALOGO_FRENOS,
     TABULADOR_MANO_OBRA,
@@ -347,7 +348,7 @@ export default function CotizadorFrenosPage() {
 
         const frenoTotalUSD = precioFrenoUnitarioUSD * units;
         const total_usd = frenoTotalUSD + (selectedModelo.cardanes_usd * units) + (selectedModelo.soporteria_usd * units) + (selectedModelo.material_electrico_usd * units);
-        const total_mxn = (total_usd * tipoCambio) + totalTraslado + (manoObraInstalacionMXN * units);
+        const total_mxn = (total_usd * tipoCambio) + totalTraslado + manoObraInstalacionMXN;
 
         return {
             freno: { usd: frenoTotalUSD, mxn: frenoTotalUSD * tipoCambio },
@@ -355,7 +356,7 @@ export default function CotizadorFrenosPage() {
             soporteria: { usd: selectedModelo.soporteria_usd * units, mxn: (selectedModelo.soporteria_usd * units) * tipoCambio },
             material: { usd: selectedModelo.material_electrico_usd * units, mxn: (selectedModelo.material_electrico_usd * units) * tipoCambio },
             traslado: { mxn: totalTraslado },
-            manoObra: { mxn: manoObraInstalacionMXN * units },
+            manoObra: { mxn: manoObraInstalacionMXN },
             total: { usd: total_usd, mxn: total_mxn }
         };
     }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades]);
@@ -404,8 +405,7 @@ export default function CotizadorFrenosPage() {
                         estado: 'enviada',
                         fecha: fechaActual,
                         vigencia_dias: 15,
-                        tipo_cambio: tipoCambio,
-                        tipo_cambio_fecha: tcFecha || ''
+                        notas: `TC: ${tipoCambio} MXN (${tcFecha || 'N/A'})`
                     })
                     .select()
                     .single();
@@ -937,7 +937,7 @@ export default function CotizadorFrenosPage() {
                                 )}
                                 {manoObraInstalacionMXN > 0 && (
                                     <PriceLine
-                                        label={`Mano de Obra Instalación (${cantidadUnidades} u.)`}
+                                        label={`Mano de Obra Instalación`}
                                         icon={<Wrench size={16} className="text-orange-500" />}
                                         usd={breakdown.manoObra.mxn / tipoCambio}
                                         mxn={breakdown.manoObra.mxn}
@@ -957,6 +957,13 @@ export default function CotizadorFrenosPage() {
                                     delay={0.3}
                                     accent
                                 />
+
+                                {/* Importe con letra */}
+                                <div className="mt-4 text-center pb-2">
+                                    <p className="text-[10px] font-bold text-retarder-gray-500 uppercase tracking-widest bg-gray-50 inline-block px-4 py-1.5 rounded-full border border-gray-100 print:bg-transparent print:border-none print:text-xs">
+                                        ({numeroALetras(breakdown.total.mxn)})
+                                    </p>
+                                </div>
                             </div>
 
                             {/* ── Observaciones y Notas (editables + se imprimen) ── */}
@@ -1052,6 +1059,9 @@ export default function CotizadorFrenosPage() {
                     * {
                         -webkit-print-color-adjust: exact !important;
                         print-color-adjust: exact !important;
+                    }
+                    .print-area, .print-area * {
+                        color: #000000 !important;
                     }
                     body * {
                         visibility: hidden;
