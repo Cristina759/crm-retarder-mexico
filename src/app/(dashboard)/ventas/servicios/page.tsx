@@ -484,7 +484,7 @@ export default function CotizadorServiciosPage() {
                                 </div>
                                 <div>
                                     <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">T.C. USD</p>
-                                    <p className="text-[10px] font-bold text-retarder-gray-700">{formatMXN(tipoCambio)}</p>
+                                    <p className="text-[10px] font-bold text-retarder-gray-700">${tipoCambio.toFixed(4)}</p>
                                 </div>
                             </div>
                             <button
