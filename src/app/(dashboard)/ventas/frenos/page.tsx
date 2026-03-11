@@ -426,19 +426,22 @@ export default function CotizadorFrenosPage() {
             const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
             document.title = `${cotNumero}_Frenos_${cleanEmpresa}`;
 
-            // Usamos onafterprint para navegar solo después de que se cierre el diálogo de impresión
-            const handleAfterPrint = () => {
-                window.removeEventListener('afterprint', handleAfterPrint);
-                document.title = documentOriginalTitle;
-                router.push('/ordenes');
-            };
-            window.addEventListener('afterprint', handleAfterPrint);
-            window.print();
-
-            // Fallback por si el navegador no soporta afterprint o el usuario cancela de forma que no dispara el evento
+            // Damos tiempo (500ms) para que el navegador o el OS procesen el nuevo <title>
             setTimeout(() => {
-                router.push('/ordenes');
-            }, 10000);
+                const handleAfterPrint = () => {
+                    window.removeEventListener('afterprint', handleAfterPrint);
+                    document.title = documentOriginalTitle;
+                    router.push('/ordenes');
+                };
+                window.addEventListener('afterprint', handleAfterPrint);
+                window.print();
+
+                // Fallback por si el navegador no soporta afterprint o el usuario cancela de forma que no dispara el evento
+                setTimeout(() => {
+                    document.title = documentOriginalTitle;
+                    router.push('/ordenes');
+                }, 10000);
+            }, 500);
 
         } catch (error: any) {
             console.error('Error generating quotation:', error);

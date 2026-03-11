@@ -341,18 +341,22 @@ export default function CotizadorRefaccionesPage() {
             const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
             document.title = `${cotNumero}_Refacciones_${cleanEmpresa}`;
 
-            const handleAfterPrint = () => {
-                window.removeEventListener('afterprint', handleAfterPrint);
-                document.title = documentOriginalTitle;
-                router.push('/ordenes');
-            };
-            window.addEventListener('afterprint', handleAfterPrint);
-            window.print();
-
-            // 4. Redirigir al funnel después de un breve delay
+            // Damos tiempo (500ms) para que el navegador o el OS procesen el nuevo <title>
             setTimeout(() => {
-                router.push('/ordenes');
-            }, 10000);
+                const handleAfterPrint = () => {
+                    window.removeEventListener('afterprint', handleAfterPrint);
+                    document.title = documentOriginalTitle;
+                    router.push('/ordenes');
+                };
+                window.addEventListener('afterprint', handleAfterPrint);
+                window.print();
+
+                // 4. Redirigir al funnel después de un breve delay
+                setTimeout(() => {
+                    document.title = documentOriginalTitle;
+                    router.push('/ordenes');
+                }, 10000);
+            }, 500);
 
         } catch (error: any) {
             console.error('Error generating quotation:', error);

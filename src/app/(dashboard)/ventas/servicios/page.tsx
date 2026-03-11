@@ -442,17 +442,21 @@ export default function CotizadorServiciosPage() {
             const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
             document.title = `${cotNumero}_Servicios_${cleanEmpresa}`;
 
-            const handleAfterPrint = () => {
-                window.removeEventListener('afterprint', handleAfterPrint);
-                document.title = documentOriginalTitle;
-                router.push('/ordenes');
-            };
-            window.addEventListener('afterprint', handleAfterPrint);
-            window.print();
-
+            // Damos tiempo (500ms) para que el navegador o el OS procesen el nuevo <title>
             setTimeout(() => {
-                router.push('/ordenes');
-            }, 10000);
+                const handleAfterPrint = () => {
+                    window.removeEventListener('afterprint', handleAfterPrint);
+                    document.title = documentOriginalTitle;
+                    router.push('/ordenes');
+                };
+                window.addEventListener('afterprint', handleAfterPrint);
+                window.print();
+
+                setTimeout(() => {
+                    document.title = documentOriginalTitle;
+                    router.push('/ordenes');
+                }, 10000);
+            }, 500);
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
