@@ -80,7 +80,7 @@ function PriceLine({
             className={cn(
                 'flex items-center justify-between py-3.5 px-4 rounded-xl transition-colors print:p-0 print:bg-transparent print:mb-2 print:!text-black',
                 accent
-                    ? 'bg-gradient-to-r from-retarder-red to-retarder-red-700 text-white shadow-lg shadow-retarder-red/20'
+                    ? 'bg-gradient-to-r from-retarder-red to-retarder-red-700 text-white shadow-lg shadow-retarder-red/20 print:bg-none print:bg-transparent print:shadow-none'
                     : 'bg-retarder-gray-50 hover:bg-retarder-gray-100'
             )}
         >
@@ -729,8 +729,8 @@ export default function CotizadorFrenosPage() {
                                     </div>
                                 </div>
                                 <div className="text-right flex flex-col justify-center">
-                                    <div className="bg-retarder-red text-white px-4 py-1.5 rounded-lg mb-2 shadow-sm">
-                                        <h2 className="text-sm font-black tracking-widest uppercase">Cotización Oficial</h2>
+                                    <div className="bg-retarder-red text-white px-4 py-1.5 rounded-lg mb-2 shadow-sm print:bg-white print:border-2 print:border-black">
+                                        <h2 className="text-sm font-black tracking-widest uppercase print:!text-black">Cotización Oficial</h2>
                                     </div>
                                     <p className="text-[10px] text-retarder-gray-400 font-medium">Folio de Referencia:</p>
                                     <p className="text-[11px] text-retarder-black font-bold font-mono">Ref: {new Date().toISOString().slice(0, 10).replace(/-/g, '')}-FRENOS</p>
@@ -765,18 +765,18 @@ export default function CotizadorFrenosPage() {
                             })()}
 
                             {/* Breakdown header */}
-                            <div className="bg-gradient-to-r from-retarder-black to-retarder-gray-800 px-6 py-5 print:rounded-2xl print:mb-4">
+                            <div className="bg-gradient-to-r from-retarder-black to-retarder-gray-800 px-6 py-5 print:rounded-2xl print:mb-4 print:bg-none print:bg-white print:border-2 print:border-black">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider">Detalle del Equipo</p>
-                                        <h3 className="text-white font-bold text-xl mt-1">
-                                            {marcaInfo.nombre} {marcaInfo.serie} <span className="text-white/40 text-sm">({selectedModelo.modelo})</span>
+                                        <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider print:!text-black">Detalle del Equipo</p>
+                                        <h3 className="text-white font-bold text-xl mt-1 print:!text-black">
+                                            {marcaInfo.nombre} {marcaInfo.serie} <span className="text-white/40 text-sm print:!text-black">({selectedModelo.modelo})</span>
                                         </h3>
-                                        <p className="text-white/50 text-xs mt-1">Para: {clientes.find(c => c.id === selectedClienteId)?.nombre_comercial || 'Cliente no seleccionado'} · {marcaInfo.nm} NM · {selectedModelo.aplicacion}</p>
+                                        <p className="text-white/50 text-xs mt-1 print:!text-black">Para: {clientes.find(c => c.id === selectedClienteId)?.nombre_comercial || 'Cliente no seleccionado'} · {marcaInfo.nm} NM · {selectedModelo.aplicacion}</p>
                                     </div>
                                     <div className="text-right hidden sm:block">
-                                        <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider">T.C. Extranjero</p>
-                                        <p className="text-white font-bold text-lg font-mono">${tipoCambio.toFixed(4)}</p>
+                                        <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider print:!text-black">T.C. Extranjero</p>
+                                        <p className="text-white font-bold text-lg font-mono print:!text-black">${tipoCambio.toFixed(4)}</p>
                                     </div>
                                 </div>
                             </div>
