@@ -19,6 +19,7 @@ import {
     Check,
     DollarSign,
     RefreshCw,
+    CheckCircle2
 } from 'lucide-react';
 import { cn, formatMXN } from '@/lib/utils';
 import {
@@ -26,6 +27,7 @@ import {
     REFACCION_CATEGORIAS,
     type Refaccion,
 } from '@/lib/data/catalogo-refacciones';
+import { numeroALetras } from '@/lib/utils/numeroALetras';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
@@ -335,28 +337,7 @@ export default function CotizadorRefaccionesPage() {
                 console.warn("No se pudo guardar en Supabase. Generando solo PDF.", dbError);
             }
 
-            // 3. Imprimir PDF
-            const documentOriginalTitle = document.title;
-            const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
-            document.title = `${cotNumero}_Refacciones_${cleanEmpresa}`;
-
-            // Damos tiempo (500ms) para que el navegador o el OS procesen el nuevo <title>
-            setTimeout(() => {
-                const handleAfterPrint = () => {
-                    window.removeEventListener('afterprint', handleAfterPrint);
-                    document.title = documentOriginalTitle;
-                    router.push('/ordenes');
-                };
-                window.addEventListener('afterprint', handleAfterPrint);
-                window.print();
-
-                // 4. Redirigir al funnel después de un breve delay
-                setTimeout(() => {
-                    document.title = documentOriginalTitle;
-                    router.push('/ordenes');
-                }, 10000);
-            }, 500);
-
+            router.push('/ordenes');
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -724,7 +705,7 @@ export default function CotizadorRefaccionesPage() {
                                             )}
                                         >
                                             {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
-                                            Oficializar y Imprimir
+                                            {isCreating ? "GUARDANDO..." : "GUARDAR Y GENERAR PDF"}
                                         </button>
                                     </div>
                                 </div>
@@ -814,17 +795,22 @@ export default function CotizadorRefaccionesPage() {
                             {/* Totals Breakdown (PDF) */}
                             <div className="px-8 py-4 flex justify-end">
                                 <div className="w-64 space-y-1">
-                                    <div className="flex justify-between text-[11px] text-retarder-gray-600">
+                                    <div className="flex justify-between text-[11px] text-retarder-gray-600 print:!text-black font-semibold">
                                         <span>Subtotal</span>
                                         <span>{formatMXN(cartTotal + traslado)}</span>
                                     </div>
-                                    <div className="flex justify-between text-[11px] text-retarder-gray-600">
+                                    <div className="flex justify-between text-[11px] text-retarder-gray-600 print:!text-black font-semibold">
                                         <span>IVA (16.0%)</span>
                                         <span>{formatMXN((cartTotal + traslado) * 0.16)}</span>
                                     </div>
-                                    <div className="flex justify-between pt-2 border-t-2 border-retarder-red">
-                                        <span className="font-bold text-sm text-retarder-black uppercase">Total Neto</span>
-                                        <span className="font-bold text-sm text-retarder-red">{formatMXN((cartTotal + traslado) * 1.16)}</span>
+                                    <div className="flex justify-between pt-2 border-t-2 border-retarder-red print:border-black">
+                                        <span className="font-black text-sm text-retarder-black print:!text-black uppercase">Total Neto</span>
+                                        <span className="font-black text-sm text-retarder-red print:!text-black">{formatMXN((cartTotal + traslado) * 1.16)}</span>
+                                    </div>
+                                    <div className="text-right pt-2 border-b border-transparent">
+                                        <p className="text-[10px] font-bold text-retarder-gray-500 uppercase tracking-widest inline-block print:text-xs print:font-black print:!text-black">
+                                            *({numeroALetras((cartTotal + traslado) * 1.16)})*
+                                        </p>
                                     </div>
                                 </div>
                             </div>

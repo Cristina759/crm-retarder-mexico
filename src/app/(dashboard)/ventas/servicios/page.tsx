@@ -35,6 +35,7 @@ import {
     REFACCION_CATEGORIAS,
     type Refaccion,
 } from '@/lib/data/catalogo-refacciones';
+import { numeroALetras } from '@/lib/utils/numeroALetras';
 import {
     CATALOGO_MANO_OBRA,
     CATEGORIAS_MANO_OBRA,
@@ -170,11 +171,11 @@ interface ManoObraItem {
 function PriceLine({ label, mxn, accent = false }: { label: string; mxn: number; accent?: boolean }) {
     return (
         <div className={cn(
-            'flex justify-between py-1.5 px-3 rounded-lg',
-            accent ? 'bg-retarder-red text-white font-bold' : 'text-retarder-gray-700'
+            'flex justify-between py-1.5 px-3 rounded-lg print:p-0 print:bg-transparent print:!text-black',
+            accent ? 'bg-retarder-red text-white font-black print:!text-black' : 'text-retarder-gray-700 print:!text-black font-semibold'
         )}>
-            <span className="text-[10px]">{label}</span>
-            <span className="text-[10px] font-mono">{formatMXN(mxn)}</span>
+            <span className={cn("text-[10px] print:!text-black", accent && "uppercase")}>{label}</span>
+            <span className="text-[10px] font-mono print:font-bold print:!text-black">{formatMXN(mxn)}</span>
         </div>
     );
 }
@@ -437,25 +438,7 @@ export default function CotizadorServiciosPage() {
                 console.warn("Hubo un problema con la base de datos, procediendo a impresión únicamente.", dbErr);
             }
 
-            const documentOriginalTitle = document.title;
-            const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
-            document.title = `${cotNumero}_Servicios_${cleanEmpresa}`;
-
-            // Damos tiempo (500ms) para que el navegador o el OS procesen el nuevo <title>
-            setTimeout(() => {
-                const handleAfterPrint = () => {
-                    window.removeEventListener('afterprint', handleAfterPrint);
-                    document.title = documentOriginalTitle;
-                    router.push('/ordenes');
-                };
-                window.addEventListener('afterprint', handleAfterPrint);
-                window.print();
-
-                setTimeout(() => {
-                    document.title = documentOriginalTitle;
-                    router.push('/ordenes');
-                }, 10000);
-            }, 500);
+            router.push('/ordenes');
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -702,7 +685,7 @@ export default function CotizadorServiciosPage() {
                                         <div><p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Total a Pagar</p><h4 className="text-3xl md:text-4xl font-black">{formatMXN(total)}</h4></div>
                                         <div className="text-left sm:text-right text-xs text-white/40"><p>Subtotal: {formatMXN(subtotal)}</p><p>IVA 16%: {formatMXN(iva)}</p></div>
                                     </div>
-                                    <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}Oficializar y Imprimir Cotización</button>
+                                    <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}GUARDAR Y GENERAR PDF</button>
                                 </div>
                             </div>
                         </div>
@@ -787,6 +770,12 @@ export default function CotizadorServiciosPage() {
                                         <PriceLine label="IVA 16%" mxn={iva} />
                                         <div className="py-1" />
                                         <PriceLine label="TOTAL" mxn={total} accent />
+                                        
+                                        <div className="mt-4 text-center pb-2">
+                                            <p className="text-[10px] font-bold text-retarder-gray-500 uppercase tracking-widest bg-gray-50 inline-block px-4 py-1.5 rounded-full border border-gray-100 print:bg-transparent print:border-none print:text-xs print:!text-black print:font-black">
+                                                *({numeroALetras(total)})*
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -21,6 +21,7 @@ import {
     ChevronUp,
     X,
     Truck,
+    CheckCircle2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, formatMXN, formatUSD, formatUserName } from '@/lib/utils';
@@ -77,7 +78,7 @@ function PriceLine({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay, duration: 0.3 }}
             className={cn(
-                'flex items-center justify-between py-3.5 px-4 rounded-xl transition-colors',
+                'flex items-center justify-between py-3.5 px-4 rounded-xl transition-colors print:p-0 print:bg-transparent print:mb-2 print:!text-black',
                 accent
                     ? 'bg-gradient-to-r from-retarder-red to-retarder-red-700 text-white shadow-lg shadow-retarder-red/20'
                     : 'bg-retarder-gray-50 hover:bg-retarder-gray-100'
@@ -85,36 +86,36 @@ function PriceLine({
         >
             <div className="flex items-center gap-3">
                 <div className={cn(
-                    'p-2 rounded-lg',
+                    'p-2 rounded-lg print:hidden',
                     accent ? 'bg-white/20' : 'bg-white shadow-sm'
                 )}>
                     {icon}
                 </div>
                 <span className={cn(
                     'font-semibold text-sm',
-                    accent ? 'text-white' : 'text-retarder-gray-700'
+                    accent ? 'text-white print:!text-black print:font-black' : 'text-retarder-gray-700 print:!text-black font-semibold'
                 )}>{label}</span>
             </div>
             <div className="flex items-center gap-4">
                 <div className="text-right">
                     <p className={cn(
                         'text-[10px] font-semibold uppercase tracking-wider',
-                        accent ? 'text-white/60' : 'text-retarder-gray-400'
+                        accent ? 'text-white/60 print:!text-black' : 'text-retarder-gray-400 print:!text-black'
                     )}>USD</p>
                     <p className={cn(
                         'font-bold text-sm font-mono',
-                        accent ? 'text-white' : 'text-retarder-gray-700'
+                        accent ? 'text-white print:!text-black' : 'text-retarder-gray-700 print:!text-black'
                     )}>{formatUSD(usd)}</p>
                 </div>
-                <ArrowRight size={14} className={accent ? 'text-white/40' : 'text-retarder-gray-300'} />
+                <ArrowRight size={14} className={cn("print:hidden", accent ? 'text-white/40' : 'text-retarder-gray-300')} />
                 <div className="text-right min-w-[120px]">
                     <p className={cn(
                         'text-[10px] font-semibold uppercase tracking-wider',
-                        accent ? 'text-white/60' : 'text-retarder-gray-400'
+                        accent ? 'text-white/60 print:!text-black' : 'text-retarder-gray-400 print:!text-black'
                     )}>MXN</p>
                     <p className={cn(
                         'font-bold font-mono',
-                        accent ? 'text-xl text-white' : 'text-sm text-retarder-red'
+                        accent ? 'text-xl text-white print:!text-black print:text-lg print:font-bold' : 'text-sm text-retarder-red print:!text-black print:font-bold'
                     )}>{formatMXN(mxn)}</p>
                 </div>
             </div>
@@ -421,28 +422,7 @@ export default function CotizadorFrenosPage() {
                 console.warn("No se pudo guardar en Supabase. Generando solo PDF.", dbError);
             }
 
-            // 3. Imprimir PDF (SIEMPRE se ejecuta, haya o no errores de BD)
-            const documentOriginalTitle = document.title;
-            const cleanEmpresa = (cliente?.nombre_comercial || 'Cliente').replace(/[^a-z0-9]/gi, '_');
-            document.title = `${cotNumero}_Frenos_${cleanEmpresa}`;
-
-            // Damos tiempo (500ms) para que el navegador o el OS procesen el nuevo <title>
-            setTimeout(() => {
-                const handleAfterPrint = () => {
-                    window.removeEventListener('afterprint', handleAfterPrint);
-                    document.title = documentOriginalTitle;
-                    router.push('/ordenes');
-                };
-                window.addEventListener('afterprint', handleAfterPrint);
-                window.print();
-
-                // Fallback por si el navegador no soporta afterprint o el usuario cancela de forma que no dispara el evento
-                setTimeout(() => {
-                    document.title = documentOriginalTitle;
-                    router.push('/ordenes');
-                }, 10000);
-            }, 500);
-
+            router.push('/ordenes');
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -865,8 +845,8 @@ export default function CotizadorFrenosPage() {
 
                                 {/* Importe con letra */}
                                 <div className="mt-4 text-center pb-2">
-                                    <p className="text-[10px] font-bold text-retarder-gray-500 uppercase tracking-widest bg-gray-50 inline-block px-4 py-1.5 rounded-full border border-gray-100 print:bg-transparent print:border-none print:text-xs">
-                                        ({numeroALetras(breakdown.total.mxn)})
+                                    <p className="text-[10px] font-bold text-retarder-gray-500 uppercase tracking-widest bg-gray-50 inline-block px-4 py-1.5 rounded-full border border-gray-100 print:bg-transparent print:border-none print:text-xs print:!text-black print:font-black">
+                                        *({numeroALetras(breakdown.total.mxn)})*
                                     </p>
                                 </div>
                             </div>
@@ -944,7 +924,7 @@ export default function CotizadorFrenosPage() {
                                     )}
                                 >
                                     {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
-                                    {isCreating ? "Oficializando..." : "Oficializar y Generar PDF"}
+                                    {isCreating ? "GUARDANDO..." : "GUARDAR Y GENERAR PDF"}
                                 </button>
                                 <button
                                     onClick={() => setSelectedModelo(null)}
