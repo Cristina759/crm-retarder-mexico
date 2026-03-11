@@ -247,6 +247,7 @@ export default function CotizadorFrenosPage() {
     const [cantidadUnidades, setCantidadUnidades] = useState<number>(1);
     const [gastosTrasladoMXN, setGastosTrasladoMXN] = useState<number>(0);
     const [isCreating, setIsCreating] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
     const cotizacionRef = useRef<HTMLDivElement>(null);
 
     // Observaciones y Notas editables (valores del machote)
@@ -422,7 +423,7 @@ export default function CotizadorFrenosPage() {
                 console.warn("No se pudo guardar en Supabase. Generando solo PDF.", dbError);
             }
 
-            router.push('/ordenes');
+            setShowSuccess(true);
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -935,6 +936,41 @@ export default function CotizadorFrenosPage() {
                             </div>
                         </div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Success Modal */}
+            <AnimatePresence>
+                {showSuccess && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] print:hidden" />
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-[101] overflow-hidden print:hidden p-8 text-center">
+                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 size={40} />
+                            </div>
+                            <h3 className="text-2xl font-black text-retarder-black mb-2">¡Cotización Guardada!</h3>
+                            <p className="text-retarder-gray-500 mb-8">La cotización se ha registrado correctamente en el CRM y se ha creado la Orden de Servicio.</p>
+                            
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={() => {
+                                        window.print();
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-retarder-red text-white rounded-2xl font-bold hover:bg-retarder-red-700 transition-all shadow-lg shadow-retarder-red/20"
+                                >
+                                    <Printer size={20} />
+                                    VISUALIZAR / IMPRIMIR PDF
+                                </button>
+                                
+                                <button 
+                                    onClick={() => router.push('/ordenes')}
+                                    className="w-full py-4 bg-retarder-gray-100 text-retarder-gray-700 rounded-2xl font-bold hover:bg-retarder-gray-200 transition-all"
+                                >
+                                    IR A ÓRDENES DE SERVICIO
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
                 )}
             </AnimatePresence>
 

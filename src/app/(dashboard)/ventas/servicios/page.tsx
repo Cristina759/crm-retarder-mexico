@@ -196,6 +196,7 @@ export default function CotizadorServiciosPage() {
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
     const [isCreating, setIsCreating] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
     const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
     const [refaccionesCatalog, setRefaccionesCatalog] = useState<Refaccion[]>([]);
     const [loadingRefs, setLoadingRefs] = useState(true);
@@ -438,7 +439,7 @@ export default function CotizadorServiciosPage() {
                 console.warn("Hubo un problema con la base de datos, procediendo a impresión únicamente.", dbErr);
             }
 
-            router.push('/ordenes');
+            setShowSuccess(true);
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -825,6 +826,41 @@ export default function CotizadorServiciosPage() {
                             <div className="px-6 py-5 bg-gradient-to-r from-retarder-black to-retarder-gray-800 flex justify-between items-center"><div className="flex items-center gap-3 text-white"><Wrench size={20} /><h3 className="font-bold">Seleccionar Mano de Obra</h3></div><button onClick={() => setShowManoSearch(false)} className="bg-white/10 hover:bg-white/20 text-white p-1.5 rounded-xl transition-all"><X size={20} /></button></div>
                             <div className="p-6 border-b border-retarder-gray-100 space-y-4"><div className="flex items-center gap-3 bg-retarder-gray-50 rounded-2xl px-5 py-3 border border-retarder-gray-200 focus-within:border-retarder-red transition-all"><SearchIcon size={18} className="text-retarder-gray-400" /><input type="text" placeholder="Buscar concepto o categoría..." value={manoSearch} onChange={e => setManoSearch(e.target.value)} className="bg-transparent outline-none text-sm w-full font-medium" autoFocus /></div><div className="flex gap-2 overflow-x-auto pb-1"><button onClick={() => setManoCategory('all')} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', manoCategory === 'all' ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>Todas</button>{CATEGORIAS_MANO_OBRA.map(cat => (<button key={cat} onClick={() => setManoCategory(cat)} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', manoCategory === cat ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>{cat}</button>))}</div></div>
                             <div className="overflow-y-auto flex-1 p-2 space-y-1">{filteredMano.map(item => (<div key={item.concepto} className="group flex items-center justify-between p-4 rounded-2xl hover:bg-retarder-gray-50 transition-all border border-transparent hover:border-retarder-gray-100"><div className="flex-1 min-w-0"><p className="text-xs font-black text-retarder-black group-hover:text-retarder-red transition-colors">{item.concepto}</p><p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest mt-0.5">{item.categoria}</p></div><div className="flex items-center gap-6"><p className="text-sm font-black text-retarder-black">{formatMXN(item.precio_mxn)}</p><button onClick={() => { addManoObra(item); setShowManoSearch(false); }} className="bg-retarder-red text-white p-2.5 rounded-xl hover:bg-retarder-red-700 shadow-md shadow-retarder-red/20 transition-all"><Plus size={18} /></button></div></div>))}</div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Success Modal */}
+            <AnimatePresence>
+                {showSuccess && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] print:hidden" />
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-[101] overflow-hidden print:hidden p-8 text-center">
+                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 size={40} />
+                            </div>
+                            <h3 className="text-2xl font-black text-retarder-black mb-2">¡Cotización Guardada!</h3>
+                            <p className="text-retarder-gray-500 mb-8">La cotización se ha registrado correctamente en el CRM y se ha creado la Orden de Servicio.</p>
+                            
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={() => {
+                                        window.print();
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 py-4 bg-retarder-red text-white rounded-2xl font-bold hover:bg-retarder-red-700 transition-all shadow-lg shadow-retarder-red/20"
+                                >
+                                    <Printer size={20} />
+                                    VISUALIZAR / IMPRIMIR PDF
+                                </button>
+                                
+                                <button 
+                                    onClick={() => router.push('/ordenes')}
+                                    className="w-full py-4 bg-retarder-gray-100 text-retarder-gray-700 rounded-2xl font-bold hover:bg-retarder-gray-200 transition-all"
+                                >
+                                    IR A ÓRDENES DE SERVICIO
+                                </button>
+                            </div>
                         </motion.div>
                     </>
                 )}
