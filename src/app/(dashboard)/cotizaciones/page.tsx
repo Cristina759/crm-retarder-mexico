@@ -53,7 +53,7 @@ export default function CotizacionesPage() {
         try {
             const { data, error } = await supabase
                 .from('cotizaciones')
-                .select('*, ordenes_servicio(id, numero)')
+                .select('*, ordenes_servicio!ordenes_servicio_cotizacion_id_fkey(id, numero)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -61,13 +61,13 @@ export default function CotizacionesPage() {
             // Map the joined data to match the expected UI structure
             const formattedData = (data || []).map((c: any) => ({
                 ...c,
-                orden_id: c.ordenes_servicio?.id || c.orden_id,
-                orden_numero: c.ordenes_servicio?.numero
+                orden_id: c.ordenes_servicio?.[0]?.id || c.orden_id,
+                orden_numero: c.ordenes_servicio?.[0]?.numero
             }));
 
             setCotizaciones(formattedData);
-        } catch (error) {
-            console.error('Error fetching cotizaciones:', error);
+        } catch (error: any) {
+            console.error('Error fetching cotizaciones:', error?.message || JSON.stringify(error));
         } finally {
             setLoading(false);
         }

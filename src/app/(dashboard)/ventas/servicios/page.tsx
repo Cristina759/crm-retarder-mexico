@@ -409,8 +409,7 @@ export default function CotizadorServiciosPage() {
                         estado: 'enviada',
                         fecha: fechaActual,
                         vigencia_dias: 15,
-                        tipo_cambio: tipoCambio,
-                        tipo_cambio_fecha: tcFecha || ''
+                        notas: `TC: ${tipoCambio} MXN (${tcFecha || 'N/A'})`
                     })
                     .select()
                     .single();
