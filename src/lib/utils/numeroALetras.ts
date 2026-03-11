@@ -29,7 +29,7 @@ export function numeroALetras(n: number): string {
     function mil(n: number): string {
         let m = Math.floor(n / 1000), c = n % 1000;
         let s = '';
-        if (m === 1) s = 'UN MIL';
+        if (m === 1) s = 'MIL';
         else if (m > 1) s = cen(m) + ' MIL';
 
         if (c > 0) s += ' ' + cen(c);
@@ -51,6 +51,6 @@ export function numeroALetras(n: number): string {
     else if (num < 1000000) t = mil(num);
     else t = millon(num);
 
-    let letras = t.replace('UN MIL', 'MIL').trim();
+    let letras = t.trim();
     return letras + ' PESOS ' + centavos.toString().padStart(2, '0') + '/100 M.N.';
 }
