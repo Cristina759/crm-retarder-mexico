@@ -196,7 +196,7 @@ export default function CotizadorServiciosPage() {
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
     const [isCreating, setIsCreating] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
+    const [savedFolio, setSavedFolio] = useState<string>('');
     const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
     const [refaccionesCatalog, setRefaccionesCatalog] = useState<Refaccion[]>([]);
     const [loadingRefs, setLoadingRefs] = useState(true);
@@ -439,7 +439,7 @@ export default function CotizadorServiciosPage() {
                 console.warn("Hubo un problema con la base de datos, procediendo a impresión únicamente.", dbErr);
             }
 
-            setShowSuccess(true);
+            setSavedFolio(cotNumero);
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -648,6 +648,28 @@ export default function CotizadorServiciosPage() {
 
                             {/* Configuration & Totals */}
                             <div className="lg:col-span-2 space-y-5">
+                                {savedFolio && (
+                                    <div className="mb-6 bg-green-50 border border-green-200 rounded-3xl p-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-200"><Check size={24} /></div>
+                                            <div>
+                                                <p className="text-green-800 font-black text-lg uppercase tracking-tight">¡Cotización Guardada!</p>
+                                                <p className="text-green-600 font-bold text-xs uppercase opacity-80">Folio: {savedFolio} · Orden Creada</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                const oldTitle = document.title;
+                                                document.title = savedFolio;
+                                                window.print();
+                                                setTimeout(() => { document.title = oldTitle; }, 100);
+                                            }} 
+                                            className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 shadow-md shadow-green-100 uppercase transition-all"
+                                        >
+                                            Imprimir Ahora
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="bg-white rounded-2xl border border-retarder-gray-200 overflow-hidden shadow-sm p-6 space-y-6">
                                     <div className="flex items-center gap-3 border-b border-retarder-gray-100 pb-4">
                                         <div className="w-10 h-10 rounded-xl bg-retarder-red/10 text-retarder-red flex items-center justify-center"><Settings2 size={20} /></div>
@@ -686,7 +708,25 @@ export default function CotizadorServiciosPage() {
                                         <div><p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">Total a Pagar</p><h4 className="text-3xl md:text-4xl font-black">{formatMXN(total)}</h4></div>
                                         <div className="text-left sm:text-right text-xs text-white/40"><p>Subtotal: {formatMXN(subtotal)}</p><p>IVA 16%: {formatMXN(iva)}</p></div>
                                     </div>
-                                    <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}GUARDAR Y GENERAR PDF</button>
+                                    {savedFolio ? (
+                                        <div className="flex flex-col gap-3">
+                                            <button 
+                                                onClick={() => {
+                                                    const oldTitle = document.title;
+                                                    document.title = savedFolio;
+                                                    window.print();
+                                                    setTimeout(() => { document.title = oldTitle; }, 100);
+                                                }} 
+                                                className="w-full flex items-center justify-center gap-3 py-4 bg-retarder-red text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-red-700 shadow-xl"
+                                            >
+                                                <Printer size={20} /> IMPRIMIR PDF OFICIAL
+                                            </button>
+                                            <button onClick={() => { setSavedFolio(''); setSelectedService(null); }} className="w-full py-4 bg-white border border-retarder-gray-200 text-retarder-gray-600 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-gray-50 transition-all">NUEVA COTIZACIÓN</button>
+                                            <button onClick={() => router.push('/ordenes')} className="w-full py-4 bg-retarder-gray-800 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-black transition-all">VER PIPELINE</button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}GUARDAR Y GENERAR PDF</button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -726,7 +766,7 @@ export default function CotizadorServiciosPage() {
                                             </div>
                                             <div className="text-right space-y-1">
                                                 <div className="grid grid-cols-[auto_1fr] gap-x-3 text-left">
-                                                    <span className="font-bold">FOLIO:</span> <span className="text-retarder-red font-bold">POR ASIGNAR</span>
+                                                    <span className="font-bold">FOLIO:</span> <span className="text-retarder-red font-bold">{savedFolio || 'POR ASIGNAR'}</span>
                                                     <span className="font-bold">SERVICIO:</span> <span className="uppercase">{selectedService.label}</span>
                                                     <span className="font-bold">VENDEDOR:</span> <span>{user?.fullName || 'VENTAS'}</span>
                                                 </div>
@@ -831,40 +871,7 @@ export default function CotizadorServiciosPage() {
                 )}
             </AnimatePresence>
 
-            {/* Success Modal */}
-            <AnimatePresence>
-                {showSuccess && (
-                    <>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] print:hidden" />
-                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-3xl shadow-2xl z-[101] overflow-hidden print:hidden p-8 text-center">
-                            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle2 size={40} />
-                            </div>
-                            <h3 className="text-2xl font-black text-retarder-black mb-2">¡Cotización Guardada!</h3>
-                            <p className="text-retarder-gray-500 mb-8">La cotización se ha registrado correctamente en el CRM y se ha creado la Orden de Servicio.</p>
-                            
-                            <div className="space-y-3">
-                                <button 
-                                    onClick={() => {
-                                        window.print();
-                                    }}
-                                    className="w-full flex items-center justify-center gap-2 py-4 bg-retarder-red text-white rounded-2xl font-bold hover:bg-retarder-red-700 transition-all shadow-lg shadow-retarder-red/20"
-                                >
-                                    <Printer size={20} />
-                                    VISUALIZAR / IMPRIMIR PDF
-                                </button>
-                                
-                                <button 
-                                    onClick={() => router.push('/ordenes')}
-                                    className="w-full py-4 bg-retarder-gray-100 text-retarder-gray-700 rounded-2xl font-bold hover:bg-retarder-gray-200 transition-all"
-                                >
-                                    IR A ÓRDENES DE SERVICIO
-                                </button>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
+
 
             <style jsx global>{`
                 @media print {
