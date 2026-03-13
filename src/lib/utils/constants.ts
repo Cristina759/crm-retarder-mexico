@@ -202,6 +202,7 @@ export const REFACCION_CATEGORIAS = [
 
 export interface DemoCotizacion {
     id: string;
+    folio?: string;
     numero: string;
     numero_cotizacion?: number;
     empresa: string;

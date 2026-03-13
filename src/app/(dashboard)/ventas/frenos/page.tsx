@@ -385,10 +385,9 @@ export default function CotizadorFrenosPage() {
                 const { data: empresaData } = await supabase
                     .from('empresas')
                     .select('id')
-                    .eq('nombre_comercial', cliente?.nombre_comercial)
-                    .single();
+                    .eq('nombre_comercial', cliente?.nombre_comercial);
 
-                const empresaUUID = empresaData?.id || null;
+                const empresaUUID = empresaData?.[0]?.id || null;
 
                 // 1. Crear Cotización
                 const { data: cotData, error: cotError } = await supabase

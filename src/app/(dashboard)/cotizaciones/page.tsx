@@ -302,7 +302,7 @@ export default function CotizacionesPage() {
                                         <td className="py-3 px-2 sm:px-4">
                                             <div className="flex items-center gap-2">
                                                 <FileText size={14} className="text-retarder-gray-400" />
-                                                <span className="font-mono text-xs font-bold text-retarder-red">{c.numero || c.numero_cotizacion}</span>
+                                                <span className="font-mono text-xs font-bold text-retarder-red">{c.folio || c.numero || '—'}</span>
                                             </div>
                                         </td>
                                         <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{c.empresa}</td>
