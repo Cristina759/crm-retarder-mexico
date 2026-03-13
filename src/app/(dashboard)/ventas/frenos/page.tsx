@@ -770,7 +770,7 @@ export default function CotizadorFrenosPage() {
                                     <button 
                                         onClick={() => {
                                             if (redirectTimer) clearTimeout(redirectTimer);
-                                            router.push('/oportunidades/ordenes');
+                                            router.push('/cotizaciones');
                                         }}
                                         className="px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 transition-colors shadow-md shadow-green-100 uppercase"
                                     >

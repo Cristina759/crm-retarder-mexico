@@ -37,6 +37,7 @@ import { useUser } from '@clerk/nextjs';
 import { useRole } from '@/hooks/useRole';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 
 interface CustomMetadata {
     company?: string;
@@ -56,6 +57,7 @@ export default function OrdenesPage() {
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [newOrden, setNewOrden] = useState<{ empresa: string; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
+    const [empresaSearch, setEmpresaSearch] = useState('');
 
     const { user } = useUser();
     const { role, isAdmin, isVendedor, isTecnico, isCliente } = useRole();
@@ -117,6 +119,7 @@ export default function OrdenesPage() {
             fetchOrdenes();
             setShowNewOrden(false);
             setStep(1);
+            setEmpresaSearch('');
             setNewOrden({ empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
         } catch (error) {
             console.error('Error creating orden:', error);
@@ -566,10 +569,30 @@ export default function OrdenesPage() {
                                         </div>
 
                                         <div>
-                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Empresa</label>
-                                            <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
-                                                <Building2 size={14} className="text-retarder-gray-400" />
-                                                <input type="text" placeholder="Nombre de la empresa" value={newOrden.empresa} onChange={e => setNewOrden({ ...newOrden, empresa: e.target.value })} className="flex-1 outline-none text-sm" />
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Empresa / Cliente</label>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
+                                                    <Search size={13} className="text-retarder-gray-400 shrink-0" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="🔍 Buscar cliente..."
+                                                        value={empresaSearch}
+                                                        onChange={e => setEmpresaSearch(e.target.value)}
+                                                        className="flex-1 outline-none text-sm"
+                                                    />
+                                                </div>
+                                                <select
+                                                    value={newOrden.empresa}
+                                                    onChange={e => setNewOrden({ ...newOrden, empresa: e.target.value })}
+                                                    className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm font-semibold outline-none focus:border-retarder-red bg-white"
+                                                >
+                                                    <option value="">-- Seleccionar empresa --</option>
+                                                    {CLIENTES_REALES
+                                                        .filter(c => !empresaSearch.trim() || (c.nombre_comercial?.toLowerCase() || '').includes(empresaSearch.toLowerCase()))
+                                                        .map(c => (
+                                                            <option key={c.id} value={c.nombre_comercial}>{c.nombre_comercial}</option>
+                                                        ))}
+                                                </select>
                                             </div>
                                         </div>
                                         <div>
