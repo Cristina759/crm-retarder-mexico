@@ -11,6 +11,7 @@ import { useRole } from '@/hooks/useRole';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, RefreshCcw } from 'lucide-react';
 import { useEffect } from 'react';
+import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 
 type CotEstado = 'borrador' | 'enviada' | 'negociacion' | 'aceptada' | 'rechazada' | 'vencida';
 
@@ -53,17 +54,19 @@ export default function CotizacionesPage() {
         try {
             const { data, error } = await supabase
                 .from('cotizaciones')
-                .select('*, ordenes_servicio!ordenes_servicio_cotizacion_id_fkey(id, numero)')
+                .select('*')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            // Map the joined data to match the expected UI structure
-            const formattedData = (data || []).map((c: any) => ({
-                ...c,
-                orden_id: c.ordenes_servicio?.[0]?.id || c.orden_id,
-                orden_numero: c.ordenes_servicio?.[0]?.numero
-            }));
+            // Resolve empresa name from CLIENTES_REALES using empresa_id
+            const formattedData = (data || []).map((c: any) => {
+                const clienteMatch = CLIENTES_REALES.find(cl => cl.id === c.empresa_id);
+                return {
+                    ...c,
+                    empresa: clienteMatch?.nombre_comercial || c.empresa || c.empresa_id || 'Sin empresa',
+                };
+            });
 
             setCotizaciones(formattedData);
         } catch (error: any) {
