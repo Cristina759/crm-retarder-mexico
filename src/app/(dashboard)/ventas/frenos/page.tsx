@@ -398,6 +398,12 @@ export default function CotizadorFrenosPage() {
                     .select()
                     .single();
 
+                if (cotError) {
+                    console.error('ERROR INSERT COTIZACION:', JSON.stringify(cotError));
+                } else {
+                    console.log('COTIZACION GUARDADA:', cotData);
+                }
+
                 if (!cotError && cotData) {
                     cotId = cotData.id;
                     setSavedFolio(cotNumero);
