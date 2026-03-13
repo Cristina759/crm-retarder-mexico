@@ -37,7 +37,6 @@ import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
-import { useCallback } from 'react';
 
 const supabase = createClient();
 
@@ -243,7 +242,7 @@ export default function CotizadorFrenosPage() {
     const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
     const [selectedModelo, setSelectedModelo] = useState<CatalogoFreno | null>(null);
     const [selectedMarca, setSelectedMarca] = useState<'pentar' | 'frenelsa' | 'cofremex'>('pentar');
-    const [clientes, setClientes] = useState<ClienteCompact[]>([]);
+    const [clientes, setClientes] = useState(CLIENTES_REALES);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
     const [clientSearch, setClientSearch] = useState('');
     const [cantidadUnidades, setCantidadUnidades] = useState<number>(1);
@@ -277,29 +276,6 @@ export default function CotizadorFrenosPage() {
     const manoObraInstalacionMXN = useMemo(() => {
         return manoObraPorUnidadMXN * (cantidadUnidades || 1);
     }, [manoObraPorUnidadMXN, cantidadUnidades]);
-
-    // Fetch de Clientes
-    const fetchClientes = useCallback(async () => {
-        const { data, error } = await supabase.from('empresas').select('id, nombre_comercial, razon_social, rfc, direccion_fiscal, email, telefono, persona_contacto, nombre_titular, nombre_sucursal, telefono_2, telefono_3, email_2').order('nombre_comercial');
-        if (data && data.length > 0) {
-            setClientes(data as any[]);
-        } else {
-            setClientes([{
-                id: 'default-local',
-                nombre_comercial: 'Cliente Genérico (Local)',
-                rfc: 'XAXX010101000',
-                direccion_fiscal: 'Dirección Generica, México',
-                email: 'contacto@ejemplo.com',
-                telefono: '55 1234 5678',
-                persona_contacto: 'Juan Pérez'
-            }]);
-            if (error) console.error("Error fetching clients:", error);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchClientes();
-    }, [fetchClientes]);
 
     useEffect(() => {
         if (savedFolio) {
