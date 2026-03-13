@@ -386,12 +386,13 @@ export default function CotizadorFrenosPage() {
                     .from('cotizaciones')
                     .insert({
                         empresa_id: selectedClienteId,
-                        vendedor_id: null,
+                        empresa: cliente?.nombre_comercial || 'Sin empresa',
+                        cliente: cliente?.nombre_comercial || 'Sin empresa',
+                        vendedor: sellerName,
                         subtotal: breakdown.total.mxn / 1.16,
                         iva: breakdown.total.mxn - (breakdown.total.mxn / 1.16),
                         total: breakdown.total.mxn,
-                        estado: 'enviada',
-                        vigencia_dias: 15,
+                        tipo: 'frenos',
                         notas: `TC: ${tipoCambio} MXN (${tcFecha || 'N/A'})`
                     })
                     .select()
