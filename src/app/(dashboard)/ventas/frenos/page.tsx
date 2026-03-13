@@ -304,7 +304,7 @@ export default function CotizadorFrenosPage() {
     useEffect(() => {
         if (savedFolio) {
             const timer = window.setTimeout(() => {
-                router.push('/oportunidades/ordenes');
+                router.push('/cotizaciones');
             }, 5000);
             setRedirectTimer(timer as any);
             return () => clearTimeout(timer);
@@ -1007,7 +1007,7 @@ export default function CotizadorFrenosPage() {
                                         <button
                                             onClick={() => {
                                                 if (redirectTimer) clearTimeout(redirectTimer);
-                                                router.push('/oportunidades/ordenes');
+                                                router.push('/cotizaciones');
                                             }}
                                             className="px-5 py-3 bg-retarder-gray-800 text-white rounded-xl text-sm font-medium hover:bg-retarder-black transition-colors"
                                         >

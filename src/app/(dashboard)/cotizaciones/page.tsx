@@ -147,10 +147,10 @@ export default function CotizacionesPage() {
         let result = cotizaciones;
 
         // Role-based filtering
-        if (isVendedor) {
+        if (isVendedor && !isAdmin) {
             // Filter by current user's name or fallback to demo name if not set
             const userName = formatUserName(user?.fullName) || 'ING. CRISTINA VELASCO';
-            result = result.filter(c => c.vendedor === userName);
+            result = result.filter(c => !c.vendedor_id || c.vendedor === userName || c.vendedor_id === user?.id);
         } else if (isCliente) {
             const clientCompany = (user?.publicMetadata as { company?: string })?.company;
             if (clientCompany) {
