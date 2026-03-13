@@ -417,6 +417,21 @@ export default function CotizadorFrenosPage() {
                 if (!cotError && cotData) {
                     cotId = cotData.id;
                     setSavedFolio(cotNumero);
+
+                    // Crear Orden de Servicio automáticamente
+                    await supabase.from('ordenes_servicio').insert({
+                        empresa_id: empresaUUID,
+                        empresa: cliente?.nombre_comercial || 'Sin empresa',
+                        vendedor: sellerName,
+                        estado: 'cotizacion_enviada',
+                        cotizacion_id: cotData.id,
+                        folio: cotData.folio,
+                        tipo: 'frenos',
+                        total: breakdown.total.mxn,
+                        subtotal: breakdown.total.mxn / 1.16,
+                        iva: breakdown.total.mxn - (breakdown.total.mxn / 1.16),
+                        fecha_creado: new Date().toISOString()
+                    });
                 } else {
                     setSavedFolio(cotNumero);
                 }
