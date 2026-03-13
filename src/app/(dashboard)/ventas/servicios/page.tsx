@@ -195,8 +195,17 @@ export default function CotizadorServiciosPage() {
 
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
+    const [clientSearch, setClientSearch] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [savedFolio, setSavedFolio] = useState<string>('');
+    const [autoPrint, setAutoPrint] = useState(false);
+    const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
+
+    const filteredClientes = useMemo(() => {
+        if (!clientSearch.trim()) return clientes;
+        const q = clientSearch.toLowerCase();
+        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q));
+    }, [clientes, clientSearch]);
     const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
     const [refaccionesCatalog, setRefaccionesCatalog] = useState<Refaccion[]>([]);
     const [loadingRefs, setLoadingRefs] = useState(true);
@@ -302,19 +311,9 @@ export default function CotizadorServiciosPage() {
 
     // Fetch de Clientes
     const fetchClientes = useCallback(async () => {
-        const { data } = await supabase.from('empresas').select('id, nombre_comercial, rfc, direccion_fiscal, email, telefono, persona_contacto, nombre_titular, nombre_sucursal, telefono_2, telefono_3, email_2').order('nombre_comercial');
+        const { data } = await supabase.from('empresas').select('id, nombre_comercial, razon_social, rfc, direccion_fiscal, email, telefono, persona_contacto, nombre_titular, nombre_sucursal, telefono_2, telefono_3, email_2').order('nombre_comercial');
         if (data && data.length > 0) {
-            setClientes(data as ClienteCompact[]);
-        } else {
-            setClientes([{
-                id: 'default-local',
-                nombre_comercial: 'Cliente Genérico (Local)',
-                rfc: 'XAXX010101000',
-                direccion_fiscal: 'Dirección Generica, México',
-                email: 'contacto@ejemplo.com',
-                telefono: '55 1234 5678',
-                persona_contacto: 'Juan Pérez'
-            }]);
+            setClientes(data as any[]);
         }
     }, []);
 
@@ -343,6 +342,16 @@ export default function CotizadorServiciosPage() {
         fetchClientes();
         fetchRefacciones();
     }, [fetchClientes, fetchRefacciones]);
+
+    useEffect(() => {
+        if (savedFolio) {
+            const timer = window.setTimeout(() => {
+                router.push('/oportunidades/ordenes');
+            }, 5000);
+            setRedirectTimer(timer as any);
+            return () => clearTimeout(timer);
+        }
+    }, [savedFolio, router]);
 
     // Calculations
     const totalRefacciones = useMemo(() => {
@@ -440,6 +449,7 @@ export default function CotizadorServiciosPage() {
             }
 
             setSavedFolio(cotNumero);
+
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -501,26 +511,34 @@ export default function CotizadorServiciosPage() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-4 py-3 shadow-sm w-full sm:w-auto">
-                        <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-col gap-2 bg-white rounded-2xl border border-retarder-gray-200 px-4 py-3 shadow-sm w-full sm:w-auto">
+                        <div className="flex items-center gap-2">
                             <div className="p-2 bg-blue-50 rounded-lg">
                                 <Building2 size={16} className="text-blue-600" />
                             </div>
-                            <div className="hidden xs:block">
-                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Cliente</p>
-                                <p className="text-[10px] text-retarder-gray-400">O.S.</p>
+                            <div>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Cliente / Empresa</p>
                             </div>
                         </div>
-                        <select
-                            value={selectedClienteId}
-                            onChange={(e) => setSelectedClienteId(e.target.value)}
-                            className="bg-transparent border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-retarder-red flex-1 min-w-0"
-                        >
-                            <option value="">-- Seleccionar Cliente --</option>
-                            {clientes.map(c => (
-                                <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
-                            ))}
-                        </select>
+                        <div className="flex flex-col gap-2">
+                            <input
+                                type="text"
+                                placeholder="🔍 Buscar..."
+                                value={clientSearch}
+                                onChange={(e) => setClientSearch(e.target.value)}
+                                className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-retarder-red transition-all"
+                            />
+                            <select
+                                value={selectedClienteId}
+                                onChange={(e) => setSelectedClienteId(e.target.value)}
+                                className="w-full bg-transparent border border-retarder-gray-200 rounded-xl px-3 py-1.5 text-sm font-semibold outline-none focus:border-retarder-red"
+                            >
+                                <option value="">-- Seleccionar --</option>
+                                {filteredClientes.map(c => (
+                                    <option key={c.id} value={c.id}>{(c as any).nombre_comercial || (c as any).razon_social || 'Empresa sin nombre'}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -659,14 +677,12 @@ export default function CotizadorServiciosPage() {
                                         </div>
                                         <button 
                                             onClick={() => {
-                                                const oldTitle = document.title;
-                                                document.title = savedFolio;
-                                                window.print();
-                                                setTimeout(() => { document.title = oldTitle; }, 100);
-                                            }} 
+                                                if (redirectTimer) clearTimeout(redirectTimer);
+                                                router.push('/oportunidades/ordenes');
+                                            }}
                                             className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 shadow-md shadow-green-100 uppercase transition-all"
                                         >
-                                            Imprimir Ahora
+                                            Ir al Pipeline
                                         </button>
                                     </div>
                                 )}
@@ -725,7 +741,19 @@ export default function CotizadorServiciosPage() {
                                             <button onClick={() => router.push('/ordenes')} className="w-full py-4 bg-retarder-gray-800 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-black transition-all">VER PIPELINE</button>
                                         </div>
                                     ) : (
-                                        <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}GUARDAR Y GENERAR PDF</button>
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-3 px-1">
+                                                <input 
+                                                    type="checkbox" 
+                                                    id="autoPrintSrv" 
+                                                    checked={autoPrint} 
+                                                    onChange={e => setAutoPrint(e.target.checked)}
+                                                    className="w-4 h-4 text-retarder-red rounded focus:ring-retarder-red border-retarder-gray-300"
+                                                />
+                                                <label htmlFor="autoPrintSrv" className="text-xs font-bold text-white/60 cursor-pointer uppercase tracking-tight">Imprimir automáticamente al guardar</label>
+                                            </div>
+                                            <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}GUARDAR Y GENERAR PDF</button>
+                                        </div>
                                     )}
                                 </div>
                             </div>

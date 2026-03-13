@@ -431,16 +431,33 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         setError(null);
         try {
             if (isValidUUID(orden.id)) {
-                // PRIMERO: Borrar evidencias para evitar error FK
+                console.log('🔗 Limpiando dependencias para la orden (Panel):', orden.id);
+                
+                // 1. Desvincular de cotizaciones
+                try {
+                    await supabase.from('cotizaciones').update({ orden_id: null }).eq('orden_id', orden.id);
+                } catch (e) {}
+
+                // 2. Borrar evidencias 
                 await supabase.from('evidencias').delete().eq('orden_id', orden.id);
-                // SEGUNDO: Borrar la orden
+                
+                // 3. Borrar encuestas
+                await supabase.from('encuestas').delete().eq('orden_id', orden.id);
+
+                // 4. Borrar historial
+                try {
+                    await supabase.from('ticket_historial').delete().eq('ticket_id', orden.id);
+                } catch (e) {}
+
+                // 5. Borrar la orden
                 const { error: deleteError } = await supabase
                     .from('ordenes_servicio')
                     .delete()
                     .eq('id', orden.id);
+                    
                 if (deleteError) {
                     console.error('Error Supabase al borrar:', deleteError);
-                    console.log('Detalle completo del error:', JSON.stringify(deleteError, null, 2));
+                    alert(`No se pudo eliminar la orden: ${deleteError.message}`);
                     throw deleteError;
                 }
             }

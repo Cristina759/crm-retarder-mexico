@@ -33,6 +33,7 @@ import {
     type CatalogoFreno,
     type ManoObraItem,
 } from '@/lib/utils/constants';
+import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
@@ -78,13 +79,13 @@ function PriceLine({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay, duration: 0.3 }}
             className={cn(
-                'flex items-center justify-between py-3.5 px-4 rounded-xl transition-colors print:p-0 print:bg-transparent print:mb-2 print:!text-black',
+                'flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 sm:py-3.5 px-4 rounded-xl transition-colors print:!flex-row print:!items-center print:!p-0 print:bg-transparent print:mb-2 print:!text-black',
                 accent
                     ? 'bg-gradient-to-r from-retarder-red to-retarder-red-700 text-white shadow-lg shadow-retarder-red/20 print:bg-none print:bg-transparent print:shadow-none'
                     : 'bg-retarder-gray-50 hover:bg-retarder-gray-100'
             )}
         >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-2 sm:mb-0">
                 <div className={cn(
                     'p-2 rounded-lg print:hidden',
                     accent ? 'bg-white/20' : 'bg-white shadow-sm'
@@ -96,26 +97,26 @@ function PriceLine({
                     accent ? 'text-white print:!text-black print:font-black' : 'text-retarder-gray-700 print:!text-black font-semibold'
                 )}>{label}</span>
             </div>
-            <div className="flex items-center gap-4">
-                <div className="text-right">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+                <div className="text-left sm:text-right">
                     <p className={cn(
-                        'text-[10px] font-semibold uppercase tracking-wider',
+                        'text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider',
                         accent ? 'text-white/60 print:!text-black' : 'text-retarder-gray-400 print:!text-black'
                     )}>USD</p>
                     <p className={cn(
-                        'font-bold text-sm font-mono',
+                        'font-bold text-xs sm:text-sm font-mono',
                         accent ? 'text-white print:!text-black' : 'text-retarder-gray-700 print:!text-black'
                     )}>{formatUSD(usd)}</p>
                 </div>
-                <ArrowRight size={14} className={cn("print:hidden", accent ? 'text-white/40' : 'text-retarder-gray-300')} />
-                <div className="text-right min-w-[120px]">
+                <ArrowRight size={14} className={cn("hidden sm:block print:hidden", accent ? 'text-white/40' : 'text-retarder-gray-300')} />
+                <div className="text-right min-w-[100px] sm:min-w-[120px]">
                     <p className={cn(
-                        'text-[10px] font-semibold uppercase tracking-wider',
+                        'text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider',
                         accent ? 'text-white/60 print:!text-black' : 'text-retarder-gray-400 print:!text-black'
                     )}>MXN</p>
                     <p className={cn(
                         'font-bold font-mono',
-                        accent ? 'text-xl text-white print:!text-black print:text-lg print:font-bold' : 'text-sm text-retarder-red print:!text-black print:font-bold'
+                        accent ? 'text-lg sm:text-xl text-white print:!text-black print:text-lg print:font-bold' : 'text-sm text-retarder-red print:!text-black print:font-bold'
                     )}>{formatMXN(mxn)}</p>
                 </div>
             </div>
@@ -244,11 +245,22 @@ export default function CotizadorFrenosPage() {
     const [selectedMarca, setSelectedMarca] = useState<'pentar' | 'frenelsa' | 'cofremex'>('pentar');
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
+    const [clientSearch, setClientSearch] = useState('');
     const [cantidadUnidades, setCantidadUnidades] = useState<number>(1);
     const [gastosTrasladoMXN, setGastosTrasladoMXN] = useState<number>(0);
     const [isCreating, setIsCreating] = useState(false);
     const [savedFolio, setSavedFolio] = useState<string>('');
+    const [autoPrint, setAutoPrint] = useState(false);
+    const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
     const cotizacionRef = useRef<HTMLDivElement>(null);
+
+    const filteredClientes = useMemo(() => {
+        if (!clientSearch.trim()) return CLIENTES_REALES;
+        const q = clientSearch.toLowerCase();
+        return CLIENTES_REALES.filter(c => 
+            (c.nombre_comercial?.toLowerCase() || '').includes(q)
+        );
+    }, [clientSearch]);
 
     // Observaciones y Notas editables (valores del machote)
     const [observaciones, setObservaciones] = useState(
@@ -268,9 +280,9 @@ export default function CotizadorFrenosPage() {
 
     // Fetch de Clientes
     const fetchClientes = useCallback(async () => {
-        const { data, error } = await supabase.from('empresas').select('id, nombre_comercial, rfc, direccion_fiscal, email, telefono, persona_contacto, nombre_titular, nombre_sucursal, telefono_2, telefono_3, email_2').order('nombre_comercial');
+        const { data, error } = await supabase.from('empresas').select('id, nombre_comercial, razon_social, rfc, direccion_fiscal, email, telefono, persona_contacto, nombre_titular, nombre_sucursal, telefono_2, telefono_3, email_2').order('nombre_comercial');
         if (data && data.length > 0) {
-            setClientes(data as ClienteCompact[]);
+            setClientes(data as any[]);
         } else {
             setClientes([{
                 id: 'default-local',
@@ -288,6 +300,16 @@ export default function CotizadorFrenosPage() {
     useEffect(() => {
         fetchClientes();
     }, [fetchClientes]);
+
+    useEffect(() => {
+        if (savedFolio) {
+            const timer = window.setTimeout(() => {
+                router.push('/oportunidades/ordenes');
+            }, 5000);
+            setRedirectTimer(timer as any);
+            return () => clearTimeout(timer);
+        }
+    }, [savedFolio, router]);
 
     // Derived prices
     // Get the brake price based on selected brand
@@ -405,11 +427,24 @@ export default function CotizadorFrenosPage() {
                     cotId = cotData.id;
                     setSavedFolio(cotNumero);
                 } else {
-                    setSavedFolio(cotNumero); // Fallback to local if direct data missing but we have the number
+                    setSavedFolio(cotNumero);
+                }
+
+                // If autoPrint is still requested manually
+                if (autoPrint) {
+                    setTimeout(() => {
+                        const oldTitle = document.title;
+                        document.title = cotNumero;
+                        window.print();
+                        setTimeout(() => { document.title = oldTitle; }, 100);
+                    }, 500);
                 }
             } catch (dbError: any) {
                 console.warn("No se pudo guardar en Supabase. Generando solo PDF.", dbError);
                 setSavedFolio(cotNumero);
+                if (autoPrint) {
+                    setTimeout(() => window.print(), 500);
+                }
             }
         } catch (error: any) {
             console.error('Error generating quotation:', error);
@@ -494,7 +529,7 @@ export default function CotizadorFrenosPage() {
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm"
+                        className="flex flex-col gap-2 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm"
                     >
                         <div className="flex items-center gap-2">
                             <div className="p-2 bg-blue-50 rounded-lg">
@@ -502,19 +537,27 @@ export default function CotizadorFrenosPage() {
                             </div>
                             <div>
                                 <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Cliente / Empresa</p>
-                                <p className="text-[10px] text-retarder-gray-400">Seleccionar para O.S.</p>
                             </div>
                         </div>
-                        <select
-                            value={selectedClienteId}
-                            onChange={(e) => setSelectedClienteId(e.target.value)}
-                            className="bg-transparent border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-retarder-red min-w-[200px]"
-                        >
-                            <option value="">-- Seleccionar Cliente --</option>
-                            {clientes.map(c => (
-                                <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
-                            ))}
-                        </select>
+                        <div className="space-y-2">
+                            <input
+                                type="text"
+                                placeholder="🔍 Buscar cliente..."
+                                value={clientSearch}
+                                onChange={(e) => setClientSearch(e.target.value)}
+                                className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-retarder-red transition-all"
+                            />
+                            <select
+                                value={selectedClienteId}
+                                onChange={(e) => setSelectedClienteId(e.target.value)}
+                                className="w-full bg-transparent border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-retarder-red"
+                            >
+                                <option value="">-- Seleccionar --</option>
+                                {filteredClientes.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
+                                ))}
+                            </select>
+                        </div>
                     </motion.div>
 
                     {/* Unidades a Instalar */}
@@ -707,11 +750,11 @@ export default function CotizadorFrenosPage() {
                             >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-200">
-                                        <Check size={20} />
+                                        <CheckCircle2 size={24} />
                                     </div>
                                     <div>
                                         <p className="text-green-800 font-black text-sm uppercase">¡Cotización Guardada Exitosamente!</p>
-                                        <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider">Folio: {savedFolio} · Orden de Servicio Creada</p>
+                                        <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider">Folio: {savedFolio}. Redirigiendo al Pipeline en 5s...</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -727,10 +770,13 @@ export default function CotizadorFrenosPage() {
                                         Imprimir Ahora
                                     </button>
                                     <button 
-                                        onClick={() => router.push('/ordenes')}
-                                        className="px-4 py-2 border border-green-200 text-green-700 rounded-xl text-xs font-bold hover:bg-green-100 transition-colors uppercase"
+                                        onClick={() => {
+                                            if (redirectTimer) clearTimeout(redirectTimer);
+                                            router.push('/oportunidades/ordenes');
+                                        }}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 transition-colors shadow-md shadow-green-100 uppercase"
                                     >
-                                        Ver Pipeline
+                                        Ir al Pipeline
                                     </button>
                                 </div>
                             </motion.div>
@@ -961,7 +1007,10 @@ export default function CotizadorFrenosPage() {
                                             NUEVA COTIZACIÓN
                                         </button>
                                         <button
-                                            onClick={() => router.push('/ordenes')}
+                                            onClick={() => {
+                                                if (redirectTimer) clearTimeout(redirectTimer);
+                                                router.push('/oportunidades/ordenes');
+                                            }}
                                             className="px-5 py-3 bg-retarder-gray-800 text-white rounded-xl text-sm font-medium hover:bg-retarder-black transition-colors"
                                         >
                                             VER PIPELINE
@@ -969,6 +1018,16 @@ export default function CotizadorFrenosPage() {
                                     </>
                                 ) : (
                                     <>
+                                        <div className="flex items-center gap-3 px-2 mb-2 sm:mb-0">
+                                            <input 
+                                                type="checkbox" 
+                                                id="autoPrint" 
+                                                checked={autoPrint} 
+                                                onChange={e => setAutoPrint(e.target.checked)}
+                                                className="w-4 h-4 text-retarder-red rounded focus:ring-retarder-red border-retarder-gray-300"
+                                            />
+                                            <label htmlFor="autoPrint" className="text-xs font-bold text-retarder-gray-500 cursor-pointer">IMPRIMIR AUTOMÁTICAMENTE</label>
+                                        </div>
                                         <button
                                             onClick={handleFinalize}
                                             disabled={!selectedClienteId || !selectedModelo || isCreating}

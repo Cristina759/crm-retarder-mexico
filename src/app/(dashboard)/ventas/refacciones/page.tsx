@@ -142,6 +142,8 @@ export default function CotizadorRefaccionesPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [savedFolio, setSavedFolio] = useState<string>('');
     const [traslado, setTraslado] = useState<number>(0);
+    const [autoPrint, setAutoPrint] = useState(false); // Changed default to false
+    const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
 
     // Editable Observations and Notes
     const [observaciones, setObservaciones] = useState(
@@ -158,11 +160,11 @@ export default function CotizadorRefaccionesPage() {
 
     // Fetch de Clientes
     const fetchClientes = useCallback(async () => {
-        const { data } = await supabase.from('empresas').select('id, nombre_comercial, rfc, direccion_fiscal, email, telefono, persona_contacto').order('nombre_comercial');
+        const { data } = await supabase.from('empresas').select('id, nombre_comercial, razon_social, rfc, direccion_fiscal, email, telefono, persona_contacto').order('nombre_comercial');
         if (data && data.length > 0) {
-            setClientes(data as ClienteCompact[]);
+            setClientes(data as any[]);
         }
-    }, [supabase]);
+    }, []);
 
 
     const fetchRefacciones = useCallback(async () => {
@@ -184,12 +186,22 @@ export default function CotizadorRefaccionesPage() {
         } finally {
             setLoadingRefacciones(false);
         }
-    }, [supabase]);
+    }, []);
 
     useEffect(() => {
         fetchClientes();
         fetchRefacciones();
     }, [fetchClientes, fetchRefacciones]);
+
+    useEffect(() => {
+        if (savedFolio) {
+            const timer = window.setTimeout(() => {
+                router.push('/oportunidades/ordenes');
+            }, 5000);
+            setRedirectTimer(timer as any);
+            return () => clearTimeout(timer);
+        }
+    }, [savedFolio, router]);
 
     // Filtered + paginated results
     const filtered = useMemo(() => {
@@ -212,7 +224,7 @@ export default function CotizadorRefaccionesPage() {
     const filteredClientes = useMemo(() => {
         if (!clientSearch.trim()) return clientes;
         const q = clientSearch.toLowerCase();
-        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q));
+        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q) || (c.razon_social || '').toLowerCase().includes(q));
     }, [clientes, clientSearch]);
 
     const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
@@ -339,6 +351,16 @@ export default function CotizadorRefaccionesPage() {
             }
 
             setSavedFolio(cotNumero);
+
+            // Auto-trigger print
+            if (autoPrint) {
+                setTimeout(() => {
+                    const oldTitle = document.title;
+                    document.title = cotNumero;
+                    window.print();
+                    setTimeout(() => { document.title = oldTitle; }, 100);
+                }, 500);
+            }
         } catch (error: any) {
             console.error('Error generating quotation:', error);
             alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
@@ -624,7 +646,7 @@ export default function CotizadorRefaccionesPage() {
                                         >
                                             <option value="">-- Seleccionar --</option>
                                             {filteredClientes.map(c => (
-                                                <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
+                                                <option key={c.id} value={c.id}>{(c as any).nombre_comercial || (c as any).razon_social || 'Empresa sin nombre'}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -700,10 +722,14 @@ export default function CotizadorRefaccionesPage() {
                                     {savedFolio && (
                                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-xl animate-in fade-in zoom-in duration-300">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center shadow-md shadow-green-100"><Check size={16} /></div>
-                                                <p className="text-green-800 font-black text-[10px] uppercase">¡Cotización Guardada!</p>
+                                                <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-200">
+                                                    <CheckCircle2 size={24} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-green-800 font-black text-sm uppercase">¡Cotización Guardada Exitosamente!</p>
+                                                    <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider">Folio: {savedFolio}. Redirigiendo al Pipeline en 5s...</p>
+                                                </div>
                                             </div>
-                                            <p className="text-green-600 text-[9px] font-bold uppercase tracking-widest pl-11">Folio: {savedFolio}</p>
                                         </div>
                                     )}
                                     <div className="pt-1 pb-4">
@@ -724,30 +750,46 @@ export default function CotizadorRefaccionesPage() {
                                                     onClick={() => {
                                                         setCart([]);
                                                         setSavedFolio('');
+                                                        if (redirectTimer) clearTimeout(redirectTimer);
                                                     }}
                                                     className="w-full py-3 bg-white border border-retarder-gray-200 text-retarder-gray-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-retarder-gray-50 transition-all"
                                                 >
                                                     NUEVA COTIZACIÓN
                                                 </button>
                                                 <button
-                                                    onClick={() => router.push('/ordenes')}
+                                                    onClick={() => {
+                                                        if (redirectTimer) clearTimeout(redirectTimer);
+                                                        router.push('/oportunidades/ordenes');
+                                                    }}
                                                     className="w-full py-3 bg-retarder-gray-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-black transition-all"
                                                 >
                                                     IR A ÓRDENES
                                                 </button>
                                             </div>
                                         ) : (
-                                            <button
-                                                onClick={handleFinalize}
-                                                disabled={!selectedClienteId || isCreating || cart.length === 0}
-                                                className={cn(
-                                                    "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg active:scale-95",
-                                                    !selectedClienteId || isCreating || cart.length === 0 ? "bg-retarder-gray-200 text-retarder-gray-400 shadow-none cursor-not-allowed" : "bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
-                                                )}
-                                            >
-                                                {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
-                                                {isCreating ? "GUARDANDO..." : "GUARDAR Y GENERAR PDF"}
-                                            </button>
+                                            <div className="space-y-3">
+                                                <div className="flex items-center gap-3 px-1">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        id="autoPrintRef" 
+                                                        checked={autoPrint} 
+                                                        onChange={e => setAutoPrint(e.target.checked)}
+                                                        className="w-4 h-4 text-retarder-red rounded focus:ring-retarder-red border-retarder-gray-300"
+                                                    />
+                                                    <label htmlFor="autoPrintRef" className="text-[10px] font-bold text-retarder-gray-400 cursor-pointer uppercase tracking-tight">Imprimir automáticamente al guardar</label>
+                                                </div>
+                                                <button
+                                                    onClick={handleFinalize}
+                                                    disabled={!selectedClienteId || isCreating || cart.length === 0}
+                                                    className={cn(
+                                                        "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg active:scale-95",
+                                                        !selectedClienteId || isCreating || cart.length === 0 ? "bg-retarder-gray-200 text-retarder-gray-400 shadow-none cursor-not-allowed" : "bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
+                                                    )}
+                                                >
+                                                    {isCreating ? <Loader2 size={16} className="animate-spin" /> : <Printer size={16} />}
+                                                    {isCreating ? "GUARDANDO..." : "GUARDAR Y GENERAR PDF"}
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>

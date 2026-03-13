@@ -40,33 +40,57 @@ export default function FacturacionPage() {
     const [filterEstado, setFilterEstado] = useState<FactEstado | 'all'>('all');
     const [showForm, setShowForm] = useState(false);
     const [isPending, startTransition] = useTransition();
+    const [clientes, setClientes] = useState<any[]>([]);
+    const [ordenesPendientes, setOrdenesPendientes] = useState<any[]>([]);
+    const [newFactura, setNewFactura] = useState({
+        orden_id: '',
+        empresa: '',
+        numero_factura: '',
+        concepto: '',
+        monto: '',
+        metodo_pago: 'Transferencia',
+        vigencia: '30'
+    });
+    const [clientSearchModal, setClientSearchModal] = useState('');
+
+    const filteredClientesModal = useMemo(() => {
+        if (!clientSearchModal.trim()) return clientes;
+        const q = clientSearchModal.toLowerCase();
+        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q));
+    }, [clientes, clientSearchModal]);
 
     const fetchFacturas = useCallback(async () => {
         setLoading(true);
         try {
-            // Buscamos órdenes que tengan número de factura (estén facturadas o pagadas)
+            // Buscamos órdenes que estén en fase administrativa O tengan número de factura
             const { data, error } = await supabase
                 .from('ordenes_servicio')
                 .select('*')
-                .not('numero_factura', 'is', null)
+                .or('estado.in.("encuesta_enviada","facturado","pagado"),numero_factura.not.is.null')
                 .order('fecha_creado', { ascending: false });
 
             if (error) throw error;
 
-            const mapped: Factura[] = (data || []).map(o => ({
-                id: o.id,
-                numero_orden: o.numero || 'OS-N/A',
-                numero_factura: o.numero_factura,
-                empresa: o.empresa,
-                concepto: o.descripcion || (o.monto_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),
-                subtotal: o.subtotal || 0,
-                iva: o.iva || 0,
-                total: o.monto || 0,
-                estado: o.estado === 'pagado' ? 'pagada' : 'enviada', // Simplificación basada en el estado de la OS
-                fecha_emision: o.fecha_creado,
-                fecha_vencimiento: o.fecha_creado, // Falta campo real de vencimiento, usamos fecha_creado como fallback
-                metodo_pago: o.metodo_pago || 'Transferencia',
-            }));
+            const mapped: Factura[] = (data || []).map(o => {
+                let estado: FactEstado = 'pendiente_facturar';
+                if (o.numero_factura) estado = 'facturada';
+                if (o.pagado || o.estado === 'pagado') estado = 'pagada';
+                
+                return {
+                    id: o.id,
+                    numero_orden: o.numero || 'OS-N/A',
+                    numero_factura: o.numero_factura || 'PENDIENTE',
+                    empresa: o.empresa,
+                    concepto: o.descripcion || (o.monto_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),
+                    subtotal: o.subtotal || 0,
+                    iva: o.iva || 0,
+                    total: o.monto || 0,
+                    estado: estado,
+                    fecha_emision: o.fecha_creado,
+                    fecha_vencimiento: o.fecha_creado, 
+                    metodo_pago: o.metodo_pago || 'Transferencia',
+                };
+            });
 
             setFacturas(mapped);
         } catch (error) {
@@ -74,11 +98,30 @@ export default function FacturacionPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [supabase]);
+
+    const fetchDropdownData = useCallback(async () => {
+        try {
+            // Clientes
+            const { data: cData } = await supabase.from('empresas').select('id, nombre_comercial').order('nombre_comercial');
+            setClientes(cData || []);
+
+            // Órdenes sin factura aún
+            const { data: oData } = await supabase
+                .from('ordenes_servicio')
+                .select('id, numero, empresa, monto, descripcion')
+                .is('numero_factura', null)
+                .order('numero', { ascending: false });
+            setOrdenesPendientes(oData || []);
+        } catch (error) {
+            console.error('Error fetching dropdown data:', error);
+        }
+    }, [supabase]);
 
     useEffect(() => {
         fetchFacturas();
-    }, [fetchFacturas]);
+        fetchDropdownData();
+    }, [fetchFacturas, fetchDropdownData]);
 
     const filtered = useMemo(() => {
         let result = facturas;
@@ -100,6 +143,55 @@ export default function FacturacionPage() {
         pendientes: facturas.filter(f => f.estado === 'pendiente_facturar').length,
         vencidas: facturas.filter(f => f.estado === 'vencida').length,
     }), [facturas]);
+
+    const handleCreateFactura = async () => {
+        if (!newFactura.numero_factura || !newFactura.empresa) {
+            alert('Por favor completa los campos obligatorios (Número de factura y Empresa)');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            if (newFactura.orden_id) {
+                const { error } = await supabase
+                    .from('ordenes_servicio')
+                    .update({
+                        numero_factura: newFactura.numero_factura,
+                        estado: 'facturado',
+                        metodo_pago: newFactura.metodo_pago,
+                        monto: newFactura.monto ? Number(newFactura.monto) : undefined
+                    })
+                    .eq('id', newFactura.orden_id);
+                
+                if (error) throw error;
+            } else {
+                const nextNum = facturas.length + 1000;
+                const { error } = await supabase
+                    .from('ordenes_servicio')
+                    .insert([{
+                        numero: `OS-F${nextNum}`,
+                        empresa: newFactura.empresa,
+                        numero_factura: newFactura.numero_factura,
+                        estado: 'facturado',
+                        descripcion: newFactura.concepto || 'Facturación Manual',
+                        monto: Number(newFactura.monto) || 0,
+                        vendedor: 'Sistema'
+                    }]);
+                if (error) throw error;
+            }
+
+            setShowForm(false);
+            setNewFactura({ orden_id: '', empresa: '', numero_factura: '', concepto: '', monto: '', metodo_pago: 'Transferencia', vigencia: '30' });
+            await fetchFacturas();
+            await fetchDropdownData();
+            alert('Factura registrada correctamente');
+        } catch (error: any) {
+            console.error('Error creating factura:', error);
+            alert(`Error al crear la factura: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="space-y-4">
@@ -207,37 +299,108 @@ export default function FacturacionPage() {
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40" />
                         <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl z-50 overflow-hidden">
                             <div className="flex items-center justify-between px-6 py-4 border-b border-retarder-gray-200 bg-gradient-to-r from-retarder-red to-retarder-red-700">
-                                <h3 className="text-lg font-bold text-white">Nueva Factura</h3>
+                                <h3 className="text-lg font-bold text-white">Registrar Factura</h3>
                                 <button onClick={() => setShowForm(false)} className="p-2 rounded-lg hover:bg-white/10 text-white"><X size={18} /></button>
                             </div>
-                            <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
-                                {[
-                                    { label: 'Número de Orden', placeholder: 'OS-00000', icon: <FileText size={14} /> },
-                                    { label: 'Empresa', placeholder: 'Nombre de la empresa', icon: <Building2 size={14} /> },
-                                ].map(f => (
-                                    <div key={f.label}>
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">{f.label}</label>
+                            <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                                <div>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Vincular a Orden de Servicio (Opcional)</label>
+                                    <select 
+                                        value={newFactura.orden_id}
+                                        onChange={e => {
+                                            const os = ordenesPendientes.find(o => o.id === e.target.value);
+                                            setNewFactura({
+                                                ...newFactura,
+                                                orden_id: e.target.value,
+                                                empresa: os ? os.empresa : newFactura.empresa,
+                                                monto: os ? String(os.monto || '') : newFactura.monto,
+                                                concepto: os ? (os.descripcion || '') : newFactura.concepto
+                                            });
+                                        }}
+                                        className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none bg-white"
+                                    >
+                                        <option value="">-- Seleccionar Orden --</option>
+                                        {ordenesPendientes.map(o => (
+                                            <option key={o.id} value={o.id}>{o.numero} - {o.empresa}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Número de Factura</label>
+                                    <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
+                                        <FileText size={14} className="text-retarder-gray-400" />
+                                        <input 
+                                            type="text" 
+                                            placeholder="F-0000" 
+                                            value={newFactura.numero_factura}
+                                            onChange={e => setNewFactura({...newFactura, numero_factura: e.target.value})}
+                                            className="flex-1 outline-none text-sm" 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Empresa / Cliente</label>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-1 focus-within:border-retarder-red">
+                                            <Search size={12} className="text-retarder-gray-400" />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Filtrar clientes..." 
+                                                value={clientSearchModal}
+                                                onChange={e => setClientSearchModal(e.target.value)}
+                                                className="flex-1 outline-none text-xs py-1"
+                                            />
+                                        </div>
                                         <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
-                                            <span className="text-retarder-gray-400">{f.icon}</span>
-                                            <input type="text" placeholder={f.placeholder} className="flex-1 outline-none text-sm" />
+                                            <Building2 size={14} className="text-retarder-gray-400" />
+                                            <select
+                                                value={newFactura.empresa}
+                                                onChange={(e) => setNewFactura({ ...newFactura, empresa: e.target.value })}
+                                                className="w-full bg-transparent text-sm outline-none transition-all"
+                                            >
+                                                <option value="">Seleccionar empresa...</option>
+                                                {filteredClientesModal.map((c) => (
+                                                    <option key={c.id} value={c.nombre_comercial}>{c.nombre_comercial}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
-                                ))}
+                                </div>
+
                                 <div>
                                     <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Concepto</label>
-                                    <textarea placeholder="Descripción de la factura..." rows={2} className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none resize-none" />
+                                    <textarea 
+                                        placeholder="Descripción de la factura..." 
+                                        rows={2} 
+                                        value={newFactura.concepto}
+                                        onChange={e => setNewFactura({...newFactura, concepto: e.target.value})}
+                                        className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none resize-none" 
+                                    />
                                 </div>
+
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Monto Total (MXN)</label>
                                         <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
                                             <DollarSign size={14} className="text-retarder-gray-400" />
-                                            <input type="number" placeholder="0.00" className="flex-1 outline-none text-sm" />
+                                            <input 
+                                                type="number" 
+                                                placeholder="0.00" 
+                                                value={newFactura.monto}
+                                                onChange={e => setNewFactura({...newFactura, monto: e.target.value})}
+                                                className="flex-1 outline-none text-sm" 
+                                            />
                                         </div>
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Método de Pago</label>
-                                        <select className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none">
+                                        <select 
+                                            value={newFactura.metodo_pago}
+                                            onChange={e => setNewFactura({...newFactura, metodo_pago: e.target.value})}
+                                            className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none bg-white"
+                                        >
                                             <option>Transferencia</option>
                                             <option>Cheque</option>
                                             <option>Efectivo</option>
@@ -245,17 +408,16 @@ export default function FacturacionPage() {
                                         </select>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Días de Vigencia</label>
-                                    <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
-                                        <Calendar size={14} className="text-retarder-gray-400" />
-                                        <input type="number" placeholder="30" className="flex-1 outline-none text-sm" />
-                                    </div>
-                                </div>
                             </div>
                             <div className="px-6 py-4 border-t border-retarder-gray-200 bg-retarder-gray-50 flex gap-2">
                                 <button onClick={() => setShowForm(false)} className="flex-1 px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-600 hover:bg-white transition-colors">Cancelar</button>
-                                <button onClick={() => setShowForm(false)} className="flex-1 px-4 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-colors shadow-md shadow-retarder-red/20">Crear Factura</button>
+                                <button 
+                                    onClick={handleCreateFactura}
+                                    disabled={loading}
+                                    className="flex-1 px-4 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-colors shadow-md shadow-retarder-red/20 disabled:bg-gray-400"
+                                >
+                                    {loading ? 'Procesando...' : 'Crear Factura'}
+                                </button>
                             </div>
                         </motion.div>
                     </>

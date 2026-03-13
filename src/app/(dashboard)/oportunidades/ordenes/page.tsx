@@ -141,13 +141,30 @@ export default function OrdenesPage() {
             try {
                 // Borrar de Supabase si es UUID válido
                 if (isValidUUID(id)) {
-                    // PRIMERO: Borrar evidencias para evitar error FK
+                    console.log('🔗 Limpiando dependencias para la orden:', id);
+                    
+                    // 1. Desvincular de cotizaciones (si existe el campo orden_id)
+                    try {
+                        await supabase.from('cotizaciones').update({ orden_id: null }).eq('orden_id', id);
+                    } catch (e) { console.log('Campo orden_id no presente en cotizaciones o ya nulo'); }
+
+                    // 2. Borrar evidencias 
                     await supabase.from('evidencias').delete().eq('orden_id', id);
-                    // SEGUNDO: Borrar la orden
+                    
+                    // 3. Borrar encuestas
+                    await supabase.from('encuestas').delete().eq('orden_id', id);
+
+                    // 4. Borrar historial (si existe la tabla)
+                    try {
+                        await supabase.from('ticket_historial').delete().eq('ticket_id', id);
+                    } catch (e) {}
+
+                    // 5. SEGUNDO: Borrar la orden
                     const { error } = await supabase.from('ordenes_servicio').delete().eq('id', id);
+                    
                     if (error) {
                         console.error('Error Supabase al borrar:', error);
-                        console.log('Detalle completo del error:', JSON.stringify(error, null, 2));
+                        alert(`No se pudo eliminar la orden: ${error.message}`);
                         return;
                     }
                 }
