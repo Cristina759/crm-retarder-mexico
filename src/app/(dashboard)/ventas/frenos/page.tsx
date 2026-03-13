@@ -381,11 +381,20 @@ export default function CotizadorFrenosPage() {
                     osNumero = `OS-${String(nextOsIdx).padStart(4, '0')}`;
                 }
 
+                // Buscar UUID real en Supabase por nombre_comercial
+                const { data: empresaData } = await supabase
+                    .from('empresas')
+                    .select('id')
+                    .eq('nombre_comercial', cliente?.nombre_comercial)
+                    .single();
+
+                const empresaUUID = empresaData?.id || null;
+
                 // 1. Crear Cotización
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
                     .insert({
-                        empresa_id: selectedClienteId,
+                        empresa_id: empresaUUID,
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
                         cliente: cliente?.nombre_comercial || 'Sin empresa',
                         vendedor: sellerName,
