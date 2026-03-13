@@ -170,7 +170,7 @@ export default function CotizadorRefaccionesPage() {
     const fetchRefacciones = useCallback(async () => {
         setLoadingRefacciones(true);
         try {
-            const { data, error } = await supabase.from('catalogo_refacciones').select('*').order('nombre');
+            const { data, error } = await supabase.from('cat_refacciones').select('*').order('nombre');
             if (error) throw error;
             if (data) {
                 // Mapear a formato esperado por el resto del componente
