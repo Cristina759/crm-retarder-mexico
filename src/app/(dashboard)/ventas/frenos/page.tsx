@@ -394,6 +394,7 @@ export default function CotizadorFrenosPage() {
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
                     .insert({
+                        folio: cotNumero,
                         empresa_id: empresaUUID,
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
                         cliente: cliente?.nombre_comercial || 'Sin empresa',
@@ -402,6 +403,7 @@ export default function CotizadorFrenosPage() {
                         iva: breakdown.total.mxn - (breakdown.total.mxn / 1.16),
                         total: breakdown.total.mxn,
                         tipo: 'frenos',
+                        estado: 'enviada',
                         notas: `TC: ${tipoCambio} MXN (${tcFecha || 'N/A'})`
                     })
                     .select()
