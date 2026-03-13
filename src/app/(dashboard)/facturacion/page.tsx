@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar, Loader2, RefreshCcw } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 
 const supabase = createClient();
 
@@ -102,9 +103,8 @@ export default function FacturacionPage() {
 
     const fetchDropdownData = useCallback(async () => {
         try {
-            // Clientes
-            const { data: cData } = await supabase.from('empresas').select('id, nombre_comercial').order('nombre_comercial');
-            setClientes(cData || []);
+            // Clientes — lista estática
+            setClientes(CLIENTES_REALES.map(c => ({ id: c.id, nombre_comercial: c.nombre_comercial })));
 
             // Órdenes sin factura aún
             const { data: oData } = await supabase
