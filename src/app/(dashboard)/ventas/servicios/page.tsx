@@ -44,6 +44,7 @@ import {
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 
 const supabase = createClient();
 
@@ -202,10 +203,10 @@ export default function CotizadorServiciosPage() {
     const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
 
     const filteredClientes = useMemo(() => {
-        if (!clientSearch.trim()) return clientes;
+        if (!clientSearch.trim()) return CLIENTES_REALES;
         const q = clientSearch.toLowerCase();
-        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q));
-    }, [clientes, clientSearch]);
+        return CLIENTES_REALES.filter(c => (c.nombre_comercial?.toLowerCase() || '').includes(q));
+    }, [clientSearch]);
     const { tipoCambio, setTipoCambio, refresh: fetchTipoCambio, isLoading: isLoadingTC, source: tcSource, fecha: tcFecha } = useExchangeRate();
     const [refaccionesCatalog, setRefaccionesCatalog] = useState<Refaccion[]>([]);
     const [loadingRefs, setLoadingRefs] = useState(true);
@@ -535,7 +536,7 @@ export default function CotizadorServiciosPage() {
                             >
                                 <option value="">-- Seleccionar --</option>
                                 {filteredClientes.map(c => (
-                                    <option key={c.id} value={c.id}>{(c as any).nombre_comercial || (c as any).razon_social || 'Empresa sin nombre'}</option>
+                                    <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
                                 ))}
                             </select>
                         </div>
