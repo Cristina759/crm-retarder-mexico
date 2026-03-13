@@ -409,14 +409,12 @@ export default function CotizadorFrenosPage() {
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
                     .insert({
-                        numero: cotNumero,
-                        empresa: cliente?.nombre_comercial || 'Sin empresa',
-                        vendedor: sellerName,
+                        empresa_id: selectedClienteId,
+                        vendedor_id: null,
                         subtotal: breakdown.total.mxn / 1.16,
                         iva: breakdown.total.mxn - (breakdown.total.mxn / 1.16),
                         total: breakdown.total.mxn,
                         estado: 'enviada',
-                        fecha: fechaActual,
                         vigencia_dias: 15,
                         notas: `TC: ${tipoCambio} MXN (${tcFecha || 'N/A'})`
                     })
