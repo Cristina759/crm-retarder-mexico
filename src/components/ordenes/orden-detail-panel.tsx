@@ -71,19 +71,9 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         }
     }, [orden]);
 
-    const fetchTecnicos = async () => {
-        try {
-            const { data } = await supabase
-                .from('usuarios')
-                .select('nombre')
-                .eq('rol', 'tecnico');
-
-            if (data && data.length > 0) {
-                setTecnicosFromDb(data.map(t => t.nombre));
-            }
-        } catch (e) {
-            console.error('Error fetching tecnicos:', e);
-        }
+    const fetchTecnicos = () => {
+        // Técnicos definidos localmente — tabla 'usuarios' no disponible en este entorno
+        setTecnicosFromDb(['Nahum Garcia', 'Carlos Abraham Espinosa']);
     };
 
     // Helper to validate UUID
@@ -433,10 +423,10 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             if (isValidUUID(orden.id)) {
                 console.log('🔗 Limpiando dependencias para la orden (Panel):', orden.id);
                 
-                // 1. Desvincular de cotizaciones
+                // 1. Desvincular de cotizaciones (si existe el campo orden_id)
                 try {
                     await supabase.from('cotizaciones').update({ orden_id: null }).eq('orden_id', orden.id);
-                } catch (e) {}
+                } catch (e) { console.warn('Campo orden_id no presente en cotizaciones o ya nulo'); }
 
                 // 2. Borrar evidencias 
                 await supabase.from('evidencias').delete().eq('orden_id', orden.id);
