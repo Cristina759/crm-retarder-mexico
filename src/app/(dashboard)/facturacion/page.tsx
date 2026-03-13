@@ -158,7 +158,6 @@ export default function FacturacionPage() {
                     .update({
                         numero_factura: newFactura.numero_factura,
                         estado: 'facturado',
-                        metodo_pago: newFactura.metodo_pago,
                         monto: newFactura.monto ? Number(newFactura.monto) : undefined
                     })
                     .eq('id', newFactura.orden_id);
