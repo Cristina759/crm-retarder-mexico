@@ -733,7 +733,7 @@ export default function CotizadorServiciosPage() {
                                                     setTimeout(() => {
                                                         document.title = oldTitle;
                                                         if (redirectTimer) clearTimeout(redirectTimer);
-                                                        router.push('/ventas/pipeline');
+                                                        router.push('/ordenes');
                                                     }, 500);
                                                 }} 
                                                 className="w-full flex items-center justify-center gap-3 py-4 bg-retarder-red text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-red-700 shadow-xl"

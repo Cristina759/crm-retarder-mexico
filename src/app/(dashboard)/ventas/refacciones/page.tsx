@@ -741,7 +741,7 @@ export default function CotizadorRefaccionesPage() {
                                                         setTimeout(() => {
                                                             document.title = oldTitle;
                                                             if (redirectTimer) clearTimeout(redirectTimer);
-                                                            router.push('/ventas/pipeline');
+                                                            router.push('/ordenes');
                                                         }, 500);
                                                     }}
                                                     className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-retarder-red text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg"
