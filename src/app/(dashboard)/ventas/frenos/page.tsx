@@ -420,17 +420,22 @@ export default function CotizadorFrenosPage() {
 
                     // Crear Orden de Servicio automáticamente
                     await supabase.from('ordenes_servicio').insert({
-                        empresa_id: empresaUUID,
-                        empresa: cliente?.nombre_comercial || 'Sin empresa',
-                        vendedor: sellerName,
-                        estado: 'solicitud_recibida',
+                        empresa_id:    empresaUUID,
+                        empresa:       cliente?.nombre_comercial || 'Sin empresa',
+                        vendedor:      sellerName,
+                        estado:        'solicitud_recibida',
                         cotizacion_id: cotData.id,
-                        folio: cotData.folio,
-                        tipo: 'frenos',
-                        total: breakdown.total.mxn,
-                        subtotal: breakdown.total.mxn / 1.16,
-                        iva: breakdown.total.mxn - (breakdown.total.mxn / 1.16),
-                        fecha_creado: new Date().toISOString()
+                        folio:         cotData.folio,
+                        numero:        cotData.folio,
+                        tipo:          'frenos',
+                        prioridad:     'media',
+                        tecnico:       '',
+                        descripcion:   `Cotización de frenos ${cotData.folio}`,
+                        total:         breakdown.total.mxn,
+                        subtotal:      breakdown.total.mxn / 1.16,
+                        iva:           breakdown.total.mxn - (breakdown.total.mxn / 1.16),
+                        monto:         breakdown.total.mxn,
+                        fecha_creado:  new Date().toISOString()
                     });
                 } else {
                     setSavedFolio(cotNumero);
