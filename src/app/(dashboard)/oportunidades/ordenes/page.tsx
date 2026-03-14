@@ -189,7 +189,11 @@ export default function OrdenesPage() {
     };
 
     // Filter ordenes
-    const ESTADOS_CIERRE = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada'];
+    // Fase Cierre + Fase Administrativa: siempre visibles para todos los roles
+    const ESTADOS_SIEMPRE_VISIBLES = [
+        'servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', // Cierre
+        'encuesta_enviada', 'facturado', 'pagado',                            // Administrativa
+    ];
     const filteredOrdenes = useMemo(() => {
         let result = ordenes;
 
@@ -197,7 +201,7 @@ export default function OrdenesPage() {
         if (isVendedor && !isAdmin) {
             if (currentUserName) {
                 result = result.filter(o => {
-                    if (ESTADOS_CIERRE.includes(o.estado)) return true;
+                    if (ESTADOS_SIEMPRE_VISIBLES.includes(o.estado)) return true;
                     const vendedorName = o.vendedor?.trim().toLocaleLowerCase() || '';
                     return vendedorName.includes('cristina') || vendedorName === currentUserName;
                 });
@@ -205,13 +209,13 @@ export default function OrdenesPage() {
         } else if (isTecnico && !isAdmin) {
             if (currentUserName) {
                 result = result.filter(o =>
-                    ESTADOS_CIERRE.includes(o.estado) ||
+                    ESTADOS_SIEMPRE_VISIBLES.includes(o.estado) ||
                     o.tecnico?.trim().toLocaleLowerCase() === currentUserName
                 );
             } else {
                 const fallback = 'Israel Garcia'.toLocaleLowerCase();
                 result = result.filter(o =>
-                    ESTADOS_CIERRE.includes(o.estado) ||
+                    ESTADOS_SIEMPRE_VISIBLES.includes(o.estado) ||
                     o.tecnico?.trim().toLocaleLowerCase() === fallback
                 );
             }
