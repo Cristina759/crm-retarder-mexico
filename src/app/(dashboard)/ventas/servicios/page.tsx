@@ -730,14 +730,16 @@ export default function CotizadorServiciosPage() {
                                                     const oldTitle = document.title;
                                                     document.title = savedFolio;
                                                     window.print();
-                                                    setTimeout(() => { document.title = oldTitle; }, 100);
+                                                    setTimeout(() => {
+                                                        document.title = oldTitle;
+                                                        if (redirectTimer) clearTimeout(redirectTimer);
+                                                        router.push('/ventas/pipeline');
+                                                    }, 500);
                                                 }} 
                                                 className="w-full flex items-center justify-center gap-3 py-4 bg-retarder-red text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-red-700 shadow-xl"
                                             >
                                                 <Printer size={20} /> IMPRIMIR PDF OFICIAL
                                             </button>
-                                            <button onClick={() => { setSavedFolio(''); setSelectedService(null); }} className="w-full py-4 bg-white border border-retarder-gray-200 text-retarder-gray-600 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-gray-50 transition-all">NUEVA COTIZACIÓN</button>
-                                            <button onClick={() => router.push('/ordenes')} className="w-full py-4 bg-retarder-gray-800 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-retarder-black transition-all">VER PIPELINE</button>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">

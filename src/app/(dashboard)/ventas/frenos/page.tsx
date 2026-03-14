@@ -996,30 +996,16 @@ export default function CotizadorFrenosPage() {
                                                 const oldTitle = document.title;
                                                 document.title = savedFolio;
                                                 window.print();
-                                                setTimeout(() => { document.title = oldTitle; }, 100);
+                                                setTimeout(() => {
+                                                    document.title = oldTitle;
+                                                    if (redirectTimer) clearTimeout(redirectTimer);
+                                                    router.push('/ventas/pipeline');
+                                                }, 500);
                                             }}
                                             className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-md bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
                                         >
                                             <Printer size={16} />
                                             IMPRIMIR COTIZACIÓN PDF
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedModelo(null);
-                                                setSavedFolio('');
-                                            }}
-                                            className="flex-1 px-5 py-3 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-600 hover:bg-white transition-colors"
-                                        >
-                                            NUEVA COTIZACIÓN
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (redirectTimer) clearTimeout(redirectTimer);
-                                                router.push('/cotizaciones');
-                                            }}
-                                            className="px-5 py-3 bg-retarder-gray-800 text-white rounded-xl text-sm font-medium hover:bg-retarder-black transition-colors"
-                                        >
-                                            VER PIPELINE
                                         </button>
                                     </>
                                 ) : (

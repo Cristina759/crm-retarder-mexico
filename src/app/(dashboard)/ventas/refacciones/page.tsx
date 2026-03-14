@@ -738,30 +738,15 @@ export default function CotizadorRefaccionesPage() {
                                                         const oldTitle = document.title;
                                                         document.title = savedFolio;
                                                         window.print();
-                                                        setTimeout(() => { document.title = oldTitle; }, 100);
+                                                        setTimeout(() => {
+                                                            document.title = oldTitle;
+                                                            if (redirectTimer) clearTimeout(redirectTimer);
+                                                            router.push('/ventas/pipeline');
+                                                        }, 500);
                                                     }}
                                                     className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-retarder-red text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg"
                                                 >
                                                     <Printer size={18} /> IMPRIMIR PDF
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setCart([]);
-                                                        setSavedFolio('');
-                                                        if (redirectTimer) clearTimeout(redirectTimer);
-                                                    }}
-                                                    className="w-full py-3 bg-white border border-retarder-gray-200 text-retarder-gray-600 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-retarder-gray-50 transition-all"
-                                                >
-                                                    NUEVA COTIZACIÓN
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        if (redirectTimer) clearTimeout(redirectTimer);
-                                                        router.push('/oportunidades/ordenes');
-                                                    }}
-                                                    className="w-full py-3 bg-retarder-gray-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-black transition-all"
-                                                >
-                                                    IR A ÓRDENES
                                                 </button>
                                             </div>
                                         ) : (
