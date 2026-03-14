@@ -44,7 +44,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
     const [isMounted, setIsMounted] = useState(false);
     const { isTecnico, isAdmin } = useRole();
     // Track pending estado change during drag to persist on drop
-    const pendingEstadoChange = useRef<{ id: string; estado: OrdenEstado } | null>(null);
+    const pendingEstadoChange = useRef<{ id: string; estado: OrdenEstado; previousEstado: OrdenEstado } | null>(null);
 
     // Prevent hydration mismatch
     useEffect(() => {
@@ -103,8 +103,8 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         }
 
         if (newEstado && newEstado !== activeOrden.estado) {
-            // Track the pending change to persist on drop
-            pendingEstadoChange.current = { id: activeId, estado: newEstado };
+            // Track the pending change to persist on drop (including previous estado for rollback)
+            pendingEstadoChange.current = { id: activeId, estado: newEstado, previousEstado: activeOrden.estado };
             const updated = ordenes.map(o =>
                 o.id === activeId ? { ...o, estado: newEstado! } : o
             );
@@ -118,16 +118,23 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
 
         // Persist estado change to Supabase if there was a column change
         if (pendingEstadoChange.current) {
-            const { id, estado } = pendingEstadoChange.current;
+            const { id, estado, previousEstado } = pendingEstadoChange.current;
             pendingEstadoChange.current = null;
             if (isValidUUID(id)) {
-                try {
-                    await supabase
-                        .from('ordenes_servicio')
-                        .update({ estado })
-                        .eq('id', id);
-                } catch (err) {
-                    console.error('Error persisting estado change:', err);
+                const { error } = await supabase
+                    .from('ordenes_servicio')
+                    .update({ estado })
+                    .eq('id', id);
+                if (error) {
+                    console.error('Supabase error al cambiar estado:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
+                    // Rollback: revertir la UI al estado anterior
+                    if (previousEstado) {
+                        onOrdenesChange(ordenes.map(o =>
+                            o.id === id ? { ...o, estado: previousEstado } : o
+                        ));
+                    }
+                    if (onRefresh) onRefresh();
+                    return;
                 }
             }
             if (onRefresh) onRefresh();
