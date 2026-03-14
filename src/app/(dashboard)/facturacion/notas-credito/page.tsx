@@ -61,24 +61,6 @@ const MOTIVO_OPTIONS = [
     'Otro',
 ] as const;
 
-// ── LocalStorage key ──
-const LS_KEY = 'notasCredito';
-
-function loadNotasFromStorage(): NotaCredito[] {
-    if (typeof window === 'undefined') return [];
-    try {
-        const raw = localStorage.getItem(LS_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveNotasToStorage(notas: NotaCredito[]) {
-    try {
-        localStorage.setItem(LS_KEY, JSON.stringify(notas));
-    } catch { /* ignore */ }
-}
 
 
 export default function NotasCreditoPage() {
@@ -97,6 +79,26 @@ export default function NotasCreditoPage() {
     const [formEstado, setFormEstado] = useState<NCEstado>('emitida');
 
     const [facturasDisponibles, setFacturasDisponibles] = useState<{ factura: string, empresa: string, total: number }[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch notas de crédito from Supabase
+    const fetchNotas = useCallback(async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase.from('notas_credito').select('*').order('created_at', { ascending: false });
+            if (error) {
+                console.warn('Error fetching notas_credito:', error.message);
+                setNotas([]);
+            } else {
+                setNotas(data || []);
+            }
+        } catch (e) {
+            console.warn('Tabla notas_credito no disponible');
+            setNotas([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [supabase]);
 
     // Fetch facturas from Supabase
     const fetchFacturas = useCallback(async () => {
@@ -134,11 +136,11 @@ export default function NotasCreditoPage() {
         }
     }, [supabase]);
 
-    // Load from localStorage on mount and fetch facturas
+    // Load on mount
     useEffect(() => {
-        setNotas(loadNotasFromStorage());
+        fetchNotas();
         fetchFacturas();
-    }, [fetchFacturas]);
+    }, [fetchNotas, fetchFacturas]);
 
     // Get empresa from selected factura
     const selectedFacturaInfo = useMemo(() => {
@@ -151,8 +153,8 @@ export default function NotasCreditoPage() {
         return `NC-${String(count + 1).padStart(4, '0')}`;
     }, [notas]);
 
-    // Create nota de crédito
-    const handleCreate = () => {
+    // Create nota de crédito in Supabase
+    const handleCreate = async () => {
         if (!formFactura || !formSubtotal) return;
 
         const subtotal = parseFloat(formSubtotal);
@@ -161,8 +163,7 @@ export default function NotasCreditoPage() {
         const iva = subtotal * 0.16;
         const total = subtotal + iva;
 
-        const nuevaNota: NotaCredito = {
-            id: crypto.randomUUID(),
+        const newNota = {
             numero_nc: nextNCNumber,
             factura_relacionada: formFactura,
             empresa: selectedFacturaInfo?.empresa || 'N/A',
@@ -172,41 +173,51 @@ export default function NotasCreditoPage() {
             total: Math.round(total * 100) / 100,
             estado: formEstado,
             fecha_emision: new Date().toISOString().split('T')[0],
-            created_at: new Date().toISOString(),
             tipo_cambio: tipoCambio,
             tipo_cambio_fecha: fechaTC || '',
         };
 
-        const updated = [nuevaNota, ...notas];
-        setNotas(updated);
-        saveNotasToStorage(updated);
+        const { error } = await supabase.from('notas_credito').insert(newNota);
+        if (error) {
+            console.error('Error inserting nota de crédito:', error);
+            alert(`Error al crear nota: ${error.message}`);
+            return;
+        }
 
-        // Reset form
+        // Reset form & refresh
         setFormFactura('');
         setFormMotivo(MOTIVO_OPTIONS[0]);
         setFormMotivoCustom('');
         setFormSubtotal('');
         setFormEstado('emitida');
         setShowForm(false);
+        await fetchNotas();
     };
 
-    // Delete nota
-    const handleDelete = (id: string) => {
+    // Delete nota from Supabase
+    const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de eliminar esta nota de crédito?')) return;
-        const updated = notas.filter(n => n.id !== id);
-        setNotas(updated);
-        saveNotasToStorage(updated);
+        const { error } = await supabase.from('notas_credito').delete().eq('id', id);
+        if (error) {
+            console.error('Error deleting nota:', error);
+            alert(`Error al eliminar: ${error.message}`);
+            return;
+        }
         if (selectedNota?.id === id) setSelectedNota(null);
+        await fetchNotas();
     };
 
-    // Change estado
-    const handleChangeEstado = (id: string, estado: NCEstado) => {
-        const updated = notas.map(n => n.id === id ? { ...n, estado } : n);
-        setNotas(updated);
-        saveNotasToStorage(updated);
+    // Change estado in Supabase
+    const handleChangeEstado = async (id: string, estado: NCEstado) => {
+        const { error } = await supabase.from('notas_credito').update({ estado }).eq('id', id);
+        if (error) {
+            console.error('Error updating estado:', error);
+            return;
+        }
         if (selectedNota?.id === id) {
             setSelectedNota({ ...selectedNota, estado });
         }
+        await fetchNotas();
     };
 
     // Filter
