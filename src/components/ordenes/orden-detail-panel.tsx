@@ -428,11 +428,15 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     await supabase.from('cotizaciones').update({ orden_id: null }).eq('orden_id', orden.id);
                 } catch (e) { console.warn('Campo orden_id no presente en cotizaciones o ya nulo'); }
 
-                // 2. Borrar evidencias 
-                await supabase.from('evidencias').delete().eq('orden_id', orden.id);
+                // 2. Borrar evidencias
+                try {
+                    await supabase.from('evidencias').delete().eq('orden_id', orden.id);
+                } catch (e) { console.warn('Tabla evidencias no existe'); }
                 
                 // 3. Borrar encuestas
-                await supabase.from('encuestas').delete().eq('orden_id', orden.id);
+                try {
+                    await supabase.from('encuestas').delete().eq('orden_id', orden.id);
+                } catch (e) { console.warn('Tabla encuestas no existe'); }
 
                 // 4. Borrar historial
                 try {
