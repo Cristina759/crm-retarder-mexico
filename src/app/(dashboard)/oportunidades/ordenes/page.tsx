@@ -189,25 +189,31 @@ export default function OrdenesPage() {
     };
 
     // Filter ordenes
+    const ESTADOS_CIERRE = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada'];
     const filteredOrdenes = useMemo(() => {
         let result = ordenes;
 
-        // Role-based filtering
+        // Role-based filtering — Fase Cierre orders are always visible for all roles
         if (isVendedor && !isAdmin) {
-            // For vendedor, show all orders assigned to them (case-insensitive partial match)
             if (currentUserName) {
                 result = result.filter(o => {
+                    if (ESTADOS_CIERRE.includes(o.estado)) return true;
                     const vendedorName = o.vendedor?.trim().toLocaleLowerCase() || '';
-                    // Match if names share significant portion (handles Velasco, etc.)
                     return vendedorName.includes('cristina') || vendedorName === currentUserName;
                 });
             }
         } else if (isTecnico && !isAdmin) {
             if (currentUserName) {
-                result = result.filter(o => o.tecnico?.trim().toLocaleLowerCase() === currentUserName);
+                result = result.filter(o =>
+                    ESTADOS_CIERRE.includes(o.estado) ||
+                    o.tecnico?.trim().toLocaleLowerCase() === currentUserName
+                );
             } else {
                 const fallback = 'Israel Garcia'.toLocaleLowerCase();
-                result = result.filter(o => o.tecnico?.trim().toLocaleLowerCase() === fallback);
+                result = result.filter(o =>
+                    ESTADOS_CIERRE.includes(o.estado) ||
+                    o.tecnico?.trim().toLocaleLowerCase() === fallback
+                );
             }
         } else if (isCliente && !isAdmin) {
             const clientCompany = (user?.publicMetadata as CustomMetadata)?.company;
