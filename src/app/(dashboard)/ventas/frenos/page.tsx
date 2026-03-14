@@ -280,7 +280,7 @@ export default function CotizadorFrenosPage() {
     useEffect(() => {
         if (savedFolio) {
             const timer = window.setTimeout(() => {
-                router.push('/cotizaciones');
+                router.push('/ventas/pipeline');
             }, 5000);
             setRedirectTimer(timer as any);
             return () => clearTimeout(timer);
