@@ -423,7 +423,7 @@ export default function CotizadorFrenosPage() {
                         empresa_id: empresaUUID,
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
                         vendedor: sellerName,
-                        estado: 'cotizacion_enviada',
+                        estado: 'solicitud_recibida',
                         cotizacion_id: cotData.id,
                         folio: cotData.folio,
                         tipo: 'frenos',
