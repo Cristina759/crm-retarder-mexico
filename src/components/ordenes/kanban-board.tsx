@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import {
     DndContext,
     DragOverlay,
@@ -32,12 +33,18 @@ interface KanbanBoardProps {
     onDelete: (id: string) => void;
     confirmDeleteId?: string | null;
     isDeleting?: boolean;
+    onRefresh?: () => void;
 }
 
-export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, confirmDeleteId, isDeleting }: KanbanBoardProps) {
+const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, confirmDeleteId, isDeleting, onRefresh }: KanbanBoardProps) {
+    const supabase = createClient();
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const { isTecnico, isAdmin } = useRole();
+    // Track pending estado change during drag to persist on drop
+    const pendingEstadoChange = useRef<{ id: string; estado: OrdenEstado } | null>(null);
 
     // Prevent hydration mismatch
     useEffect(() => {
@@ -69,6 +76,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         const { active } = event;
         const orden = ordenes.find(o => o.id === active.id);
         if (orden) setActiveOrden(orden);
+        pendingEstadoChange.current = null; // reset on new drag
     }, [ordenes]);
 
     const handleDragOver = useCallback((event: DragOverEvent) => {
@@ -95,6 +103,8 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         }
 
         if (newEstado && newEstado !== activeOrden.estado) {
+            // Track the pending change to persist on drop
+            pendingEstadoChange.current = { id: activeId, estado: newEstado };
             const updated = ordenes.map(o =>
                 o.id === activeId ? { ...o, estado: newEstado! } : o
             );
@@ -102,9 +112,26 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         }
     }, [ordenes, onOrdenesChange]);
 
-    const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const handleDragEnd = useCallback(async (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveOrden(null);
+
+        // Persist estado change to Supabase if there was a column change
+        if (pendingEstadoChange.current) {
+            const { id, estado } = pendingEstadoChange.current;
+            pendingEstadoChange.current = null;
+            if (isValidUUID(id)) {
+                try {
+                    await supabase
+                        .from('ordenes_servicio')
+                        .update({ estado })
+                        .eq('id', id);
+                } catch (err) {
+                    console.error('Error persisting estado change:', err);
+                }
+            }
+            if (onRefresh) onRefresh();
+        }
 
         if (!over) return;
 
@@ -128,7 +155,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                 }
             }
         }
-    }, [ordenes, onOrdenesChange]);
+    }, [ordenes, onOrdenesChange, onRefresh]);
 
     if (!isMounted) {
         return <div className="p-8 text-center text-retarder-gray-500 text-sm">Cargando tablero...</div>;

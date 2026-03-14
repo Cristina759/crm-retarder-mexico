@@ -387,6 +387,7 @@ export default function OrdenesPage() {
                             onDelete={handleDeleteOrden}
                             confirmDeleteId={confirmDeleteId}
                             isDeleting={isDeleting}
+                            onRefresh={fetchOrdenes}
                         />
                     </motion.div>
                 )}
