@@ -201,6 +201,7 @@ export default function OrdenesPage() {
         if (isVendedor && !isAdmin) {
             if (currentUserName) {
                 result = result.filter(o => {
+                    if (!o.vendedor) return true;
                     if (ESTADOS_SIEMPRE_VISIBLES.includes(o.estado)) return true;
                     const vendedorName = o.vendedor?.trim().toLocaleLowerCase() || '';
                     return vendedorName.includes('cristina') || vendedorName === currentUserName;
