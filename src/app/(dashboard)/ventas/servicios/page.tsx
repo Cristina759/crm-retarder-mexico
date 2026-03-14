@@ -310,12 +310,9 @@ export default function CotizadorServiciosPage() {
         setManoObraItems(prev => prev.filter(item => item.concepto.concepto !== conceptoName));
     }, []);
 
-    // Fetch de Clientes
-    const fetchClientes = useCallback(async () => {
-        const { data } = await supabase.from('empresas').select('id, nombre_comercial, razon_social, rfc, direccion_fiscal, email, telefono, persona_contacto, nombre_titular, nombre_sucursal, telefono_2, telefono_3, email_2').order('nombre_comercial');
-        if (data && data.length > 0) {
-            setClientes(data as any[]);
-        }
+    // Carga de Clientes desde lista estática
+    const fetchClientes = useCallback(() => {
+        setClientes(CLIENTES_REALES as any[]);
     }, []);
 
     const fetchRefacciones = useCallback(async () => {
@@ -391,7 +388,8 @@ export default function CotizadorServiciosPage() {
 
         setIsCreating(true);
         try {
-            const cliente = clientes.find(c => c.id === selectedClienteId);
+            const cliente = clientes.find(c => c.id === selectedClienteId)
+                || CLIENTES_REALES.find(c => c.id === selectedClienteId);
             const sellerName = user?.fullName || 'Sistema';
             const fechaActual = new Date().toISOString().split('T')[0];
 

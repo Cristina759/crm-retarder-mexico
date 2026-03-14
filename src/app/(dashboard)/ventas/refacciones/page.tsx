@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 
 const supabase = createClient();
 
@@ -158,12 +159,9 @@ export default function CotizadorRefaccionesPage() {
 
     const ITEMS_PER_PAGE = 50;
 
-    // Fetch de Clientes
-    const fetchClientes = useCallback(async () => {
-        const { data } = await supabase.from('empresas').select('id, nombre_comercial, razon_social, rfc, direccion_fiscal, email, telefono, persona_contacto').order('nombre_comercial');
-        if (data && data.length > 0) {
-            setClientes(data as any[]);
-        }
+    // Carga de Clientes desde lista estática
+    const fetchClientes = useCallback(() => {
+        setClientes(CLIENTES_REALES as any[]);
     }, []);
 
 
@@ -224,7 +222,7 @@ export default function CotizadorRefaccionesPage() {
     const filteredClientes = useMemo(() => {
         if (!clientSearch.trim()) return clientes;
         const q = clientSearch.toLowerCase();
-        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q) || (c.razon_social || '').toLowerCase().includes(q));
+        return clientes.filter(c => c.nombre_comercial.toLowerCase().includes(q));
     }, [clientes, clientSearch]);
 
     const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
