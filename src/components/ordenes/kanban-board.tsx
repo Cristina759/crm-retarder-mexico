@@ -37,6 +37,7 @@ interface KanbanBoardProps {
 }
 
 const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+const ESTADOS_CIERRE: OrdenEstado[] = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada'];
 
 export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, confirmDeleteId, isDeleting, onRefresh }: KanbanBoardProps) {
     const supabase = createClient();
@@ -121,20 +122,32 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
             const { id, estado, previousEstado } = pendingEstadoChange.current;
             pendingEstadoChange.current = null;
             if (isValidUUID(id)) {
-                const { error } = await supabase
-                    .from('ordenes_servicio')
-                    .update({ estado })
-                    .eq('id', id);
-                if (error) {
-                    console.error('Supabase error al cambiar estado:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
-                    // Rollback: revertir la UI al estado anterior
-                    if (previousEstado) {
-                        onOrdenesChange(ordenes.map(o =>
-                            o.id === id ? { ...o, estado: previousEstado } : o
-                        ));
+                if (ESTADOS_CIERRE.includes(estado)) {
+                    // Fase Cierre: update directo sin validaciones ni rollback
+                    const { error } = await supabase
+                        .from('ordenes_servicio')
+                        .update({ estado })
+                        .eq('id', id);
+                    if (error) {
+                        console.error('Supabase error (cierre):', error.message, '| code:', error.code, '| hint:', error.hint);
                     }
-                    if (onRefresh) onRefresh();
-                    return;
+                } else {
+                    // Otros estados: update con log y rollback si falla
+                    const { error } = await supabase
+                        .from('ordenes_servicio')
+                        .update({ estado })
+                        .eq('id', id);
+                    if (error) {
+                        console.error('Supabase error al cambiar estado:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
+                        // Rollback: revertir la UI al estado anterior
+                        if (previousEstado) {
+                            onOrdenesChange(ordenes.map(o =>
+                                o.id === id ? { ...o, estado: previousEstado } : o
+                            ));
+                        }
+                        if (onRefresh) onRefresh();
+                        return;
+                    }
                 }
             }
             if (onRefresh) onRefresh();
