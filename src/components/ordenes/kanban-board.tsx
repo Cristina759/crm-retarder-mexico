@@ -129,7 +129,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                         .update({ estado })
                         .eq('id', id);
                     if (error) {
-                        console.error('Supabase error (cierre):', error.message, '| code:', error.code, '| hint:', error.hint);
+                        alert('Error: ' + error.message + ' | ' + error.code);
                     }
                 } else {
                     // Otros estados: update con log y rollback si falla
