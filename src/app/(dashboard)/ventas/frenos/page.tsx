@@ -280,7 +280,7 @@ export default function CotizadorFrenosPage() {
     useEffect(() => {
         if (savedFolio) {
             const timer = window.setTimeout(() => {
-                router.push('/ventas/pipeline');
+                router.push('/ordenes');
             }, 5000);
             setRedirectTimer(timer as any);
             return () => clearTimeout(timer);
@@ -999,7 +999,7 @@ export default function CotizadorFrenosPage() {
                                                 setTimeout(() => {
                                                     document.title = oldTitle;
                                                     if (redirectTimer) clearTimeout(redirectTimer);
-                                                    router.push('/ventas/pipeline');
+                                                    router.push('/ordenes');
                                                 }, 500);
                                             }}
                                             className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-md bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
