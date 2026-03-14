@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar, Loader2, RefreshCcw } from 'lucide-react';
+import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X, Building2, Calendar, Loader2, RefreshCcw, Trash2 } from 'lucide-react';
 import { cn, formatMXN, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
@@ -192,6 +192,28 @@ export default function FacturacionPage() {
         }
     };
 
+    const handleDeleteFactura = async (factura: Factura) => {
+        if (!confirm(`¿Eliminar la factura ${factura.numero_factura} de ${factura.empresa}?`)) return;
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('ordenes_servicio')
+                .update({
+                    numero_factura: null,
+                    estado: 'encuesta_enviada',
+                })
+                .eq('id', factura.id);
+            if (error) throw error;
+            await fetchFacturas();
+            await fetchDropdownData();
+        } catch (err: any) {
+            console.error('Error eliminando factura:', err);
+            alert(`Error al eliminar: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -255,12 +277,13 @@ export default function FacturacionPage() {
                                 <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
                                 <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
                                 <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Vencimiento</th>
+                                <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan={7} className="py-12 text-center">
+                                    <td colSpan={8} className="py-12 text-center">
                                         <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
                                         <p className="text-xs text-retarder-gray-400">Cargando facturas...</p>
                                     </td>
@@ -281,6 +304,15 @@ export default function FacturacionPage() {
                                             <td className="py-3 px-2 sm:px-4 text-right font-bold text-retarder-gray-800 whitespace-nowrap">{formatMXN(f.total)}</td>
                                             <td className="py-3 px-2 sm:px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
                                                 {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : '—'}
+                                            </td>
+                                            <td className="py-3 px-2 sm:px-4 text-right">
+                                                <button
+                                                    onClick={e => { e.stopPropagation(); handleDeleteFactura(f); }}
+                                                    className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
+                                                    title="Eliminar factura"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </td>
                                         </motion.tr>
                                     );
