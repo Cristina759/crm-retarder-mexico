@@ -43,6 +43,12 @@ interface CustomMetadata {
     company?: string;
 }
 
+// Fase Cierre + Fase Administrativa: siempre visibles para todos los roles
+const ESTADOS_SIEMPRE_VISIBLES = [
+    'servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', // Cierre
+    'encuesta_enviada', 'facturado', 'pagado',                            // Administrativa
+];
+
 export default function OrdenesPage() {
     const supabase = createClient();
     const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -189,11 +195,6 @@ export default function OrdenesPage() {
     };
 
     // Filter ordenes
-    // Fase Cierre + Fase Administrativa: siempre visibles para todos los roles
-    const ESTADOS_SIEMPRE_VISIBLES = [
-        'servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', // Cierre
-        'encuesta_enviada', 'facturado', 'pagado',                            // Administrativa
-    ];
     const filteredOrdenes = useMemo(() => {
         let result = ordenes;
 
@@ -242,10 +243,10 @@ export default function OrdenesPage() {
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter(o =>
-                o.numero.toLowerCase().includes(q) ||
-                o.empresa.toLowerCase().includes(q) ||
-                o.tecnico.toLowerCase().includes(q) ||
-                o.descripcion.toLowerCase().includes(q)
+                (o.numero?.toLowerCase() || '').includes(q) ||
+                (o.empresa?.toLowerCase() || '').includes(q) ||
+                (o.tecnico?.toLowerCase() || '').includes(q) ||
+                (o.descripcion?.toLowerCase() || '').includes(q)
             );
         }
 
