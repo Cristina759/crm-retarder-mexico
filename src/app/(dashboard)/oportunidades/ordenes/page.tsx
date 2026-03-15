@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus,
@@ -77,7 +77,7 @@ export default function OrdenesPage() {
         return formatUserName(name).toLowerCase();
     }, [user]);
 
-    const fetchOrdenes = async () => {
+    const fetchOrdenes = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -93,11 +93,16 @@ export default function OrdenesPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [supabase]);
+
+    const handleDragEstadoChange = useCallback(() => {
+        setActivePhaseFilter('all');
+        fetchOrdenes();
+    }, [fetchOrdenes]);
 
     useEffect(() => {
         fetchOrdenes();
-    }, []);
+    }, [fetchOrdenes]);
 
     const handleCreateOrden = async () => {
         setIsSaving(true);
@@ -399,7 +404,7 @@ export default function OrdenesPage() {
                             onDelete={handleDeleteOrden}
                             confirmDeleteId={confirmDeleteId}
                             isDeleting={isDeleting}
-                            onRefresh={fetchOrdenes}
+                            onRefresh={handleDragEstadoChange}
                         />
                     </motion.div>
                 )}
