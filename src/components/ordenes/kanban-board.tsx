@@ -130,9 +130,13 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                         .eq('id', id);
                     if (error) {
                         alert('Error: ' + error.message + ' | ' + error.code);
+                    } else {
+                        // Success: update local state (redundant but safe) to stay in sync
+                        const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
+                        onOrdenesChange(updated);
                     }
                 } else {
-                    // Otros estados: update con log y rollback si falla
+                    // Otros estados: update 
                     const { error } = await supabase
                         .from('ordenes_servicio')
                         .update({ estado })
@@ -145,12 +149,13 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                                 o.id === id ? { ...o, estado: previousEstado } : o
                             ));
                         }
-                        if (onRefresh) onRefresh();
                         return;
                     }
+                    // Success: update local state
+                    const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
+                    onOrdenesChange(updated);
                 }
             }
-            if (onRefresh) onRefresh();
         }
 
         if (!over) return;
