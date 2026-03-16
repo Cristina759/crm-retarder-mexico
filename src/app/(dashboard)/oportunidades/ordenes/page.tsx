@@ -256,7 +256,7 @@ export default function OrdenesPage() {
         }
 
         return result;
-    }, [ordenes, activePhaseFilter, searchQuery]);
+    }, [ordenes, activePhaseFilter, searchQuery, isAdmin, isVendedor, isTecnico, currentUserName]);
 
     // Filter phases: Technical role doesn't see 'comercial' nor 'administrativa' phases
     const visiblePhases = useMemo(() => {

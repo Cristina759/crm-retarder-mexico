@@ -50,7 +50,7 @@ export function KanbanBoard({
     const [isMounted, setIsMounted] = useState(false);
 
     // Permisos de drag: solo director y administradora
-    const canDrag = userRole === 'director' || userRole === 'administradora';
+    const canDrag = userRole === 'director' || userRole === 'administradora' || userRole === 'admin';
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
