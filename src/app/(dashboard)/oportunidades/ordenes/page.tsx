@@ -398,7 +398,7 @@ export default function OrdenesPage() {
                         transition={{ duration: 0.2 }}
                     >
                         <KanbanBoard
-                            ordenes={filteredOrdenes}
+                            ordenes={isAdmin ? ordenes : filteredOrdenes}
                             onOrdenesChange={setOrdenes}
                             onOrdenClick={setSelectedOrden}
                             onDelete={handleDeleteOrden}
@@ -442,7 +442,7 @@ export default function OrdenesPage() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredOrdenes.map((o, i) => {
+                                        (isAdmin ? ordenes : filteredOrdenes).map((o, i) => {
                                             const phase = getPhaseForEstado(o.estado);
                                             return (
                                                 <motion.tr
