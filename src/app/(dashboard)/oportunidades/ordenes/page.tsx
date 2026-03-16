@@ -406,6 +406,7 @@ export default function OrdenesPage() {
                             confirmDeleteId={confirmDeleteId}
                             isDeleting={isDeleting}
                             onRefresh={handleDragEstadoChange}
+                            userRole={role}
                         />
                     </motion.div>
                 )}

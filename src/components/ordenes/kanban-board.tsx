@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
     DndContext,
@@ -13,18 +13,15 @@ import {
     type DragEndEvent,
     type DragOverEvent,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
 import {
     ORDEN_ESTADOS,
     ORDEN_PHASES,
     type OrdenEstado,
     type DemoOrden,
-    getPhaseForEstado,
 } from '@/lib/utils/constants';
 import { KanbanColumn } from './kanban-column';
 import { KanbanCardOverlay } from './kanban-card';
-import { useRole } from '@/hooks/useRole';
 
 interface KanbanBoardProps {
     ordenes: DemoOrden[];
@@ -33,39 +30,27 @@ interface KanbanBoardProps {
     onDelete: (id: string) => void;
     confirmDeleteId?: string | null;
     isDeleting?: boolean;
-    onRefresh?: (estado?: string) => void;
+    onRefresh: () => void;
+    userRole?: string;
 }
 
 const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-const ESTADOS_SIN_VALIDACION: OrdenEstado[] = [
-    'servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', // Cierre
-    'encuesta_enviada', 'facturado', 'pagado'                             // Administrativa
-];
 
-export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, confirmDeleteId, isDeleting, onRefresh }: KanbanBoardProps) {
+export function KanbanBoard({
+    ordenes,
+    onOrdenClick,
+    onDelete,
+    confirmDeleteId,
+    isDeleting,
+    onRefresh,
+    userRole
+}: KanbanBoardProps) {
     const supabase = createClient();
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
-    const { isTecnico, isAdmin } = useRole();
 
-
-    // Track pending estado change during drag to persist on drop
-    const pendingEstadoChange = useRef<{ id: string; estado: OrdenEstado; previousEstado: OrdenEstado } | null>(null);
-
-    // Prevent hydration mismatch
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
-
-
-
-    // Filter phases: Technical role doesn't see 'comercial' nor 'administrativa' phases
-    const visiblePhases = useMemo(() => {
-        if (isTecnico && !isAdmin) {
-            return ORDEN_PHASES.filter(p => p.id !== 'comercial' && p.id !== 'administrativa');
-        }
-        return ORDEN_PHASES;
-    }, [isTecnico, isAdmin]);
+    // Permisos de drag: solo director y administradora
+    const canDrag = userRole === 'director' || userRole === 'administradora';
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -75,19 +60,28 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         }),
     );
 
+    // Track del cambio pendiente durante el drag
+    const pendingEstadoChange = useRef<{ id: string; estado: OrdenEstado } | null>(null);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const getOrdenesForEstado = useCallback(
         (estado: OrdenEstado) => ordenes.filter(o => o.estado === estado),
         [ordenes],
     );
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
+        if (!canDrag) return;
         const { active } = event;
         const orden = ordenes.find(o => o.id === active.id);
         if (orden) setActiveOrden(orden);
-        pendingEstadoChange.current = null; // reset on new drag
-    }, [ordenes]);
+        pendingEstadoChange.current = null;
+    }, [ordenes, canDrag]);
 
     const handleDragOver = useCallback((event: DragOverEvent) => {
+        if (!canDrag) return;
         const { active, over } = event;
         if (!over) return;
 
@@ -97,13 +91,10 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         const activeOrden = ordenes.find(o => o.id === activeId);
         if (!activeOrden) return;
 
-        // Check if dropping over a column
         const isOverColumn = ORDEN_ESTADOS.includes(overId as OrdenEstado);
-        // Check if dropping over another orden
         const overOrden = ordenes.find(o => o.id === overId);
 
         let newEstado: OrdenEstado | null = null;
-
         if (isOverColumn) {
             newEstado = overId as OrdenEstado;
         } else if (overOrden) {
@@ -111,79 +102,36 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         }
 
         if (newEstado && newEstado !== activeOrden.estado) {
-            // Track the pending change to persist on drop (including previous estado for rollback)
-            // NOTE: Do NOT call onOrdenesChange here — ordenes only contains filtered data,
-            // calling it would overwrite the full array with partial data.
-            pendingEstadoChange.current = { id: activeId, estado: newEstado, previousEstado: activeOrden.estado };
+            pendingEstadoChange.current = { id: activeId, estado: newEstado };
         }
-    }, [ordenes]);
+    }, [ordenes, canDrag]);
 
     const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-        const { active, over } = event;
+        if (!canDrag) return;
         setActiveOrden(null);
 
-        // Persist estado change to Supabase if there was a column change
         if (pendingEstadoChange.current) {
-            const { id, estado, previousEstado } = pendingEstadoChange.current;
+            const { id, estado } = pendingEstadoChange.current;
             pendingEstadoChange.current = null;
+
             if (isValidUUID(id)) {
-                if (ESTADOS_SIN_VALIDACION.includes(estado)) {
-                    // Fase Cierre o Administrativa: update directo
-                    const { error } = await supabase
-                        .from('ordenes_servicio')
-                        .update({ estado })
-                        .eq('id', id);
-                    if (error) {
-                        alert('Error: ' + error.message + ' | ' + error.code);
-                    } else {
-                        // Success: Solo refrescar (sin pasar estado para simplificar)
-                        if (onRefresh) onRefresh();
-                    }
-                } else {
-                    // Otros estados
-                    const { error } = await supabase
-                        .from('ordenes_servicio')
-                        .update({ estado })
-                        .eq('id', id);
-                    if (error) {
-                        console.error('Supabase error al cambiar estado:', error.message);
-                        // No hacemos rollback local, el refresh posterior del padre limpiará la UI
-                        if (onRefresh) onRefresh();
-                        return;
-                    }
-                    // Success: Solo refrescar
-                    if (onRefresh) onRefresh();
+                const { error } = await supabase
+                    .from('ordenes_servicio')
+                    .update({ estado })
+                    .eq('id', id);
+
+                if (error) {
+                    console.error('Error al actualizar estado:', error);
+                    alert('Error al guardar el cambio: ' + error.message);
                 }
+                
+                // Siempre refrescamos desde Supabase para mantener la sincronía
+                onRefresh();
             }
         }
+    }, [supabase, onRefresh, canDrag]);
 
-        if (!over) return;
-
-        const activeId = active.id as string;
-        const overId = over.id as string;
-
-        // Same item — reorder within column
-        if (activeId !== overId) {
-            const activeOrden = ordenes.find(o => o.id === activeId);
-            const overOrden = ordenes.find(o => o.id === overId);
-
-            if (activeOrden && overOrden && activeOrden.estado === overOrden.estado) {
-                const columnOrdenes = ordenes.filter(o => o.estado === activeOrden.estado);
-                const oldIndex = columnOrdenes.findIndex(o => o.id === activeId);
-                const newIndex = columnOrdenes.findIndex(o => o.id === overId);
-
-                if (oldIndex !== -1 && newIndex !== -1) {
-                    const reordered = arrayMove(columnOrdenes, oldIndex, newIndex);
-                    const otherOrdenes = ordenes.filter(o => o.estado !== activeOrden.estado);
-                    onOrdenesChange([...otherOrdenes, ...reordered]);
-                }
-            }
-        }
-    }, [ordenes, onOrdenesChange, onRefresh]);
-
-    if (!isMounted) {
-        return <div className="p-8 text-center text-retarder-gray-500 text-sm">Cargando tablero...</div>;
-    }
+    if (!isMounted) return null;
 
     return (
         <DndContext
@@ -195,9 +143,9 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         >
             <div className="overflow-x-auto pb-4 kanban-scroll">
                 <div className="flex gap-0 min-w-max">
-                    {visiblePhases.map((phase) => (
+                    {ORDEN_PHASES.map((phase) => (
                         <div key={phase.id} className="flex flex-col">
-                            {/* Phase header */}
+                            {/* Encabezado de Fase */}
                             <div className={cn(
                                 'flex items-center gap-2 px-3 py-2 mb-2 rounded-lg mx-1',
                                 phase.bgLight,
@@ -210,19 +158,19 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                                     'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
                                     phase.bgColor, 'text-white',
                                 )}>
-                                    {phase.estados.reduce((acc, e) => acc + getOrdenesForEstado(e).length, 0)}
+                                    {phase.estados.reduce((acc, e) => acc + getOrdenesForEstado(e as OrdenEstado).length, 0)}
                                 </span>
                             </div>
 
-                            {/* Columns for this phase */}
+                            {/* Columnas de la Fase */}
                             <div className="flex gap-2 px-1">
-                                {phase.estados.map((estado, idx) => (
+                                {phase.estados.map((estado) => (
                                     <KanbanColumn
                                         key={estado}
-                                        estado={estado}
-                                        ordenes={getOrdenesForEstado(estado)}
+                                        estado={estado as OrdenEstado}
+                                        ordenes={getOrdenesForEstado(estado as OrdenEstado)}
                                         phase={phase}
-                                        index={ORDEN_ESTADOS.indexOf(estado)}
+                                        index={ORDEN_ESTADOS.indexOf(estado as OrdenEstado)}
                                         onOrdenClick={onOrdenClick}
                                         onDelete={onDelete}
                                         confirmDeleteId={confirmDeleteId}
@@ -235,11 +183,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                 </div>
             </div>
 
-            {/* Drag Overlay */}
-            <DragOverlay dropAnimation={{
-                duration: 200,
-                easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-            }}>
+            <DragOverlay>
                 {activeOrden ? <KanbanCardOverlay orden={activeOrden} /> : null}
             </DragOverlay>
         </DndContext>
