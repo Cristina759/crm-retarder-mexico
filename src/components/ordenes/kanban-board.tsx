@@ -128,7 +128,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
             pendingEstadoChange.current = null;
             if (isValidUUID(id)) {
                 if (ESTADOS_SIN_VALIDACION.includes(estado)) {
-                    // Fase Cierre o Administrativa: update directo sin validaciones ni rollback
+                    // Fase Cierre o Administrativa: update directo
                     const { error } = await supabase
                         .from('ordenes_servicio')
                         .update({ estado })
@@ -136,31 +136,23 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                     if (error) {
                         alert('Error: ' + error.message + ' | ' + error.code);
                     } else {
-                        // Success: update local state (redundant but safe) to stay in sync
-                        const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
-                        onOrdenesChange(updated);
-                        if (onRefresh) onRefresh(estado);
+                        // Success: Solo refrescar (sin pasar estado para simplificar)
+                        if (onRefresh) onRefresh();
                     }
                 } else {
-                    // Otros estados: update 
+                    // Otros estados
                     const { error } = await supabase
                         .from('ordenes_servicio')
                         .update({ estado })
                         .eq('id', id);
                     if (error) {
-                        console.error('Supabase error al cambiar estado:', error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint);
-                        // Rollback: revertir la UI al estado anterior
-                        if (previousEstado) {
-                            onOrdenesChange(ordenes.map(o =>
-                                o.id === id ? { ...o, estado: previousEstado } : o
-                            ));
-                        }
+                        console.error('Supabase error al cambiar estado:', error.message);
+                        // No hacemos rollback local, el refresh posterior del padre limpiará la UI
+                        if (onRefresh) onRefresh();
                         return;
                     }
-                    // Success: update local state
-                    const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
-                    onOrdenesChange(updated);
-                    if (onRefresh) onRefresh(estado);
+                    // Success: Solo refrescar
+                    if (onRefresh) onRefresh();
                 }
             }
         }

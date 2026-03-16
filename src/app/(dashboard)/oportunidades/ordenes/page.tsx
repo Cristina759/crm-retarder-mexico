@@ -95,14 +95,10 @@ export default function OrdenesPage() {
         }
     }, [supabase]);
 
-    const handleDragEstadoChange = useCallback((nuevoEstado?: string) => {
-        if (nuevoEstado) {
-            const fase = ORDEN_PHASES.find(p => p.estados.includes(nuevoEstado as OrdenEstado));
-            setActivePhaseFilter(fase ? fase.id : 'all');
-        }
-        // setTimeout garantiza que React procese el cambio de filtro
-        // antes de que lleguen los datos del fetch
-        setTimeout(() => fetchOrdenes(), 300);
+    const handleDragEstadoChange = useCallback(() => {
+        setActivePhaseFilter('all');
+        // El delay de 800ms permite que las animaciones terminen y el estado se limpie
+        setTimeout(() => fetchOrdenes(), 800);
     }, [fetchOrdenes]);
 
     useEffect(() => {
