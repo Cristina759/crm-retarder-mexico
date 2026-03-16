@@ -103,6 +103,12 @@ export default function OrdenesPage() {
         } else {
             setActivePhaseFilter('all');
         }
+
+        // Reset scroll to start when phase changes via drag
+        setTimeout(() => {
+            const kanban = document.querySelector('.kanban-scroll');
+            if (kanban) kanban.scrollLeft = 0;
+        }, 100);
     }, []);
 
     useEffect(() => {
