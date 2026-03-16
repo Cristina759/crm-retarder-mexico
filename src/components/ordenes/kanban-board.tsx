@@ -44,7 +44,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
     const { isTecnico, isAdmin } = useRole();
-    const kanbanScrollRef = useRef<HTMLDivElement>(null);
+
 
     // Track pending estado change during drag to persist on drop
     const pendingEstadoChange = useRef<{ id: string; estado: OrdenEstado; previousEstado: OrdenEstado } | null>(null);
@@ -54,12 +54,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
         setIsMounted(true);
     }, []);
 
-    // Reset scroll when data changes
-    useEffect(() => {
-        if (kanbanScrollRef.current) {
-            kanbanScrollRef.current.scrollLeft = 0;
-        }
-    }, [ordenes]);
+
 
     // Filter phases: Technical role doesn't see 'comercial' nor 'administrativa' phases
     const visiblePhases = useMemo(() => {
@@ -143,6 +138,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                         // Success: update local state (redundant but safe) to stay in sync
                         const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
                         onOrdenesChange(updated);
+                        if (onRefresh) onRefresh();
                     }
                 } else {
                     // Otros estados: update 
@@ -163,6 +159,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                     // Success: update local state
                     const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
                     onOrdenesChange(updated);
+                    if (onRefresh) onRefresh();
                 }
             }
         }
@@ -203,7 +200,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div ref={kanbanScrollRef} className="overflow-x-auto pb-4 kanban-scroll">
+            <div className="overflow-x-auto pb-4 kanban-scroll">
                 <div className="flex gap-0 min-w-max">
                     {visiblePhases.map((phase) => (
                         <div key={phase.id} className="flex flex-col">
