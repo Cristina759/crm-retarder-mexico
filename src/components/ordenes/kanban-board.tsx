@@ -37,7 +37,10 @@ interface KanbanBoardProps {
 }
 
 const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-const ESTADOS_CIERRE: OrdenEstado[] = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada'];
+const ESTADOS_SIN_VALIDACION: OrdenEstado[] = [
+    'servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', // Cierre
+    'encuesta_enviada', 'facturado', 'pagado'                             // Administrativa
+];
 
 export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, confirmDeleteId, isDeleting, onRefresh }: KanbanBoardProps) {
     const supabase = createClient();
@@ -126,8 +129,8 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
             const { id, estado, previousEstado } = pendingEstadoChange.current;
             pendingEstadoChange.current = null;
             if (isValidUUID(id)) {
-                if (ESTADOS_CIERRE.includes(estado)) {
-                    // Fase Cierre: update directo sin validaciones ni rollback
+                if (ESTADOS_SIN_VALIDACION.includes(estado)) {
+                    // Fase Cierre o Administrativa: update directo sin validaciones ni rollback
                     const { error } = await supabase
                         .from('ordenes_servicio')
                         .update({ estado })
