@@ -1,7 +1,5 @@
-// Orden de Servicio pipeline states — ordered
 export const ORDEN_ESTADOS = [
-    'solicitud_recibida',
-    'cotizacion_enviada',
+    'cotizacion_enviada_al_cliente',
     'cotizacion_aceptada',
     'asignacion_tecnico',
     'servicio_programado',
@@ -21,8 +19,7 @@ export const ORDEN_ESTADOS = [
 export type OrdenEstado = (typeof ORDEN_ESTADOS)[number];
 
 export const ORDEN_ESTADO_LABELS: Record<OrdenEstado, string> = {
-    solicitud_recibida: 'Solicitud Recibida',
-    cotizacion_enviada: 'Cotización Enviada',
+    cotizacion_enviada_al_cliente: 'Cotización Enviada al Cliente',
     cotizacion_aceptada: 'Cotización Aceptada',
     asignacion_tecnico: 'Asignación de Técnico',
     servicio_programado: 'Servicio Programado',
@@ -64,7 +61,7 @@ export const ORDEN_PHASES: PhaseConfig[] = [
         id: 'comercial',
         label: 'Fase Comercial',
         emoji: '💼',
-        estados: ['solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada'],
+        estados: ['cotizacion_enviada_al_cliente', 'cotizacion_aceptada'],
         bgColor: 'bg-blue-600',
         bgLight: 'bg-blue-50',
         borderColor: 'border-blue-500',
@@ -113,8 +110,7 @@ export function getPhaseForEstado(estado: OrdenEstado): PhaseConfig {
 
 // Per-state colors (aligned with phase)
 export const ORDEN_ESTADO_COLORS: Record<OrdenEstado, string> = {
-    solicitud_recibida: 'bg-blue-400',
-    cotizacion_enviada: 'bg-blue-500',
+    cotizacion_enviada_al_cliente: 'bg-blue-500',
     cotizacion_aceptada: 'bg-blue-600',
     asignacion_tecnico: 'bg-amber-400',
     servicio_programado: 'bg-orange-400',

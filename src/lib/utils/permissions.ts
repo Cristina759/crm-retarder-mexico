@@ -80,24 +80,24 @@ const PERMISSIONS: Record<Rol, Partial<Record<Resource, Permission[]>>> = {
 // States a role can transition órdenes TO
 const ESTADO_TRANSITIONS: Record<Rol, OrdenEstado[]> = {
     admin: [
-        'solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada',
+        'cotizacion_enviada_al_cliente', 'cotizacion_aceptada',
         'servicio_programado', 'documentacion_enviada', 'tecnico_en_contacto',
         'servicio_en_proceso', 'autorizacion_adicional', 'servicio_concluido',
         'evidencia_cargada', 'documentacion_entregada', 'encuesta_enviada',
         'facturado', 'pagado',
     ],
     direccion: [
-        'solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada',
+        'cotizacion_enviada_al_cliente', 'cotizacion_aceptada',
         'servicio_programado', 'documentacion_enviada', 'tecnico_en_contacto',
         'servicio_en_proceso', 'autorizacion_adicional', 'servicio_concluido',
         'evidencia_cargada', 'documentacion_entregada', 'encuesta_enviada',
         'facturado', 'pagado',
     ],
-    vendedor: ['solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada'],
+    vendedor: ['cotizacion_enviada_al_cliente', 'cotizacion_aceptada'],
     tecnico: ['tecnico_en_contacto', 'servicio_en_proceso', 'autorizacion_adicional', 'servicio_concluido', 'evidencia_cargada'],
     cliente: [],
     administracion: [
-        'solicitud_recibida', 'cotizacion_enviada', 'cotizacion_aceptada',
+        'cotizacion_enviada_al_cliente', 'cotizacion_aceptada',
         'documentacion_enviada', 'evidencia_cargada', 'documentacion_entregada',
         'encuesta_enviada', 'facturado', 'pagado',
     ],

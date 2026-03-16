@@ -375,10 +375,8 @@ export default function CotizadorFrenosPage() {
                 const { count: osCount, error: countErr2 } = await supabase.from('ordenes_servicio').select('*', { count: 'exact', head: true });
 
                 if (!countErr1 && !countErr2) {
-                    const nextCotIdx = (cotCount || 0) + 1;
-                    const nextOsIdx = (osCount || 0) + 1;
+                    const nextCotIdx = (cotCount || 0) + 100;
                     cotNumero = `COT-${String(nextCotIdx).padStart(4, '0')}`;
-                    osNumero = `OS-${String(nextOsIdx).padStart(4, '0')}`;
                 }
 
                 // Buscar UUID real en Supabase por nombre_comercial
@@ -423,10 +421,10 @@ export default function CotizadorFrenosPage() {
                         empresa_id:    empresaUUID,
                         empresa:       cliente?.nombre_comercial || 'Sin empresa',
                         vendedor:      sellerName,
-                        estado:        'solicitud_recibida',
+                        estado:        'cotizacion_enviada_al_cliente',
                         cotizacion_id: cotData.id,
                         folio:         cotData.folio,
-                        numero:        cotData.folio,
+                        numero:        '', // Se captura manualmente
                         tipo:          'frenos',
                         prioridad:     'media',
                         tecnico:       '',

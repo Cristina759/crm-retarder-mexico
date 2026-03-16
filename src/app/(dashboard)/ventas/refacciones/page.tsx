@@ -300,10 +300,8 @@ export default function CotizadorRefaccionesPage() {
                 const { count: osCount, error: countErr2 } = await supabase.from('ordenes_servicio').select('*', { count: 'exact', head: true });
 
                 if (!countErr1 && !countErr2) {
-                    const nextCotIdx = (cotCount || 0) + 1;
-                    const nextOsIdx = (osCount || 0) + 1;
+                    const nextCotIdx = (cotCount || 0) + 100;
                     cotNumero = `COT-${String(nextCotIdx).padStart(4, '0')}`;
-                    osNumero = `OS-${String(nextOsIdx).padStart(4, '0')}`;
                 }
 
                 // 1. Crear Cotización
@@ -332,10 +330,10 @@ export default function CotizadorRefaccionesPage() {
                 await supabase
                     .from('ordenes_servicio')
                     .insert({
-                        numero: osNumero,
+                        numero: '', // Se captura manualmente
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
                         tipo: 'correctivo',
-                        estado: 'solicitud_recibida',
+                        estado: 'cotizacion_enviada_al_cliente',
                         prioridad: 'media',
                         vendedor: sellerName,
                         tecnico: '',

@@ -62,7 +62,7 @@ export default function OrdenesPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [newOrden, setNewOrden] = useState<{ empresa: string; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
+    const [newOrden, setNewOrden] = useState<{ numero: string; empresa: string; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ numero: '', empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
     const [empresaSearch, setEmpresaSearch] = useState('');
 
     const { user } = useUser();
@@ -108,12 +108,11 @@ export default function OrdenesPage() {
     const handleCreateOrden = async () => {
         setIsSaving(true);
         try {
-            const nextNum = ordenes.length + 52;
             const newRecord = {
-                numero: `OS-${String(nextNum).padStart(5, '0')}`,
+                numero: newOrden.numero || '', // Captura manual
                 empresa: newOrden.empresa || 'Sin empresa',
                 tipo: newOrden.tipo,
-                estado: 'solicitud_recibida' as OrdenEstado,
+                estado: 'cotizacion_enviada_al_cliente' as OrdenEstado,
                 prioridad: newOrden.prioridad,
                 tecnico: newOrden.tecnico,
                 vendedor: newOrden.vendedor || 'Sin asignar',
@@ -132,7 +131,7 @@ export default function OrdenesPage() {
             setShowNewOrden(false);
             setStep(1);
             setEmpresaSearch('');
-            setNewOrden({ empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
+            setNewOrden({ numero: '', empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
         } catch (error) {
             console.error('Error creating orden:', error);
             alert('Error al crear la orden');
@@ -425,13 +424,12 @@ export default function OrdenesPage() {
                             <table className="w-full text-sm">
                                 <thead className="bg-retarder-gray-50">
                                     <tr className="border-b border-retarder-gray-200">
-                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Orden</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Folio / OS</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
-                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Tipo</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Técnico</th>
-                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Prioridad</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden xl:table-cell">Monto</th>
+                                        <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Fecha</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
                                     </tr>
                                 </thead>
@@ -455,17 +453,16 @@ export default function OrdenesPage() {
                                                     className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors"
                                                     onClick={() => setSelectedOrden(o)}
                                                 >
-                                                    <td className="py-3 px-2 sm:px-4 font-mono text-xs font-bold text-retarder-red">{o.numero}</td>
+                                                    <td className="py-3 px-2 sm:px-4">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-mono text-xs font-bold text-retarder-red">{o.numero || '---'}</span>
+                                                            <span className="text-[9px] text-retarder-gray-400">Ref: {o.cotizacion_numero || 'N/A'}</span>
+                                                        </div>
+                                                    </td>
                                                     <td className="py-3 px-2 sm:px-4">
                                                         <div className="flex items-center gap-2">
                                                             <Building2 size={14} className="text-retarder-gray-400 hidden sm:block" />
                                                             <span className="font-medium text-retarder-gray-800 truncate max-w-[100px] sm:max-w-[160px]">{o.empresa}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="py-3 px-2 sm:px-4 hidden md:table-cell">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Wrench size={12} className="text-retarder-gray-400" />
-                                                            <span className="text-retarder-gray-600 truncate max-w-[100px]">{TIPO_SERVICIO_LABELS[o.tipo as keyof typeof TIPO_SERVICIO_LABELS]}</span>
                                                         </div>
                                                     </td>
                                                     <td className="py-3 px-2 sm:px-4">
@@ -477,16 +474,11 @@ export default function OrdenesPage() {
                                                         </div>
                                                     </td>
                                                     <td className="py-3 px-2 sm:px-4 text-retarder-gray-600 hidden lg:table-cell truncate max-w-[120px]">{o.tecnico || '—'}</td>
-                                                    <td className="py-3 px-2 sm:px-4 hidden sm:table-cell">
-                                                        <span className={cn(
-                                                            'px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap',
-                                                            PRIORIDAD_COLORS[o.prioridad as keyof typeof PRIORIDAD_COLORS],
-                                                        )}>
-                                                            {o.prioridad}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-3 px-2 sm:px-4 text-right text-retarder-gray-600 font-medium hidden xl:table-cell whitespace-nowrap">
+                                                    <td className="py-3 px-2 sm:px-4 text-right text-retarder-gray-600 font-bold hidden xl:table-cell whitespace-nowrap">
                                                         {o.monto ? formatMXN(o.monto) : '—'}
+                                                    </td>
+                                                    <td className="py-3 px-2 sm:px-4 text-right text-retarder-gray-400 text-[10px] hidden sm:table-cell">
+                                                        {o.fecha_creado}
                                                     </td>
                                                     <td className="py-3 px-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">
@@ -627,6 +619,13 @@ export default function OrdenesPage() {
                                                 <option value="alta">🟠 Alta</option>
                                                 <option value="urgente">🔴 Urgente</option>
                                             </select>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Número de Orden de Servicio (Manual)</label>
+                                            <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
+                                                <OrdenIcon size={14} className="text-retarder-gray-400" />
+                                                <input type="text" placeholder="Ej: OS-1234" value={newOrden.numero || ''} onChange={e => setNewOrden({ ...newOrden, numero: e.target.value })} className="flex-1 outline-none text-sm" />
+                                            </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>

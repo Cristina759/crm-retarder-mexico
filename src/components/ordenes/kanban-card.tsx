@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
-import { GripVertical, Clock, Wrench, AlertTriangle, Trash2 } from 'lucide-react';
+import { GripVertical, Clock, Wrench, AlertTriangle, Trash2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
     type DemoOrden,
@@ -94,10 +94,11 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 </div>
             )}
 
-            {/* Orden number + Priority */}
+            {/* Folio (Cotización) + Priority */}
             <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-xs font-bold text-retarder-red tracking-tight">
-                    {orden.numero}
+                <span className="font-mono text-[10px] font-bold text-retarder-gray-500 tracking-tight flex items-center gap-1">
+                    <FileText size={10} className="text-retarder-red" />
+                    {orden.cotizacion_numero || 'S/F'}
                 </span>
                 <span
                     className={cn(
@@ -112,55 +113,42 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 </span>
             </div>
 
+            {/* Service Order Number (Manual) */}
+            {orden.numero && (
+                <p className="text-[10px] font-bold text-retarder-red mb-1">
+                    OS: {orden.numero}
+                </p>
+            )}
+
             {/* Company name */}
             <p className="text-sm font-semibold text-retarder-gray-800 truncate leading-tight">
                 {orden.empresa}
             </p>
 
-            {/* Description */}
-            <p className="text-[11px] text-retarder-gray-500 truncate mt-1 leading-tight">
-                {orden.descripcion}
-            </p>
+            {/* Tech */}
+            <div className="flex items-center gap-1.5 mt-2">
+                <div className={cn(
+                    'w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold',
+                    phase.dotColor,
+                )}>
+                    {orden.tecnico ? orden.tecnico.charAt(0) : '?'}
+                </div>
+                <span className="text-[10px] text-retarder-gray-500 truncate">{orden.tecnico || 'Sin técnico'}</span>
+            </div>
 
-            {/* Meta row */}
-            <div className="flex items-center gap-2 mt-2.5 pt-2.5 border-t border-retarder-gray-100">
-                {/* Service type */}
+            {/* Amount + Date */}
+            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-retarder-gray-100">
                 <div className="flex items-center gap-1">
-                    <Wrench size={10} className="text-retarder-gray-400" />
-                    <span className="text-[10px] text-retarder-gray-500">
-                        {TIPO_SERVICIO_LABELS[orden.tipo]}
+                    <Clock size={10} className="text-retarder-gray-300" />
+                    <span className="text-[9px] text-retarder-gray-400">
+                        {orden.fecha_creado}
                     </span>
                 </div>
-
-                {/* Amount */}
                 {orden.monto && (
-                    <span className="text-[10px] font-semibold text-retarder-gray-600 ml-auto">
+                    <span className="text-[10px] font-bold text-retarder-black">
                         {formatMXN(orden.monto)}
                     </span>
                 )}
-            </div>
-
-            {/* Tech + Seller */}
-            {orden.tecnico && (
-                <div className="flex items-center gap-2 mt-2">
-                    <div className="flex items-center gap-1.5">
-                        <div className={cn(
-                            'w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold',
-                            phase.dotColor,
-                        )}>
-                            {orden.tecnico.charAt(0)}
-                        </div>
-                        <span className="text-[10px] text-retarder-gray-500">{orden.tecnico}</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Days indicator */}
-            <div className="flex items-center gap-1 mt-1.5">
-                <Clock size={9} className="text-retarder-gray-300" />
-                <span className="text-[9px] text-retarder-gray-400">
-                    {orden.fecha_creado}
-                </span>
             </div>
         </div>
     );

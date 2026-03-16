@@ -194,7 +194,7 @@ export default function CotizacionesPage() {
                 numero: osNum,
                 empresa: cot.empresa || 'Sin empresa',
                 tipo: 'instalacion', // Default
-                estado: 'solicitud_recibida' as OrdenEstado,
+                estado: 'cotizacion_enviada_al_cliente' as OrdenEstado,
                 prioridad: 'media',
                 tecnico: '',
                 vendedor: cot.vendedor || '',

@@ -401,11 +401,9 @@ export default function CotizadorServiciosPage() {
                 const { count: cotCount } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
                 const { count: osCount } = await supabase.from('ordenes_servicio').select('*', { count: 'exact', head: true });
 
-                const nextCotIdx = (cotCount || 0) + 1;
-                const nextOsIdx = (osCount || 0) + 1;
+                const nextCotIdx = (cotCount || 0) + 100;
 
                 cotNumero = `COT-${String(nextCotIdx).padStart(4, '0')}`;
-                osNumero = `OS-${String(nextOsIdx).padStart(4, '0')}`;
 
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
@@ -431,10 +429,10 @@ export default function CotizadorServiciosPage() {
                 await supabase
                     .from('ordenes_servicio')
                     .insert({
-                        numero: osNumero,
+                        numero: '', // Se captura manualmente
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
                         tipo: selectedService.id,
-                        estado: 'solicitud_recibida',
+                        estado: 'cotizacion_enviada_al_cliente',
                         prioridad: 'media',
                         vendedor: sellerName,
                         tecnico: '',
