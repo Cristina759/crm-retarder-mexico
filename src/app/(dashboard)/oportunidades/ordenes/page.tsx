@@ -103,8 +103,7 @@ export default function OrdenesPage() {
         } else {
             setActivePhaseFilter('all');
         }
-        fetchOrdenes();
-    }, [fetchOrdenes]);
+    }, []);
 
     useEffect(() => {
         fetchOrdenes();
