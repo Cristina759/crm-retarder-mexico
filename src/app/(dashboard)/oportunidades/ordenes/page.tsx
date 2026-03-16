@@ -95,8 +95,14 @@ export default function OrdenesPage() {
         }
     }, [supabase]);
 
-    const handleDragEstadoChange = useCallback(() => {
-        setActivePhaseFilter('all');
+    const handleDragEstadoChange = useCallback((nuevoEstado?: string) => {
+        if (nuevoEstado) {
+            const fase = ORDEN_PHASES.find(p => p.estados.includes(nuevoEstado as OrdenEstado));
+            if (fase) setActivePhaseFilter(fase.id);
+            else setActivePhaseFilter('all');
+        } else {
+            setActivePhaseFilter('all');
+        }
         fetchOrdenes();
     }, [fetchOrdenes]);
 

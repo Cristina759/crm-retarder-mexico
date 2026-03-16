@@ -33,7 +33,7 @@ interface KanbanBoardProps {
     onDelete: (id: string) => void;
     confirmDeleteId?: string | null;
     isDeleting?: boolean;
-    onRefresh?: () => void;
+    onRefresh?: (estado?: string) => void;
 }
 
 const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -141,7 +141,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                         // Success: update local state (redundant but safe) to stay in sync
                         const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
                         onOrdenesChange(updated);
-                        if (onRefresh) onRefresh();
+                        if (onRefresh) onRefresh(estado);
                     }
                 } else {
                     // Otros estados: update 
@@ -162,7 +162,7 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
                     // Success: update local state
                     const updated = ordenes.map(o => o.id === id ? { ...o, estado } : o);
                     onOrdenesChange(updated);
-                    if (onRefresh) onRefresh();
+                    if (onRefresh) onRefresh(estado);
                 }
             }
         }
