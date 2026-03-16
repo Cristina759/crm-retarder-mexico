@@ -112,13 +112,11 @@ export function KanbanBoard({ ordenes, onOrdenesChange, onOrdenClick, onDelete, 
 
         if (newEstado && newEstado !== activeOrden.estado) {
             // Track the pending change to persist on drop (including previous estado for rollback)
+            // NOTE: Do NOT call onOrdenesChange here — ordenes only contains filtered data,
+            // calling it would overwrite the full array with partial data.
             pendingEstadoChange.current = { id: activeId, estado: newEstado, previousEstado: activeOrden.estado };
-            const updated = ordenes.map(o =>
-                o.id === activeId ? { ...o, estado: newEstado! } : o
-            );
-            onOrdenesChange(updated);
         }
-    }, [ordenes, onOrdenesChange]);
+    }, [ordenes]);
 
     const handleDragEnd = useCallback(async (event: DragEndEvent) => {
         const { active, over } = event;

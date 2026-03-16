@@ -98,18 +98,12 @@ export default function OrdenesPage() {
     const handleDragEstadoChange = useCallback((nuevoEstado?: string) => {
         if (nuevoEstado) {
             const fase = ORDEN_PHASES.find(p => p.estados.includes(nuevoEstado as OrdenEstado));
-            if (fase) setActivePhaseFilter(fase.id);
-            else setActivePhaseFilter('all');
-        } else {
-            setActivePhaseFilter('all');
+            setActivePhaseFilter(fase ? fase.id : 'all');
         }
-
-        // Reset scroll to start when phase changes via drag
-        setTimeout(() => {
-            const kanban = document.querySelector('.kanban-scroll');
-            if (kanban) kanban.scrollLeft = 0;
-        }, 100);
-    }, []);
+        // setTimeout garantiza que React procese el cambio de filtro
+        // antes de que lleguen los datos del fetch
+        setTimeout(() => fetchOrdenes(), 300);
+    }, [fetchOrdenes]);
 
     useEffect(() => {
         fetchOrdenes();
