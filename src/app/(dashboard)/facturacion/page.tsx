@@ -74,7 +74,7 @@ export default function FacturacionPage() {
 
             const mapped: Factura[] = (data || []).map(o => {
                 let estado: FactEstado = 'pendiente_facturar';
-                if (o.numero_factura) estado = 'facturada';
+                if (o.numero_factura || o.estado === 'facturado') estado = 'facturada';
                 if (o.pagado || o.estado === 'pagado') estado = 'pagada';
                 
                 return {
@@ -214,6 +214,28 @@ export default function FacturacionPage() {
         }
     };
 
+    const handleUpdateEstado = async (factura: Factura, nuevoEstado: 'facturada' | 'pagada') => {
+        setLoading(true);
+        try {
+            const updates: Record<string, any> = nuevoEstado === 'pagada'
+                ? { estado: 'pagado', pagado: true }
+                : { estado: 'facturado' };
+
+            const { error } = await supabase
+                .from('ordenes_servicio')
+                .update(updates)
+                .eq('id', factura.id);
+
+            if (error) throw error;
+            await fetchFacturas();
+        } catch (err: any) {
+            console.error('Error actualizando estado:', err);
+            alert(`Error al actualizar: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             {/* Header */}
@@ -306,13 +328,35 @@ export default function FacturacionPage() {
                                                 {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : '—'}
                                             </td>
                                             <td className="py-3 px-2 sm:px-4 text-right">
-                                                <button
-                                                    onClick={e => { e.stopPropagation(); handleDeleteFactura(f); }}
-                                                    className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
-                                                    title="Eliminar factura"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {f.estado === 'pendiente_facturar' && (
+                                                        <button
+                                                            onClick={e => { e.stopPropagation(); handleUpdateEstado(f, 'facturada'); }}
+                                                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors whitespace-nowrap"
+                                                            title="Marcar como Facturada"
+                                                        >
+                                                            <FileText size={11} />
+                                                            <span className="hidden sm:inline">Facturada</span>
+                                                        </button>
+                                                    )}
+                                                    {f.estado === 'facturada' && (
+                                                        <button
+                                                            onClick={e => { e.stopPropagation(); handleUpdateEstado(f, 'pagada'); }}
+                                                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors whitespace-nowrap"
+                                                            title="Marcar como Pagada"
+                                                        >
+                                                            <CheckCircle2 size={11} />
+                                                            <span className="hidden sm:inline">Pagada</span>
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={e => { e.stopPropagation(); handleDeleteFactura(f); }}
+                                                        className="p-1.5 text-retarder-gray-400 hover:text-retarder-red hover:bg-retarder-red/5 rounded-lg transition-colors"
+                                                        title="Eliminar factura"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </motion.tr>
                                     );
