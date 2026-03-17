@@ -98,7 +98,7 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
             <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-bold text-retarder-gray-500 tracking-tight flex items-center gap-1">
                     <FileText size={10} className="text-retarder-red" />
-                    {orden.cotizacion_numero || 'S/F'}
+                    {orden.numero || 'S/F'}
                 </span>
                 <span
                     className={cn(
