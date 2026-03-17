@@ -67,7 +67,7 @@ export default function FacturacionPage() {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
                 .select('*')
-                .or('estado.in.(encuesta_enviada,facturado,pagado),numero_factura.not.is.null')
+                .in('estado', ['encuesta_enviada', 'facturado', 'pagado'])
                 .order('fecha_creado', { ascending: false });
 
             if (error) throw error;
