@@ -64,13 +64,23 @@ export default function FacturacionPage() {
         setLoading(true);
         try {
             // Buscamos órdenes que estén en fase administrativa O tengan número de factura
-            const { data, error } = await supabase
+            const { data: d1, error: e1 } = await supabase
                 .from('ordenes_servicio')
                 .select('*')
                 .in('estado', ['encuesta_enviada', 'facturado', 'pagado'])
                 .order('fecha_creado', { ascending: false });
 
-            if (error) throw error;
+            const { data: d2, error: e2 } = await supabase
+                .from('ordenes_servicio')
+                .select('*')
+                .not('numero_factura', 'is', null)
+                .order('fecha_creado', { ascending: false });
+
+            if (e1) throw e1;
+            if (e2) throw e2;
+
+            const seenIds = new Set((d1 || []).map((o: any) => o.id));
+            const data = [...(d1 || []), ...(d2 || []).filter((o: any) => !seenIds.has(o.id))];
 
             const mapped: Factura[] = (data || []).map(o => {
                 let estado: FactEstado = 'pendiente_facturar';
