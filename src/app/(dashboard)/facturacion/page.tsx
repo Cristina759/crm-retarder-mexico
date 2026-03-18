@@ -227,9 +227,18 @@ export default function FacturacionPage() {
     const handleUpdateEstado = async (factura: Factura, nuevoEstado: 'facturada' | 'pagada') => {
         setLoading(true);
         try {
-            const updates: Record<string, any> = nuevoEstado === 'pagada'
-                ? { estado: 'pagado', pagado: true }
-                : { estado: 'facturado' };
+            let updates: Record<string, any> = {};
+            
+            if (nuevoEstado === 'pagada') {
+                updates = { estado: 'pagado', pagado: true };
+            } else {
+                const numeroFactura = prompt('Ingresa el número de factura (ej. F-0001):');
+                if (!numeroFactura?.trim()) {
+                    setLoading(false);
+                    return;
+                }
+                updates = { estado: 'facturado', numero_factura: numeroFactura.trim() };
+            }
 
             const { error } = await supabase
                 .from('ordenes_servicio')
