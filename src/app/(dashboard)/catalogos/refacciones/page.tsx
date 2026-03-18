@@ -145,6 +145,8 @@ export default function RefaccionesPage() {
                     })
                     .eq('id', selectedItem.id);
                 if (error) throw error;
+                // Actualizar estado localmente
+                setRefacciones(prev => prev.map(r => r.id === selectedItem.id ? { ...r, ...formData } : r));
             } else {
                 const { error } = await supabase
                     .from('catalogo_refacciones')
@@ -152,7 +154,7 @@ export default function RefaccionesPage() {
                 if (error) throw error;
             }
 
-            await fetchRefacciones();
+            fetchRefacciones();
             handleCloseForm();
         } catch (err: any) {
             console.error('Error saving refaccion:', err);
@@ -170,7 +172,8 @@ export default function RefaccionesPage() {
                 .delete()
                 .eq('id', id);
             if (error) throw error;
-            fetchRefacciones();
+            // Actualizar estado localmente
+            setRefacciones(prev => prev.filter(r => r.id !== id));
         } catch (err: any) {
             alert(`Error al eliminar: ${err.message}`);
         }
