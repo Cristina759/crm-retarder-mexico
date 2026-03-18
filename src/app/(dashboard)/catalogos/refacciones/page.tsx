@@ -138,8 +138,6 @@ export default function RefaccionesPage() {
                 precio_venta: Number(formData.precio_venta),
             };
 
-            console.log('selectedItem completo:', JSON.stringify(selectedItem));
-
             if (isEditMode && selectedItem?.id) {
                 const { error } = await supabase
                     .from('catalogo_refacciones')
@@ -161,8 +159,8 @@ export default function RefaccionesPage() {
                 if (error) throw error;
             }
 
-            await fetchRefacciones();
             handleCloseForm();
+            await fetchRefacciones();
         } catch (err: any) {
             console.error('Error saving refaccion:', err);
             alert(`Error al guardar: ${err.message}`);
