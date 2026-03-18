@@ -139,8 +139,6 @@ export default function RefaccionesPage() {
             };
 
             if (isEditMode && selectedItem?.id) {
-                console.log('Updating id:', selectedItem.id);
-                console.log('parsedData:', parsedData);
                 const { error } = await supabase
                     .from('catalogo_refacciones')
                     .update({
@@ -153,11 +151,7 @@ export default function RefaccionesPage() {
                     })
                     .eq('id', selectedItem.id);
                 
-                console.log('Update error:', error);
-                
                 if (error) throw error;
-                // Actualizar estado localmente
-                setRefacciones(prev => prev.map(r => r.id === selectedItem.id ? { ...r, ...parsedData } : r));
             } else {
                 const { error } = await supabase
                     .from('catalogo_refacciones')
@@ -165,7 +159,7 @@ export default function RefaccionesPage() {
                 if (error) throw error;
             }
 
-            fetchRefacciones();
+            await fetchRefacciones();
             handleCloseForm();
         } catch (err: any) {
             console.error('Error saving refaccion:', err);
