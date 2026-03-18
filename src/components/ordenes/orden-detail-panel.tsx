@@ -71,9 +71,16 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         }
     }, [orden]);
 
-    const fetchTecnicos = () => {
-        // Técnicos definidos localmente — tabla 'usuarios' no disponible en este entorno
-        setTecnicosFromDb(['Nahum Garcia', 'Carlos Abraham Espinosa']);
+    const fetchTecnicos = async () => {
+        const { data, error: fetchErr } = await supabase
+            .from('usuarios')
+            .select('nombre')
+            .eq('rol', 'tecnico')
+            .eq('activo', true);
+
+        if (!fetchErr && data) {
+            setTecnicosFromDb(data.map(t => t.nombre));
+        }
     };
 
     // Helper to validate UUID
