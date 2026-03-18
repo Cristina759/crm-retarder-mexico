@@ -230,7 +230,13 @@ export default function FacturacionPage() {
             let updates: Record<string, any> = {};
             
             if (nuevoEstado === 'pagada') {
-                updates = { estado: 'pagado', pagado: true };
+                let numeroFactura = factura.numero_factura;
+                if (!numeroFactura || numeroFactura === 'PENDIENTE') {
+                    const input = prompt('Ingresa el número de factura antes de marcar como pagada:');
+                    if (!input?.trim()) { setLoading(false); return; }
+                    numeroFactura = input.trim();
+                }
+                updates = { estado: 'pagado', pagado: true, numero_factura: numeroFactura };
             } else {
                 const numeroFactura = prompt('Ingresa el número de factura (ej. F-0001):');
                 if (!numeroFactura?.trim()) {
