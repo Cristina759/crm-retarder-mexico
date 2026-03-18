@@ -162,6 +162,7 @@ export default function RefaccionesPage() {
 
             handleCloseForm();
             await fetchRefacciones();
+            console.log('Fetch completado, refacciones count:', refacciones.length);
         } catch (err: any) {
             console.error('Error saving refaccion:', err);
             alert(`Error al guardar: ${err.message}`);
