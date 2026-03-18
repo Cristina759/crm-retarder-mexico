@@ -138,6 +138,8 @@ export default function RefaccionesPage() {
                 precio_venta: Number(formData.precio_venta),
             };
 
+            console.log('selectedItem completo:', JSON.stringify(selectedItem));
+
             if (isEditMode && selectedItem?.id) {
                 const { error } = await supabase
                     .from('catalogo_refacciones')
