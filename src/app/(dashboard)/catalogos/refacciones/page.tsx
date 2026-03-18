@@ -139,6 +139,8 @@ export default function RefaccionesPage() {
             };
 
             if (isEditMode && selectedItem?.id) {
+                console.log('Updating id:', selectedItem.id);
+                console.log('parsedData:', parsedData);
                 const { error } = await supabase
                     .from('catalogo_refacciones')
                     .update({
@@ -150,6 +152,9 @@ export default function RefaccionesPage() {
                         precio_venta: parsedData.precio_venta
                     })
                     .eq('id', selectedItem.id);
+                
+                console.log('Update error:', error);
+                
                 if (error) throw error;
                 // Actualizar estado localmente
                 setRefacciones(prev => prev.map(r => r.id === selectedItem.id ? { ...r, ...parsedData } : r));
