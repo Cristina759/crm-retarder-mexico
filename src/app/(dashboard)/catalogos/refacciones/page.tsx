@@ -132,25 +132,31 @@ export default function RefaccionesPage() {
 
         setIsSaving(true);
         try {
+            const parsedData = {
+                ...formData,
+                precio_compra: Number(formData.precio_compra),
+                precio_venta: Number(formData.precio_venta),
+            };
+
             if (isEditMode && selectedItem?.id) {
                 const { error } = await supabase
                     .from('catalogo_refacciones')
                     .update({
-                        codigo: formData.codigo,
-                        nombre: formData.nombre,
-                        categoria: formData.categoria,
-                        modelo_freno: formData.modelo_freno,
-                        precio_compra: formData.precio_compra,
-                        precio_venta: formData.precio_venta
+                        codigo: parsedData.codigo,
+                        nombre: parsedData.nombre,
+                        categoria: parsedData.categoria,
+                        modelo_freno: parsedData.modelo_freno,
+                        precio_compra: parsedData.precio_compra,
+                        precio_venta: parsedData.precio_venta
                     })
                     .eq('id', selectedItem.id);
                 if (error) throw error;
                 // Actualizar estado localmente
-                setRefacciones(prev => prev.map(r => r.id === selectedItem.id ? { ...r, ...formData } : r));
+                setRefacciones(prev => prev.map(r => r.id === selectedItem.id ? { ...r, ...parsedData } : r));
             } else {
                 const { error } = await supabase
                     .from('catalogo_refacciones')
-                    .insert([formData]);
+                    .insert([parsedData]);
                 if (error) throw error;
             }
 
