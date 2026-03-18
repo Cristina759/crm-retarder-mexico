@@ -500,12 +500,21 @@ export default function DashboardPage() {
             if (ordData) setOrdenes(ordData as OrdenMini[]);
 
             // Calculate metrics
-            // El Total Vendido ahora se calcula sumando los montos de las Órdenes de Servicio
-            // Así, si se borra una OS, automáticamente se descuenta del total.
-            const totalVentas = (ordData as any[])?.reduce((s: number, o: any) => s + (Number(o.monto) || 0), 0) || 0;
+            const ordArray = (ordData as any[]) || [];
+            
+            // 1. Venta Total: Sumar órdenes que ya están en proceso real o facturadas/pagadas
+            // Excluimos explícitamente las cotizaciones enviadas que aún no son órdenes reales
+            const totalVentas = ordArray
+                .filter(o => o.estado !== 'cotizacion_enviada_al_cliente')
+                .reduce((acc, current) => acc + (Number(current.monto) || 0), 0);
+
+            // 2. Facturación Cobrada: Sumar solo lo que ya tiene marcado 'pagado' o estado 'pagado'
+            const totalCobrado = ordArray
+                .filter(o => o.pagado === true || o.estado === 'pagado')
+                .reduce((acc, current) => acc + (Number(current.monto) || 0), 0);
 
             const cotizacionesActivas = (cotData as CotizacionMini[])?.filter((c: CotizacionMini) => ['enviada', 'negociacion'].includes(c.estado)).length || 0;
-            const ordenesActivas = (ordData as OrdenMini[])?.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
+            const ordenesActivas = ordArray.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
 
             // Priority Logic
             const alerts: PriorityAlert[] = [];
@@ -522,7 +531,7 @@ export default function DashboardPage() {
             });
 
             // 2. Urgent Orders
-            (ordData as OrdenMini[])?.filter(o => o.prioridad === 'urgente' && o.estado !== 'servicio_concluido').slice(0, 1).forEach(o => {
+            ordArray.filter(o => o.prioridad === 'urgente' && o.estado !== 'servicio_concluido').slice(0, 1).forEach(o => {
                 alerts.push({
                     id: `ord-${o.id}`,
                     title: `Pedido Urgente: ${o.numero}`,
@@ -535,22 +544,22 @@ export default function DashboardPage() {
             setPriorityAlerts(alerts);
 
             // Specific Technician metrics
-            const ordTecnico = (ordData as OrdenMini[])?.filter((o: OrdenMini) => {
+            const ordTecnico = ordArray.filter((o: OrdenMini) => {
                 if (!currentUserName) return false;
                 return o.tecnico?.trim().toLocaleLowerCase() === currentUserName;
-            }) || [];
+            });
 
             const ordenesTecnico = ordTecnico.filter((o: OrdenMini) => o.estado !== 'servicio_concluido').length;
             const ordenesProceso = ordTecnico.filter((o: OrdenMini) => o.estado === 'servicio_en_proceso').length;
 
             // Orders completed today
             const today = new Date().toISOString().split('T')[0];
-            const ordenesHoy = (ordData as OrdenMini[])?.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
+            const ordenesHoy = ordArray.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
 
             // Live Statistics from Supabase
             setStats({
                 totalVentas: totalVentas,
-                totalCobrado: totalVentas * 0.75, // Simplified: assume 75% collection for now
+                totalCobrado: totalCobrado, // <-- AHORA ES REAL, no 75%
                 ordenesActivas,
                 cotizacionesActivas,
                 ordenesTecnico,
