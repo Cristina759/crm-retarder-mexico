@@ -45,9 +45,10 @@ const REAL_CATEGORIAS = [
     'TORNILLO'
 ];
 
+const supabase = createClient();
+
 export default function RefaccionesPage() {
     const { isAdmin, isVendedor } = useRole();
-    const supabase = createClient();
 
     const [refacciones, setRefacciones] = useState<Refaccion[]>([]);
     const [loading, setLoading] = useState(true);
@@ -83,7 +84,7 @@ export default function RefaccionesPage() {
         } finally {
             setLoading(false);
         }
-    }, [supabase]);
+    }, []);
 
     useEffect(() => {
         fetchRefacciones();
