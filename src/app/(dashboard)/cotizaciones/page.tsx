@@ -12,6 +12,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Loader2, RefreshCcw } from 'lucide-react';
 import { useEffect } from 'react';
 import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 type CotEstado = 'borrador' | 'enviada' | 'negociacion' | 'aceptada' | 'rechazada' | 'vencida';
 
@@ -80,7 +81,7 @@ export default function CotizacionesPage() {
         // Envolvemos el confirm en un pequeño delay para que la interacción del click se registre primero
         // y no bloquee el "Interaction to Next Paint" (INP)
         setTimeout(async () => {
-            if (!confirm('¿Estás seguro de que deseas eliminar esta cotización? Esto también eliminará cualquier Orden de Servicio vinculada. Esta acción no se puede deshacer.')) return;
+            if (!await confirmModal('¿Estás seguro de que deseas eliminar esta cotización? Esto también eliminará cualquier Orden de Servicio vinculada. Esta acción no se puede deshacer.')) return;
 
             setDeletingId(id);
             setIsProcessing(true);
@@ -109,7 +110,7 @@ export default function CotizacionesPage() {
                     setSelectedCot(null);
                 } catch (error: any) {
                     console.error('Error deleting cotización:', error);
-                    alert(`Error al eliminar la cotización: ${error.message || 'Error desconocido'}`);
+                    toast.error(`Error al eliminar la cotización: ${error.message || 'Error desconocido'}`);
                 } finally {
                     setIsProcessing(false);
                     setDeletingId(null);
@@ -133,7 +134,7 @@ export default function CotizacionesPage() {
             }
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Error al actualizar el estado');
+            toast.error('Error al actualizar el estado');
         } finally {
             setIsProcessing(false);
         }
@@ -227,10 +228,10 @@ export default function CotizacionesPage() {
             // He verificado que SÍ tiene orden_id en pasos anteriores.
 
             await fetchCotizaciones();
-            alert(`¡Orden de Servicio ${osNum} creada exitosamente para ${cot.empresa}!`);
+            toast.success(`¡Orden de Servicio ${osNum} creada exitosamente para ${cot.empresa}!`);
         } catch (error: any) {
             console.error('Error creating orden:', error);
-            alert(`Error al crear la orden: ${error.message || 'Error desconocido'}`);
+            toast.error(`Error al crear la orden: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsProcessing(false);
         }

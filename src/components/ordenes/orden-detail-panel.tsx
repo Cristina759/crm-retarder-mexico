@@ -24,6 +24,7 @@ import { StorageService } from '@/lib/services/storage-service';
 import { SurveyService } from '@/lib/services/survey-service';
 import type { Evidencia } from '@/types/database';
 import { useRole } from '@/hooks/useRole';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 
 interface OrdenDetailPanelProps {
@@ -458,7 +459,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     
                 if (deleteError) {
                     console.error('Error Supabase al borrar:', deleteError);
-                    alert(`No se pudo eliminar la orden: ${deleteError.message}`);
+                    toast.error(`No se pudo eliminar la orden: ${deleteError.message}`);
                     throw deleteError;
                 }
             }

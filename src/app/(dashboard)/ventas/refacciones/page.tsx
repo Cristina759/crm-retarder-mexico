@@ -33,6 +33,7 @@ import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
@@ -277,7 +278,7 @@ export default function CotizadorRefaccionesPage() {
 
     const handleFinalize = async () => {
         if (cart.length === 0 || !selectedClienteId) {
-            alert('Por favor agrega refacciones y selecciona un cliente.');
+            toast.error('Por favor agrega refacciones y selecciona un cliente.');
             return;
         }
 
@@ -359,7 +360,7 @@ export default function CotizadorRefaccionesPage() {
             }
         } catch (error: any) {
             console.error('Error generating quotation:', error);
-            alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
+            toast.error(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsCreating(false);
         }

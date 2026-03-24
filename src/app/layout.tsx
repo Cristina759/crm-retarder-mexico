@@ -28,6 +28,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+import { GlobalModals } from '@/components/ui/global-modals';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -38,6 +40,7 @@ export default function RootLayout({
       <html lang="es">
         <body className={`${inter.variable} antialiased`}>
           {children}
+          <GlobalModals />
           <script
             dangerouslySetInnerHTML={{
               __html: `

@@ -22,6 +22,7 @@ import {
 } from '@/lib/utils/constants';
 import { KanbanColumn } from './kanban-column';
 import { KanbanCardOverlay } from './kanban-card';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 interface KanbanBoardProps {
     ordenes: DemoOrden[];
@@ -122,7 +123,7 @@ export function KanbanBoard({
 
                 if (error) {
                     console.error('Error al actualizar estado:', error);
-                    alert('Error al guardar el cambio: ' + error.message);
+                    toast.error('Error al guardar el cambio: ' + error.message);
                 }
                 
                 // Siempre refrescamos desde Supabase para mantener la sincronía

@@ -22,6 +22,7 @@ import {
 import { cn, formatMXN, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 // ── Types ──
@@ -180,7 +181,7 @@ export default function NotasCreditoPage() {
         const { error } = await supabase.from('notas_credito').insert(newNota);
         if (error) {
             console.error('Error inserting nota de crédito:', error);
-            alert(`Error al crear nota: ${error.message}`);
+            toast.error(`Error al crear nota: ${error.message}`);
             return;
         }
 
@@ -196,11 +197,11 @@ export default function NotasCreditoPage() {
 
     // Delete nota from Supabase
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar esta nota de crédito?')) return;
+        if (!await confirmModal('¿Estás seguro de eliminar esta nota de crédito?')) return;
         const { error } = await supabase.from('notas_credito').delete().eq('id', id);
         if (error) {
             console.error('Error deleting nota:', error);
-            alert(`Error al eliminar: ${error.message}`);
+            toast.error(`Error al eliminar: ${error.message}`);
             return;
         }
         if (selectedNota?.id === id) setSelectedNota(null);

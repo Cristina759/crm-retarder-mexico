@@ -6,6 +6,7 @@ import { Plus, Search, FileText, DollarSign, CheckCircle2, Clock, AlertCircle, X
 import { cn, formatMXN, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
@@ -158,7 +159,7 @@ export default function FacturacionPage() {
 
     const handleCreateFactura = async () => {
         if (!newFactura.numero_factura || !newFactura.empresa) {
-            alert('Por favor completa los campos obligatorios (Número de factura y Empresa)');
+            toast.error('Por favor completa los campos obligatorios (Número de factura y Empresa)');
             return;
         }
 
@@ -195,17 +196,17 @@ export default function FacturacionPage() {
             setNewFactura({ orden_id: '', empresa: '', numero_factura: '', concepto: '', monto: '', vigencia: '30' });
             await fetchFacturas();
             await fetchDropdownData();
-            alert('Factura registrada correctamente');
+            toast.success('Factura registrada correctamente');
         } catch (error: any) {
             console.error('Error creating factura:', error);
-            alert(`Error al crear la factura: ${error.message}`);
+            toast.error(`Error al crear la factura: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
 
     const handleDeleteFactura = async (factura: Factura) => {
-        if (!confirm(`¿Eliminar la factura ${factura.numero_factura} de ${factura.empresa}?`)) return;
+        if (!await confirmModal(`¿Eliminar la factura ${factura.numero_factura} de ${factura.empresa}?`)) return;
         setLoading(true);
         try {
             const { error } = await supabase
@@ -220,7 +221,7 @@ export default function FacturacionPage() {
             await fetchDropdownData();
         } catch (err: any) {
             console.error('Error eliminando factura:', err);
-            alert(`Error al eliminar: ${err.message}`);
+            toast.error(`Error al eliminar: ${err.message}`);
         } finally {
             setLoading(false);
         }
@@ -234,13 +235,13 @@ export default function FacturacionPage() {
             if (nuevoEstado === 'pagada') {
                 let numeroFactura = factura.numero_factura;
                 if (!numeroFactura || numeroFactura === 'PENDIENTE') {
-                    const input = prompt('Ingresa el número de factura antes de marcar como pagada:');
+                    const input = await promptModal('Ingresa el número de factura antes de marcar como pagada:');
                     if (!input?.trim()) { setLoading(false); return; }
                     numeroFactura = input.trim();
                 }
                 updates = { estado: 'pagado', pagado: true, numero_factura: numeroFactura };
             } else {
-                const numeroFactura = prompt('Ingresa el número de factura (ej. F-0001):');
+                const numeroFactura = await promptModal('Ingresa el número de factura (ej. F-0001):');
                 if (!numeroFactura?.trim()) {
                     setLoading(false);
                     return;
@@ -257,7 +258,7 @@ export default function FacturacionPage() {
             await fetchFacturas();
         } catch (err: any) {
             console.error('Error actualizando estado:', err);
-            alert(`Error al actualizar: ${err.message}`);
+            toast.error(`Error al actualizar: ${err.message}`);
         } finally {
             setLoading(false);
         }

@@ -38,6 +38,7 @@ import { useRole } from '@/hooks/useRole';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 interface CustomMetadata {
     company?: string;
@@ -134,7 +135,7 @@ export default function OrdenesPage() {
             setNewOrden({ numero: '', empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
         } catch (error) {
             console.error('Error creating orden:', error);
-            alert('Error al crear la orden');
+            toast.error('Error al crear la orden');
         } finally {
             setIsSaving(false);
         }
@@ -172,7 +173,7 @@ export default function OrdenesPage() {
                     
                     if (error) {
                         console.error('Error Supabase al borrar:', error);
-                        alert(`No se pudo eliminar la orden: ${error.message}`);
+                        toast.error(`No se pudo eliminar la orden: ${error.message}`);
                         return;
                     }
                 }

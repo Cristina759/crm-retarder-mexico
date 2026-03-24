@@ -37,6 +37,7 @@ import { CLIENTES_REALES } from '@/lib/data/clientes-reales';
 import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
@@ -352,7 +353,7 @@ export default function CotizadorFrenosPage() {
 
     const handleFinalize = async () => {
         if (!selectedModelo || !selectedClienteId) {
-            alert('Por favor selecciona un modelo de freno y un cliente.');
+            toast.error('Por favor selecciona un modelo de freno y un cliente.');
             return;
         }
         if (!breakdown) return;
@@ -455,7 +456,7 @@ export default function CotizadorFrenosPage() {
             }
         } catch (error: any) {
             console.error('Error generating quotation:', error);
-            alert(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
+            toast.error(`Error al generar la cotización: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsCreating(false);
         }

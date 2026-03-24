@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { SurveyService } from '@/lib/services/survey-service';
 import { SignaturePad } from '@/components/ui/signature-pad';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 interface OrderInfo {
     numero: string;
@@ -55,7 +56,7 @@ export default function PublicSurveyPage() {
 
     const handleSubmit = async () => {
         if (ratingGeneral === 0 || ratingTecnico === 0 || ratingTiempo === 0) {
-            alert('Por favor, califica todos los rubros.');
+            toast.error('Por favor, califica todos los rubros.');
             return;
         }
 
@@ -75,7 +76,7 @@ export default function PublicSurveyPage() {
         if (!error) {
             setSubmitted(true);
         } else {
-            alert('Error al enviar la encuesta. Por favor intenta de nuevo.');
+            toast.error('Error al enviar la encuesta. Por favor intenta de nuevo.');
         }
         setSubmitting(false);
     };

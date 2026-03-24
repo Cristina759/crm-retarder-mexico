@@ -6,6 +6,7 @@ import { Plus, Search, Wrench, Package, Filter, X, Loader2, Edit2, Trash2, Check
 import { cn, formatMXN } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useRole } from '@/hooks/useRole';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 interface Refaccion {
     id?: string;
@@ -127,7 +128,7 @@ export default function RefaccionesPage() {
 
     const handleSave = async () => {
         if (!formData.nombre || !formData.codigo) {
-            alert('Nombre y Código son obligatorios');
+            toast.error('Nombre y Código son obligatorios');
             return;
         }
 
@@ -165,14 +166,14 @@ export default function RefaccionesPage() {
             console.log('Fetch completado, refacciones count:', refacciones.length);
         } catch (err: any) {
             console.error('Error saving refaccion:', err);
-            alert(`Error al guardar: ${err.message}`);
+            toast.error(`Error al guardar: ${err.message}`);
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar este artículo?')) return;
+        if (!await confirmModal('¿Estás seguro de eliminar este artículo?')) return;
         try {
             const { error } = await supabase
                 .from('catalogo_refacciones')
@@ -182,7 +183,7 @@ export default function RefaccionesPage() {
             // Actualizar estado localmente
             setRefacciones(prev => prev.filter(r => r.id !== id));
         } catch (err: any) {
-            alert(`Error al eliminar: ${err.message}`);
+            toast.error(`Error al eliminar: ${err.message}`);
         }
     };
 

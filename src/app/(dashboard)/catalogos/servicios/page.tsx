@@ -6,6 +6,7 @@ import { Plus, Search, Clock, DollarSign, X, Loader2, Pencil, Trash2, ClipboardC
 import { cn, formatMXN } from '@/lib/utils';
 import { useRole } from '@/hooks/useRole';
 import { createClient } from '@/lib/supabase/client';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
@@ -138,12 +139,12 @@ export default function ServiciosPage() {
 
     const handleSave = async () => {
         if (!form.nombre.trim()) {
-            alert('El nombre del servicio es obligatorio.');
+            toast.error('El nombre del servicio es obligatorio.');
             return;
         }
         const precio = parseFloat(form.precio_base_mxn);
         if (isNaN(precio) || precio < 0) {
-            alert('Ingresa un precio base válido.');
+            toast.info('Ingresa un precio base válido.');
             return;
         }
 
@@ -176,7 +177,7 @@ export default function ServiciosPage() {
             await fetchServicios();
         } catch (err: any) {
             console.error('Error guardando servicio:', err);
-            alert(`Error al guardar: ${err.message}`);
+            toast.error(`Error al guardar: ${err.message}`);
         } finally {
             setSaving(false);
         }
@@ -200,7 +201,7 @@ export default function ServiciosPage() {
             await fetchServicios();
         } catch (err: any) {
             console.error('Error eliminando servicio:', err);
-            alert(`Error al eliminar: ${err.message}`);
+            toast.error(`Error al eliminar: ${err.message}`);
         } finally {
             setDeleting(null);
         }

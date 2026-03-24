@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { ROL_LABELS, Rol } from '@/lib/utils/constants';
 import { createClient } from '@/lib/supabase/client';
 import { useRole } from '@/hooks/useRole';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
@@ -121,7 +122,7 @@ export default function UsuariosPage() {
             setShowAddForm(false);
         } catch (err: any) {
             console.error('Error adding user:', err);
-            alert('Error al registrar colaborador: ' + err.message);
+            toast.error('Error al registrar colaborador: ' + err.message);
         } finally {
             setIsSavingUser(false);
         }
@@ -158,7 +159,7 @@ export default function UsuariosPage() {
             setEditingUserId(null);
         } catch (err: any) {
             console.error('Error updating user:', err);
-            alert('Error al actualizar colaborador: ' + err.message);
+            toast.error('Error al actualizar colaborador: ' + err.message);
         } finally {
             setIsSavingUser(false);
         }
@@ -166,7 +167,7 @@ export default function UsuariosPage() {
 
     // Delete custom user
     const handleDeleteUser = async (userId: string) => {
-        if (!confirm('¿Estás seguro de eliminar este colaborador?')) return;
+        if (!await confirmModal('¿Estás seguro de eliminar este colaborador?')) return;
 
         try {
             const { error } = await supabase.from('usuarios').delete().eq('id', userId);
@@ -174,7 +175,7 @@ export default function UsuariosPage() {
             await fetchUsuarios();
         } catch (err: any) {
             console.error('Error deleting user:', err);
-            alert('Error al eliminar colaborador');
+            toast.error('Error al eliminar colaborador');
         }
     };
 

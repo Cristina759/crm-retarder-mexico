@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Package, AlertTriangle, ArrowDown, ArrowUp, RefreshCw, TrendingDown, X, Loader2 } from 'lucide-react';
 import { cn, formatMXN } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
@@ -115,12 +116,12 @@ export default function InventarioPage() {
 
     const handleRegistrarMovimiento = async () => {
         if (!form.inventario_id || !form.cantidad) {
-            alert('Por favor selecciona un producto e ingresa la cantidad.');
+            toast.error('Por favor selecciona un producto e ingresa la cantidad.');
             return;
         }
         const cantidad = parseInt(form.cantidad, 10);
         if (isNaN(cantidad) || cantidad <= 0) {
-            alert('La cantidad debe ser un número mayor a 0.');
+            toast.info('La cantidad debe ser un número mayor a 0.');
             return;
         }
 
@@ -134,7 +135,7 @@ export default function InventarioPage() {
         } else if (form.tipo === 'salida') {
             nuevoStock = item.stock_actual - cantidad;
             if (nuevoStock < 0) {
-                alert(`Stock insuficiente. Stock actual: ${item.stock_actual}`);
+                toast.error(`Stock insuficiente. Stock actual: ${item.stock_actual}`);
                 return;
             }
         } else {
@@ -169,10 +170,10 @@ export default function InventarioPage() {
             setForm({ tipo: 'entrada', inventario_id: '', cantidad: '', motivo: 'compra', notas: '' });
             setShowForm(false);
             await fetchInventario();
-            alert('Movimiento registrado correctamente.');
+            toast.success('Movimiento registrado correctamente.');
         } catch (err: any) {
             console.error('Error registrando movimiento:', err);
-            alert(`Error al registrar el movimiento: ${err.message}`);
+            toast.error(`Error al registrar el movimiento: ${err.message}`);
         } finally {
             setSaving(false);
         }

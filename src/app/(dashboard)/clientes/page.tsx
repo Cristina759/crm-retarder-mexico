@@ -9,6 +9,7 @@ import {
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { useRole } from '@/hooks/useRole';
+import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 interface Sucursal {
     id: string;
@@ -154,7 +155,7 @@ export default function ClientesPage() {
     };
 
     async function handleDelete(id: string) {
-        if (!confirm('¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.')) return;
+        if (!await confirmModal('¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.')) return;
 
         try {
             const { error } = await supabase
@@ -168,7 +169,7 @@ export default function ClientesPage() {
             setSelectedCliente(null);
         } catch (err: any) {
             console.error('Error deleting client:', err);
-            alert(`Error al eliminar: ${err.message}`);
+            toast.error(`Error al eliminar: ${err.message}`);
         }
     }
 
@@ -192,7 +193,7 @@ export default function ClientesPage() {
 
     async function handleSave() {
         if (!formData.nombre_comercial) {
-            alert('El nombre comercial es obligatorio');
+            toast.error('El nombre comercial es obligatorio');
             return;
         }
 
@@ -201,7 +202,7 @@ export default function ClientesPage() {
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
-            alert('ERROR CRÍTICO: Las variables de entorno de Supabase no están configuradas en Vercel. Por favor contacta al administrador.');
+            toast.error('ERROR CRÍTICO: Las variables de entorno de Supabase no están configuradas en Vercel. Por favor contacta al administrador.');
             return;
         }
 
@@ -307,11 +308,11 @@ export default function ClientesPage() {
             const hint = err.hint || 'Sin sugerencias';
 
             if (code === '23505') {
-                alert('CONFLITO: Ya existe una empresa con ese RFC. Intenta con uno distinto o búscalo en la lista.');
+                toast.error('CONFLITO: Ya existe una empresa con ese RFC. Intenta con uno distinto o búscalo en la lista.');
             } else if (code === '42501') {
-                alert('ERROR DE PERMISOS (RLS): No tienes permisos para insertar en la tabla empresas. Verifica las políticas en Supabase.');
+                toast.error('ERROR DE PERMISOS (RLS): No tienes permisos para insertar en la tabla empresas. Verifica las políticas en Supabase.');
             } else {
-                alert(`Error al guardar cliente (v1.2):\n\nCódigo: ${code}\nMensaje: ${message}\nDetalles: ${details}\nSugerencia: ${hint}`);
+                toast.error(`Error al guardar cliente (v1.2):\n\nCódigo: ${code}\nMensaje: ${message}\nDetalles: ${details}\nSugerencia: ${hint}`);
             }
         } finally {
             setIsSaving(false);
