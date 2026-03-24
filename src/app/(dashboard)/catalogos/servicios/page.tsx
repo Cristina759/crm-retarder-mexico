@@ -20,7 +20,7 @@ interface Servicio {
     descripcion: string | null;
     precio_base: number;
     duracion_estimada_hrs: number | null;
-    requiere_equipo: string[];
+    requiere_equipo: string[] | null;
     activo: boolean;
 }
 
@@ -124,7 +124,7 @@ export default function ServiciosPage() {
             descripcion: s.descripcion || '',
             precio_base: s.precio_base.toString(),
             duracion_estimada_hrs: s.duracion_estimada_hrs?.toString() || '',
-            requiere_equipo: s.requiere_equipo.join(', '),
+            requiere_equipo: (s.requiere_equipo ?? []).join(', '),
         });
         setModal(s);
     };
@@ -367,11 +367,11 @@ export default function ServiciosPage() {
                                 </div>
 
                                 {/* Equipo requerido */}
-                                {s.requiere_equipo.length > 0 && (
+                                {(s.requiere_equipo ?? []).length > 0 && (
                                     <div>
                                         <p className="text-[9px] font-semibold uppercase text-retarder-gray-400 mb-1">Equipo Requerido</p>
                                         <div className="flex flex-wrap gap-1">
-                                            {s.requiere_equipo.map(eq => (
+                                            {(s.requiere_equipo ?? []).map(eq => (
                                                 <span key={eq} className="text-[9px] px-1.5 py-0.5 bg-retarder-gray-100 rounded text-retarder-gray-600">
                                                     {eq}
                                                 </span>
