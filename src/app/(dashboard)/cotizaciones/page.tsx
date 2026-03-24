@@ -174,8 +174,10 @@ export default function CotizacionesPage() {
     const handleCreateOrden = async (cot: any) => {
         setIsProcessing(true);
         try {
-            // 1. Generar número de orden profesional (Intenta obtener el siguiente folio real)
-            let osNum = `OS-${Math.floor(Math.random() * 9000) + 1000}`; // Fallback random
+            // 1. Generar número de orden secuencial basado en el total existente en Supabase
+            // Fallback determinístico con timestamp si la query falla (evita colisiones)
+            const tsuffix = Date.now().toString().slice(-6);
+            let osNum = `OS-T${tsuffix}`;
 
             try {
                 const { count } = await supabase
@@ -186,7 +188,7 @@ export default function CotizacionesPage() {
                     osNum = `OS-${String(count + 1).padStart(4, '0')}`;
                 }
             } catch (err) {
-                console.warn("Fallback to random OS number");
+                // Mantiene el fallback de timestamp si Supabase no responde
             }
 
             // 2. Crear el registro en ordenes_servicio

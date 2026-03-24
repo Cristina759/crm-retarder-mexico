@@ -145,22 +145,16 @@ export default function OrdenesPage() {
     // Paso 1: primer clic en el bote de basura → pone el ID en confirmDeleteId
     // Paso 2: segundo clic (botón rojo "Confirmar") → ejecuta el borrado real
     const handleDeleteOrden = async (id: string) => {
-        console.log('🗑️ handleDeleteOrden llamado con id:', id);
-        console.log('🔍 confirmDeleteId actual:', confirmDeleteId);
-
         // Si ya está en modo confirmar para este ID, ejecutar el borrado
         if (confirmDeleteId === id) {
-            console.log('✅ Ejecutando DELETE en Supabase...');
             setIsDeleting(true);
             try {
                 // Borrar de Supabase si es UUID válido
                 if (isValidUUID(id)) {
-                    console.log('🔗 Limpiando dependencias para la orden:', id);
-                    
                     // 1. Desvincular de cotizaciones (si existe el campo orden_id)
                     try {
                         await supabase.from('cotizaciones').update({ orden_id: null }).eq('orden_id', id);
-                    } catch (e) { console.log('Campo orden_id no presente en cotizaciones o ya nulo'); }
+                    } catch (e) { /* campo orden_id no presente o ya nulo */ }
 
                     // 2. Borrar evidencias 
                     await supabase.from('evidencias').delete().eq('orden_id', id);

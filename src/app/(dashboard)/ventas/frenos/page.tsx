@@ -408,8 +408,6 @@ export default function CotizadorFrenosPage() {
 
                 if (cotError) {
                     console.error('ERROR INSERT COTIZACION:', JSON.stringify(cotError));
-                } else {
-                    console.log('COTIZACION GUARDADA:', cotData);
                 }
 
                 if (!cotError && cotData) {
