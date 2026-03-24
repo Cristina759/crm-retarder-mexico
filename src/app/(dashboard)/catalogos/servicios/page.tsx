@@ -62,7 +62,6 @@ export default function ServiciosPage() {
     const [deleting, setDeleting] = useState<string | null>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterTipo, setFilterTipo] = useState<ServTipo | 'all'>('all');
 
     // Modal state: null = closed, 'create' = new, Servicio = editing
     const [modal, setModal] = useState<null | 'create' | Servicio>(null);
@@ -103,17 +102,13 @@ export default function ServiciosPage() {
     // ── Derived ───────────────────────────────────────
 
     const filtered = useMemo(() => {
-        let result = servicios;
-        if (filterTipo !== 'all') result = result.filter(s => s.tipo === filterTipo);
-        if (searchQuery.trim()) {
-            const q = searchQuery.toLowerCase();
-            result = result.filter(s =>
-                s.nombre.toLowerCase().includes(q) ||
-                (s.descripcion?.toLowerCase() || '').includes(q)
-            );
-        }
-        return result;
-    }, [servicios, searchQuery, filterTipo]);
+        if (!searchQuery.trim()) return servicios;
+        const q = searchQuery.toLowerCase();
+        return servicios.filter(s =>
+            s.nombre.toLowerCase().includes(q) ||
+            (s.descripcion?.toLowerCase() || '').includes(q)
+        );
+    }, [servicios, searchQuery]);
 
     // ── Modal helpers ──────────────────────────────────
 
@@ -247,38 +242,6 @@ export default function ServiciosPage() {
                 </div>
             </div>
 
-            {/* Type filters */}
-            <div className="flex gap-2 overflow-x-auto pb-1">
-                <button
-                    onClick={() => setFilterTipo('all')}
-                    className={cn(
-                        'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
-                        filterTipo === 'all'
-                            ? 'bg-retarder-black text-white border-retarder-black'
-                            : 'bg-white text-retarder-gray-600 border-retarder-gray-200 hover:bg-retarder-gray-50'
-                    )}
-                >
-                    Todos ({servicios.length})
-                </button>
-                {(Object.keys(TIPO_CONFIG) as ServTipo[]).map(tipo => {
-                    const cfg = TIPO_CONFIG[tipo];
-                    const count = servicios.filter(s => s.tipo === tipo).length;
-                    return (
-                        <button
-                            key={tipo}
-                            onClick={() => setFilterTipo(filterTipo === tipo ? 'all' : tipo)}
-                            className={cn(
-                                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap border',
-                                filterTipo === tipo
-                                    ? 'bg-retarder-black text-white border-retarder-black'
-                                    : 'bg-white text-retarder-gray-600 border-retarder-gray-200 hover:bg-retarder-gray-50'
-                            )}
-                        >
-                            {cfg.icon} {cfg.label} ({count})
-                        </button>
-                    );
-                })}
-            </div>
 
             {/* Cards grid */}
             {loading ? (
