@@ -217,7 +217,7 @@ export default function ServiciosPage() {
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black">Catálogo de Servicios</h2>
                     <p className="text-xs text-retarder-gray-500">
-                        {servicios.length} servicio{servicios.length !== 1 ? 's' : ''} en {Object.keys(TIPO_CONFIG).length} categorías
+                        {servicios.length} servicio{servicios.length !== 1 ? 's' : ''} registrado{servicios.length !== 1 ? 's' : ''}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
