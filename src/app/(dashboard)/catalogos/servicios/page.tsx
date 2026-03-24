@@ -18,7 +18,7 @@ interface Servicio {
     tipo: ServTipo;
     nombre: string;
     descripcion: string | null;
-    precio_base: number;
+    precio_base_mxn: number;
     duracion_estimada_hrs: number | null;
     requiere_equipo: string[] | null;
     activo: boolean;
@@ -28,7 +28,7 @@ interface FormState {
     tipo: ServTipo;
     nombre: string;
     descripcion: string;
-    precio_base: string;
+    precio_base_mxn: string;
     duracion_estimada_hrs: string;
     requiere_equipo: string; // comma-separated string → array al guardar
 }
@@ -37,7 +37,7 @@ const FORM_INITIAL: FormState = {
     tipo: 'preventivo',
     nombre: '',
     descripcion: '',
-    precio_base: '',
+    precio_base_mxn: '',
     duracion_estimada_hrs: '',
     requiere_equipo: '',
 };
@@ -84,7 +84,7 @@ export default function ServiciosPage() {
             if (error) throw error;
             setServicios((data || []).map(s => ({
                 ...s,
-                precio_base: Number(s.precio_base) || 0,
+                precio_base_mxn: Number(s.precio_base_mxn) || 0,
                 duracion_estimada_hrs: s.duracion_estimada_hrs != null ? Number(s.duracion_estimada_hrs) : null,
             })));
         } catch (err) {
@@ -126,7 +126,7 @@ export default function ServiciosPage() {
             tipo: s.tipo,
             nombre: s.nombre,
             descripcion: s.descripcion || '',
-            precio_base: s.precio_base.toString(),
+            precio_base_mxn: s.precio_base_mxn.toString(),
             duracion_estimada_hrs: s.duracion_estimada_hrs?.toString() || '',
             requiere_equipo: (s.requiere_equipo ?? []).join(', '),
         });
@@ -145,7 +145,7 @@ export default function ServiciosPage() {
             alert('El nombre del servicio es obligatorio.');
             return;
         }
-        const precio = parseFloat(form.precio_base);
+        const precio = parseFloat(form.precio_base_mxn);
         if (isNaN(precio) || precio < 0) {
             alert('Ingresa un precio base válido.');
             return;
@@ -155,7 +155,7 @@ export default function ServiciosPage() {
             tipo: form.tipo,
             nombre: form.nombre.trim(),
             descripcion: form.descripcion.trim() || null,
-            precio_base: precio,
+            precio_base_mxn: precio,
             duracion_estimada_hrs: form.duracion_estimada_hrs ? parseFloat(form.duracion_estimada_hrs) : null,
             requiere_equipo: form.requiere_equipo
                 .split(',')
@@ -356,7 +356,7 @@ export default function ServiciosPage() {
                                         <DollarSign size={12} className="text-retarder-gray-400" />
                                         <div>
                                             <p className="text-[9px] text-retarder-gray-400 font-semibold">PRECIO BASE</p>
-                                            <p className="text-xs font-bold text-retarder-gray-800">{formatMXN(s.precio_base)}</p>
+                                            <p className="text-xs font-bold text-retarder-gray-800">{formatMXN(s.precio_base_mxn)}</p>
                                         </div>
                                     </div>
                                     <div className="bg-retarder-gray-50 rounded-lg p-2 flex items-center gap-2">
@@ -480,8 +480,8 @@ export default function ServiciosPage() {
                                                 type="number"
                                                 placeholder="0.00"
                                                 min="0"
-                                                value={form.precio_base}
-                                                onChange={e => setForm(f => ({ ...f, precio_base: e.target.value }))}
+                                                value={form.precio_base_mxn}
+                                                onChange={e => setForm(f => ({ ...f, precio_base_mxn: e.target.value }))}
                                                 className="flex-1 outline-none text-sm"
                                             />
                                         </div>
