@@ -141,7 +141,7 @@ export const ROL_LABELS: Record<Rol, string> = {
 
 // ── Other Types ────────────────────────────────────
 
-export type TipoServicio = 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico';
+export type TipoServicio = 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico' | 'venta';
 export type Prioridad = 'baja' | 'media' | 'alta' | 'urgente';
 export type OportunidadEstado = 'prospecto' | 'contactado' | 'cotizado' | 'negociacion' | 'ganada' | 'perdida';
 export type CotizacionEstado = 'borrador' | 'enviada' | 'negociacion' | 'aceptada' | 'rechazada' | 'vencida';
@@ -186,6 +186,7 @@ export const TIPO_SERVICIO_LABELS: Record<TipoServicio, string> = {
     correctivo: 'Correctivo',
     instalacion: 'Instalación',
     diagnostico: 'Diagnóstico',
+    venta: 'Venta',
 };
 
 export const FRENO_MODELOS = ['PK1', 'PK', 'P5-1', 'P5', 'P7-1', 'P7', 'P11-1', 'P11', 'P10', 'P9'] as const;

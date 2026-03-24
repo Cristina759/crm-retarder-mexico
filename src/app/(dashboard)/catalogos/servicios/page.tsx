@@ -11,7 +11,7 @@ const supabase = createClient();
 
 // ── Types ────────────────────────────────────────────
 
-type ServTipo = 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico';
+type ServTipo = 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico' | 'venta';
 
 interface Servicio {
     id: string;
@@ -49,6 +49,7 @@ const TIPO_CONFIG: Record<ServTipo, { label: string; color: string; icon: string
     correctivo:  { label: 'Correctivo',  color: 'bg-amber-100 text-amber-700',     icon: '🔧' },
     instalacion: { label: 'Instalación', color: 'bg-blue-100 text-blue-700',       icon: '⚙️' },
     diagnostico: { label: 'Diagnóstico', color: 'bg-purple-100 text-purple-700',   icon: '🔍' },
+    venta:       { label: 'Venta',       color: 'bg-retarder-red/10 text-retarder-red',   icon: '💰' },
 };
 
 // ── Page ─────────────────────────────────────────────
