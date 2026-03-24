@@ -250,8 +250,6 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
                             <div className="relative w-12 h-12">
                                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="15" />
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#0ea5e9" strokeWidth="15" strokeDasharray="180 251" />
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f43f5e" strokeWidth="15" strokeDasharray="40 251" strokeDashoffset="-180" />
                                 </svg>
                             </div>
                             <span className="text-[9px] font-black text-retarder-gray-400 uppercase whitespace-nowrap">Oct - Dic 2025</span>
@@ -260,8 +258,6 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
                             <div className="relative w-12 h-12 opacity-60">
                                 <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
                                     <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="15" />
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#7dd3fc" strokeWidth="15" strokeDasharray="200 251" />
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#fda4af" strokeWidth="15" strokeDasharray="20 251" strokeDashoffset="-200" />
                                 </svg>
                             </div>
                             <span className="text-[9px] font-black text-retarder-gray-400 uppercase whitespace-nowrap">Jul - Sep 2025</span>
@@ -698,8 +694,8 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         title="Eficiencia"
-                        value="100%"
-                        subtitle="Datos de sistema"
+                        value={ordenes.length === 0 ? '—' : `${Math.round((ordenes.filter(o => o.estado === 'servicio_concluido' || o.estado === 'pagado' || o.estado === 'documentacion_entregada').length / ordenes.length) * 100)}%`}
+                        subtitle="Órdenes completadas"
                         icon={<Clock size={22} />}
                         color="bg-retarder-yellow"
                         delay={0.7}

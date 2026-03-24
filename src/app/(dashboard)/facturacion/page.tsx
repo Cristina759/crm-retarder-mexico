@@ -23,7 +23,6 @@ interface Factura {
     estado: FactEstado;
     fecha_emision: string;
     fecha_vencimiento: string;
-    metodo_pago: string;
 }
 
 const ESTADO_CONFIG: Record<FactEstado, { label: string; color: string; icon: typeof Clock }> = {
@@ -49,7 +48,6 @@ export default function FacturacionPage() {
         numero_factura: '',
         concepto: '',
         monto: '',
-        metodo_pago: 'Transferencia',
         vigencia: '30'
     });
     const [clientSearchModal, setClientSearchModal] = useState('');
@@ -98,8 +96,12 @@ export default function FacturacionPage() {
                     total: o.monto || 0,
                     estado: estado,
                     fecha_emision: o.fecha_creado,
-                    fecha_vencimiento: o.fecha_creado, 
-                    metodo_pago: o.metodo_pago || 'Transferencia',
+                    fecha_vencimiento: (() => {
+                        if (!o.fecha_creado) return '';
+                        const d = new Date(o.fecha_creado);
+                        d.setDate(d.getDate() + 30);
+                        return d.toISOString().split('T')[0];
+                    })(),
                 };
             });
 
@@ -190,7 +192,7 @@ export default function FacturacionPage() {
             }
 
             setShowForm(false);
-            setNewFactura({ orden_id: '', empresa: '', numero_factura: '', concepto: '', monto: '', metodo_pago: 'Transferencia', vigencia: '30' });
+            setNewFactura({ orden_id: '', empresa: '', numero_factura: '', concepto: '', monto: '', vigencia: '30' });
             await fetchFacturas();
             await fetchDropdownData();
             alert('Factura registrada correctamente');
@@ -494,19 +496,7 @@ export default function FacturacionPage() {
                                             />
                                         </div>
                                     </div>
-                                    <div>
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Método de Pago</label>
-                                        <select 
-                                            value={newFactura.metodo_pago}
-                                            onChange={e => setNewFactura({...newFactura, metodo_pago: e.target.value})}
-                                            className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none bg-white"
-                                        >
-                                            <option>Transferencia</option>
-                                            <option>Cheque</option>
-                                            <option>Efectivo</option>
-                                            <option>Tarjeta</option>
-                                        </select>
-                                    </div>
+
                                 </div>
                             </div>
                             <div className="px-6 py-4 border-t border-retarder-gray-200 bg-retarder-gray-50 flex gap-2">
