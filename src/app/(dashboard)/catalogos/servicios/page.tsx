@@ -82,7 +82,11 @@ export default function ServiciosPage() {
                 .order('nombre');
 
             if (error) throw error;
-            setServicios(data || []);
+            setServicios((data || []).map(s => ({
+                ...s,
+                precio_base: Number(s.precio_base) || 0,
+                duracion_estimada_hrs: s.duracion_estimada_hrs != null ? Number(s.duracion_estimada_hrs) : null,
+            })));
         } catch (err) {
             console.error('Error cargando servicios:', err);
             setServicios([]);
