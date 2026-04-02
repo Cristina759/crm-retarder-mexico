@@ -156,7 +156,7 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                         <Search size={16} className="text-retarder-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar rdenes, clientes..."
+                            placeholder="Buscar Ordenes, clientes..."
                             className="bg-transparent border-none outline-none text-sm text-retarder-gray-700 placeholder-retarder-gray-400 w-full"
                         />
                         <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-retarder-gray-400 bg-white rounded border border-retarder-gray-200">

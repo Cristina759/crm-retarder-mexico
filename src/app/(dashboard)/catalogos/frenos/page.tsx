@@ -167,7 +167,7 @@ export default function FrenosPage() {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-blue-800">{clientes.find(c => c.id === selectedClienteId)?.nombre_comercial}</p>
-                            <p className="text-[10px] text-blue-500">{clientOrders.length} rdenes registradas  Total: {formatMXN(clientOrders.reduce((s, o) => s + (o.monto || 0), 0))}</p>
+                            <p className="text-[10px] text-blue-500">{clientOrders.length} Ordenes registradas  Total: {formatMXN(clientOrders.reduce((s, o) => s + (o.monto || 0), 0))}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">

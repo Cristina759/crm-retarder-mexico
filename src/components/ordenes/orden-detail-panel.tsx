@@ -254,7 +254,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             }
             if (onUpdate) onUpdate();
         } catch (err: any) {
-            setError(`Error: ${err.message || 'No se pudo asignar el tcnico.'}`);
+            setError(`Error: ${err.message || 'No se pudo asignar el tecnico.'}`);
         } finally {
             setIsUpdatingTecnico(false);
         }
@@ -273,17 +273,17 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         try {
             // --- Business Validations ---
             // Determinar si esta orden ya est en una fase avanzada (datos reales importados)
-            // Estas rdenes ya completaron su proceso real y no necesitan evidencias digitales
+            // Estas Ordenes ya completaron su proceso real y no necesitan evidencias digitales
             const advancedStates: string[] = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', 'encuesta_enviada', 'facturado', 'pagado'];
             const isAlreadyAdvanced = advancedStates.includes(orden.estado);
 
-            // Solo aplicar validaciones estrictas a rdenes que estn en fases tempranas
+            // Solo aplicar validaciones estrictas a Ordenes que estn en fases tempranas
             if (!isAlreadyAdvanced) {
-                // 2. Para avanzar a fase operativa: requiere tcnico + N OS fsica + foto
+                // 2. Para avanzar a fase operativa: requiere tecnico + N OS fsica + foto
                 const operativeStates = ['asignacion_tecnico', 'servicio_programado', 'documentacion_enviada', 'tecnico_en_contacto', 'servicio_en_proceso', 'autorizacion_adicional'];
                 if (operativeStates.includes(nextState)) {
                     if (!localTecnico) {
-                        throw new Error('Se requiere asignar un tcnico antes de avanzar.');
+                        throw new Error('Se requiere asignar un tecnico antes de avanzar.');
                     }
                     if (!numeroOrdenFisica.trim()) {
                         throw new Error('Se requiere capturar el N de Orden de Servicio Fsica (papel) antes de avanzar.');
@@ -544,7 +544,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-1.5 text-retarder-gray-400">
                                         <User size={14} />
-                                        <span className="text-[10px] font-semibold uppercase tracking-wide">Tcnico</span>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide">Tecnico</span>
                                     </div>
                                     {(orden.estado === 'asignacion_tecnico' || !localTecnico || orden.estado === 'cotizacion_aceptada') ? (
                                         <div className="relative pl-5">
@@ -557,7 +557,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     !localTecnico ? "border-retarder-red/50 bg-red-50/50 animate-pulse" : "border-retarder-gray-200"
                                                 )}
                                             >
-                                                <option value=""> Seleccionar tcnico...</option>
+                                                <option value=""> Seleccionar tecnico...</option>
                                                 {TECNICOS.map(t => (
                                                     <option key={t} value={t}>{t}</option>
                                                 ))}
@@ -642,7 +642,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 </div>
                             )}
 
-                            {/* Orden de Servicio Fsica (Tcnico) */}
+                            {/* Orden de Servicio Fsica (Tecnico) */}
                             <div>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
                                     <ClipboardList size={12} className="inline mr-1" />
@@ -650,7 +650,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 </h3>
                                 <div className="bg-amber-50 border border-amber-200/50 rounded-xl p-4 space-y-3">
                                     <p className="text-[10px] text-amber-700 font-medium">
-                                        El tcnico captura el nmero de la orden impresa y sube la foto del documento.
+                                        El tecnico captura el nmero de la orden impresa y sube la foto del documento.
                                     </p>
 
                                     {/* Nmero de orden fsica */}
@@ -970,7 +970,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     <p className="font-bold text-retarder-black">{survey.calificacion_general}/10</p>
                                                 </div>
                                                 <div className="text-center p-2 bg-retarder-gray-50 rounded-lg">
-                                                    <p className="text-[8px] text-retarder-gray-400 uppercase">Tcnico</p>
+                                                    <p className="text-[8px] text-retarder-gray-400 uppercase">Tecnico</p>
                                                     <p className="font-bold text-retarder-black">{survey.calificacion_tecnico}/5</p>
                                                 </div>
                                                 <div className="text-center p-2 bg-retarder-gray-50 rounded-lg">

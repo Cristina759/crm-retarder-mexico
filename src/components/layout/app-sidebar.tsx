@@ -58,7 +58,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Operaciones',
         items: [
-            { label: 'rdenes de Servicio', href: '/ordenes', icon: <OrdenIcon size={20} />, roles: ['admin', 'vendedor', 'tecnico', 'cliente'] },
+            { label: 'Ordenes de Servicio', href: '/ordenes', icon: <OrdenIcon size={20} />, roles: ['admin', 'vendedor', 'tecnico', 'cliente'] },
             { label: 'Clientes', href: '/clientes', icon: <Building2 size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Inventario', href: '/inventario', icon: <Warehouse size={20} />, roles: ['admin'] },
         ],

@@ -21,10 +21,10 @@ export type OrdenEstado = (typeof ORDEN_ESTADOS)[number];
 export const ORDEN_ESTADO_LABELS: Record<OrdenEstado, string> = {
     cotizacion_enviada_al_cliente: 'Cotizacin Enviada al Cliente',
     cotizacion_aceptada: 'Cotizacin Aceptada',
-    asignacion_tecnico: 'Asignacin de Tcnico',
+    asignacion_tecnico: 'Asignacin de Tecnico',
     servicio_programado: 'Servicio Programado',
     documentacion_enviada: 'Documentacin Enviada',
-    tecnico_en_contacto: 'Tcnico en Contacto',
+    tecnico_en_contacto: 'Tecnico en Contacto',
     servicio_en_proceso: 'Servicio en Proceso',
     autorizacion_adicional: 'Autorizacin Adicional',
     servicio_concluido: 'Servicio Concluido',
@@ -133,7 +133,7 @@ export type Rol = 'admin' | 'vendedor' | 'tecnico' | 'cliente' | 'direccion' | '
 export const ROL_LABELS: Record<Rol, string> = {
     admin: 'Admin/Direccin',
     vendedor: 'Vendedor',
-    tecnico: 'Tcnico',
+    tecnico: 'Tecnico',
     cliente: 'Cliente',
     direccion: 'Admin/Direccin',
     administracion: 'rea Administrativa',

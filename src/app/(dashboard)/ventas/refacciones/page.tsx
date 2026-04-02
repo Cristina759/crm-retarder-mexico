@@ -845,7 +845,7 @@ export default function CotizadorRefaccionesPage() {
                                         {traslado > 0 && (
                                             <tr className="bg-retarder-gray-50/30">
                                                 <td className="py-2 px-3 font-bold text-retarder-red">SERV-TRAS</td>
-                                                <td className="py-2 px-3 uppercase font-bold">Gastos de Traslado / Desplazamiento Tcnico</td>
+                                                <td className="py-2 px-3 uppercase font-bold">Gastos de Traslado / Desplazamiento Tecnico</td>
                                                 <td className="py-2 px-3 text-center">1</td>
                                                 <td className="py-2 px-3 text-right">{formatMXN(traslado)}</td>
                                                 <td className="py-2 px-3 text-right font-bold">{formatMXN(traslado)}</td>

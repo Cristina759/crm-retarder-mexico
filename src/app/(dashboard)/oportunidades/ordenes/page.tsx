@@ -221,7 +221,7 @@ export default function OrdenesPage() {
                     o.tecnico?.trim().toLocaleLowerCase() === currentUserName
                 );
             } else {
-                // Tcnico sin nombre en Clerk: solo muestra rdenes en fases siempre visibles
+                // Tecnico sin nombre en Clerk: solo muestra Ordenes en fases siempre visibles
                 result = result.filter(o => ESTADOS_SIEMPRE_VISIBLES.includes(o.estado));
             }
         } else if (isCliente && !isAdmin) {
@@ -278,9 +278,9 @@ export default function OrdenesPage() {
             {/* Header Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-retarder-black">Pipeline de rdenes de Servicio</h2>
+                    <h2 className="text-xl font-bold text-retarder-black">Pipeline de Ordenes de Servicio</h2>
                     <p className="text-xs text-retarder-gray-500">
-                        {stats.total} rdenes en el pipeline  14 estados  {visiblePhases.length} fases
+                        {stats.total} Ordenes en el pipeline  14 estados  {visiblePhases.length} fases
                         {process.env.NODE_ENV === 'development' && currentUserName && (
                             <span className="ml-2 text-[10px] text-retarder-red/50">
                                 (Filtrando por: {currentUserName})
@@ -425,7 +425,7 @@ export default function OrdenesPage() {
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Folio / OS</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Tcnico</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Tecnico</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden xl:table-cell">Monto</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Fecha</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
@@ -436,7 +436,7 @@ export default function OrdenesPage() {
                                         <tr>
                                             <td colSpan={7} className="py-12 text-center">
                                                 <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
-                                                <p className="text-xs text-retarder-gray-400">Cargando rdenes...</p>
+                                                <p className="text-xs text-retarder-gray-400">Cargando Ordenes...</p>
                                             </td>
                                         </tr>
                                     ) : (
@@ -627,10 +627,10 @@ export default function OrdenesPage() {
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Tcnico</label>
+                                                <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Tecnico</label>
                                                 <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
                                                     <User size={14} className="text-retarder-gray-400" />
-                                                    <input type="text" placeholder="Asignar tcnico" value={newOrden.tecnico} onChange={e => setNewOrden({ ...newOrden, tecnico: e.target.value })} className="flex-1 outline-none text-sm" />
+                                                    <input type="text" placeholder="Asignar tecnico" value={newOrden.tecnico} onChange={e => setNewOrden({ ...newOrden, tecnico: e.target.value })} className="flex-1 outline-none text-sm" />
                                                 </div>
                                             </div>
                                             <div>

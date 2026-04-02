@@ -84,7 +84,7 @@ export interface Contacto {
     updated_at: string;
 }
 
-//  rdenes de Servicio 
+//  Ordenes de Servicio 
 
 export interface OrdenServicio {
     id: string;

@@ -133,7 +133,7 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 )}>
                     {orden.tecnico ? orden.tecnico.charAt(0) : '?'}
                 </div>
-                <span className="text-[10px] text-retarder-gray-500 truncate">{orden.tecnico || 'Sin tcnico'}</span>
+                <span className="text-[10px] text-retarder-gray-500 truncate">{orden.tecnico || 'Sin tecnico'}</span>
             </div>
 
             {/* Amount + Date */}

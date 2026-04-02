@@ -192,7 +192,7 @@ export default function RefaccionesPage() {
                         Catlogo de <span className="text-retarder-red">Herramientas</span>
                     </h1>
                     <p className="text-sm text-retarder-gray-500 mt-1">
-                        Gestin de precios y existencias tcnico-comerciales ({refacciones.length} piezas en sistema)
+                        Gestin de precios y existencias tecnico-comerciales ({refacciones.length} piezas en sistema)
                     </p>
                 </div>
                 <div className="flex items-center gap-3">

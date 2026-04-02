@@ -87,7 +87,7 @@ export default function CotizacionesPage() {
 
             startTransition(async () => {
                 try {
-                    // 1. Primero eliminamos las rdenes de servicio vinculadas para evitar error de FK
+                    // 1. Primero eliminamos las Ordenes de servicio vinculadas para evitar error de FK
                     const { error: osError } = await supabase
                         .from('ordenes_servicio')
                         .delete()

@@ -62,7 +62,7 @@ export default function FacturacionPage() {
     const fetchFacturas = useCallback(async () => {
         setLoading(true);
         try {
-            // Buscamos rdenes que estn en fase administrativa O tengan nmero de factura
+            // Buscamos Ordenes que estn en fase administrativa O tengan nmero de factura
             const { data: d1, error: e1 } = await supabase
                 .from('ordenes_servicio')
                 .select('*, empresa:empresas(nombre_comercial)')
@@ -118,7 +118,7 @@ export default function FacturacionPage() {
             // Clientes  lista esttica
             setClientes(CLIENTES_REALES.map(c => ({ id: c.id, nombre_comercial: c.nombre_comercial })));
 
-            // rdenes sin factura an
+            // Ordenes sin factura an
             const { data: oData } = await supabase
                 .from('ordenes_servicio')
                 .select('id, numero, empresa, monto, descripcion')

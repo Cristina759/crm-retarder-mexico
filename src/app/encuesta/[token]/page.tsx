@@ -127,7 +127,7 @@ export default function PublicSurveyPage() {
                             </div>
                             <h2 className="text-3xl font-bold text-retarder-black mb-4">Muchas Gracias!</h2>
                             <p className="text-retarder-gray-600 leading-relaxed mb-8">
-                                Tus comentarios son muy valiosos para nosotros y nos ayudan a mejorar el servicio tcnico de <span className="font-bold text-retarder-red">RETARDER MXICO</span>.
+                                Tus comentarios son muy valiosos para nosotros y nos ayudan a mejorar el servicio tecnico de <span className="font-bold text-retarder-red">RETARDER MXICO</span>.
                             </p>
                             <div className="p-4 bg-retarder-gray-50 rounded-2xl inline-block border border-retarder-gray-100">
                                 <p className="text-[10px] uppercase font-bold text-retarder-gray-400 tracking-widest mb-1">Folio del Servicio</p>
@@ -177,16 +177,16 @@ export default function PublicSurveyPage() {
                                     </div>
                                 </section>
 
-                                {/* Pregunta 2: Tcnico */}
+                                {/* Pregunta 2: Tecnico */}
                                 <section>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-8 h-8 rounded-lg bg-retarder-yellow-100 flex items-center justify-center text-retarder-yellow-600">
                                             <Wrench size={18} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-retarder-black uppercase tracking-wider text-sm">Atencin del Tcnico</h3>
+                                            <h3 className="font-bold text-retarder-black uppercase tracking-wider text-sm">Atencin del Tecnico</h3>
                                             {survey.ordenes_servicio?.tecnico && (
-                                                <p className="text-[10px] text-retarder-gray-400">Tcnico: <span className="font-bold">{survey.ordenes_servicio.tecnico}</span></p>
+                                                <p className="text-[10px] text-retarder-gray-400">Tecnico: <span className="font-bold">{survey.ordenes_servicio.tecnico}</span></p>
                                             )}
                                         </div>
                                     </div>

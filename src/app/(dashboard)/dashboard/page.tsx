@@ -272,11 +272,11 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
 
 //  Pipeline Mini Chart 
 
-function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className?: string }) {
+function PipelineChart({ oOrdenes, className }: { oOrdenes: OrdenMini[]; className?: string }) {
     // Group orders by state
     const pipelineData = ORDEN_ESTADOS.map(estado => ({
         estado,
-        count: ordenes.filter(o => o.estado === estado).length
+        count: oOrdenes.filter(o => o.estado === estado).length
     })).filter(d => d.count > 0);
 
     if (pipelineData.length === 0) return null;
@@ -290,7 +290,7 @@ function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className
             transition={{ duration: 0.4, delay: 0.3 }}
             className={cn("bg-white rounded-xl border border-retarder-gray-200 p-5 w-full h-full", className)}
         >
-            <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de rdenes de Servicio</h3>
+            <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de Ordenes de Servicio</h3>
             <div className="space-y-2.5">
                 {pipelineData.map((item, i) => (
                     <div key={item.estado} className="flex items-center gap-3">
@@ -317,10 +317,10 @@ function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className
     );
 }
 
-//  Recent Ordenes Table 
+//  Recent OOrdenes Table 
 
-function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
-    const displayOrdenes = ordenes.slice(0, 8);
+function RecentOOrdenes({ oOrdenes }: { oOrdenes: OrdenMini[] }) {
+    const displayOOrdenes = oOrdenes.slice(0, 8);
 
     return (
         <motion.div
@@ -330,8 +330,8 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
             className="bg-white rounded-xl border border-retarder-gray-200 p-5 col-span-full"
         >
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm text-retarder-black">rdenes Recientes</h3>
-                <Link href="/ordenes" className="text-xs text-retarder-red font-medium hover:underline">Ver todas</Link>
+                <h3 className="font-semibold text-sm text-retarder-black">Ordenes Recientes</h3>
+                <Link href="/oOrdenes" className="text-xs text-retarder-red font-medium hover:underline">Ver todas</Link>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -341,12 +341,12 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Tipo</th>
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                            <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Tcnico</th>
+                            <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Tecnico</th>
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Prioridad</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {displayOrdenes.map((o, i) => (
+                        {displayOOrdenes.map((o, i) => (
                             <motion.tr
                                 key={o.id || o.numero}
                                 initial={{ opacity: 0, x: -10 }}
@@ -453,16 +453,16 @@ export default function DashboardPage() {
     const { user } = useUser();
     const { role, isAdmin, isVendedor, isTecnico, isCliente } = useRole();
     const [loading, setLoading] = useState(true);
-    const [ordenes, setOrdenes] = useState<OrdenMini[]>([]);
+    const [oOrdenes, setOOrdenes] = useState<OrdenMini[]>([]);
     const [cotizaciones, setCotizaciones] = useState<CotizacionMini[]>([]);
     const [stats, setStats] = useState({
         totalVentas: 0,
         totalCobrado: 0,
-        ordenesActivas: 0,
+        oOrdenesActivas: 0,
         cotizacionesActivas: 0,
-        ordenesTecnico: 0,
-        ordenesProceso: 0,
-        ordenesHoy: 0
+        oOrdenesTecnico: 0,
+        oOrdenesProceso: 0,
+        oOrdenesHoy: 0
     });
 
     // Name detection from Clerk
@@ -486,7 +486,7 @@ export default function DashboardPage() {
                 { data: invDataRaw },
             ] = await Promise.all([
                 supabase.from('cotizaciones').select('total, estado'),
-                supabase.from('ordenes_servicio').select('*'),
+                supabase.from('oOrdenes_servicio').select('*'),
                 supabase.from('inventario').select('id, nombre, stock_actual, stock_minimo'),
             ]);
 
@@ -494,13 +494,13 @@ export default function DashboardPage() {
 
             setCotizaciones((cotData as CotizacionMini[]) || []);
 
-            if (ordData) setOrdenes(ordData as OrdenMini[]);
+            if (ordData) setOOrdenes(ordData as OrdenMini[]);
 
             // Calculate metrics
             const ordArray = (ordData as any[]) || [];
             
-            // 1. Venta Total: Sumar rdenes que ya estn en proceso real o facturadas/pagadas
-            // Excluimos explcitamente las cotizaciones enviadas que an no son rdenes reales
+            // 1. Venta Total: Sumar Ordenes que ya estn en proceso real o facturadas/pagadas
+            // Excluimos explcitamente las cotizaciones enviadas que an no son Ordenes reales
             const totalVentas = ordArray
                 .filter(o => o.estado !== 'cotizacion_enviada_al_cliente')
                 .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
@@ -511,7 +511,7 @@ export default function DashboardPage() {
                 .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
 
             const cotizacionesActivas = (cotData as CotizacionMini[])?.filter((c: CotizacionMini) => ['enviada', 'negociacion'].includes(c.estado)).length || 0;
-            const ordenesActivas = ordArray.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
+            const oOrdenesActivas = ordArray.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
 
             // Priority Logic
             const alerts: PriorityAlert[] = [];
@@ -546,22 +546,22 @@ export default function DashboardPage() {
                 return o.tecnico?.trim().toLocaleLowerCase() === currentUserName;
             });
 
-            const ordenesTecnico = ordTecnico.filter((o: OrdenMini) => o.estado !== 'servicio_concluido').length;
-            const ordenesProceso = ordTecnico.filter((o: OrdenMini) => o.estado === 'servicio_en_proceso').length;
+            const oOrdenesTecnico = ordTecnico.filter((o: OrdenMini) => o.estado !== 'servicio_concluido').length;
+            const oOrdenesProceso = ordTecnico.filter((o: OrdenMini) => o.estado === 'servicio_en_proceso').length;
 
             // Orders completed today
             const today = new Date().toISOString().split('T')[0];
-            const ordenesHoy = ordArray.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
+            const oOrdenesHoy = ordArray.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
 
             // Live Statistics from Supabase
             setStats({
                 totalVentas: totalVentas,
                 totalCobrado: totalCobrado, // <-- AHORA ES REAL, no 75%
-                ordenesActivas,
+                oOrdenesActivas,
                 cotizacionesActivas,
-                ordenesTecnico,
-                ordenesProceso,
-                ordenesHoy
+                oOrdenesTecnico,
+                oOrdenesProceso,
+                oOrdenesHoy
             });
         } catch (error) {
         } finally {
@@ -575,11 +575,11 @@ export default function DashboardPage() {
 
     // Removed hardcoded VENTAS_REALES mapping for a clean, dynamic dashboard
     const dashboardVentas = useMemo(() => {
-        return ordenes.map(o => ({
+        return oOrdenes.map(o => ({
             ...o,
             total: (o as any).monto || 0,
         }));
-    }, [ordenes]);
+    }, [oOrdenes]);
 
     if (loading) {
         return (
@@ -639,8 +639,8 @@ export default function DashboardPage() {
             {isTecnico && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <KpiCard
-                        title="rdenes Asignadas"
-                        value={stats.ordenesTecnico}
+                        title="Ordenes Asignadas"
+                        value={stats.oOrdenesTecnico}
                         subtitle="Pendientes de atencin"
                         icon={<OrdenIcon size={22} />}
                         color="bg-retarder-gray-800"
@@ -648,7 +648,7 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         title="Servicios en Proceso"
-                        value={stats.ordenesProceso}
+                        value={stats.oOrdenesProceso}
                         subtitle="Trabajando actualmente"
                         icon={<Wrench size={22} />}
                         color="bg-orange-600"
@@ -656,7 +656,7 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         title="Concluidos hoy"
-                        value={stats.ordenesHoy}
+                        value={stats.oOrdenesHoy}
                         subtitle="Eficiencia diaria"
                         icon={<CheckCircle2 size={22} />}
                         color="bg-green-600"
@@ -685,8 +685,8 @@ export default function DashboardPage() {
             {isAdmin && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
-                        title="rdenes Reales"
-                        value={ordenes.length}
+                        title="Ordenes Reales"
+                        value={oOrdenes.length}
                         subtitle="Registradas en sistema"
                         icon={<OrdenIcon size={22} />}
                         color="bg-retarder-gray-800"
@@ -694,8 +694,8 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         title="Eficiencia"
-                        value={ordenes.length === 0 ? '' : `${Math.round((ordenes.filter(o => o.estado === 'servicio_concluido' || o.estado === 'pagado' || o.estado === 'documentacion_entregada').length / ordenes.length) * 100)}%`}
-                        subtitle="rdenes completadas"
+                        value={oOrdenes.length === 0 ? '' : `${Math.round((oOrdenes.filter(o => o.estado === 'servicio_concluido' || o.estado === 'pagado' || o.estado === 'documentacion_entregada').length / oOrdenes.length) * 100)}%`}
+                        subtitle="Ordenes completadas"
                         icon={<Clock size={22} />}
                         color="bg-retarder-yellow"
                         delay={0.7}
@@ -707,7 +707,7 @@ export default function DashboardPage() {
             {!isCliente && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <PipelineChart
-                        ordenes={ordenes}
+                        oOrdenes={oOrdenes}
                         className="lg:col-span-2"
                     />
                     <div className="lg:col-span-1 hidden lg:block" />
@@ -715,7 +715,7 @@ export default function DashboardPage() {
             )}
 
             {/* Recent Activity */}
-            <RecentOrdenes ordenes={ordenes} />
+            <RecentOOrdenes oOrdenes={oOrdenes} />
         </div>
     );
 }

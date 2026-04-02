@@ -98,7 +98,7 @@ export default function NuevaCotizacionPage() {
                 <div>
                     <p className="text-sm font-semibold text-retarder-black">Tip</p>
                     <p className="text-xs text-retarder-gray-500">
-                        Las cotizaciones aceptadas se pueden convertir automticamente en rdenes de Servicio desde la seccin &quot;Mis Cotizaciones&quot;.
+                        Las cotizaciones aceptadas se pueden convertir automticamente en Ordenes de Servicio desde la seccin &quot;Mis Cotizaciones&quot;.
                     </p>
                 </div>
             </motion.div>
