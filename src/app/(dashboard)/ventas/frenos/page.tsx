@@ -283,6 +283,7 @@ export default function CotizadorFrenosPage() {
     const [clientSearch, setClientSearch] = useState('');
     const [cantidadUnidades, setCantidadUnidades] = useState<number>(1);
     const [gastosTrasladoMXN, setGastosTrasladoMXN] = useState<number>(0);
+    const [costoKitLedUSD, setCostoKitLedUSD] = useState<number>(0);
     const [isCreating, setIsCreating] = useState(false);
     const [savedFolio, setSavedFolio] = useState<string>('');
     const [autoPrint, setAutoPrint] = useState(false);
@@ -462,7 +463,9 @@ export default function CotizadorFrenosPage() {
         const f_usd = priceOverrides.freno?.usd ?? (base_f_usd + c_usd + s_usd + m_usd);
 
         const totalTraslado = gastosTrasladoMXN * units;
-        const total_usd = f_usd;
+        const totalKitLedUSD = costoKitLedUSD * units;
+        
+        const total_usd = f_usd + totalKitLedUSD;
         const total_mxn = (total_usd * tipoCambio) + totalTraslado + manoObraInstalacionMXN;
 
         return {
@@ -470,6 +473,11 @@ export default function CotizadorFrenosPage() {
                 label: priceOverrides.freno?.label ?? 'Equipo Freno (Retarder) Incluye Accesorios', 
                 usd: f_usd, 
                 mxn: f_usd * tipoCambio 
+            },
+            kitLed: {
+                label: 'Kit de Luces LED',
+                usd: totalKitLedUSD,
+                mxn: totalKitLedUSD * tipoCambio
             },
             traslado: { mxn: totalTraslado },
             manoObra: { mxn: manoObraInstalacionMXN },
@@ -597,9 +605,6 @@ export default function CotizadorFrenosPage() {
                     <p className="text-xs text-retarder-gray-500 mt-1 mb-3">
                         Selecciona un modelo para ver el desglose de precios con conversión USD / MXN en tiempo real
                     </p>
-                    <button onClick={handleOpenCreateForm} className="self-start flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
-                        <Plus size={16} /><span className="hidden sm:inline">Nueva Cotización Borrador</span>
-                    </button>
                 </div>
 
                 {/* Exchange rate control */}
@@ -781,6 +786,35 @@ export default function CotizadorFrenosPage() {
                                     const val = parseInt(e.target.value);
                                     setManoObraPorUnidadMXN(isNaN(val) ? 0 : val);
                                 }}
+                                className="w-24 text-sm font-bold text-retarder-black border border-retarder-gray-200 rounded-xl px-3 py-1.5 focus:border-retarder-red outline-none"
+                            />
+                        </div>
+                    </motion.div>
+
+                    {/* Kit de Luces LED */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-3 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm hover:border-retarder-red/40 transition-colors"
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="p-2 bg-yellow-100 rounded-lg">
+                                <Zap size={16} className="text-yellow-600" />
+                            </div>
+                            <div>
+                                <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Kit Luces LED</p>
+                                <p className="text-[10px] text-retarder-gray-400">Opcional (USD)</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <span className="text-sm font-bold text-retarder-gray-400">$</span>
+                            <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                placeholder="0.00"
+                                value={costoKitLedUSD || ''}
+                                onChange={(e) => setCostoKitLedUSD(parseFloat(e.target.value) || 0)}
                                 className="w-24 text-sm font-bold text-retarder-black border border-retarder-gray-200 rounded-xl px-3 py-1.5 focus:border-retarder-red outline-none"
                             />
                         </div>
@@ -1012,6 +1046,15 @@ export default function CotizadorFrenosPage() {
                                     onLabelChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, label: v } }))}
                                     onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
                                 />
+                                {costoKitLedUSD > 0 && (
+                                    <PriceLine
+                                        label={breakdown.kitLed.label}
+                                        icon={<Zap size={16} className="text-yellow-500" />}
+                                        usd={breakdown.kitLed.usd}
+                                        mxn={breakdown.kitLed.mxn}
+                                        delay={0.15}
+                                    />
+                                )}
                                 {gastosTrasladoMXN > 0 && (
                                     <PriceLine
                                         label={`Gastos de Traslado / Viticos (${cantidadUnidades} u.)`}
