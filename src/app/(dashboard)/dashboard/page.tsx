@@ -348,14 +348,14 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
                     <tbody>
                         {displayOrdenes.map((o, i) => (
                             <motion.tr
-                                key={o.id || o.numero}
+                                key={o.id || o.numero_orden_fisica||o.numero}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5 + i * 0.05 }}
                                 className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors"
                             >
-                                <td className="py-3 px-2 sm:px-3 font-mono font-semibold text-retarder-red">{o.numero}</td>
-                                <td className="py-3 px-2 sm:px-3 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{o.empresa}</td>
+                                <td className="py-3 px-2 sm:px-3 font-mono font-semibold text-retarder-red">{o.numero_orden_fisica||o.numero}</td>
+                                <td className="py-3 px-2 sm:px-3 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{o.empresa?.nombre_comercial}</td>
                                 <td className="py-3 px-2 sm:px-3 text-retarder-gray-600 capitalize hidden md:table-cell">{o.tipo}</td>
                                 <td className="py-3 px-2 sm:px-3">
                                     <span className={cn(
@@ -531,8 +531,8 @@ export default function DashboardPage() {
             ordArray.filter(o => o.prioridad === 'urgente' && o.estado !== 'servicio_concluido').slice(0, 1).forEach(o => {
                 alerts.push({
                     id: `ord-${o.id}`,
-                    title: `Pedido Urgente: ${o.numero}`,
-                    description: `Para ${o.empresa}. Fase: ${ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}.`,
+                    title: `Pedido Urgente: ${o.numero_orden_fisica||o.numero}`,
+                    description: `Para ${o.empresa?.nombre_comercial}. Fase: ${ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}.`,
                     type: 'warning',
                     icon: <AlertTriangle size={18} />
                 });

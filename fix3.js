@@ -1,0 +1,1 @@
+const fs=require('fs');const p='src/app/(dashboard)/dashboard/page.tsx';let c=fs.readFileSync(p,'utf8');c=c.replace(/o\.empresa\b/g,'o.empresa?.nombre_comercial');c=c.replace(/o\.numero\b/g,'o.numero_orden_fisica||o.numero');fs.writeFileSync(p,c,'utf8');console.log('OK');
