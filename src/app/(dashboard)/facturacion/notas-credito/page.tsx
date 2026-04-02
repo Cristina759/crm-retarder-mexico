@@ -104,7 +104,7 @@ export default function NotasCreditoPage() {
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
-                .select('id, numero, empresa, numero_factura, monto, estado, fecha_creado')
+                .select('id, numero_factura, empresa:empresas(nombre_comercial), total, estado, created_at')
                 .not('numero_factura', 'is', null)
                 .neq('numero_factura', '')
                 .order('fecha_creado', { ascending: false });
@@ -121,7 +121,7 @@ export default function NotasCreditoPage() {
                         uniqueFacturas.set(nf, {
                             factura: nf,
                             empresa: o.empresa?.nombre_comercial || 'N/A',
-                            total: Number(o.monto) || 0
+                            total: Number(o.total) || 0
                         });
                     }
                 });
