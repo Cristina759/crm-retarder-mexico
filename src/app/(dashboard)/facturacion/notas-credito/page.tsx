@@ -104,7 +104,7 @@ export default function NotasCreditoPage() {
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
-                .select('id, numero, empresa, numero_factura, monto, estado, fecha_creado')
+                .select('id, numero_orden_fisica, empresa:empresas(nombre_comercial), numero_factura, total, estado, created_at')
                 .not('numero_factura', 'is', null)
                 .neq('numero_factura', '')
                 .order('fecha_creado', { ascending: false });
