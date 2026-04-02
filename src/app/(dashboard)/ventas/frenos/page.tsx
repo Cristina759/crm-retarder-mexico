@@ -561,7 +561,7 @@ export default function CotizadorFrenosPage() {
         if (material_usd > 0) accs.push('Material Eléctrico');
         if (soporteria_usd > 0) accs.push('Soportería');
         
-        const defaultLabel = `Equipo Freno (Retarder) Incluye Accesorios ${accs.length > 0 ? '(' + accs.join(', ') + ')' : ''}`;
+        const defaultLabel = 'Equipo Freno (Retarder) Incluye Accesorios';
 
         return {
             freno: { 
