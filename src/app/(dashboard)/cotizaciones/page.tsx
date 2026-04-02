@@ -354,12 +354,13 @@ export default function CotizacionesPage() {
             const newRecord = {
                 numero: osNum,
                 empresa: cot.empresa || 'Sin empresa',
+                empresa_id: cot.empresa_id,
                 tipo: 'instalacion', // Default
                 estado: 'cotizacion_enviada_al_cliente' as OrdenEstado,
                 prioridad: 'media',
                 tecnico: '',
                 vendedor: cot.vendedor || '',
-                descripcion: `Creado desde Cotizacin ${cot.numero || cot.numero_cotizacion}`,
+                descripcion: `Creado desde Cotización ${cot.numero || cot.numero_cotizacion}`,
                 fecha_creado: new Date().toISOString().split('T')[0],
                 monto: cot.total,
                 cotizacion_id: cot.id

@@ -63,7 +63,7 @@ export default function OrdenesPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [newOrden, setNewOrden] = useState<{ numero: string; empresa: string; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ numero: '', empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
+    const [newOrden, setNewOrden] = useState<{ numero: string; empresa: string; empresa_id?: string | null; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ numero: '', empresa: '', empresa_id: null, tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
     const [empresaSearch, setEmpresaSearch] = useState('');
 
     const { user } = useUser();
@@ -83,14 +83,14 @@ export default function OrdenesPage() {
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
-                .select('*, empresa:empresas(nombre_comercial)')
+                .select('*, empresa_join:empresas(nombre_comercial)')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
             const mapped = (data || []).map((o: any) => ({
                 ...o,
-                empresa: o.empresa?.nombre_comercial || 'Sin empresa',
+                empresa: o.empresa_join?.nombre_comercial || o.empresa || 'Sin empresa',
                 monto: o.total,
                 fecha_creado: o.fecha_real || o.created_at,
                 numero: o.numero_orden_fisica,
@@ -118,9 +118,24 @@ export default function OrdenesPage() {
     const handleCreateOrden = async () => {
         setIsSaving(true);
         try {
+            // Buscar UUID real de la base de datos si no lo tenemos
+            let realEmpresaId = newOrden.empresa_id;
+            if (!realEmpresaId && newOrden.empresa) {
+                try {
+                    const { data: dbCliente } = await supabase
+                        .from('empresas')
+                        .select('id')
+                        .eq('nombre_comercial', newOrden.empresa)
+                        .limit(1)
+                        .single();
+                    if (dbCliente) realEmpresaId = dbCliente.id;
+                } catch(e) {}
+            }
+
             const newRecord = {
                 numero: newOrden.numero || '', // Captura manual
                 empresa: newOrden.empresa || 'Sin empresa',
+                empresa_id: realEmpresaId,
                 tipo: newOrden.tipo,
                 estado: 'cotizacion_enviada_al_cliente' as OrdenEstado,
                 prioridad: newOrden.prioridad,
@@ -593,7 +608,10 @@ export default function OrdenesPage() {
                                                 </div>
                                                 <select
                                                     value={newOrden.empresa}
-                                                    onChange={e => setNewOrden({ ...newOrden, empresa: e.target.value })}
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        setNewOrden({ ...newOrden, empresa: val, empresa_id: null }); // Se buscar el ID al guardar o podemos buscarlo aqu
+                                                    }}
                                                     className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm font-semibold outline-none focus:border-retarder-red bg-white"
                                                 >
                                                     <option value="">-- Seleccionar empresa --</option>
