@@ -189,11 +189,22 @@ export default function CotizadorServiciosPage() {
     const { user } = useUser();
     const cotizacionRef = useRef<HTMLDivElement>(null);
 
-    const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
+    const [serviceSelection, setServiceSelection] = useState({ preventivo: false, correctivo: false });
     const [cantidad, setCantidad] = useState(1);
     const [traslado, setTraslado] = useState(0);
     const [refacciones, setRefacciones] = useState<RefaccionItem[]>([]);
     const [manoObraItems, setManoObraItems] = useState<ManoObraItem[]>([]);
+
+    const activeService = useMemo(() => {
+        const isPrev = serviceSelection.preventivo;
+        const isCorr = serviceSelection.correctivo;
+        if (isPrev && isCorr) {
+            return { ...SERVICE_TYPES[1], id: 'mixto', label: 'Servicio Mixto', checklist: SERVICE_TYPES[0].checklist, allowRefacciones: true };
+        }
+        if (isPrev) return SERVICE_TYPES[0];
+        if (isCorr) return SERVICE_TYPES[1];
+        return null;
+    }, [serviceSelection]);
 
     const [clientes, setClientes] = useState<ClienteCompact[]>([]);
     const [selectedClienteId, setSelectedClienteId] = useState<string>('');
@@ -436,18 +447,18 @@ export default function CotizadorServiciosPage() {
     }, [manoObraItems]);
 
     const subtotal = useMemo(() => {
-        if (!selectedService) return 0;
-        const totalTraslado = traslado * cantidad;
-        if (selectedService.id === 'preventivo') return (cantidad * PRECIO_PREVENTIVO) + totalTraslado;
-        if (selectedService.id === 'correctivo') return totalManoObra + totalRefacciones + totalTraslado;
-        return 0;
-    }, [selectedService, cantidad, totalManoObra, traslado, totalRefacciones]);
+        let base = 0;
+        if (serviceSelection.preventivo) base += (cantidad * PRECIO_PREVENTIVO);
+        if (serviceSelection.correctivo) base += (totalManoObra + totalRefacciones);
+        if (base === 0) return 0;
+        return base + (traslado * cantidad);
+    }, [serviceSelection, cantidad, totalManoObra, totalRefacciones, traslado]);
 
     const iva = subtotal * 0.16;
     const total = subtotal + iva;
 
     const resetForm = () => {
-        setSelectedService(null);
+        setServiceSelection({ preventivo: false, correctivo: false });
         setCantidad(1);
         setTraslado(0);
         setManoObraItems([]);
@@ -456,8 +467,8 @@ export default function CotizadorServiciosPage() {
     };
 
     const handleFinalize = async () => {
-        if (!selectedService || !selectedClienteId) {
-            toast.error('Por favor selecciona un servicio y un cliente.');
+        if (!activeService || !selectedClienteId) {
+            toast.error('Por favor selecciona al menos un tipo de servicio y un cliente.');
             return;
         }
 
@@ -506,12 +517,12 @@ export default function CotizadorServiciosPage() {
                     .insert({
                         numero: '', // Se captura manualmente
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
-                        tipo: selectedService.id,
+                        tipo: activeService.id,
                         estado: 'cotizacion_enviada_al_cliente',
                         prioridad: 'media',
                         vendedor: sellerName,
                         tecnico: '',
-                        descripcion: `Servicio ${selectedService.label}. Cotizacin: ${cotNumero}.`,
+                        descripcion: `Servicio ${activeService.label}. Cotizacin: ${cotNumero}.`,
                         monto: total,
                         fecha_creado: fechaActual,
                         cotizacion_id: cotId
@@ -618,74 +629,127 @@ export default function CotizadorServiciosPage() {
 
             {/*  Service Type Cards  */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 print:hidden">
-                {SERVICE_TYPES.map((service, i) => {
-                    const Icon = service.icon;
-                    const isSelected = selectedService?.id === service.id;
-                    return (
-                        <motion.button
-                            key={service.id}
-                            initial={{ opacity: 0, y: 15 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.06 }}
-                            onClick={() => {
-                                if (isSelected) resetForm();
-                                else {
-                                    setSelectedService(service);
-                                    setRefacciones([]);
-                                    setManoObraItems([]);
-                                    setExpandChecklist(true);
-                                }
-                            }}
-                            className={cn(
-                                'relative p-5 rounded-2xl border-2 text-left transition-all duration-300 group',
-                                isSelected
-                                    ? 'border-retarder-red bg-retarder-red/5 shadow-xl shadow-retarder-red/10 overflow-hidden'
-                                    : service.bgColor + ' hover:shadow-md'
-                            )}
-                        >
-                            {isSelected && (
-                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-4 right-4 bg-retarder-red rounded-full p-1"><CheckCircle2 size={20} className="text-white" /></motion.div>
-                            )}
-                            <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors', isSelected ? 'bg-retarder-red text-white' : 'bg-white text-gray-400 group-hover:bg-white/80')}>
-                                <Icon size={24} />
+            {/*  Unified Service Selection (Mixta)  */}
+            <div className="bg-white rounded-[2.5rem] border-2 border-retarder-gray-200 p-8 shadow-xl shadow-retarder-gray-200/50 print:hidden overflow-hidden relative group transition-all duration-500 hover:border-retarder-red/30">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-retarder-red/5 blur-[80px] -mr-32 -mt-32 rounded-full group-hover:bg-retarder-red/10 transition-all duration-700" />
+                
+                <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-retarder-red text-white flex items-center justify-center shadow-lg shadow-retarder-red/20">
+                            <Settings2 size={28} />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-black text-retarder-black uppercase tracking-tight">Formulario de Servicio Mixto</h3>
+                            <p className="text-xs text-retarder-gray-500 font-bold uppercase tracking-widest mt-1">Configura el alcance preventivo y correctivo</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {(serviceSelection.preventivo || serviceSelection.correctivo) && (
+                            <button 
+                                onClick={resetForm}
+                                className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-retarder-gray-400 hover:text-retarder-red transition-colors"
+                            >
+                                Limpiar Selección
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Preventivo Toggle */}
+                    <button 
+                        onClick={() => setServiceSelection(prev => ({ ...prev, preventivo: !prev.preventivo }))}
+                        className={cn(
+                            "group/btn relative flex flex-col p-6 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden",
+                            serviceSelection.preventivo 
+                                ? "border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-500/10" 
+                                : "border-retarder-gray-100 bg-retarder-gray-50 hover:border-retarder-gray-200"
+                        )}
+                    >
+                        {serviceSelection.preventivo && (
+                            <div className="absolute top-4 right-4 text-emerald-500 bg-white rounded-full p-1 shadow-sm animate-in zoom-in duration-300">
+                                <Check size={16} strokeWidth={4} />
                             </div>
-                            <p className={cn('font-bold text-lg leading-tight', isSelected ? 'text-retarder-red' : 'text-retarder-gray-800')}>{service.label}</p>
-                            <p className="text-sm text-retarder-gray-500 mt-2 leading-relaxed">{service.description}</p>
-                        </motion.button>
-                    );
-                })}
+                        )}
+                        <div className={cn(
+                            "w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300",
+                            serviceSelection.preventivo ? "bg-emerald-500 text-white" : "bg-white text-retarder-gray-400 group-hover/btn:scale-110"
+                        )}>
+                            <Shield size={24} />
+                        </div>
+                        <p className={cn("font-black text-lg uppercase tracking-tight", serviceSelection.preventivo ? "text-emerald-700" : "text-retarder-gray-800")}>
+                            Preventivo
+                        </p>
+                        <p className="text-xs text-retarder-gray-500 mt-2 font-medium leading-relaxed">
+                            Incluye checklist tcnico y mantenimiento regular por {formatMXN(PRECIO_PREVENTIVO)} c/u.
+                        </p>
+                    </button>
+
+                    {/* Correctivo Toggle */}
+                    <button 
+                        onClick={() => setServiceSelection(prev => ({ ...prev, correctivo: !prev.correctivo }))}
+                        className={cn(
+                            "group/btn relative flex flex-col p-6 rounded-3xl border-2 transition-all duration-300 text-left overflow-hidden",
+                            serviceSelection.correctivo 
+                                ? "border-orange-500 bg-orange-50 shadow-lg shadow-orange-500/10" 
+                                : "border-retarder-gray-100 bg-retarder-gray-50 hover:border-retarder-gray-200"
+                        )}
+                    >
+                        {serviceSelection.correctivo && (
+                            <div className="absolute top-4 right-4 text-orange-500 bg-white rounded-full p-1 shadow-sm animate-in zoom-in duration-300">
+                                <Check size={16} strokeWidth={4} />
+                            </div>
+                        )}
+                        <div className={cn(
+                            "w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300",
+                            serviceSelection.correctivo ? "bg-orange-500 text-white" : "bg-white text-retarder-gray-400 group-hover/btn:scale-110"
+                        )}>
+                            <Wrench size={24} />
+                        </div>
+                        <p className={cn("font-black text-lg uppercase tracking-tight", serviceSelection.correctivo ? "text-orange-700" : "text-retarder-gray-800")}>
+                            Correctivo
+                        </p>
+                        <p className="text-xs text-retarder-gray-500 mt-2 font-medium leading-relaxed">
+                            Permite agregar mano de obra y refacciones segn diagnstico de falla.
+                        </p>
+                    </button>
+                </div>
+            </div>
             </div>
 
             {/*  Main Section (UI and Print Hidden)  */}
             <AnimatePresence mode="wait">
-                {selectedService && (
-                    <motion.div key={selectedService.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="print:hidden">
+                {(serviceSelection.preventivo || serviceSelection.correctivo) && (
+                    <motion.div key={activeService?.id || 'none'} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="print:hidden">
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Checklist & Items */}
                             <div className="lg:col-span-1 space-y-5">
                                 {/* Checklist */}
-                                <div className="bg-white rounded-2xl border border-retarder-gray-200 overflow-hidden shadow-sm">
-                                    <button onClick={() => setExpandChecklist(!expandChecklist)} className="w-full flex items-center justify-between px-5 py-4 bg-retarder-gray-50 hover:bg-retarder-gray-100 transition-all font-bold text-sm text-retarder-black">
-                                        <div className="flex items-center gap-2">
-                                            <ClipboardCheck size={18} className="text-retarder-red" />
-                                            Checklist Incluido
-                                        </div>
-                                        {expandChecklist ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                    </button>
-                                    {expandChecklist && (
-                                        <div className="px-5 py-4 space-y-4">
-                                            {selectedService.checklist.map(group => (
-                                                <div key={group.title}>
-                                                    <p className="text-[10px] font-black uppercase text-retarder-gray-400 mb-2 tracking-widest">{group.title}</p>
-                                                    <ul className="space-y-1.5">{group.items.map(item => (<li key={item} className="text-xs text-retarder-gray-700 flex items-start gap-2"><CircleDot size={8} className="mt-1 text-retarder-red" />{item}</li>))}</ul>
+                                    {serviceSelection.preventivo && (
+                                        <div className="bg-white rounded-2xl border border-retarder-gray-200 overflow-hidden shadow-sm">
+                                            <button onClick={() => setExpandChecklist(!expandChecklist)} className="w-full flex items-center justify-between px-5 py-4 bg-retarder-gray-50 hover:bg-retarder-gray-100 transition-all font-bold text-sm text-retarder-black">
+                                                <div className="flex items-center gap-2">
+                                                    <ClipboardCheck size={18} className="text-retarder-red" />
+                                                    Checklist Preventivo
                                                 </div>
-                                            ))}
+                                                {expandChecklist ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </button>
+                                            {expandChecklist && (
+                                                <div className="px-5 py-4 space-y-4">
+                                                    {SERVICE_TYPES[0].checklist.map(group => (
+                                                        <div key={group.title}>
+                                                            <p className="text-[10px] font-black uppercase text-retarder-gray-400 mb-2 tracking-widest">{group.title}</p>
+                                                            <ul className="space-y-1.5">{group.items.map(item => (<li key={item} className="text-xs text-retarder-gray-700 flex items-start gap-2"><CircleDot size={8} className="mt-1 text-retarder-red" />{item}</li>))}</ul>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
-                                </div>
 
                                 {/* Mano de Obra (Concepts) */}
-                                {selectedService.id === 'correctivo' && (
+                                {serviceSelection.correctivo && (
                                     <div className="bg-white rounded-2xl border border-retarder-gray-200 overflow-hidden shadow-sm">
                                         <div className="px-5 py-4 bg-red-50/50 border-b border-retarder-gray-200 flex justify-between items-center">
                                             <div className="flex items-center gap-2 font-bold text-sm text-retarder-black"><Wrench size={18} className="text-retarder-red" />Mano de Obra</div>
@@ -711,7 +775,7 @@ export default function CotizadorServiciosPage() {
                                 )}
 
                                 {/* Refacciones */}
-                                {selectedService.allowRefacciones && (
+                                {serviceSelection.correctivo && (
                                     <div className="bg-white rounded-2xl border border-retarder-gray-200 overflow-hidden shadow-sm">
                                         <div className="px-5 py-4 bg-orange-50/50 border-b border-retarder-gray-200 flex justify-between items-center">
                                             <div className="flex items-center gap-2 font-bold text-sm text-retarder-black"><Package size={18} className="text-orange-500" />Refacciones</div>
@@ -839,7 +903,7 @@ export default function CotizadorServiciosPage() {
 
             {/*  PROFESSIONAL PRINT AREA (PDF ONLY)  */}
             <AnimatePresence>
-                {selectedService && (
+                {activeService && (
                     <div className="print-area hidden print:block bg-white p-0">
                         <div className="max-w-[800px] mx-auto bg-white overflow-hidden">
                             {/* PDF Header */}
@@ -870,7 +934,7 @@ export default function CotizadorServiciosPage() {
                                             <div className="text-right space-y-1">
                                                 <div className="grid grid-cols-[auto_1fr] gap-x-3 text-left">
                                                     <span className="font-bold">FOLIO:</span> <span className="text-retarder-red font-bold">{savedFolio || 'POR ASIGNAR'}</span>
-                                                    <span className="font-bold">SERVICIO:</span> <span className="uppercase">{selectedService.label}</span>
+                                                    <span className="font-bold">SERVICIO:</span> <span className="uppercase">{activeService.label}</span>
                                                     <span className="font-bold">VENDEDOR:</span> <span>{user?.fullName || 'VENTAS'}</span>
                                                 </div>
                                             </div>
@@ -884,7 +948,7 @@ export default function CotizadorServiciosPage() {
                                 <div>
                                     <h5 className="text-[9px] font-black uppercase border-b-2 border-retarder-gray-800 pb-1 mb-3 tracking-widest">Incluye los siguientes trabajos:</h5>
                                     <div className="space-y-2">
-                                        {selectedService.checklist.map(group => (
+                                        {activeService.checklist.map(group => (
                                             <div key={group.title}>
                                                 <p className="text-[8px] font-bold uppercase text-retarder-gray-400 mb-1">{group.title}</p>
                                                 <ul className="grid grid-cols-1 gap-0.5">{group.items.map(i => (<li key={i} className="text-[8px] flex items-start gap-1"><span className="text-retarder-red mt-0.5"></span>{i}</li>))}</ul>
@@ -895,20 +959,20 @@ export default function CotizadorServiciosPage() {
                                 <div className="space-y-6">
                                     <h5 className="text-[9px] font-black uppercase border-b-2 border-retarder-gray-800 pb-1 mb-3 tracking-widest">Desglose Econmico:</h5>
                                     <div className="space-y-1">
-                                        {selectedService.id === 'preventivo' ? (
-                                            <>
-                                                <PriceLine label={`Mano de Obra (${cantidad} unidad/es)`} mxn={cantidad * PRECIO_PREVENTIVO} />
-                                                {traslado > 0 && <PriceLine label={`Desplazamiento / Traslado (${cantidad} unidad/es)`} mxn={traslado * cantidad} />}
-                                            </>
-                                        ) : (
-                                            <>
-                                                {manoObraItems.map(item => (
-                                                    <PriceLine key={item.concepto.concepto} label={`${item.concepto.concepto} (x${item.cantidad})`} mxn={item.concepto.precio_mxn * item.cantidad} />
-                                                ))}
-                                                {refacciones.length > 0 && <PriceLine label={`Refacciones (${refacciones.length} items)`} mxn={totalRefacciones} />}
-                                                {traslado > 0 && <PriceLine label={`Desplazamiento / Traslado (${cantidad} unidad/es)`} mxn={traslado * cantidad} />}
-                                            </>
-                                        )}
+                                        <div className="space-y-1">
+                                            {serviceSelection.preventivo && (
+                                                <PriceLine label={`Mantenimiento Preventivo (${cantidad} u.)`} mxn={cantidad * PRECIO_PREVENTIVO} />
+                                            )}
+                                            {serviceSelection.correctivo && (
+                                                <>
+                                                    {manoObraItems.map(item => (
+                                                        <PriceLine key={item.concepto.concepto} label={`${item.concepto.concepto} (x${item.cantidad})`} mxn={item.concepto.precio_mxn * item.cantidad} />
+                                                    ))}
+                                                    {refacciones.length > 0 && <PriceLine label={`Refacciones (${refacciones.length} items)`} mxn={totalRefacciones} />}
+                                                </>
+                                            )}
+                                            {traslado > 0 && <PriceLine label={`Desplazamiento / Traslado (${cantidad} u.)`} mxn={traslado * cantidad} />}
+                                        </div>
                                         <div className="py-2" />
                                         <PriceLine label="Subtotal" mxn={subtotal} />
                                         <PriceLine label="IVA 16%" mxn={iva} />
