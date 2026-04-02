@@ -555,7 +555,7 @@ export default function DashboardPage() {
 
             // Live Statistics from Supabase
             setStats({
-                totalVentas: totalVentas - totalNotas,
+                totalVentas: totalVentas,
                 totalCobrado: totalCobrado, // <-- AHORA ES REAL, no 75%
                 ordenesActivas,
                 cotizacionesActivas,
