@@ -168,8 +168,8 @@ function ModelCard({
     tipoCambio,
     onClick,
     index,
-    priceOverride,
-    onPriceChange,
+    overrides,
+    onOverrideChange,
     onShowMaterial,
 }: {
     freno: CatalogoFreno;
@@ -177,12 +177,28 @@ function ModelCard({
     tipoCambio: number;
     onClick: () => void;
     index: number;
-    priceOverride?: number;
-    onPriceChange: (val: number) => void;
+    overrides?: {
+        freno_base?: number,
+        cardanes?: number,
+        material?: number,
+        soporteria?: number,
+        mano_obra?: number
+    };
+    onOverrideChange: (field: string, val: number) => void;
     onShowMaterial: () => void;
 }) {
-    const currentPriceUSD = priceOverride ?? freno.precio_freno_usd;
-    const totalUSD = currentPriceUSD + freno.cardanes_usd + freno.soporteria_usd + freno.material_electrico_usd;
+    // Current values with defaults
+    const cardanes = overrides?.cardanes ?? freno.cardanes_usd;
+    const material = overrides?.material ?? freno.material_electrico_usd;
+    const soporteria = overrides?.soporteria ?? freno.soporteria_usd;
+    const manoObra = overrides?.mano_obra ?? 361.72; // Default from spreadsheet
+    
+    // The "Freno Base" is the residual if we treat precio_freno_usd as the target total
+    // or just use the price as is. Following the user's logic, we'll let them edit 
+    // the Freno Base too.
+    const frenoBase = overrides?.freno_base ?? (freno.precio_freno_usd - (freno.cardanes_usd + freno.material_electrico_usd + freno.soporteria_usd + 361.72));
+
+    const totalUSD = frenoBase + cardanes + material + soporteria + manoObra;
     const totalMXN = totalUSD * tipoCambio;
 
     return (
@@ -222,81 +238,97 @@ function ModelCard({
             </div>
 
             {/* Body */}
-            <div className="p-4 bg-white space-y-3">
+            <div className="p-4 bg-white space-y-4">
                 {/* Brand badges with NM */}
-                <div className="space-y-1.5">
-                    {freno.pentar_precio_usd > 0 && (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                                <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[8px] font-bold rounded">PENTAR</span>
-                                <span className="text-[10px] text-retarder-gray-500">{freno.pentar_serie}</span>
-                            </div>
-                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.pentar_nm} NM  {formatUSD(freno.pentar_precio_usd)}</span>
-                        </div>
-                    )}
-                    {freno.frenelsa_precio_usd > 0 && (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                                <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[8px] font-bold rounded">FRENELSA</span>
-                                <span className="text-[10px] text-retarder-gray-500">{freno.frenelsa_serie}</span>
-                            </div>
-                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.frenelsa_nm} NM  {formatUSD(freno.frenelsa_precio_usd)}</span>
-                        </div>
-                    )}
-                    {freno.cofremex_precio_usd > 0 && (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                                <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-bold rounded">COFREMEX</span>
-                                <span className="text-[10px] text-retarder-gray-500">{freno.cofremex_serie}</span>
-                            </div>
-                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.cofremex_nm} NM  {formatUSD(freno.cofremex_precio_usd)}</span>
-                        </div>
-                    )}
-                    {/* Show series without price if available */}
-                    {freno.frenelsa_serie && freno.frenelsa_precio_usd === 0 && (
+                <div className="space-y-1.5 border-b border-retarder-gray-100 pb-3">
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-400 text-[8px] font-bold rounded">FRENELSA</span>
-                            <span className="text-[10px] text-retarder-gray-400">{freno.frenelsa_serie}  {freno.frenelsa_nm} NM</span>
+                            <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[8px] font-bold rounded uppercase">Freno Base</span>
+                            <span className="text-[10px] text-retarder-gray-500">{freno.pentar_serie}</span>
                         </div>
-                    )}
-                    {freno.cofremex_serie && freno.cofremex_precio_usd === 0 && freno.pentar_precio_usd > 0 && (
-                        <div className="flex items-center gap-1.5">
-                            <span className="px-1.5 py-0.5 bg-amber-50 text-amber-400 text-[8px] font-bold rounded">COFREMEX</span>
-                            <span className="text-[10px] text-retarder-gray-400">{freno.cofremex_serie}  {freno.cofremex_nm} NM</span>
+                        <input 
+                            type="number" 
+                            step="any"
+                            value={frenoBase.toFixed(2)}
+                            onChange={(e) => onOverrideChange('freno_base', parseFloat(e.target.value) || 0)}
+                            className="w-16 bg-transparent text-right text-[10px] font-bold outline-none border-b border-dashed border-gray-200 focus:border-red-500"
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-retarder-gray-600">
+                            <span className="text-[10px] font-bold uppercase">Cardanes</span>
                         </div>
-                    )}
+                        <input 
+                            type="number" 
+                            step="any"
+                            value={cardanes.toFixed(2)}
+                            onChange={(e) => onOverrideChange('cardanes', parseFloat(e.target.value) || 0)}
+                            className="w-16 bg-transparent text-right text-[10px] font-bold outline-none border-b border-dashed border-gray-200 focus:border-red-500"
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-retarder-gray-600">
+                            <span className="text-[10px] font-bold uppercase">Mat. Eléctrico</span>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onShowMaterial(); }}
+                                className="text-blue-500 hover:text-blue-700"
+                            >
+                                <Settings2 size={10} />
+                            </button>
+                        </div>
+                        <input 
+                            type="number" 
+                            step="any"
+                            value={material.toFixed(2)}
+                            onChange={(e) => onOverrideChange('material', parseFloat(e.target.value) || 0)}
+                            className="w-16 bg-transparent text-right text-[10px] font-bold outline-none border-b border-dashed border-gray-200 focus:border-red-500"
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-retarder-gray-600">
+                            <span className="text-[10px] font-bold uppercase">Soportería</span>
+                        </div>
+                        <input 
+                            type="number" 
+                            step="any"
+                            value={soporteria.toFixed(2)}
+                            onChange={(e) => onOverrideChange('soporteria', parseFloat(e.target.value) || 0)}
+                            className="w-16 bg-transparent text-right text-[10px] font-bold outline-none border-b border-dashed border-gray-200 focus:border-red-500"
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-retarder-gray-600">
+                            <span className="text-[10px] font-bold uppercase">Mano de Obra</span>
+                        </div>
+                        <input 
+                            type="number" 
+                            step="any"
+                            value={manoObra.toFixed(2)}
+                            onChange={(e) => onOverrideChange('mano_obra', parseFloat(e.target.value) || 0)}
+                            className="w-16 bg-transparent text-right text-[10px] font-bold outline-none border-b border-dashed border-gray-200 focus:border-red-500"
+                            onClick={e => e.stopPropagation()}
+                        />
+                    </div>
                 </div>
 
-                {/* Price */}
-                <div className="pt-2 border-t border-retarder-gray-100 flex flex-col gap-2">
+                {/* Total */}
+                <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                            <p className="text-[9px] font-semibold uppercase text-retarder-gray-400">Precio Freno ({freno.pentar_serie})</p>
-                            <div className="flex items-center gap-1 group/price">
-                                <span className="text-xs font-bold text-retarder-black">$</span>
-                                <input 
-                                    type="number" 
-                                    step="any"
-                                    value={currentPriceUSD}
-                                    onChange={(e) => onPriceChange(parseFloat(e.target.value) || 0)}
-                                    className="w-20 bg-retarder-gray-50 border border-transparent hover:border-retarder-red/30 focus:border-retarder-red rounded px-1.5 py-0.5 text-sm font-bold text-retarder-black outline-none transition-all"
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                                <span className="text-[10px] font-bold text-retarder-gray-400">USD</span>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onShowMaterial();
-                            }}
-                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                            title="Editar Material Eléctrico"
-                        >
-                            <Settings2 size={16} />
-                        </button>
+                        <p className="text-[9px] font-black uppercase text-retarder-gray-400 tracking-wider">Precio Venta Público</p>
+                        <p className="text-sm font-black text-retarder-black font-mono">{formatUSD(totalUSD)}</p>
                     </div>
-                    <p className="text-[10px] text-retarder-gray-400">Total instalado: <span className="font-semibold text-retarder-red">{formatMXN(totalMXN)}</span></p>
+                    <div className="p-2.5 bg-retarder-red/5 rounded-xl border border-retarder-red/10 group-hover:bg-retarder-red transition-all duration-300">
+                        <p className="text-[8px] font-bold uppercase text-retarder-red group-hover:text-white/60 mb-0.5">Total Instalado MXN</p>
+                        <p className="text-base font-black text-retarder-red group-hover:text-white transition-colors">{formatMXN(totalMXN)}</p>
+                    </div>
                 </div>
             </div>
         </motion.button>
@@ -330,18 +362,42 @@ export default function CotizadorFrenosPage() {
     const [manualFolio, setManualFolio] = useState('');
     const [manualAtencion, setManualAtencion] = useState('');
 
-    // Pre-selection price overrides for specific models
-    const [modelPriceOverrides, setModelPriceOverrides] = useState<Record<string, number>>({});
+    // Pre-selection overrides for each model components
+    const [modelOverrides, setModelOverrides] = useState<Record<string, {
+        freno_base?: number,
+        cardanes?: number,
+        material?: number,
+        soporteria?: number,
+        mano_obra?: number
+    }>>({});
 
     // Material Eléctrico Sub-catalog state
     const [showMaterialModal, setShowMaterialModal] = useState(false);
     const [selectedMaterialItems, setSelectedMaterialItems] = useState<MaterialElectricoItem[]>(MATERIAL_ELECTRICO_BASE);
 
+    // Track which model is being customized with the material modal
+    const [materialTargetModel, setMaterialTargetModel] = useState<string | null>(null);
+
     // Clear overrides when model changes
     useEffect(() => {
         setPriceOverrides({});
-        // We DON'T clear modelPriceOverrides here because user might want to keep them while browsing models
+        // We DON'T clear modelOverrides here to allow browsing
     }, [selectedModelo, selectedMarca, cantidadUnidades]);
+
+    // Update material cost for a specific model when selectedMaterialItems changes
+    useEffect(() => {
+        if (!materialTargetModel) return;
+        const totalMaterialMXN = selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0);
+        const totalMaterialUSD = totalMaterialMXN / tipoCambio;
+        
+        setModelOverrides(p => ({
+            ...p,
+            [materialTargetModel]: {
+                ...p[materialTargetModel],
+                material: totalMaterialUSD
+            }
+        }));
+    }, [selectedMaterialItems, materialTargetModel, tipoCambio]);
 
     const handleOpenCreateForm = async () => {
         let nextFolio = 'COT-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
@@ -485,36 +541,37 @@ export default function CotizadorFrenosPage() {
         if (!selectedModelo) return null;
 
         const units = cantidadUnidades || 1;
-        const baseFrenoUSD = (() => {
-            // Apply model-specific override if it exists
-            const override = modelPriceOverrides[selectedModelo.modelo];
-            if (override !== undefined) return override;
-
-            switch (selectedMarca) {
-                case 'pentar': return selectedModelo.pentar_precio_usd;
-                case 'frenelsa': return selectedModelo.frenelsa_precio_usd;
-                case 'cofremex': return selectedModelo.cofremex_precio_usd;
-                default: return selectedModelo.precio_freno_usd;
-            }
-        })();
-
-        // Apply overrides or defaults
-        const base_f_usd = priceOverrides.freno?.usd ?? (baseFrenoUSD * units);
-        const c_usd = selectedModelo.cardanes_usd * units;
-        const s_usd = selectedModelo.soporteria_usd * units;
         
-        // Calculate current Material Electrónico from selected sub-catalog
-        const base_m_mxn = selectedMaterialItems.reduce((acc, item) => acc + (item.cantidad * item.precio_unitario_mxn), 0) * units;
-        const base_m_usd = base_m_mxn / tipoCambio;
+        // Get customized values for the selected model
+        const ovs = modelOverrides[selectedModelo.modelo];
 
-        // Roll up the cost of cardanes, soporteria and material into the Freno price
-        const f_usd = priceOverrides.freno?.usd ?? (base_f_usd + c_usd + s_usd + base_m_usd);
+        // 1. Component values (per unit)
+        const cardanes_usd = (ovs?.cardanes !== undefined ? ovs.cardanes : selectedModelo.cardanes_usd);
+        const soporteria_usd = (ovs?.soporteria !== undefined ? ovs.soporteria : selectedModelo.soporteria_usd);
+        
+        // Material Eléctrico: Default from Excel state if no manual override in card
+        const material_usd = (ovs?.material !== undefined 
+            ? ovs.material 
+            : (selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0) / tipoCambio));
+            
+        const mano_obra_usd = (ovs?.mano_obra !== undefined ? ovs.mano_obra : 361.72);
+        
+        // Base Freno: residual from original total or specific override
+        const default_freno_base = selectedModelo.precio_freno_usd - (selectedModelo.cardanes_usd + selectedModelo.material_electrico_usd + selectedModelo.soporteria_usd + 361.72);
+        const base_f_usd = (ovs?.freno_base !== undefined ? ovs.freno_base : default_freno_base);
 
+        // 2. Aggregate with units
+        const unit_total_usd = base_f_usd + cardanes_usd + soporteria_usd + material_usd + mano_obra_usd;
+        
+        // Handle final preview price overrides (which override the entire equipment block)
+        const f_usd = priceOverrides.freno?.usd ?? (unit_total_usd * units);
+
+        // Other items
         const base_t_usd = (gastosTrasladoMXN * units) / tipoCambio;
         const t_usd = priceOverrides.traslado?.usd ?? base_t_usd;
 
-        const base_mo_usd = manoObraInstalacionMXN / tipoCambio;
-        const mo_usd = priceOverrides.manoObra?.usd ?? base_mo_usd;
+        const base_mo_usd = priceOverrides.manoObra?.usd ?? 0; // Handled within freno block usually
+        const mo_usd = base_mo_usd;
 
         const totalKitLedUSD = costoKitLedUSD * units;
         
@@ -544,7 +601,7 @@ export default function CotizadorFrenosPage() {
             },
             total: { usd: total_usd, mxn: total_mxn }
         };
-    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades, priceOverrides, selectedMaterialItems]);
+    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades, priceOverrides, selectedMaterialItems, modelOverrides]);
 
     const handleFinalize = async () => {
         if (!selectedModelo || !selectedClienteId) {
@@ -1050,9 +1107,15 @@ export default function CotizadorFrenosPage() {
                             freno={freno}
                             selected={selectedModelo?.modelo === freno.modelo}
                             tipoCambio={tipoCambio}
-                            priceOverride={modelPriceOverrides[freno.modelo]}
-                            onPriceChange={(val) => setModelPriceOverrides(p => ({ ...p, [freno.modelo]: val }))}
-                            onShowMaterial={() => setShowMaterialModal(true)}
+                            overrides={modelOverrides[freno.modelo]}
+                            onOverrideChange={(field, val) => setModelOverrides(p => ({
+                                ...p,
+                                [freno.modelo]: { ...(p[freno.modelo] || {}), [field]: val }
+                            }))}
+                            onShowMaterial={() => {
+                                setMaterialTargetModel(freno.modelo);
+                                setShowMaterialModal(true);
+                            }}
                             onClick={() => {
                                 setSelectedModelo(freno);
                                 // Auto-select first available brand
