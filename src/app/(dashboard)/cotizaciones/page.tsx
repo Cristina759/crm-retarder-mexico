@@ -1,4 +1,5 @@
 'use client';
+// Force redeploy - All statuses are now editable for folio, atencion_a and concepts.
 
 import { useState, useMemo, useTransition, useCallback } from 'react';
 import Link from 'next/link';
