@@ -220,10 +220,10 @@ export default function NotasCreditoPage() {
         if (searchQuery.trim()) {
             const q = searchQuery.toLowerCase();
             result = result.filter(n =>
-                n.numero_nc.toLowerCase().includes(q) ||
-                n.empresa.toLowerCase().includes(q) ||
-                n.factura_relacionada.toLowerCase().includes(q) ||
-                n.motivo.toLowerCase().includes(q)
+                (n.numero_nc || '').toLowerCase().includes(q) ||
+                (n.empresa || '').toLowerCase().includes(q) ||
+                (n.factura_relacionada || '').toLowerCase().includes(q) ||
+                (n.motivo || '').toLowerCase().includes(q)
             );
         }
         return result;

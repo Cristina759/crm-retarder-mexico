@@ -90,7 +90,7 @@ export default function FacturacionPage() {
                     id: o.id,
                     numero_orden: o.numero || 'OS-N/A',
                     numero_factura: o.numero_factura || 'PENDIENTE',
-                    empresa: o.empresa?.nombre_comercial,
+                    empresa: (o.empresa && typeof o.empresa === 'object' ? o.empresa.nombre_comercial : o.empresa) || 'S/N',
                     concepto: o.descripcion || (o.total_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),
                     subtotal: o.subtotal || 0,
                     iva: o.iva || 0,
