@@ -50,6 +50,7 @@ export default function CotizacionesPage() {
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
     const [loadingItems, setLoadingItems] = useState(false);
     const [editedAtencion, setEditedAtencion] = useState('');
+    const [editedFolio, setEditedFolio] = useState('');
     const [newCot, setNewCot] = useState({ empresa_id: '', atencion_a: '', folio: '', fecha: '' });
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPending, startTransition] = useTransition();
@@ -132,6 +133,7 @@ export default function CotizacionesPage() {
     const handleSelectCot = async (c: any) => {
         setSelectedCot(c);
         setEditedAtencion(c.atencion_a || '');
+        setEditedFolio(c.folio || c.numero || c.numero_cotizacion || '');
         setLoadingItems(true);
         try {
             const { data, error } = await supabase.from('cotizaciones_items').select('*').eq('cotizacion_id', c.id).order('created_at', { ascending: true });
@@ -177,6 +179,7 @@ export default function CotizacionesPage() {
 
             const { error: cotError } = await supabase.from('cotizaciones').update({ 
                 atencion_a: editedAtencion,
+                folio: editedFolio,
                 subtotal: subtotalMXN,
                 iva: ivaMXN,
                 total: totalMXN
@@ -542,7 +545,13 @@ export default function CotizacionesPage() {
                                             <FileText size={24} />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-black text-retarder-black">{selectedCot.numero || selectedCot.numero_cotizacion}</h3>
+                                            <input 
+                                                type="text" 
+                                                value={editedFolio} 
+                                                onChange={e => setEditedFolio(e.target.value)}
+                                                className="text-xl font-black text-retarder-black bg-white border border-retarder-gray-200 rounded-lg px-2 py-1 outline-none focus:border-retarder-red w-48"
+                                                placeholder="Cot. Folio"
+                                            />
                                             <p className="text-xs text-retarder-gray-400 font-bold uppercase tracking-widest">{selectedCot.empresa}</p>
                                         </div>
                                     </div>
@@ -563,17 +572,13 @@ export default function CotizacionesPage() {
                                         </div>
                                         <div className="col-span-2 space-y-3">
                                             <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1">Atención a (Opcional)</label>
-                                            {selectedCot.estado === 'borrador' ? (
-                                                <input 
-                                                    type="text" 
-                                                    value={editedAtencion} 
-                                                    onChange={e => setEditedAtencion(e.target.value)}
-                                                    placeholder="Nombre de la persona..."
-                                                    className="w-full bg-white border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-retarder-red transition-all" 
-                                                />
-                                            ) : (
-                                                <p className="text-sm font-bold px-1 text-retarder-gray-800 border bg-retarder-gray-50 border-retarder-gray-200 rounded-xl px-3 py-3">{selectedCot.atencion_a || 'No especificado'}</p>
-                                            )}
+                                            <input 
+                                                type="text" 
+                                                value={editedAtencion} 
+                                                onChange={e => setEditedAtencion(e.target.value)}
+                                                placeholder="Nombre de la persona..."
+                                                className="w-full bg-white border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-retarder-red transition-all" 
+                                            />
                                         </div>
                                         {selectedCot.tipo_cambio && (
                                             <div className="col-span-2 bg-retarder-gray-50 rounded-xl p-3 border border-orange-100 flex items-center justify-between">
@@ -593,11 +598,9 @@ export default function CotizacionesPage() {
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1">Conceptos</label>
-                                            {selectedCot.estado === 'borrador' && (
-                                                <button onClick={handleAddItem} className="text-[10px] font-bold text-blue-600 flex items-center gap-1 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded-lg">
-                                                    <Plus size={12} /> Añadir Línea
-                                                </button>
-                                            )}
+                                            <button onClick={handleAddItem} className="text-[10px] font-bold text-blue-600 flex items-center gap-1 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded-lg">
+                                                <Plus size={12} /> Añadir Línea
+                                            </button>
                                         </div>
                                         {loadingItems ? (
                                             <div className="py-4 text-center">
@@ -608,37 +611,25 @@ export default function CotizacionesPage() {
                                                 {selectedItems.length === 0 && <p className="text-xs text-retarder-gray-400 italic bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200">No hay conceptos guardados.</p>}
                                                 {selectedItems.map((item, idx) => (
                                                     <div key={item.id} className="flex items-start gap-2 bg-retarder-gray-50 p-3 rounded-xl border border-retarder-gray-200">
-                                                        {selectedCot.estado === 'borrador' ? (
-                                                            <>
-                                                                <div className="flex-1 space-y-2">
-                                                                    <div className="flex gap-2">
-                                                                        <input type="text" placeholder="Nombre del concepto" value={item.concepto} onChange={e => handleItemChange(idx, 'concepto', e.target.value)} className="w-full text-xs p-2 border border-retarder-gray-200 rounded-lg outline-none focus:border-retarder-red" />
-                                                                    </div>
-                                                                    <div className="flex gap-2 items-center flex-wrap">
-                                                                        <input type="number" placeholder="Cant." value={item.cantidad} onChange={e => handleItemChange(idx, 'cantidad', parseFloat(e.target.value))} className="w-16 text-xs p-2 border border-retarder-gray-200 rounded-lg outline-none focus:border-retarder-red text-center" />
-                                                                        <div className="flex items-center bg-white border border-retarder-gray-200 rounded-lg overflow-hidden focus-within:border-retarder-red">
-                                                                            <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-2 border-r border-gray-200">USD</span>
-                                                                            <input type="number" step="0.01" value={item.precio_usd} onChange={e => handleItemChange(idx, 'precio_usd', parseFloat(e.target.value))} className="w-20 text-xs p-2 outline-none" />
-                                                                        </div>
-                                                                        <div className="flex items-center ml-auto bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
-                                                                            <span className="text-[10px] font-bold text-green-700 mr-2 uppercase">MXN</span>
-                                                                            <span className="text-sm font-bold text-green-800">{formatMXN(item.precio_mxn)}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <button onClick={() => handleRemoveItem(idx)} className="mt-1 p-2 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors rounded-lg">
-                                                                    <Trash2 size={16} />
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <div className="flex-1 flex items-center justify-between">
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-gray-800">{item.concepto}</p>
-                                                                    <p className="text-xs text-gray-500 font-medium">{item.cantidad} x {formatMXN(item.precio_usd, 'USD')} USD</p>
-                                                                </div>
-                                                                <span className="text-sm font-black text-retarder-black">{formatMXN(item.precio_mxn)}</span>
+                                                        <div className="flex-1 space-y-2">
+                                                            <div className="flex gap-2">
+                                                                <input type="text" placeholder="Nombre del concepto" value={item.concepto} onChange={e => handleItemChange(idx, 'concepto', e.target.value)} className="w-full text-xs p-2 border border-retarder-gray-200 rounded-lg outline-none focus:border-retarder-red" />
                                                             </div>
-                                                        )}
+                                                            <div className="flex gap-2 items-center flex-wrap">
+                                                                <input type="number" placeholder="Cant." value={item.cantidad} onChange={e => handleItemChange(idx, 'cantidad', parseFloat(e.target.value))} className="w-16 text-xs p-2 border border-retarder-gray-200 rounded-lg outline-none focus:border-retarder-red text-center" />
+                                                                <div className="flex items-center bg-white border border-retarder-gray-200 rounded-lg overflow-hidden focus-within:border-retarder-red">
+                                                                    <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-2 border-r border-gray-200">USD</span>
+                                                                    <input type="number" step="0.01" value={item.precio_usd} onChange={e => handleItemChange(idx, 'precio_usd', parseFloat(e.target.value))} className="w-20 text-xs p-2 outline-none" />
+                                                                </div>
+                                                                <div className="flex items-center ml-auto bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
+                                                                    <span className="text-[10px] font-bold text-green-700 mr-2 uppercase">MXN</span>
+                                                                    <span className="text-sm font-bold text-green-800">{formatMXN(item.precio_mxn)}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => handleRemoveItem(idx)} className="mt-1 p-2 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors rounded-lg">
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -681,15 +672,13 @@ export default function CotizacionesPage() {
                                                 {isProcessing && deletingId === selectedCot.id ? 'Eliminando...' : 'Eliminar'}
                                             </button>
                                         )}
-                                        {selectedCot.estado === 'borrador' && (
-                                            <button
-                                                onClick={handleGuardarCambios}
-                                                disabled={isProcessing}
-                                                className="flex-1 py-3 bg-[#FACC15] text-black hover:bg-[#EAB308] rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl transition-all"
-                                            >
-                                                {isProcessing ? 'Guardando...' : 'Guardar'}
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={handleGuardarCambios}
+                                            disabled={isProcessing}
+                                            className="flex-1 py-3 bg-[#FACC15] text-black hover:bg-[#EAB308] rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl transition-all"
+                                        >
+                                            {isProcessing ? 'Guardando...' : 'Guardar Cambios'}
+                                        </button>
                                         <button
                                             onClick={() => setSelectedCot(null)}
                                             className="flex-1 py-3 bg-retarder-black text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-retarder-black/20 hover:scale-[1.02] active:scale-95 transition-all"
