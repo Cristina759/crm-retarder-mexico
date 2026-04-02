@@ -91,7 +91,7 @@ export default function OrdenesPage() {
             const mapped = (data || []).map((o: any) => ({
                 ...o,
                 empresa: o.empresa_join?.nombre_comercial || o.empresa || 'Sin empresa',
-                monto: o.total,
+                monto: Number(o.monto || o.total || 0),
                 fecha_creado: o.fecha_real || o.created_at,
                 numero: o.numero_orden_fisica,
                 prioridad: o.prioridad || 'media',
