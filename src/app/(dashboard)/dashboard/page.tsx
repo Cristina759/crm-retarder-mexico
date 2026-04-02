@@ -486,7 +486,7 @@ export default function DashboardPage() {
                 { data: invDataRaw },
             ] = await Promise.all([
                 supabase.from('cotizaciones').select('total, estado'),
-                supabase.from('ordenes_servicio').select('*'),
+                supabase.from('ordenes_servicio').select('*, empresa:empresas(nombre_comercial)'),
                 supabase.from('inventario').select('id, nombre, stock_actual, stock_minimo'),
             ]);
 
