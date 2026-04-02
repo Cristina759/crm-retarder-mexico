@@ -503,12 +503,12 @@ export default function DashboardPage() {
             // Excluimos explcitamente las cotizaciones enviadas que an no son rdenes reales
             const totalVentas = ordArray
                 .filter(o => o.estado !== 'cotizacion_enviada_al_cliente')
-                .reduce((acc, current) => acc + (Number(current.monto) || 0), 0);
+                .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
 
             // 2. Facturacin Cobrada: Sumar solo lo que ya tiene marcado 'pagado' o estado 'pagado'
             const totalCobrado = ordArray
                 .filter(o => o.pagado === true || o.estado === 'pagado')
-                .reduce((acc, current) => acc + (Number(current.monto) || 0), 0);
+                .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
 
             const cotizacionesActivas = (cotData as CotizacionMini[])?.filter((c: CotizacionMini) => ['enviada', 'negociacion'].includes(c.estado)).length || 0;
             const ordenesActivas = ordArray.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
