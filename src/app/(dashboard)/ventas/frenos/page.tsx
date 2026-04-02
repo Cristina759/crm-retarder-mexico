@@ -332,7 +332,7 @@ export default function CotizadorFrenosPage() {
     const [clientSearch, setClientSearch] = useState('');
     const [cantidadUnidades, setCantidadUnidades] = useState<number>(1);
     const [gastosTrasladoMXN, setGastosTrasladoMXN] = useState<number>(0);
-    const [costoKitLedUSD, setCostoKitLedUSD] = useState<number>(0);
+    const [costoKitLedMXN, setCostoKitLedMXN] = useState<number>(0);
     const [isCreating, setIsCreating] = useState(false);
     const [savedFolio, setSavedFolio] = useState<string>('');
     const [autoPrint, setAutoPrint] = useState(false);
@@ -551,7 +551,7 @@ export default function CotizadorFrenosPage() {
         const base_mo_usd = (manoObraInstalacionMXN / tipoCambio);
         const mo_usd = priceOverrides.manoObra?.usd ?? base_mo_usd;
 
-        const totalKitLedUSD = (priceOverrides.kitLed?.usd ?? costoKitLedUSD) * units;
+        const totalKitLedUSD = (costoKitLedMXN * units) / tipoCambio;
         
         const total_usd = f_usd + totalKitLedUSD + t_usd + mo_usd;
         const total_mxn = total_usd * tipoCambio;
@@ -899,7 +899,7 @@ export default function CotizadorFrenosPage() {
                             </div>
                             <div>
                                 <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Kit Luces LED</p>
-                                <p className="text-[10px] text-retarder-gray-400">Opcional (USD)</p>
+                                <p className="text-[10px] text-retarder-gray-400">Opcional (MXN)</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
@@ -909,8 +909,8 @@ export default function CotizadorFrenosPage() {
                                 min="0"
                                 step="any"
                                 placeholder="0.00"
-                                value={costoKitLedUSD || ''}
-                                onChange={(e) => setCostoKitLedUSD(parseFloat(e.target.value) || 0)}
+                                value={costoKitLedMXN || ''}
+                                onChange={(e) => setCostoKitLedMXN(parseFloat(e.target.value) || 0)}
                                 className="w-24 text-sm font-bold text-retarder-black border border-retarder-gray-200 rounded-xl px-3 py-1.5 focus:border-retarder-red outline-none"
                             />
                         </div>
