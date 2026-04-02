@@ -556,9 +556,16 @@ export default function CotizadorFrenosPage() {
         const total_usd = f_usd + totalKitLedUSD + t_usd + mo_usd;
         const total_mxn = total_usd * tipoCambio;
 
+        const accs = [];
+        if (cardanes_usd > 0) accs.push('Cardanes');
+        if (material_usd > 0) accs.push('Material Eléctrico');
+        if (soporteria_usd > 0) accs.push('Soportería');
+        
+        const defaultLabel = `Equipo Freno (Retarder) Incluye Accesorios ${accs.length > 0 ? '(' + accs.join(', ') + ')' : ''}`;
+
         return {
             freno: { 
-                label: priceOverrides.freno?.label ?? 'Equipo Freno (Retarder) Incluye Accesorios', 
+                label: priceOverrides.freno?.label ?? defaultLabel, 
                 usd: f_usd, 
                 mxn: f_usd * tipoCambio 
             },
