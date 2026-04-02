@@ -181,8 +181,7 @@ function ModelCard({
         freno_base?: number,
         cardanes?: number,
         material?: number,
-        soporteria?: number,
-        mano_obra?: number
+        soporteria?: number
     };
     onOverrideChange: (field: string, val: number) => void;
     onShowMaterial: () => void;
@@ -191,14 +190,13 @@ function ModelCard({
     const cardanes = overrides?.cardanes ?? freno.cardanes_usd;
     const material = overrides?.material ?? freno.material_electrico_usd;
     const soporteria = overrides?.soporteria ?? freno.soporteria_usd;
-    const manoObra = overrides?.mano_obra ?? 361.72; // Default from spreadsheet
     
     // The "Freno Base" is the residual if we treat precio_freno_usd as the target total
     // or just use the price as is. Following the user's logic, we'll let them edit 
     // the Freno Base too.
-    const frenoBase = overrides?.freno_base ?? (freno.precio_freno_usd - (freno.cardanes_usd + freno.material_electrico_usd + freno.soporteria_usd + 361.72));
+    const frenoBase = overrides?.freno_base ?? (freno.precio_freno_usd - (freno.cardanes_usd + freno.material_electrico_usd + freno.soporteria_usd));
 
-    const totalUSD = frenoBase + cardanes + material + soporteria + manoObra;
+    const totalUSD = frenoBase + cardanes + material + soporteria;
     const totalMXN = totalUSD * tipoCambio;
 
     return (
@@ -303,20 +301,6 @@ function ModelCard({
                             onClick={e => e.stopPropagation()}
                         />
                     </div>
-
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-retarder-gray-600">
-                            <span className="text-[10px] font-bold uppercase">Mano de Obra</span>
-                        </div>
-                        <input 
-                            type="number" 
-                            step="any"
-                            value={manoObra.toFixed(2)}
-                            onChange={(e) => onOverrideChange('mano_obra', parseFloat(e.target.value) || 0)}
-                            className="w-16 bg-transparent text-right text-[10px] font-bold outline-none border-b border-dashed border-gray-200 focus:border-red-500"
-                            onClick={e => e.stopPropagation()}
-                        />
-                    </div>
                 </div>
 
                 {/* Total */}
@@ -367,8 +351,7 @@ export default function CotizadorFrenosPage() {
         freno_base?: number,
         cardanes?: number,
         material?: number,
-        soporteria?: number,
-        mano_obra?: number
+        soporteria?: number
     }>>({});
 
     // Material Eléctrico Sub-catalog state
@@ -554,14 +537,12 @@ export default function CotizadorFrenosPage() {
             ? ovs.material 
             : (selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0) / tipoCambio));
             
-        const mano_obra_usd = (ovs?.mano_obra !== undefined ? ovs.mano_obra : 361.72);
-        
         // Base Freno: residual from original total or specific override
-        const default_freno_base = selectedModelo.precio_freno_usd - (selectedModelo.cardanes_usd + selectedModelo.material_electrico_usd + selectedModelo.soporteria_usd + 361.72);
+        const default_freno_base = selectedModelo.precio_freno_usd - (selectedModelo.cardanes_usd + selectedModelo.material_electrico_usd + selectedModelo.soporteria_usd);
         const base_f_usd = (ovs?.freno_base !== undefined ? ovs.freno_base : default_freno_base);
 
         // 2. Aggregate with units
-        const unit_total_usd = base_f_usd + cardanes_usd + soporteria_usd + material_usd + mano_obra_usd;
+        const unit_total_usd = base_f_usd + cardanes_usd + soporteria_usd + material_usd;
         
         // Handle final preview price overrides (which override the entire equipment block)
         const f_usd = priceOverrides.freno?.usd ?? (unit_total_usd * units);
@@ -570,8 +551,7 @@ export default function CotizadorFrenosPage() {
         const base_t_usd = (gastosTrasladoMXN * units) / tipoCambio;
         const t_usd = priceOverrides.traslado?.usd ?? base_t_usd;
 
-        const base_mo_usd = priceOverrides.manoObra?.usd ?? 0; // Handled within freno block usually
-        const mo_usd = base_mo_usd;
+        const mo_usd = (priceOverrides.manoObra?.usd ?? (manoObraInstalacionMXN / tipoCambio));
 
         const totalKitLedUSD = costoKitLedUSD * units;
         
