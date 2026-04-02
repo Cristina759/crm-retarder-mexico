@@ -57,15 +57,20 @@ export async function GET() {
         // Si Banxico ya public el FIX de hoy (despus de las 12pm), ese dato NO es el del DOF de hoy.
 
         // Invertimos para empezar por el ms reciente
+        // Invertimos para empezar por el más reciente
         const sortedDatos = [...datos].sort((a, b) => {
             const [da, ma, ya] = a.fecha.split('/');
             const [db, mb, yb] = b.fecha.split('/');
             const timeA = new Date(parseInt(ya), parseInt(ma) - 1, parseInt(da)).getTime();
             const timeB = new Date(parseInt(yb), parseInt(mb) - 1, parseInt(db)).getTime();
-            return timeB - timeA; // Descendente (ms reciente primero)
+            return timeB - timeA; // Descendente (más reciente primero)
         });
 
-        // Buscamos el primero que sea estrictamente anterior a hoy (Frmulas DOF)
+        console.log('--- DEBUG TC ---');
+        console.log('Today (MX):', nowMx);
+        console.log('Sorted Data (Banxico):', sortedDatos);
+
+        // Buscamos el primero que sea estrictamente anterior a hoy (Fórmulas DOF)
         let datoOficial = sortedDatos.find(d => {
             const [dD, dM, dY] = d.fecha.split('/');
             const [tD, tM, tY] = nowMx.split('/');
@@ -74,10 +79,13 @@ export async function GET() {
             return dateD < dateT;
         });
 
-        // Si no hay ninguno anterior (caso raro), usamos el ms reciente disponible
+        // Si no hay ninguno anterior (caso raro), usamos el más reciente disponible
         if (!datoOficial) {
             datoOficial = sortedDatos[0];
         }
+
+        console.log('Selected Official Data (DOF):', datoOficial);
+        console.log('----------------');
 
         const valor = parseFloat(datoOficial.dato);
 

@@ -46,9 +46,149 @@ export default function CotizacionesPage() {
     const [filterEstado, setFilterEstado] = useState<CotEstado | 'all'>('all');
     const [showForm, setShowForm] = useState(false);
     const [selectedCot, setSelectedCot] = useState<any | null>(null);
+    const [selectedItems, setSelectedItems] = useState<any[]>([]);
+    const [loadingItems, setLoadingItems] = useState(false);
+    const [editedAtencion, setEditedAtencion] = useState('');
+    const [newCot, setNewCot] = useState({ empresa_id: '', atencion_a: '', folio: '', fecha: '' });
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const handleOpenCreateForm = async () => {
+        let nextFolio = 'COT-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        try {
+            const { count } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
+            if (count !== null) {
+                nextFolio = `COT-${String(count + 1).padStart(4, '0')}`;
+            }
+        } catch (err) {}
+
+        const today = new Date();
+        // Adjust localized format if needed to get correct local date string (YYYY-MM-DD):
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        
+        setNewCot({
+            empresa_id: '',
+            atencion_a: '',
+            folio: nextFolio,
+            fecha: `${yyyy}-${mm}-${dd}`
+        });
+        setShowForm(true);
+    };
+
+    const handleCreateCot = async () => {
+        if (!newCot.empresa_id || !newCot.folio || !newCot.fecha) {
+            toast.error('Por favor selecciona la empresa, folio y fecha.');
+            return;
+        }
+        setIsProcessing(true);
+        try {
+            const clienteMatch = CLIENTES_REALES.find(c => c.id === newCot.empresa_id);
+            const { data, error } = await supabase.from('cotizaciones').insert({
+                empresa_id: newCot.empresa_id,
+                empresa: clienteMatch?.nombre_comercial || 'Sin empresa',
+                cliente: clienteMatch?.nombre_comercial || 'Sin empresa',
+                atencion_a: newCot.atencion_a,
+                folio: newCot.folio,
+                fecha: newCot.fecha,
+                estado: 'borrador',
+                subtotal: 0,
+                iva: 0,
+                total: 0,
+            }).select().single();
+
+            if (error) throw error;
+            toast.success('Cotización en borrador creada.');
+            setShowForm(false);
+            fetchCotizaciones();
+            handleSelectCot(data); 
+        } catch (err: any) {
+            toast.error(`Error al crear: ${err.message}`);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleSelectCot = async (c: any) => {
+        setSelectedCot(c);
+        setEditedAtencion(c.atencion_a || '');
+        setLoadingItems(true);
+        try {
+            const { data, error } = await supabase.from('cotizaciones_items').select('*').eq('cotizacion_id', c.id).order('created_at', { ascending: true });
+            if (!error && data) {
+                setSelectedItems(data);
+            } else {
+                setSelectedItems([]);
+            }
+        } catch (err) {
+            setSelectedItems([]);
+        } finally {
+            setLoadingItems(false);
+        }
+    };
+
+    const handleItemChange = (index: number, field: string, value: any) => {
+        const newItems = [...selectedItems];
+        newItems[index][field] = value;
+        if (field === 'precio_usd') {
+            const tc = parseFloat(selectedCot?.tipo_cambio || '1');
+            newItems[index].precio_mxn = value * tc;
+        }
+        setSelectedItems(newItems);
+    };
+
+    const handleAddItem = () => {
+        setSelectedItems([...selectedItems, { id: crypto.randomUUID(), concepto: '', cantidad: 1, precio_usd: 0, precio_mxn: 0, cotizacion_id: selectedCot.id }]);
+    };
+
+    const handleRemoveItem = (index: number) => {
+        const newItems = [...selectedItems];
+        newItems.splice(index, 1);
+        setSelectedItems(newItems);
+    };
+
+    const handleGuardarCambios = async () => {
+        setIsProcessing(true);
+        try {
+            // 1. Calculate new totals
+            const subtotalMXN = selectedItems.reduce((acc, item) => acc + (parseFloat(item.precio_mxn || '0') * parseFloat(item.cantidad || '1')), 0);
+            const ivaMXN = subtotalMXN * 0.16;
+            const totalMXN = subtotalMXN + ivaMXN;
+
+            const { error: cotError } = await supabase.from('cotizaciones').update({ 
+                atencion_a: editedAtencion,
+                subtotal: subtotalMXN,
+                iva: ivaMXN,
+                total: totalMXN
+            }).eq('id', selectedCot.id);
+            if (cotError) throw cotError;
+    
+            await supabase.from('cotizaciones_items').delete().eq('cotizacion_id', selectedCot.id);
+    
+            const itemsToInsert = selectedItems.map(i => ({ 
+                cotizacion_id: selectedCot.id,
+                concepto: i.concepto,
+                cantidad: i.cantidad,
+                precio_usd: i.precio_usd,
+                precio_mxn: i.precio_mxn
+            }));
+            
+            if (itemsToInsert.length > 0) {
+                const { error: itemsError } = await supabase.from('cotizaciones_items').insert(itemsToInsert);
+                if (itemsError) throw itemsError;
+            }
+    
+            toast.success('Cotización guardada exitosamente');
+            fetchCotizaciones();
+            setSelectedCot(null); // Close modal on save
+        } catch (err: any) {
+            toast.error('Error al guardar: ' + err.message);
+        } finally {
+            setIsProcessing(false);
+        }
+    };
 
     const fetchCotizaciones = useCallback(async () => {
         setLoading(true);
@@ -246,9 +386,9 @@ export default function CotizacionesPage() {
                         <Search size={14} className="text-retarder-gray-400" />
                         <input type="text" placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-transparent border-none outline-none text-sm w-40" />
                     </div>
-                    <Link href="/ventas/nueva" className="flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
-                        <Plus size={16} /><span className="hidden sm:inline">Nueva Cotizacin</span>
-                    </Link>
+                    <button onClick={handleOpenCreateForm} className="flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
+                        <Plus size={16} /><span className="hidden sm:inline">Nueva Cotización</span>
+                    </button>
                 </div>
             </div>
 
@@ -294,7 +434,7 @@ export default function CotizacionesPage() {
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.01 }}
-                                        onClick={() => setSelectedCot(c)}
+                                        onClick={() => handleSelectCot(c)}
                                         className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors group"
                                     >
                                         <td className="py-3 px-2 sm:px-4">
@@ -403,6 +543,20 @@ export default function CotizacionesPage() {
                                                 {ESTADO_CONFIG[selectedCot.estado as CotEstado].label}
                                             </span>
                                         </div>
+                                        <div className="col-span-2 space-y-3">
+                                            <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1">Atención a (Opcional)</label>
+                                            {selectedCot.estado === 'borrador' ? (
+                                                <input 
+                                                    type="text" 
+                                                    value={editedAtencion} 
+                                                    onChange={e => setEditedAtencion(e.target.value)}
+                                                    placeholder="Nombre de la persona..."
+                                                    className="w-full bg-white border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-retarder-red transition-all" 
+                                                />
+                                            ) : (
+                                                <p className="text-sm font-bold px-1 text-retarder-gray-800 border bg-retarder-gray-50 border-retarder-gray-200 rounded-xl px-3 py-3">{selectedCot.atencion_a || 'No especificado'}</p>
+                                            )}
+                                        </div>
                                         {selectedCot.tipo_cambio && (
                                             <div className="col-span-2 bg-retarder-gray-50 rounded-xl p-3 border border-orange-100 flex items-center justify-between">
                                                 <div>
@@ -410,9 +564,65 @@ export default function CotizacionesPage() {
                                                     <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedCot.tipo_cambio} MXN</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Publicacin</p>
+                                                    <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Publicación</p>
                                                     <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedCot.tipo_cambio_fecha || 'N/A'}</p>
                                                 </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Line Items Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1">Conceptos</label>
+                                            {selectedCot.estado === 'borrador' && (
+                                                <button onClick={handleAddItem} className="text-[10px] font-bold text-blue-600 flex items-center gap-1 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded-lg">
+                                                    <Plus size={12} /> Añadir Línea
+                                                </button>
+                                            )}
+                                        </div>
+                                        {loadingItems ? (
+                                            <div className="py-4 text-center">
+                                                <Loader2 size={20} className="mx-auto text-retarder-red animate-spin" />
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2 max-h-[30vh] overflow-y-auto px-1">
+                                                {selectedItems.length === 0 && <p className="text-xs text-retarder-gray-400 italic bg-gray-50 p-3 rounded-xl border border-dashed border-gray-200">No hay conceptos guardados.</p>}
+                                                {selectedItems.map((item, idx) => (
+                                                    <div key={item.id} className="flex items-start gap-2 bg-retarder-gray-50 p-3 rounded-xl border border-retarder-gray-200">
+                                                        {selectedCot.estado === 'borrador' ? (
+                                                            <>
+                                                                <div className="flex-1 space-y-2">
+                                                                    <div className="flex gap-2">
+                                                                        <input type="text" placeholder="Nombre del concepto" value={item.concepto} onChange={e => handleItemChange(idx, 'concepto', e.target.value)} className="w-full text-xs p-2 border border-retarder-gray-200 rounded-lg outline-none focus:border-retarder-red" />
+                                                                    </div>
+                                                                    <div className="flex gap-2 items-center flex-wrap">
+                                                                        <input type="number" placeholder="Cant." value={item.cantidad} onChange={e => handleItemChange(idx, 'cantidad', parseFloat(e.target.value))} className="w-16 text-xs p-2 border border-retarder-gray-200 rounded-lg outline-none focus:border-retarder-red text-center" />
+                                                                        <div className="flex items-center bg-white border border-retarder-gray-200 rounded-lg overflow-hidden focus-within:border-retarder-red">
+                                                                            <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-2 border-r border-gray-200">USD</span>
+                                                                            <input type="number" step="0.01" value={item.precio_usd} onChange={e => handleItemChange(idx, 'precio_usd', parseFloat(e.target.value))} className="w-20 text-xs p-2 outline-none" />
+                                                                        </div>
+                                                                        <div className="flex items-center ml-auto bg-green-50 px-3 py-1.5 rounded-lg border border-green-200">
+                                                                            <span className="text-[10px] font-bold text-green-700 mr-2 uppercase">MXN</span>
+                                                                            <span className="text-sm font-bold text-green-800">{formatMXN(item.precio_mxn)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <button onClick={() => handleRemoveItem(idx)} className="mt-1 p-2 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors rounded-lg">
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex-1 flex items-center justify-between">
+                                                                <div>
+                                                                    <p className="text-sm font-bold text-gray-800">{item.concepto}</p>
+                                                                    <p className="text-xs text-gray-500 font-medium">{item.cantidad} x {formatMXN(item.precio_usd, 'USD')} USD</p>
+                                                                </div>
+                                                                <span className="text-sm font-black text-retarder-black">{formatMXN(item.precio_mxn)}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
@@ -453,11 +663,106 @@ export default function CotizacionesPage() {
                                                 {isProcessing && deletingId === selectedCot.id ? 'Eliminando...' : 'Eliminar'}
                                             </button>
                                         )}
+                                        {selectedCot.estado === 'borrador' && (
+                                            <button
+                                                onClick={handleGuardarCambios}
+                                                disabled={isProcessing}
+                                                className="flex-1 py-3 bg-[#FACC15] text-black hover:bg-[#EAB308] rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl transition-all"
+                                            >
+                                                {isProcessing ? 'Guardando...' : 'Guardar'}
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => setSelectedCot(null)}
                                             className="flex-1 py-3 bg-retarder-black text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-retarder-black/20 hover:scale-[1.02] active:scale-95 transition-all"
                                         >
                                             Cerrar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Create Modal */}
+            <AnimatePresence>
+                {showForm && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="fixed inset-0 bg-retarder-black/60 backdrop-blur-md z-40" />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[2rem] shadow-2xl z-50 overflow-hidden"
+                        >
+                            <div className="p-8">
+                                <div className="flex items-start justify-between mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#FACC15]/20 flex items-center justify-center text-black">
+                                            <FileText size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-retarder-black">Nueva Cotización</h3>
+                                            <p className="text-xs text-retarder-gray-400 font-bold uppercase tracking-widest">Estado Borrador</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setShowForm(false)} className="p-2 rounded-xl bg-retarder-gray-50 text-retarder-gray-400 hover:bg-retarder-red/10 hover:text-retarder-red transition-all"><X size={20} /></button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Cliente / Empresa *</label>
+                                        <select 
+                                            value={newCot.empresa_id} 
+                                            onChange={e => setNewCot({...newCot, empresa_id: e.target.value})}
+                                            className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15]"
+                                        >
+                                            <option value="">-- Seleccionar Empresa --</option>
+                                            {CLIENTES_REALES.map(c => (
+                                                <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Atención a (Opcional)</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Nombre del cliente/contacto..." 
+                                            value={newCot.atencion_a} 
+                                            onChange={e => setNewCot({...newCot, atencion_a: e.target.value})}
+                                            className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15]"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Folio *</label>
+                                            <input 
+                                                type="text" 
+                                                value={newCot.folio} 
+                                                onChange={e => setNewCot({...newCot, folio: e.target.value})}
+                                                className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15] font-mono font-bold"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Fecha *</label>
+                                            <input 
+                                                type="date" 
+                                                value={newCot.fecha} 
+                                                onChange={e => setNewCot({...newCot, fecha: e.target.value})}
+                                                className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-retarder-gray-100 flex gap-3">
+                                        <button
+                                            onClick={handleCreateCot}
+                                            disabled={isProcessing}
+                                            className="flex-1 py-3 bg-[#FACC15] text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                        >
+                                            {isProcessing ? 'Creando...' : 'Crear y Añadir Conceptos'}
                                         </button>
                                     </div>
                                 </div>
