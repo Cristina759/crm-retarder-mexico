@@ -27,28 +27,39 @@ export function formatUSD(amount: number = 0): string {
     }).format(amount || 0);
 }
 
-/**
- * Format date for display in Mexico timezone
- */
-export function formatDate(date: string | Date): string {
-    return new Intl.DateTimeFormat('es-MX', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-    }).format(new Date(date));
+export function formatDate(date: string | Date | null | undefined): string {
+    if (!date) return 'N/A';
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return 'N/A';
+        return new Intl.DateTimeFormat('es-MX', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        }).format(d);
+    } catch {
+        return 'N/A';
+    }
 }
 
 /**
  * Format date + time
  */
-export function formatDateTime(date: string | Date): string {
-    return new Intl.DateTimeFormat('es-MX', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(new Date(date));
+export function formatDateTime(date: string | Date | null | undefined): string {
+    if (!date) return 'N/A';
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return 'N/A';
+        return new Intl.DateTimeFormat('es-MX', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(d);
+    } catch {
+        return 'N/A';
+    }
 }
 
 /**
