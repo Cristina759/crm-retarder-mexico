@@ -67,6 +67,9 @@ function PriceLine({
     mxn,
     delay = 0,
     accent = false,
+    editable = false,
+    onLabelChange,
+    onUsdChange
 }: {
     label: string;
     icon: React.ReactNode;
@@ -74,6 +77,9 @@ function PriceLine({
     mxn: number;
     delay?: number;
     accent?: boolean;
+    editable?: boolean;
+    onLabelChange?: (val: string) => void;
+    onUsdChange?: (val: number) => void;
 }) {
     return (
         <motion.div
@@ -94,10 +100,23 @@ function PriceLine({
                 )}>
                     {icon}
                 </div>
-                <span className={cn(
-                    'font-semibold text-sm',
-                    accent ? 'text-white print:!text-black print:font-black' : 'text-retarder-gray-700 print:!text-black font-semibold'
-                )}>{label}</span>
+                {editable && onLabelChange ? (
+                    <input 
+                        type="text" 
+                        value={label} 
+                        onChange={e => onLabelChange(e.target.value)} 
+                        className={cn(
+                            'font-semibold text-sm bg-transparent outline-none border-b border-transparent hover:border-retarder-gray-300 focus:border-retarder-red print:border-none px-1 w-40 sm:w-64 transition-colors',
+                            accent ? 'text-white border-white/30' : 'text-retarder-gray-700'
+                        )} 
+                        onClick={e => e.stopPropagation()}
+                    />
+                ) : (
+                    <span className={cn(
+                        'font-semibold text-sm',
+                        accent ? 'text-white print:!text-black print:font-black' : 'text-retarder-gray-700 print:!text-black font-semibold'
+                    )}>{label}</span>
+                )}
             </div>
             <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                 <div className="text-left sm:text-right">
@@ -105,10 +124,24 @@ function PriceLine({
                         'text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider',
                         accent ? 'text-white/60 print:!text-black' : 'text-retarder-gray-400 print:!text-black'
                     )}>USD</p>
-                    <p className={cn(
-                        'font-bold text-xs sm:text-sm font-mono',
-                        accent ? 'text-white print:!text-black' : 'text-retarder-gray-700 print:!text-black'
-                    )}>{formatUSD(usd)}</p>
+                    {editable && onUsdChange ? (
+                        <input 
+                            type="number" 
+                            step="any"
+                            value={usd} 
+                            onChange={e => onUsdChange(parseFloat(e.target.value) || 0)}
+                            className={cn(
+                                'font-bold text-xs sm:text-sm font-mono bg-transparent outline-none border-b border-transparent hover:border-retarder-gray-300 focus:border-retarder-red print:border-none px-1 w-20 text-left sm:text-right transition-colors',
+                                accent ? 'text-white border-white/30' : 'text-retarder-gray-700'
+                            )}
+                            onClick={e => e.stopPropagation()}
+                        />
+                    ) : (
+                        <p className={cn(
+                            'font-bold text-xs sm:text-sm font-mono',
+                            accent ? 'text-white print:!text-black' : 'text-retarder-gray-700 print:!text-black'
+                        )}>{formatUSD(usd)}</p>
+                    )}
                 </div>
                 <ArrowRight size={14} className={cn("hidden sm:block print:hidden", accent ? 'text-white/40' : 'text-retarder-gray-300')} />
                 <div className="text-right min-w-[100px] sm:min-w-[120px]">
@@ -258,6 +291,16 @@ export default function CotizadorFrenosPage() {
     const [showForm, setShowForm] = useState(false);
     const [newCot, setNewCot] = useState({ empresa_id: '', atencion_a: '', folio: '', fecha: '' });
 
+    // Manual overrides for the final preview
+    const [priceOverrides, setPriceOverrides] = useState<Record<string, { label?: string, usd?: number }>>({});
+    const [manualFolio, setManualFolio] = useState('');
+    const [manualAtencion, setManualAtencion] = useState('');
+
+    // Clear overrides when model changes
+    useEffect(() => {
+        setPriceOverrides({});
+    }, [selectedModelo, selectedMarca, cantidadUnidades]);
+
     const handleOpenCreateForm = async () => {
         let nextFolio = 'COT-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         try {
@@ -400,10 +443,7 @@ export default function CotizadorFrenosPage() {
         if (!selectedModelo) return null;
 
         const units = cantidadUnidades || 1;
-        const totalTraslado = gastosTrasladoMXN * units;
-
-        // Precio del FRENO segn la marca seleccionada (no el campo legacy)
-        const precioFrenoUnitarioUSD = (() => {
+        const baseFrenoUSD = (() => {
             switch (selectedMarca) {
                 case 'pentar': return selectedModelo.pentar_precio_usd;
                 case 'frenelsa': return selectedModelo.frenelsa_precio_usd;
@@ -412,20 +452,43 @@ export default function CotizadorFrenosPage() {
             }
         })();
 
-        const frenoTotalUSD = precioFrenoUnitarioUSD * units;
-        const total_usd = frenoTotalUSD + (selectedModelo.cardanes_usd * units) + (selectedModelo.soporteria_usd * units) + (selectedModelo.material_electrico_usd * units);
+        // Apply overrides or defaults
+        const f_usd = priceOverrides.freno?.usd ?? (baseFrenoUSD * units);
+        const c_usd = priceOverrides.cardanes?.usd ?? (selectedModelo.cardanes_usd * units);
+        const s_usd = priceOverrides.soporteria?.usd ?? (selectedModelo.soporteria_usd * units);
+        const m_usd = priceOverrides.material?.usd ?? (selectedModelo.material_electrico_usd * units);
+
+        const totalTraslado = gastosTrasladoMXN * units;
+        
+        const total_usd = f_usd + c_usd + s_usd + m_usd;
         const total_mxn = (total_usd * tipoCambio) + totalTraslado + manoObraInstalacionMXN;
 
         return {
-            freno: { usd: frenoTotalUSD, mxn: frenoTotalUSD * tipoCambio },
-            cardanes: { usd: selectedModelo.cardanes_usd * units, mxn: (selectedModelo.cardanes_usd * units) * tipoCambio },
-            soporteria: { usd: selectedModelo.soporteria_usd * units, mxn: (selectedModelo.soporteria_usd * units) * tipoCambio },
-            material: { usd: selectedModelo.material_electrico_usd * units, mxn: (selectedModelo.material_electrico_usd * units) * tipoCambio },
+            freno: { 
+                label: priceOverrides.freno?.label ?? 'Freno (Retarder)', 
+                usd: f_usd, 
+                mxn: f_usd * tipoCambio 
+            },
+            cardanes: { 
+                label: priceOverrides.cardanes?.label ?? 'Cardanes', 
+                usd: c_usd, 
+                mxn: c_usd * tipoCambio 
+            },
+            soporteria: { 
+                label: priceOverrides.soporteria?.label ?? 'Soportería', 
+                usd: s_usd, 
+                mxn: s_usd * tipoCambio 
+            },
+            material: { 
+                label: priceOverrides.material?.label ?? 'Material Eléctrico', 
+                usd: m_usd, 
+                mxn: m_usd * tipoCambio 
+            },
             traslado: { mxn: totalTraslado },
             manoObra: { mxn: manoObraInstalacionMXN },
             total: { usd: total_usd, mxn: total_mxn }
         };
-    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades]);
+    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades, priceOverrides]);
 
     const handleFinalize = async () => {
         if (!selectedModelo || !selectedClienteId) {
@@ -887,7 +950,12 @@ export default function CotizadorFrenosPage() {
                                         <h2 className="text-sm font-black tracking-widest uppercase print:!text-black">Cotizacin Oficial</h2>
                                     </div>
                                     <p className="text-[10px] text-retarder-gray-400 font-medium">Folio de Referencia:</p>
-                                    <p className="text-[11px] text-retarder-black font-bold font-mono">Ref: {new Date().toISOString().slice(0, 10).replace(/-/g, '')}-FRENOS</p>
+                                    <input 
+                                        type="text" 
+                                        value={manualFolio || `Ref: ${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-FRENOS`} 
+                                        onChange={e => setManualFolio(e.target.value)} 
+                                        className="text-[11px] text-retarder-black font-bold font-mono bg-transparent text-right outline-none hover:bg-gray-50 focus:bg-gray-50 focus:border-b focus:border-retarder-red transition-all print:border-none print:bg-transparent" 
+                                    />
                                 </div>
                             </div>
 
@@ -901,7 +969,17 @@ export default function CotizadorFrenosPage() {
                                         <div className="flex justify-between">
                                             <div className="space-y-0.5">
                                                 <p className="font-bold text-[11px] uppercase">{cli.persona_contacto || cli.nombre_comercial}</p>
-                                                {cli.rfc && <p>{cli.rfc}</p>}
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="font-bold text-[10px]">ATENCIÓN A:</span>
+                                                    <input 
+                                                        type="text" 
+                                                        value={manualAtencion} 
+                                                        onChange={e => setManualAtencion(e.target.value)} 
+                                                        placeholder="Nombre del contacto..." 
+                                                        className="text-[10px] w-48 bg-transparent outline-none border-b border-dashed border-gray-300 hover:border-gray-500 print:border-none uppercase" 
+                                                    />
+                                                </div>
+                                                {cli.rfc && <p className="mt-1">{cli.rfc}</p>}
                                                 {cli.direccion_fiscal && <p className="whitespace-pre-line">{cli.direccion_fiscal}</p>}
                                                 {cli.email && <p className="text-blue-600 underline">{cli.email}</p>}
                                                 {cli.telefono && <p>Tel: {cli.telefono}</p>}
@@ -936,34 +1014,46 @@ export default function CotizadorFrenosPage() {
                             </div>
 
                             {/* Price lines */}
-                            <div className="p-6 space-y-3">
+                            <div className="p-6 space-y-3 relative group">
                                 <PriceLine
-                                    label="Freno (Retarder)"
+                                    label={breakdown.freno.label}
                                     icon={<Package size={16} className="text-retarder-red" />}
                                     usd={breakdown.freno.usd}
                                     mxn={breakdown.freno.mxn}
                                     delay={0.1}
+                                    editable
+                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, label: v } }))}
+                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
                                 />
                                 <PriceLine
-                                    label="Cardanes"
+                                    label={breakdown.cardanes.label}
                                     icon={<Wrench size={16} className="text-blue-500" />}
                                     usd={breakdown.cardanes.usd}
                                     mxn={breakdown.cardanes.mxn}
                                     delay={0.15}
+                                    editable
+                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, cardanes: { ...p.cardanes, label: v } }))}
+                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, cardanes: { ...p.cardanes, usd: v } }))}
                                 />
                                 <PriceLine
-                                    label="Soportera"
+                                    label={breakdown.soporteria.label}
                                     icon={<Settings2 size={16} className="text-amber-500" />}
                                     usd={breakdown.soporteria.usd}
                                     mxn={breakdown.soporteria.mxn}
                                     delay={0.2}
+                                    editable
+                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, soporteria: { ...p.soporteria, label: v } }))}
+                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, soporteria: { ...p.soporteria, usd: v } }))}
                                 />
                                 <PriceLine
-                                    label="Material Elctrico"
+                                    label={breakdown.material.label}
                                     icon={<Zap size={16} className="text-yellow-500" />}
                                     usd={breakdown.material.usd}
                                     mxn={breakdown.material.mxn}
                                     delay={0.25}
+                                    editable
+                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, material: { ...p.material, label: v } }))}
+                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, material: { ...p.material, usd: v } }))}
                                 />
                                 {gastosTrasladoMXN > 0 && (
                                     <PriceLine
