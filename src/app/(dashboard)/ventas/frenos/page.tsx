@@ -40,6 +40,7 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
 import { toast, confirmModal, promptModal } from '@/lib/modals';
+import { MATERIAL_ELECTRICO_BASE, type MaterialElectricoItem } from '@/lib/data/material-electrico';
 
 const supabase = createClient();
 
@@ -297,9 +298,14 @@ export default function CotizadorFrenosPage() {
     const [manualFolio, setManualFolio] = useState('');
     const [manualAtencion, setManualAtencion] = useState('');
 
+    // Material Eléctrico Sub-catalog state
+    const [showMaterialModal, setShowMaterialModal] = useState(false);
+    const [selectedMaterialItems, setSelectedMaterialItems] = useState<MaterialElectricoItem[]>(MATERIAL_ELECTRICO_BASE);
+
     // Clear overrides when model changes
     useEffect(() => {
         setPriceOverrides({});
+        setSelectedMaterialItems(MATERIAL_ELECTRICO_BASE);
     }, [selectedModelo, selectedMarca, cantidadUnidades]);
 
     const handleOpenCreateForm = async () => {
@@ -457,16 +463,24 @@ export default function CotizadorFrenosPage() {
         const base_f_usd = priceOverrides.freno?.usd ?? (baseFrenoUSD * units);
         const c_usd = selectedModelo.cardanes_usd * units;
         const s_usd = selectedModelo.soporteria_usd * units;
-        const m_usd = selectedModelo.material_electrico_usd * units;
+        
+        // Calculate current Material Electrónico from selected sub-catalog
+        const base_m_mxn = selectedMaterialItems.reduce((acc, item) => acc + (item.cantidad * item.precio_unitario_mxn), 0) * units;
+        const base_m_usd = base_m_mxn / tipoCambio;
 
         // Roll up the cost of cardanes, soporteria and material into the Freno price
-        const f_usd = priceOverrides.freno?.usd ?? (base_f_usd + c_usd + s_usd + m_usd);
+        const f_usd = priceOverrides.freno?.usd ?? (base_f_usd + c_usd + s_usd + base_m_usd);
 
-        const totalTraslado = gastosTrasladoMXN * units;
+        const base_t_usd = (gastosTrasladoMXN * units) / tipoCambio;
+        const t_usd = priceOverrides.traslado?.usd ?? base_t_usd;
+
+        const base_mo_usd = manoObraInstalacionMXN / tipoCambio;
+        const mo_usd = priceOverrides.manoObra?.usd ?? base_mo_usd;
+
         const totalKitLedUSD = costoKitLedUSD * units;
         
-        const total_usd = f_usd + totalKitLedUSD;
-        const total_mxn = (total_usd * tipoCambio) + totalTraslado + manoObraInstalacionMXN;
+        const total_usd = f_usd + totalKitLedUSD + t_usd + mo_usd;
+        const total_mxn = total_usd * tipoCambio;
 
         return {
             freno: { 
@@ -479,11 +493,19 @@ export default function CotizadorFrenosPage() {
                 usd: totalKitLedUSD,
                 mxn: totalKitLedUSD * tipoCambio
             },
-            traslado: { mxn: totalTraslado },
-            manoObra: { mxn: manoObraInstalacionMXN },
+            traslado: { 
+                label: priceOverrides.traslado?.label ?? `Gastos de Traslado / Viáticos (${units} u.)`,
+                usd: t_usd,
+                mxn: t_usd * tipoCambio
+            },
+            manoObra: { 
+                label: priceOverrides.manoObra?.label ?? 'Mano de Obra Instalación',
+                usd: mo_usd,
+                mxn: mo_usd * tipoCambio
+            },
             total: { usd: total_usd, mxn: total_mxn }
         };
-    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades, priceOverrides]);
+    }, [selectedModelo, selectedMarca, tipoCambio, gastosTrasladoMXN, manoObraInstalacionMXN, cantidadUnidades, priceOverrides, selectedMaterialItems]);
 
     const handleFinalize = async () => {
         if (!selectedModelo || !selectedClienteId) {
@@ -821,6 +843,162 @@ export default function CotizadorFrenosPage() {
                     </motion.div>
                 </div>
             </div>
+
+            {/* Material Electrónico Sub-catalog Summary */}
+            {selectedModelo && (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-[2rem] border border-retarder-gray-200 p-6 shadow-sm overflow-hidden"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2.5 bg-blue-50 rounded-xl">
+                                <Settings2 size={20} className="text-blue-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-black text-retarder-black uppercase tracking-wider">Configuración de Material Eléctrico</h4>
+                                <p className="text-[10px] text-retarder-gray-400 font-bold uppercase">Personaliza los componentes del kit</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setShowMaterialModal(true)}
+                            className="bg-retarder-black text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-retarder-gray-800 transition-all flex items-center gap-2"
+                        >
+                            <Plus size={14} /> Editar Sub-catálogo
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <div className="bg-retarder-gray-50 p-3 rounded-2xl border border-retarder-gray-100">
+                            <p className="text-[9px] font-bold text-retarder-gray-400 uppercase">Total Items</p>
+                            <p className="text-sm font-black text-retarder-black">{selectedMaterialItems.length} componentes</p>
+                        </div>
+                        <div className="bg-retarder-gray-50 p-3 rounded-2xl border border-retarder-gray-100">
+                            <p className="text-[9px] font-bold text-retarder-gray-400 uppercase">Subtotal Kit (MXN)</p>
+                            <p className="text-sm font-black text-retarder-red">{formatMXN(selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0))}</p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
+            {/* Material Eléctrico Modal */}
+            <AnimatePresence>
+                {showMaterialModal && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }} 
+                            animate={{ opacity: 1 }} 
+                            exit={{ opacity: 0 }} 
+                            onClick={() => setShowMaterialModal(false)} 
+                            className="fixed inset-0 bg-retarder-black/60 backdrop-blur-md z-[60]" 
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl z-[70] overflow-hidden max-h-[85vh] flex flex-col"
+                        >
+                            <div className="p-8 border-b border-retarder-gray-100 flex items-center justify-between bg-retarder-gray-50">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center text-blue-600">
+                                        <Settings2 size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-retarder-black uppercase tracking-tight">Material Eléctrico</h3>
+                                        <p className="text-xs text-retarder-gray-400 font-bold uppercase tracking-widest">Sub-catálogo Personalizable</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setShowMaterialModal(false)}
+                                    className="p-3 rounded-2xl bg-white text-retarder-gray-400 hover:text-retarder-red transition-all shadow-sm"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-8 pt-4">
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-[80px_1fr_120px_120px_60px] gap-4 px-4 py-2 border-b border-retarder-gray-100 text-[10px] font-black uppercase text-retarder-gray-500">
+                                        <span>Cant.</span>
+                                        <span>Concepto</span>
+                                        <span className="text-right">P.U. (MXN)</span>
+                                        <span className="text-right">Total (MXN)</span>
+                                        <span></span>
+                                    </div>
+                                    {selectedMaterialItems.map((item, idx) => (
+                                        <div key={idx} className="grid grid-cols-[80px_1fr_120px_120px_60px] gap-4 items-center p-3 bg-white hover:bg-gray-50 rounded-2xl transition-colors border border-transparent hover:border-retarder-gray-100 group">
+                                            <input 
+                                                type="number" 
+                                                value={item.cantidad} 
+                                                onChange={e => {
+                                                    const newItems = [...selectedMaterialItems];
+                                                    newItems[idx].cantidad = parseFloat(e.target.value) || 0;
+                                                    setSelectedMaterialItems(newItems);
+                                                }}
+                                                className="w-full bg-retarder-gray-50 border border-transparent focus:border-blue-300 rounded-xl px-3 py-2 text-sm font-bold text-center outline-none"
+                                            />
+                                            <input 
+                                                type="text" 
+                                                value={item.concepto} 
+                                                onChange={e => {
+                                                    const newItems = [...selectedMaterialItems];
+                                                    newItems[idx].concepto = e.target.value;
+                                                    setSelectedMaterialItems(newItems);
+                                                }}
+                                                className="w-full bg-transparent border-b border-transparent focus:border-blue-300 px-2 py-1 text-sm font-semibold outline-none"
+                                            />
+                                            <input 
+                                                type="number" 
+                                                value={item.precio_unitario_mxn} 
+                                                onChange={e => {
+                                                    const newItems = [...selectedMaterialItems];
+                                                    newItems[idx].precio_unitario_mxn = parseFloat(e.target.value) || 0;
+                                                    setSelectedMaterialItems(newItems);
+                                                }}
+                                                className="w-full bg-transparent border-b border-transparent focus:border-blue-300 px-2 py-1 text-sm font-mono text-right outline-none"
+                                            />
+                                            <p className="text-sm font-black text-retarder-black text-right font-mono">
+                                                {formatMXN(item.cantidad * item.precio_unitario_mxn)}
+                                            </p>
+                                            <button 
+                                                onClick={() => {
+                                                    const newItems = selectedMaterialItems.filter((_, i) => i !== idx);
+                                                    setSelectedMaterialItems(newItems);
+                                                }}
+                                                className="p-2 text-retarder-gray-300 hover:text-retarder-red opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button 
+                                        onClick={() => setSelectedMaterialItems([...selectedMaterialItems, { cantidad: 1, concepto: 'Nuevo Item', precio_unitario_mxn: 0 }])}
+                                        className="w-full py-4 border-2 border-dashed border-retarder-gray-100 rounded-[2rem] text-retarder-gray-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/30 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest mt-6"
+                                    >
+                                        <Plus size={18} /> Agregar Concepto Personalizado
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="p-8 bg-retarder-gray-50 border-t border-retarder-gray-100 flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase text-retarder-gray-400">Total Material Eléctrico</p>
+                                    <p className="text-3xl font-black text-retarder-red">
+                                        {formatMXN(selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0))} <span className="text-sm text-retarder-gray-400">MXN</span>
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => setShowMaterialModal(false)}
+                                    className="bg-blue-600 text-white px-10 py-4 rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                >
+                                    Confirmar y Actualizar Precios
+                                </button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
             {/*  Model Grid  */}
             <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-3">
@@ -1043,7 +1221,6 @@ export default function CotizadorFrenosPage() {
                                     mxn={breakdown.freno.mxn}
                                     delay={0.1}
                                     editable
-                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, label: v } }))}
                                     onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
                                 />
                                 {costoKitLedUSD > 0 && (
@@ -1055,24 +1232,26 @@ export default function CotizadorFrenosPage() {
                                         delay={0.15}
                                     />
                                 )}
-                                {gastosTrasladoMXN > 0 && (
-                                    <PriceLine
-                                        label={`Gastos de Traslado / Viticos (${cantidadUnidades} u.)`}
-                                        icon={<Package size={16} className="text-purple-500" />}
-                                        usd={breakdown.traslado.mxn / tipoCambio}
-                                        mxn={breakdown.traslado.mxn}
-                                        delay={0.28}
-                                    />
-                                )}
-                                {manoObraInstalacionMXN > 0 && (
-                                    <PriceLine
-                                        label={`Mano de Obra Instalacin`}
-                                        icon={<Wrench size={16} className="text-orange-500" />}
-                                        usd={breakdown.manoObra.mxn / tipoCambio}
-                                        mxn={breakdown.manoObra.mxn}
-                                        delay={0.30}
-                                    />
-                                )}
+                                <PriceLine
+                                    label={breakdown.traslado.label}
+                                    icon={<Package size={16} className="text-purple-500" />}
+                                    usd={breakdown.traslado.usd}
+                                    mxn={breakdown.traslado.mxn}
+                                    delay={0.28}
+                                    editable
+                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, traslado: { ...p.traslado, label: v } }))}
+                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, traslado: { ...p.traslado, usd: v } }))}
+                                />
+                                <PriceLine
+                                    label={breakdown.manoObra.label}
+                                    icon={<Wrench size={16} className="text-orange-500" />}
+                                    usd={breakdown.manoObra.usd}
+                                    mxn={breakdown.manoObra.mxn}
+                                    delay={0.30}
+                                    editable
+                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, manoObra: { ...p.manoObra, label: v } }))}
+                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, manoObra: { ...p.manoObra, usd: v } }))}
+                                />
 
                                 {/* Divider */}
                                 <div className="border-t-2 border-dashed border-retarder-gray-200 my-4" />
