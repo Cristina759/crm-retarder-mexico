@@ -18,7 +18,7 @@ export function useExchangeRate() {
         setError(null);
 
         try {
-            // Intentar obtener el dato oficial del DOF vía Banxico
+            // Intentar obtener el dato oficial del DOF va Banxico
             const res = await fetch('/api/tc', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();

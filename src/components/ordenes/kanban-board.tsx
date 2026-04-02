@@ -125,7 +125,7 @@ export function KanbanBoard({
                     toast.error('Error al guardar el cambio: ' + error.message);
                 }
                 
-                // Siempre refrescamos desde Supabase para mantener la sincronía
+                // Siempre refrescamos desde Supabase para mantener la sincrona
                 onRefresh();
             }
         }

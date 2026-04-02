@@ -49,7 +49,7 @@ import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
-// ── Types ───────────────────────────────────────────
+//  Types 
 
 interface ClienteCompact {
     id: string;
@@ -66,7 +66,7 @@ interface ClienteCompact {
     nombre_sucursal?: string;
 }
 
-// ── Service Type Definitions ────────────────────────
+//  Service Type Definitions 
 
 interface ChecklistGroup {
     title: string;
@@ -91,25 +91,25 @@ const SERVICE_TYPES: ServiceType[] = [
         icon: Shield,
         color: 'text-emerald-600',
         bgColor: 'bg-emerald-50 border-emerald-200 hover:border-emerald-400',
-        description: 'Revisi�n completa del sistema con checklist detallado',
+        description: 'Revisin completa del sistema con checklist detallado',
         allowRefacciones: false,
         checklist: [
             {
-                title: 'Sistema Mec�nico',
+                title: 'Sistema Mecnico',
                 items: [
-                    'Torque a torniller�a',
+                    'Torque a tornillera',
                     'Limpieza de panel de conexiones',
                     'Placas laterales',
-                    'Hules y torniller�a en general',
-                    'Revisi�n cardanes y crucetas',
+                    'Hules y tornillera en general',
+                    'Revisin cardanes y crucetas',
                 ],
             },
             {
                 title: 'Engrase',
-                items: ['Engrase seg�n marca (tubo incluido)'],
+                items: ['Engrase segn marca (tubo incluido)'],
             },
             {
-                title: 'Sistema El�ctrico',
+                title: 'Sistema Elctrico',
                 items: [
                     'Palanca control',
                     'Foco piloto',
@@ -117,11 +117,11 @@ const SERVICE_TYPES: ServiceType[] = [
                     'Relay de corte',
                     'Arneses de control y terminales',
                     'Sensor de velocidad',
-                    'Sistema neum�tico',
+                    'Sistema neumtico',
                 ],
             },
             {
-                title: 'Sistema de Bater�as',
+                title: 'Sistema de Bateras',
                 items: [
                     'Caja de contactores',
                     'Maza y positivo',
@@ -136,39 +136,39 @@ const SERVICE_TYPES: ServiceType[] = [
         icon: Wrench,
         color: 'text-orange-600',
         bgColor: 'bg-orange-50 border-orange-200 hover:border-orange-400',
-        description: 'Diagn�stico de falla, reparaci�n y refacciones',
+        description: 'Diagnstico de falla, reparacin y refacciones',
         allowRefacciones: true,
         checklist: [
             {
                 title: 'Servicio Correctivo',
                 items: [
-                    'Diagn�stico de falla',
-                    'Reparaci�n',
-                    'Refacciones (se agregan del cat�logo)',
+                    'Diagnstico de falla',
+                    'Reparacin',
+                    'Refacciones (se agregan del catlogo)',
                 ],
             },
         ],
     },
 ];
 
-// ── Precio Fijo Preventivo ──────────────────────────
+//  Precio Fijo Preventivo 
 const PRECIO_PREVENTIVO = 4250;
 
-// ── Refaccion Cart Item ─────────────────────────────
+//  Refaccion Cart Item 
 
 interface RefaccionItem {
     refaccion: Refaccion;
     cantidad: number;
 }
 
-// ── Mano de Obra Item ───────────────────────────────
+//  Mano de Obra Item 
 
 interface ManoObraItem {
     concepto: ConceptoManoObra;
     cantidad: number;
 }
 
-// ── Price Line Component (PDF Only) ─────────────────
+//  Price Line Component (PDF Only) 
 
 function PriceLine({ label, mxn, accent = false }: { label: string; mxn: number; accent?: boolean }) {
     return (
@@ -182,7 +182,7 @@ function PriceLine({ label, mxn, accent = false }: { label: string; mxn: number;
     );
 }
 
-// ── Page Component ──────────────────────────────────
+//  Page Component 
 
 export default function CotizadorServiciosPage() {
     const router = useRouter();
@@ -224,10 +224,10 @@ export default function CotizadorServiciosPage() {
 
     // Editable Observations and Notes
     const [observaciones, setObservaciones] = useState(
-        '*ESTE SERVICIO INCLUYE LOS PUNTOS DESCRITOS EN EL CHECKLIST\n*TIEMPO ESTIMADO DE REALIZACIÓN: 4 A 6 HORAS POR UNIDAD\n*EL CLIENTE DEBE PROPORCIONAR EL ESPACIO ADECUADO SI EL SERVICIO ES EN SITIO\n*SE REQUIERE CONFIRMACIÓN DE CITA CON 48 HORAS DE ANTICIPACIÓN'
+        '*ESTE SERVICIO INCLUYE LOS PUNTOS DESCRITOS EN EL CHECKLIST\n*TIEMPO ESTIMADO DE REALIZACIN: 4 A 6 HORAS POR UNIDAD\n*EL CLIENTE DEBE PROPORCIONAR EL ESPACIO ADECUADO SI EL SERVICIO ES EN SITIO\n*SE REQUIERE CONFIRMACIN DE CITA CON 48 HORAS DE ANTICIPACIN'
     );
     const [notas, setNotas] = useState(
-        '*COTIZACIÓN VÁLIDA POR 15 DÍAS\n*GARANTÍA DE 30 DÍAS EN MANO DE OBRA'
+        '*COTIZACIN VLIDA POR 15 DAS\n*GARANTA DE 30 DAS EN MANO DE OBRA'
     );
 
     // Filtered refacciones for search modal
@@ -311,7 +311,7 @@ export default function CotizadorServiciosPage() {
         setManoObraItems(prev => prev.filter(item => item.concepto.concepto !== conceptoName));
     }, []);
 
-    // Carga de Clientes desde lista est�tica
+    // Carga de Clientes desde lista esttica
     const fetchClientes = useCallback(() => {
         setClientes(CLIENTES_REALES as any[]);
     }, []);
@@ -436,7 +436,7 @@ export default function CotizadorServiciosPage() {
                         prioridad: 'media',
                         vendedor: sellerName,
                         tecnico: '',
-                        descripcion: `Servicio ${selectedService.label}. Cotizaci�n: ${cotNumero}.`,
+                        descripcion: `Servicio ${selectedService.label}. Cotizacin: ${cotNumero}.`,
                         monto: total,
                         fecha_creado: fechaActual,
                         cotizacion_id: cotId
@@ -447,7 +447,7 @@ export default function CotizadorServiciosPage() {
             setSavedFolio(cotNumero);
 
         } catch (error: any) {
-            toast.error(`Error al generar la cotizaci�n: ${error.message || 'Error desconocido'}`);
+            toast.error(`Error al generar la cotizacin: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsCreating(false);
         }
@@ -455,7 +455,7 @@ export default function CotizadorServiciosPage() {
 
     return (
         <div className="space-y-6 pb-12">
-            {/* ── Header ───────────────────────── */}
+            {/*  Header  */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 print:hidden">
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black flex items-center gap-2">
@@ -463,7 +463,7 @@ export default function CotizadorServiciosPage() {
                         Cotizador de Servicios
                     </h2>
                     <p className="text-xs text-retarder-gray-500">
-                        Selecciona el tipo de servicio y genera la cotizaci�n autom�ticamente
+                        Selecciona el tipo de servicio y genera la cotizacin automticamente
                     </p>
                 </div>
 
@@ -518,7 +518,7 @@ export default function CotizadorServiciosPage() {
                         <div className="flex flex-col gap-2">
                             <input
                                 type="text"
-                                placeholder="🔍 Buscar..."
+                                placeholder=" Buscar..."
                                 value={clientSearch}
                                 onChange={(e) => setClientSearch(e.target.value)}
                                 className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-retarder-red transition-all"
@@ -538,7 +538,7 @@ export default function CotizadorServiciosPage() {
                 </div>
             </div>
 
-            {/* ── Service Type Cards ─────────── */}
+            {/*  Service Type Cards  */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 print:hidden">
                 {SERVICE_TYPES.map((service, i) => {
                     const Icon = service.icon;
@@ -578,7 +578,7 @@ export default function CotizadorServiciosPage() {
                 })}
             </div>
 
-            {/* ── Main Section (UI and Print Hidden) ─ */}
+            {/*  Main Section (UI and Print Hidden)  */}
             <AnimatePresence mode="wait">
                 {selectedService && (
                     <motion.div key={selectedService.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="print:hidden">
@@ -666,8 +666,8 @@ export default function CotizadorServiciosPage() {
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-green-200"><Check size={24} /></div>
                                             <div>
-                                                <p className="text-green-800 font-black text-lg uppercase tracking-tight">¡Cotizaci�n Guardada!</p>
-                                                <p className="text-green-600 font-bold text-xs uppercase opacity-80">Folio: {savedFolio} · Orden Creada</p>
+                                                <p className="text-green-800 font-black text-lg uppercase tracking-tight">Cotizacin Guardada!</p>
+                                                <p className="text-green-600 font-bold text-xs uppercase opacity-80">Folio: {savedFolio}  Orden Creada</p>
                                             </div>
                                         </div>
                                         <button 
@@ -708,7 +708,7 @@ export default function CotizadorServiciosPage() {
                                         <textarea
                                             value={observaciones}
                                             onChange={e => setObservaciones(e.target.value)}
-                                            placeholder="Detalles espec�ficos del servicio para este cliente..."
+                                            placeholder="Detalles especficos del servicio para este cliente..."
                                             className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-2xl px-5 py-4 text-sm outline-none focus:border-retarder-red min-h-[100px] transition-all"
                                         />
                                     </div>
@@ -747,7 +747,7 @@ export default function CotizadorServiciosPage() {
                                                     onChange={e => setAutoPrint(e.target.checked)}
                                                     className="w-4 h-4 text-retarder-red rounded focus:ring-retarder-red border-retarder-gray-300"
                                                 />
-                                                <label htmlFor="autoPrintSrv" className="text-xs font-bold text-white/60 cursor-pointer uppercase tracking-tight">Imprimir autom�ticamente al guardar</label>
+                                                <label htmlFor="autoPrintSrv" className="text-xs font-bold text-white/60 cursor-pointer uppercase tracking-tight">Imprimir automticamente al guardar</label>
                                             </div>
                                             <button onClick={handleFinalize} disabled={!selectedClienteId || subtotal <= 0 || isCreating} className={cn('w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all', !selectedClienteId || subtotal <= 0 || isCreating ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-retarder-red text-white hover:bg-retarder-red-700 shadow-lg shadow-retarder-red/30')}>{isCreating ? <Loader2 className="animate-spin" size={20} /> : <Printer size={20} />}GUARDAR Y GENERAR PDF</button>
                                         </div>
@@ -759,17 +759,17 @@ export default function CotizadorServiciosPage() {
                 )}
             </AnimatePresence>
 
-            {/* ── PROFESSIONAL PRINT AREA (PDF ONLY) ── */}
+            {/*  PROFESSIONAL PRINT AREA (PDF ONLY)  */}
             <AnimatePresence>
                 {selectedService && (
                     <div className="print-area hidden print:block bg-white p-0">
                         <div className="max-w-[800px] mx-auto bg-white overflow-hidden">
                             {/* PDF Header */}
                             <div className="flex items-center justify-between px-8 py-6 border-b-4 border-retarder-red">
-                                <div><img src="/logo-retarder.png" alt="Retarder M�xico Logo" className="h-24 object-contain" /></div>
+                                <div><img src="/logo-retarder.png" alt="Retarder Mxico Logo" className="h-24 object-contain" /></div>
                                 <div className="text-right">
-                                    <h2 className="text-xl font-black text-retarder-black tracking-tight uppercase">RETARDER MÉXICO</h2>
-                                    <p className="text-xs text-retarder-gray-500 font-medium">Cotizaci�n de Servicios</p>
+                                    <h2 className="text-xl font-black text-retarder-black tracking-tight uppercase">RETARDER MXICO</h2>
+                                    <p className="text-xs text-retarder-gray-500 font-medium">Cotizacin de Servicios</p>
                                     <p className="text-[10px] text-retarder-gray-400 mt-1">Fecha: {new Date().toLocaleDateString('es-MX')}</p>
                                 </div>
                             </div>
@@ -809,13 +809,13 @@ export default function CotizadorServiciosPage() {
                                         {selectedService.checklist.map(group => (
                                             <div key={group.title}>
                                                 <p className="text-[8px] font-bold uppercase text-retarder-gray-400 mb-1">{group.title}</p>
-                                                <ul className="grid grid-cols-1 gap-0.5">{group.items.map(i => (<li key={i} className="text-[8px] flex items-start gap-1"><span className="text-retarder-red mt-0.5">•</span>{i}</li>))}</ul>
+                                                <ul className="grid grid-cols-1 gap-0.5">{group.items.map(i => (<li key={i} className="text-[8px] flex items-start gap-1"><span className="text-retarder-red mt-0.5"></span>{i}</li>))}</ul>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                                 <div className="space-y-6">
-                                    <h5 className="text-[9px] font-black uppercase border-b-2 border-retarder-gray-800 pb-1 mb-3 tracking-widest">Desglose Econ�mico:</h5>
+                                    <h5 className="text-[9px] font-black uppercase border-b-2 border-retarder-gray-800 pb-1 mb-3 tracking-widest">Desglose Econmico:</h5>
                                     <div className="space-y-1">
                                         {selectedService.id === 'preventivo' ? (
                                             <>
@@ -849,18 +849,18 @@ export default function CotizadorServiciosPage() {
                             {/* Observations & Notes */}
                             <div className="px-8 py-4 mt-8">
                                 <div className="mb-4">
-                                    <p className="text-[9px] font-black text-retarder-black uppercase mb-1 tracking-wider border-b border-retarder-gray-100 pb-1">Observaciones T�cnicas / Log�sticas:</p>
+                                    <p className="text-[9px] font-black text-retarder-black uppercase mb-1 tracking-wider border-b border-retarder-gray-100 pb-1">Observaciones Tcnicas / Logsticas:</p>
                                     <textarea value={observaciones} onChange={e => setObservaciones(e.target.value)} rows={4} className="w-full text-[9px] text-retarder-gray-700 bg-transparent resize-none leading-relaxed border-none p-0 outline-none" />
                                 </div>
                                 <div className="mb-4">
-                                    <p className="text-[9px] font-black text-retarder-red uppercase mb-1 tracking-wider">Pol�ticas y Garant�as:</p>
+                                    <p className="text-[9px] font-black text-retarder-red uppercase mb-1 tracking-wider">Polticas y Garantas:</p>
                                     <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={2} className="w-full text-[9px] text-retarder-red font-bold bg-transparent resize-none leading-relaxed border-none p-0 outline-none" />
                                 </div>
                             </div>
 
                             {/* PDF Footer / Signature */}
                             <div className="px-8 py-10 border-t border-retarder-gray-100 flex justify-between items-end mt-12 mb-8">
-                                <div><p className="text-[10px] font-black text-retarder-black leading-none">{user?.fullName || 'CRISTINA VELASCO'}</p><p className="text-[8px] text-retarder-gray-500 uppercase mt-1 tracking-widest">Área T�cnica y Comercial</p><p className="text-[8px] text-retarder-red font-black mt-1">TEL. 55-7372-1633</p></div>
+                                <div><p className="text-[10px] font-black text-retarder-black leading-none">{user?.fullName || 'CRISTINA VELASCO'}</p><p className="text-[8px] text-retarder-gray-500 uppercase mt-1 tracking-widest">rea Tcnica y Comercial</p><p className="text-[8px] text-retarder-red font-black mt-1">TEL. 55-7372-1633</p></div>
                                 <div className="text-right space-y-0.5"><p className="text-[8px] text-retarder-gray-500">ventasyservicio@tgrpentarmexico.com</p><p className="text-[8px] font-black text-retarder-red tracking-wider">www.tgrpentarmexico.com</p></div>
                             </div>
                         </div>
@@ -868,28 +868,28 @@ export default function CotizadorServiciosPage() {
                 )}
             </AnimatePresence>
 
-            {/* ── Refacciones Modal ────────────────── */}
+            {/*  Refacciones Modal  */}
             <AnimatePresence>
                 {showRefSearch && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowRefSearch(false)} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] print:hidden" />
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-3xl shadow-2xl z-[70] overflow-hidden max-h-[85vh] flex flex-col print:hidden">
                             <div className="px-6 py-5 bg-gradient-to-r from-orange-500 to-orange-700 flex justify-between items-center"><div className="flex items-center gap-3 text-white"><Package size={20} /><h3 className="font-bold">Seleccionar Refacciones</h3></div><button onClick={() => setShowRefSearch(false)} className="bg-white/10 hover:bg-white/20 text-white p-1.5 rounded-xl transition-all"><X size={20} /></button></div>
-                            <div className="p-6 border-b border-retarder-gray-100 space-y-4"><div className="flex items-center gap-3 bg-retarder-gray-50 rounded-2xl px-5 py-3 border border-retarder-gray-200 focus-within:border-retarder-red transition-all"><SearchIcon size={18} className="text-retarder-gray-400" /><input type="text" placeholder="Buscar por c�digo, descripci�n..." value={refSearch} onChange={e => setRefSearch(e.target.value)} className="bg-transparent outline-none text-sm w-full font-medium" autoFocus /></div><div className="flex gap-2 overflow-x-auto pb-1"><button onClick={() => setRefCategory('all')} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', refCategory === 'all' ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>Todas</button>{REFACCION_CATEGORIAS.map(cat => (<button key={cat} onClick={() => setRefCategory(cat)} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', refCategory === cat ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>{cat}</button>))}</div></div>
-                            <div className="overflow-y-auto flex-1 p-2 space-y-1">{filteredRefs.map(ref => (<div key={ref.codigo} className="group flex items-center justify-between p-4 rounded-2xl hover:bg-retarder-gray-50 transition-all border border-transparent hover:border-retarder-gray-100"><div className="flex-1 min-w-0"><p className="text-xs font-black text-retarder-black group-hover:text-retarder-red transition-colors">{ref.descripcion}</p><p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest mt-0.5">{ref.codigo} • {ref.area}</p></div><div className="flex items-center gap-6"><p className="text-sm font-black text-retarder-black">{formatMXN(ref.precio_venta)}</p><button onClick={() => { addRefaccion(ref); setShowRefSearch(false); }} className="bg-orange-500 text-white p-2.5 rounded-xl hover:bg-orange-600 shadow-md shadow-orange-500/20 transition-all"><Plus size={18} /></button></div></div>))}</div>
+                            <div className="p-6 border-b border-retarder-gray-100 space-y-4"><div className="flex items-center gap-3 bg-retarder-gray-50 rounded-2xl px-5 py-3 border border-retarder-gray-200 focus-within:border-retarder-red transition-all"><SearchIcon size={18} className="text-retarder-gray-400" /><input type="text" placeholder="Buscar por cdigo, descripcin..." value={refSearch} onChange={e => setRefSearch(e.target.value)} className="bg-transparent outline-none text-sm w-full font-medium" autoFocus /></div><div className="flex gap-2 overflow-x-auto pb-1"><button onClick={() => setRefCategory('all')} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', refCategory === 'all' ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>Todas</button>{REFACCION_CATEGORIAS.map(cat => (<button key={cat} onClick={() => setRefCategory(cat)} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', refCategory === cat ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>{cat}</button>))}</div></div>
+                            <div className="overflow-y-auto flex-1 p-2 space-y-1">{filteredRefs.map(ref => (<div key={ref.codigo} className="group flex items-center justify-between p-4 rounded-2xl hover:bg-retarder-gray-50 transition-all border border-transparent hover:border-retarder-gray-100"><div className="flex-1 min-w-0"><p className="text-xs font-black text-retarder-black group-hover:text-retarder-red transition-colors">{ref.descripcion}</p><p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest mt-0.5">{ref.codigo}  {ref.area}</p></div><div className="flex items-center gap-6"><p className="text-sm font-black text-retarder-black">{formatMXN(ref.precio_venta)}</p><button onClick={() => { addRefaccion(ref); setShowRefSearch(false); }} className="bg-orange-500 text-white p-2.5 rounded-xl hover:bg-orange-600 shadow-md shadow-orange-500/20 transition-all"><Plus size={18} /></button></div></div>))}</div>
                         </motion.div>
                     </>
                 )}
             </AnimatePresence>
 
-            {/* ── Mano de Obra Modal ───────────────── */}
+            {/*  Mano de Obra Modal  */}
             <AnimatePresence>
                 {showManoSearch && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowManoSearch(false)} className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] print:hidden" />
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 30 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 30 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-3xl shadow-2xl z-[70] overflow-hidden max-h-[85vh] flex flex-col print:hidden">
                             <div className="px-6 py-5 bg-gradient-to-r from-retarder-black to-retarder-gray-800 flex justify-between items-center"><div className="flex items-center gap-3 text-white"><Wrench size={20} /><h3 className="font-bold">Seleccionar Mano de Obra</h3></div><button onClick={() => setShowManoSearch(false)} className="bg-white/10 hover:bg-white/20 text-white p-1.5 rounded-xl transition-all"><X size={20} /></button></div>
-                            <div className="p-6 border-b border-retarder-gray-100 space-y-4"><div className="flex items-center gap-3 bg-retarder-gray-50 rounded-2xl px-5 py-3 border border-retarder-gray-200 focus-within:border-retarder-red transition-all"><SearchIcon size={18} className="text-retarder-gray-400" /><input type="text" placeholder="Buscar concepto o categor�a..." value={manoSearch} onChange={e => setManoSearch(e.target.value)} className="bg-transparent outline-none text-sm w-full font-medium" autoFocus /></div><div className="flex gap-2 overflow-x-auto pb-1"><button onClick={() => setManoCategory('all')} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', manoCategory === 'all' ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>Todas</button>{CATEGORIAS_MANO_OBRA.map(cat => (<button key={cat} onClick={() => setManoCategory(cat)} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', manoCategory === cat ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>{cat}</button>))}</div></div>
+                            <div className="p-6 border-b border-retarder-gray-100 space-y-4"><div className="flex items-center gap-3 bg-retarder-gray-50 rounded-2xl px-5 py-3 border border-retarder-gray-200 focus-within:border-retarder-red transition-all"><SearchIcon size={18} className="text-retarder-gray-400" /><input type="text" placeholder="Buscar concepto o categora..." value={manoSearch} onChange={e => setManoSearch(e.target.value)} className="bg-transparent outline-none text-sm w-full font-medium" autoFocus /></div><div className="flex gap-2 overflow-x-auto pb-1"><button onClick={() => setManoCategory('all')} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', manoCategory === 'all' ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>Todas</button>{CATEGORIAS_MANO_OBRA.map(cat => (<button key={cat} onClick={() => setManoCategory(cat)} className={cn('px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap', manoCategory === cat ? 'bg-retarder-black text-white' : 'bg-white text-retarder-gray-500 hover:bg-retarder-gray-50')}>{cat}</button>))}</div></div>
                             <div className="overflow-y-auto flex-1 p-2 space-y-1">{filteredMano.map(item => (<div key={item.concepto} className="group flex items-center justify-between p-4 rounded-2xl hover:bg-retarder-gray-50 transition-all border border-transparent hover:border-retarder-gray-100"><div className="flex-1 min-w-0"><p className="text-xs font-black text-retarder-black group-hover:text-retarder-red transition-colors">{item.concepto}</p><p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest mt-0.5">{item.categoria}</p></div><div className="flex items-center gap-6"><p className="text-sm font-black text-retarder-black">{formatMXN(item.precio_mxn)}</p><button onClick={() => { addManoObra(item); setShowManoSearch(false); }} className="bg-retarder-red text-white p-2.5 rounded-xl hover:bg-retarder-red-700 shadow-md shadow-retarder-red/20 transition-all"><Plus size={18} /></button></div></div>))}</div>
                         </motion.div>
                     </>

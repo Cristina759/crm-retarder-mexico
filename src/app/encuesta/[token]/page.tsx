@@ -64,7 +64,7 @@ export default function PublicSurveyPage() {
 
         // Si hay firma, subirla primero (simulado o a storage si tenemos el ID de la orden)
         // En este caso, el service submitSurvey solo guarda calificaciones. 
-        // Idealmente guardaríamos la firma vinculada a la orden.
+        // Idealmente guardaramos la firma vinculada a la orden.
 
         const { error } = await SurveyService.submitSurvey(token as string, {
             calificacion_general: ratingGeneral,
@@ -97,7 +97,7 @@ export default function PublicSurveyPage() {
                         <Star size={32} />
                     </div>
                     <h1 className="text-2xl font-bold text-retarder-black mb-2">Encuesta no encontrada</h1>
-                    <p className="text-retarder-gray-500">El link que utilizaste no es válido o ha expirado.</p>
+                    <p className="text-retarder-gray-500">El link que utilizaste no es vlido o ha expirado.</p>
                 </div>
             </div>
         );
@@ -125,9 +125,9 @@ export default function PublicSurveyPage() {
                             <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <CheckCircle2 size={40} />
                             </div>
-                            <h2 className="text-3xl font-bold text-retarder-black mb-4">¡Muchas Gracias!</h2>
+                            <h2 className="text-3xl font-bold text-retarder-black mb-4">Muchas Gracias!</h2>
                             <p className="text-retarder-gray-600 leading-relaxed mb-8">
-                                Tus comentarios son muy valiosos para nosotros y nos ayudan a mejorar el servicio técnico de <span className="font-bold text-retarder-red">RETARDER MÉXICO</span>.
+                                Tus comentarios son muy valiosos para nosotros y nos ayudan a mejorar el servicio tcnico de <span className="font-bold text-retarder-red">RETARDER MXICO</span>.
                             </p>
                             <div className="p-4 bg-retarder-gray-50 rounded-2xl inline-block border border-retarder-gray-100">
                                 <p className="text-[10px] uppercase font-bold text-retarder-gray-400 tracking-widest mb-1">Folio del Servicio</p>
@@ -177,16 +177,16 @@ export default function PublicSurveyPage() {
                                     </div>
                                 </section>
 
-                                {/* Pregunta 2: Técnico */}
+                                {/* Pregunta 2: Tcnico */}
                                 <section>
                                     <div className="flex items-center gap-3 mb-4">
                                         <div className="w-8 h-8 rounded-lg bg-retarder-yellow-100 flex items-center justify-center text-retarder-yellow-600">
                                             <Wrench size={18} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-retarder-black uppercase tracking-wider text-sm">Atención del Técnico</h3>
+                                            <h3 className="font-bold text-retarder-black uppercase tracking-wider text-sm">Atencin del Tcnico</h3>
                                             {survey.ordenes_servicio?.tecnico && (
-                                                <p className="text-[10px] text-retarder-gray-400">Técnico: <span className="font-bold">{survey.ordenes_servicio.tecnico}</span></p>
+                                                <p className="text-[10px] text-retarder-gray-400">Tcnico: <span className="font-bold">{survey.ordenes_servicio.tecnico}</span></p>
                                             )}
                                         </div>
                                     </div>
@@ -247,7 +247,7 @@ export default function PublicSurveyPage() {
                                     <textarea
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
-                                        placeholder="Escribe aquí tus comentarios..."
+                                        placeholder="Escribe aqu tus comentarios..."
                                         className="w-full bg-retarder-gray-50 border border-retarder-gray-100 rounded-3xl p-5 text-sm focus:ring-4 focus:ring-retarder-red/5 focus:border-retarder-red outline-none resize-none h-32 transition-all shadow-inner"
                                     />
                                 </section>
@@ -282,7 +282,7 @@ export default function PublicSurveyPage() {
                                 </button>
 
                                 <p className="text-[10px] text-center text-retarder-gray-400 font-bold uppercase tracking-widest mt-4">
-                                    Seguridad y Confidencialidad Retarder México
+                                    Seguridad y Confidencialidad Retarder Mxico
                                 </p>
                             </div>
                         </motion.div>

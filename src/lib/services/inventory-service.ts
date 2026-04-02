@@ -1,4 +1,4 @@
-﻿import { createClient } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import type { OrdenEstado } from '@/lib/utils/constants';
 
 const supabase = createClient();

@@ -9,7 +9,7 @@ import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
-// ── Types ────────────────────────────────────────────
+//  Types 
 
 type ProductoTipo = 'freno' | 'refaccion' | 'insumo';
 type MovimientoTipo = 'entrada' | 'salida' | 'ajuste';
@@ -36,23 +36,23 @@ interface FormState {
     notas: string;
 }
 
-// ── Stock status helper ──────────────────────────────
+//  Stock status helper 
 
 function getStockStatus(item: InventarioItem): { label: string; color: string; icon: typeof AlertTriangle } {
     if (item.stock_actual === 0)
         return { label: 'Agotado', color: 'bg-red-100 text-red-700', icon: AlertTriangle };
     if (item.stock_actual <= item.stock_minimo)
-        return { label: 'Bajo m�nimo', color: 'bg-amber-100 text-amber-700', icon: TrendingDown };
+        return { label: 'Bajo mnimo', color: 'bg-amber-100 text-amber-700', icon: TrendingDown };
     return { label: 'Normal', color: 'bg-emerald-100 text-emerald-700', icon: Package };
 }
 
 const TIPO_LABELS: Record<ProductoTipo, string> = {
     freno: 'Freno',
-    refaccion: 'Refacci�n',
+    refaccion: 'Refaccin',
     insumo: 'Insumo',
 };
 
-// ── Page ─────────────────────────────────────────────
+//  Page 
 
 export default function InventarioPage() {
     const [inventario, setInventario] = useState<InventarioItem[]>([]);
@@ -69,7 +69,7 @@ export default function InventarioPage() {
         notas: '',
     });
 
-    // ── Fetch ────────────────────────────────────────
+    //  Fetch 
 
     const fetchInventario = useCallback(async () => {
         setLoading(true);
@@ -93,7 +93,7 @@ export default function InventarioPage() {
         fetchInventario();
     }, [fetchInventario]);
 
-    // ── Derived ──────────────────────────────────────
+    //  Derived 
 
     const filtered = useMemo(() => {
         let result = inventario;
@@ -111,7 +111,7 @@ export default function InventarioPage() {
     const alertCount = inventario.filter(i => i.stock_actual <= i.stock_minimo).length;
     const totalValue = inventario.reduce((s, i) => s + i.stock_actual * i.costo_unitario, 0);
 
-    // ── Registrar Movimiento ─────────────────────────
+    //  Registrar Movimiento 
 
     const handleRegistrarMovimiento = async () => {
         if (!form.inventario_id || !form.cantidad) {
@@ -120,7 +120,7 @@ export default function InventarioPage() {
         }
         const cantidad = parseInt(form.cantidad, 10);
         if (isNaN(cantidad) || cantidad <= 0) {
-            toast.info('La cantidad debe ser un n�mero mayor a 0.');
+            toast.info('La cantidad debe ser un nmero mayor a 0.');
             return;
         }
 
@@ -177,7 +177,7 @@ export default function InventarioPage() {
         }
     };
 
-    // ── Render ───────────────────────────────────────
+    //  Render 
 
     return (
         <div className="space-y-4">
@@ -186,7 +186,7 @@ export default function InventarioPage() {
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black">Inventario</h2>
                     <p className="text-xs text-retarder-gray-500">
-                        Valor total: {formatMXN(totalValue)} · {alertCount} alerta{alertCount !== 1 ? 's' : ''}
+                        Valor total: {formatMXN(totalValue)}  {alertCount} alerta{alertCount !== 1 ? 's' : ''}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function InventarioPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                     { label: 'Total Productos', value: inventario.length.toString(), color: 'text-blue-600', icon: Package },
-                    { label: 'Bajo M�nimo', value: alertCount.toString(), color: 'text-red-600', icon: AlertTriangle },
+                    { label: 'Bajo Mnimo', value: alertCount.toString(), color: 'text-red-600', icon: AlertTriangle },
                     { label: 'Agotados', value: inventario.filter(i => i.stock_actual === 0).length.toString(), color: 'text-red-700', icon: TrendingDown },
                     { label: 'Valor Total', value: formatMXN(totalValue), color: 'text-emerald-600', icon: Package },
                 ].map((s, i) => (
@@ -248,10 +248,10 @@ export default function InventarioPage() {
                         <thead className="bg-retarder-gray-50">
                             <tr className="border-b border-retarder-gray-200">
                                 <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Producto</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">C�digo</th>
-                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Ubicaci�n</th>
+                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Cdigo</th>
+                                <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Ubicacin</th>
                                 <th className="text-center py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Stock</th>
-                                <th className="text-center py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">M�n.</th>
+                                <th className="text-center py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Mn.</th>
                                 <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
                                 <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Valor</th>
                             </tr>
@@ -273,8 +273,8 @@ export default function InventarioPage() {
                                         </p>
                                         <p className="text-xs text-retarder-gray-300 mt-1">
                                             {inventario.length === 0
-                                                ? 'Agrega productos desde Supabase para verlos aqu�.'
-                                                : 'Intenta con otro t�rmino de b�squeda.'}
+                                                ? 'Agrega productos desde Supabase para verlos aqu.'
+                                                : 'Intenta con otro trmino de bsqueda.'}
                                         </p>
                                     </td>
                                 </tr>
@@ -305,10 +305,10 @@ export default function InventarioPage() {
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">
-                                                {item.codigo_interno || '—'}
+                                                {item.codigo_interno || ''}
                                             </td>
                                             <td className="py-3 px-4 text-xs text-retarder-gray-600 hidden lg:table-cell">
-                                                {item.ubicacion || '—'}
+                                                {item.ubicacion || ''}
                                             </td>
                                             <td className="py-3 px-4 text-center">
                                                 <span className={cn(
@@ -342,7 +342,7 @@ export default function InventarioPage() {
                 </div>
             </motion.div>
 
-            {/* Modal — Registrar Movimiento */}
+            {/* Modal  Registrar Movimiento */}
             <AnimatePresence>
                 {showForm && (
                     <>
@@ -395,7 +395,7 @@ export default function InventarioPage() {
                                     </div>
                                     {form.tipo === 'ajuste' && (
                                         <p className="text-[10px] text-blue-600 mt-1">
-                                            ℹ️ El ajuste reemplaza el stock actual con la cantidad ingresada.
+                                             El ajuste reemplaza el stock actual con la cantidad ingresada.
                                         </p>
                                     )}
                                 </div>
@@ -446,7 +446,7 @@ export default function InventarioPage() {
                                             <option value="compra">Compra</option>
                                             <option value="venta">Venta</option>
                                             <option value="servicio">Servicio</option>
-                                            <option value="devolucion">Devoluci�n</option>
+                                            <option value="devolucion">Devolucin</option>
                                             <option value="ajuste_manual">Ajuste Manual</option>
                                         </select>
                                     </div>

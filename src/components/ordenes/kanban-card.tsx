@@ -94,7 +94,7 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 </div>
             )}
 
-            {/* Folio (Cotización) + Priority */}
+            {/* Folio (Cotizacin) + Priority */}
             <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-bold text-retarder-gray-500 tracking-tight flex items-center gap-1">
                     <FileText size={10} className="text-retarder-red" />
@@ -133,7 +133,7 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 )}>
                     {orden.tecnico ? orden.tecnico.charAt(0) : '?'}
                 </div>
-                <span className="text-[10px] text-retarder-gray-500 truncate">{orden.tecnico || 'Sin técnico'}</span>
+                <span className="text-[10px] text-retarder-gray-500 truncate">{orden.tecnico || 'Sin tcnico'}</span>
             </div>
 
             {/* Amount + Date */}

@@ -7,7 +7,7 @@ import { Package, Wrench, ClipboardCheck, ArrowRight } from 'lucide-react';
 const TIPOS_COTIZACION = [
     {
         title: 'Frenos (Retarders)',
-        description: 'Cotiza retarders electromagnéticos e hidráulicos con precios en USD/MXN, incluye cardanes, soportería y material eléctrico.',
+        description: 'Cotiza retarders electromagnticos e hidrulicos con precios en USD/MXN, incluye cardanes, soportera y material elctrico.',
         icon: <Package size={32} />,
         href: '/ventas/frenos',
         gradient: 'from-red-500 to-red-700',
@@ -18,7 +18,7 @@ const TIPOS_COTIZACION = [
     },
     {
         title: 'Refacciones',
-        description: 'Cotiza refacciones individuales: cardanes, crucetas, hules, tornillería, placas y más â€” con precios actualizados.',
+        description: 'Cotiza refacciones individuales: cardanes, crucetas, hules, tornillera, placas y ms  con precios actualizados.',
         icon: <Wrench size={32} />,
         href: '/ventas/refacciones',
         gradient: 'from-blue-500 to-blue-700',
@@ -29,7 +29,7 @@ const TIPOS_COTIZACION = [
     },
     {
         title: 'Servicios',
-        description: 'Cotiza mano de obra: instalación, mantenimiento preventivo/correctivo, diagnóstico y servicios técnicos especializados.',
+        description: 'Cotiza mano de obra: instalacin, mantenimiento preventivo/correctivo, diagnstico y servicios tcnicos especializados.',
         icon: <ClipboardCheck size={32} />,
         href: '/ventas/servicios',
         gradient: 'from-emerald-500 to-emerald-700',
@@ -44,9 +44,9 @@ export default function NuevaCotizacionPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-xl font-bold text-retarder-black">Nueva Cotización</h2>
+                <h2 className="text-xl font-bold text-retarder-black">Nueva Cotizacin</h2>
                 <p className="text-sm text-retarder-gray-500 mt-1">
-                    Selecciona el tipo de cotización que deseas crear
+                    Selecciona el tipo de cotizacin que deseas crear
                 </p>
             </div>
 
@@ -93,12 +93,12 @@ export default function NuevaCotizacionPage() {
                 className="bg-retarder-gray-50 rounded-xl border border-retarder-gray-200 p-4 flex items-start gap-3"
             >
                 <div className="w-8 h-8 rounded-lg bg-retarder-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-sm">ðŸ’¡</span>
+                    <span className="text-sm"></span>
                 </div>
                 <div>
                     <p className="text-sm font-semibold text-retarder-black">Tip</p>
                     <p className="text-xs text-retarder-gray-500">
-                        Las cotizaciones aceptadas se pueden convertir automáticamente en Ã“rdenes de Servicio desde la sección &quot;Mis Cotizaciones&quot;.
+                        Las cotizaciones aceptadas se pueden convertir automticamente en rdenes de Servicio desde la seccin &quot;Mis Cotizaciones&quot;.
                     </p>
                 </div>
             </motion.div>

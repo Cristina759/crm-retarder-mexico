@@ -150,7 +150,7 @@ export default function ClientesPage() {
     };
 
     async function handleDelete(id: string) {
-        if (!await confirmModal('¬øEst·s seguro de que deseas eliminar este cliente? Esta acciÛn no se puede deshacer.')) return;
+        if (!await confirmModal('Ests seguro de que deseas eliminar este cliente? Esta accin no se puede deshacer.')) return;
 
         try {
             const { error } = await supabase
@@ -196,7 +196,7 @@ export default function ClientesPage() {
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
-            toast.error('ERROR CR√çTICO: Las variables de entorno de Supabase no est·n configuradas en Vercel. Por favor contacta al administrador.');
+            toast.error('ERROR CRTICO: Las variables de entorno de Supabase no estn configuradas en Vercel. Por favor contacta al administrador.');
             return;
         }
 
@@ -298,11 +298,11 @@ export default function ClientesPage() {
             const hint = err.hint || 'Sin sugerencias';
 
             if (code === '23505') {
-                toast.error('CONFLITO: Ya existe una empresa con ese RFC. Intenta con uno distinto o b˙scalo en la lista.');
+                toast.error('CONFLITO: Ya existe una empresa con ese RFC. Intenta con uno distinto o bscalo en la lista.');
             } else if (code === '42501') {
-                toast.error('ERROR DE PERMISOS (RLS): No tienes permisos para insertar en la tabla empresas. Verifica las polÌticas en Supabase.');
+                toast.error('ERROR DE PERMISOS (RLS): No tienes permisos para insertar en la tabla empresas. Verifica las polticas en Supabase.');
             } else {
-                toast.error(`Error al guardar cliente (v1.2):\n\nCÛdigo: ${code}\nMensaje: ${message}\nDetalles: ${details}\nSugerencia: ${hint}`);
+                toast.error(`Error al guardar cliente (v1.2):\n\nCdigo: ${code}\nMensaje: ${message}\nDetalles: ${details}\nSugerencia: ${hint}`);
             }
         } finally {
             setIsSaving(false);
@@ -321,7 +321,7 @@ export default function ClientesPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-retarder-black">Clientes <span className="text-xs font-normal text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded">V1.3.1-DIAG</span></h1>
-                        <p className="text-sm text-retarder-gray-500 mt-1">GestiÛn integral de empresas y contactos (Total: {clientes.length})</p>
+                        <p className="text-sm text-retarder-gray-500 mt-1">Gestin integral de empresas y contactos (Total: {clientes.length})</p>
                     </div>
                     <div className="flex items-center gap-3">
                         {/* View toggle removed to force card view */}
@@ -470,8 +470,8 @@ export default function ClientesPage() {
                                                 <Phone size={14} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[9px] font-black text-retarder-gray-400 uppercase tracking-widest">TelÈfono</p>
-                                                <p className="text-xs font-bold text-retarder-black">{e.telefono || '‚Äî'}</p>
+                                                <p className="text-[9px] font-black text-retarder-gray-400 uppercase tracking-widest">Telfono</p>
+                                                <p className="text-xs font-bold text-retarder-black">{e.telefono || ''}</p>
                                             </div>
                                         </div>
 
@@ -499,7 +499,7 @@ export default function ClientesPage() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <span className="text-[9px] text-retarder-gray-400 font-black uppercase tracking-widest">MÈtricas: 0</span>
+                                            <span className="text-[9px] text-retarder-gray-400 font-black uppercase tracking-widest">Mtricas: 0</span>
                                         )}
                                         {e.sucursales && e.sucursales.length > 3 && (
                                             <div className="w-7 h-7 rounded-full bg-retarder-black border-2 border-white flex items-center justify-center text-[8px] font-black text-white">
@@ -525,7 +525,7 @@ export default function ClientesPage() {
                             <Building2 size={40} className="text-retarder-gray-200" />
                         </div>
                         <h3 className="text-lg font-bold text-retarder-gray-900">No se encontraron clientes</h3>
-                        <p className="text-sm text-retarder-gray-400 mt-1 max-w-xs mx-auto">Prueba ajustando los tÈrminos de b˙squeda o agrega un nuevo cliente al sistema.</p>
+                        <p className="text-sm text-retarder-gray-400 mt-1 max-w-xs mx-auto">Prueba ajustando los trminos de bsqueda o agrega un nuevo cliente al sistema.</p>
                     </motion.div>
                 )
             }
@@ -568,25 +568,25 @@ export default function ClientesPage() {
                                             <div className="space-y-2">
                                                 <div className="flex gap-3 text-sm text-retarder-gray-700 font-medium">
                                                     <Building2 className="text-retarder-red flex-shrink-0 mt-0.5" size={16} />
-                                                    <p><strong>Titular:</strong> {selectedCliente.nombre_titular || '‚Äî'}</p>
+                                                    <p><strong>Titular:</strong> {selectedCliente.nombre_titular || ''}</p>
                                                 </div>
                                                 <div className="flex gap-3 text-sm text-retarder-gray-700 font-medium">
                                                     <MapPinned className="text-retarder-red flex-shrink-0 mt-0.5" size={16} />
-                                                    <p><strong>Sucursal:</strong> {selectedCliente.nombre_sucursal || '‚Äî'}</p>
+                                                    <p><strong>Sucursal:</strong> {selectedCliente.nombre_sucursal || ''}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="group">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">DirecciÛn Fiscal</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">Direccin Fiscal</label>
                                             <div className="flex gap-3 text-sm text-retarder-gray-700 font-medium">
                                                 <MapPin className="text-retarder-red flex-shrink-0 mt-0.5" size={16} />
-                                                <p className="leading-relaxed">{selectedCliente.direccion_fiscal || 'Sin direcciÛn registrada'}</p>
+                                                <p className="leading-relaxed">{selectedCliente.direccion_fiscal || 'Sin direccin registrada'}</p>
                                             </div>
                                         </div>
 
                                         <div className="group">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">InformaciÛn de contacto</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">Informacin de contacto</label>
                                             <div className="space-y-3">
                                                 <div className="flex items-center gap-3 text-sm text-retarder-gray-700 font-medium">
                                                     <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
@@ -599,7 +599,7 @@ export default function ClientesPage() {
                                                         <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center">
                                                             <Phone className="text-emerald-600" size={12} />
                                                         </div>
-                                                        <span>{selectedCliente.telefono || 'TelÈfono 1 no registrado'}</span>
+                                                        <span>{selectedCliente.telefono || 'Telfono 1 no registrado'}</span>
                                                     </div>
                                                     {selectedCliente.telefono_2 && (
                                                         <div className="flex items-center gap-3 text-sm text-retarder-gray-700 font-medium">
@@ -661,7 +661,7 @@ export default function ClientesPage() {
                                         {(isAdmin || isVendedor || isAdministrativo) && (
                                             <button className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-white border border-dashed border-retarder-gray-300 rounded-xl text-xs font-bold text-retarder-gray-500 hover:border-retarder-red hover:text-retarder-red transition-all">
                                                 <Plus size={14} />
-                                                <span>AÒadir Sucursal</span>
+                                                <span>Aadir Sucursal</span>
                                             </button>
                                         )}
                                     </div>
@@ -750,7 +750,7 @@ export default function ClientesPage() {
                                             </div>
                                             <input
                                                 type="text"
-                                                placeholder="RFC de 12 o 13 car·c"
+                                                placeholder="RFC de 12 o 13 carc"
                                                 maxLength={13}
                                                 className="w-full bg-retarder-gray-50 border-2 border-transparent focus:border-retarder-red/20 focus:bg-white rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-retarder-black uppercase transition-all outline-none"
                                                 value={formData.rfc}
@@ -760,7 +760,7 @@ export default function ClientesPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Nombre Titular (DueÒo/Legal)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Nombre Titular (Dueo/Legal)</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <User size={18} />
@@ -810,7 +810,7 @@ export default function ClientesPage() {
 
                                     {/* Phones */}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">TelÈfono 1</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Telfono 1</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <Phone size={18} />
@@ -826,7 +826,7 @@ export default function ClientesPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">TelÈfono 2</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Telfono 2</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <Phone size={18} />
@@ -842,7 +842,7 @@ export default function ClientesPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">TelÈfono 3</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Telfono 3</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <Phone size={18} />
@@ -892,13 +892,13 @@ export default function ClientesPage() {
 
                                     {/* Tax Address */}
                                     <div className="md:col-span-2 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">DirecciÛn Fiscal</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Direccin Fiscal</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-4 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <MapPin size={18} />
                                             </div>
                                             <textarea
-                                                placeholder="Calle, n˙mero, colonia, CP, Ciudad y Estado"
+                                                placeholder="Calle, nmero, colonia, CP, Ciudad y Estado"
                                                 className="w-full bg-retarder-gray-50 border-2 border-transparent focus:border-retarder-red/20 focus:bg-white rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-retarder-black min-h-[100px] transition-all outline-none resize-none"
                                                 value={formData.direccion_fiscal}
                                                 onChange={e => setFormData({ ...formData, direccion_fiscal: e.target.value })}

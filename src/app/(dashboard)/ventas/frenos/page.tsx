@@ -56,7 +56,7 @@ interface ClienteCompact {
     nombre_sucursal?: string;
 }
 
-// ── Price Line Component ────────────────────────────
+//  Price Line Component 
 
 function PriceLine({
     label,
@@ -124,7 +124,7 @@ function PriceLine({
     );
 }
 
-// ── Model Card ──────────────────────────────────────
+//  Model Card 
 
 function ModelCard({
     freno,
@@ -188,7 +188,7 @@ function ModelCard({
                                 <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[8px] font-bold rounded">PENTAR</span>
                                 <span className="text-[10px] text-retarder-gray-500">{freno.pentar_serie}</span>
                             </div>
-                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.pentar_nm} NM · {formatUSD(freno.pentar_precio_usd)}</span>
+                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.pentar_nm} NM  {formatUSD(freno.pentar_precio_usd)}</span>
                         </div>
                     )}
                     {freno.frenelsa_precio_usd > 0 && (
@@ -197,7 +197,7 @@ function ModelCard({
                                 <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[8px] font-bold rounded">FRENELSA</span>
                                 <span className="text-[10px] text-retarder-gray-500">{freno.frenelsa_serie}</span>
                             </div>
-                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.frenelsa_nm} NM · {formatUSD(freno.frenelsa_precio_usd)}</span>
+                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.frenelsa_nm} NM  {formatUSD(freno.frenelsa_precio_usd)}</span>
                         </div>
                     )}
                     {freno.cofremex_precio_usd > 0 && (
@@ -206,20 +206,20 @@ function ModelCard({
                                 <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[8px] font-bold rounded">COFREMEX</span>
                                 <span className="text-[10px] text-retarder-gray-500">{freno.cofremex_serie}</span>
                             </div>
-                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.cofremex_nm} NM · {formatUSD(freno.cofremex_precio_usd)}</span>
+                            <span className="text-[10px] font-semibold text-retarder-gray-600">{freno.cofremex_nm} NM  {formatUSD(freno.cofremex_precio_usd)}</span>
                         </div>
                     )}
                     {/* Show series without price if available */}
                     {freno.frenelsa_serie && freno.frenelsa_precio_usd === 0 && (
                         <div className="flex items-center gap-1.5">
                             <span className="px-1.5 py-0.5 bg-blue-50 text-blue-400 text-[8px] font-bold rounded">FRENELSA</span>
-                            <span className="text-[10px] text-retarder-gray-400">{freno.frenelsa_serie} · {freno.frenelsa_nm} NM</span>
+                            <span className="text-[10px] text-retarder-gray-400">{freno.frenelsa_serie}  {freno.frenelsa_nm} NM</span>
                         </div>
                     )}
                     {freno.cofremex_serie && freno.cofremex_precio_usd === 0 && freno.pentar_precio_usd > 0 && (
                         <div className="flex items-center gap-1.5">
                             <span className="px-1.5 py-0.5 bg-amber-50 text-amber-400 text-[8px] font-bold rounded">COFREMEX</span>
-                            <span className="text-[10px] text-retarder-gray-400">{freno.cofremex_serie} · {freno.cofremex_nm} NM</span>
+                            <span className="text-[10px] text-retarder-gray-400">{freno.cofremex_serie}  {freno.cofremex_nm} NM</span>
                         </div>
                     )}
                 </div>
@@ -235,7 +235,7 @@ function ModelCard({
     );
 }
 
-// ── Main Page ───────────────────────────────────────
+//  Main Page 
 
 export default function CotizadorFrenosPage() {
     const router = useRouter();
@@ -264,10 +264,10 @@ export default function CotizadorFrenosPage() {
 
     // Observaciones y Notas editables (valores del machote)
     const [observaciones, setObservaciones] = useState(
-        '*NO INCLUYE MODIFICACIÓN DE CARDANES\n*NO INCLUYE SOLDADURAS NI OTRAS MODIFICACIONES QUE INTERFIERAN CON LA INSTALACIÓN DEL FRENO\n*SE REQUIERE EL PAGO TOTAL DEL EQUIPO POR ADELANTADO\n*GASTOS DE ENVÍO DEL FRENO POR PARTE DEL CLIENTE\n*UNA VEZ RECIBIDO EL PAGO, SE DA FECHA DE INSTALACIÓN'
+        '*NO INCLUYE MODIFICACIN DE CARDANES\n*NO INCLUYE SOLDADURAS NI OTRAS MODIFICACIONES QUE INTERFIERAN CON LA INSTALACIN DEL FRENO\n*SE REQUIERE EL PAGO TOTAL DEL EQUIPO POR ADELANTADO\n*GASTOS DE ENVO DEL FRENO POR PARTE DEL CLIENTE\n*UNA VEZ RECIBIDO EL PAGO, SE DA FECHA DE INSTALACIN'
     );
     const [notas, setNotas] = useState(
-        '*PRECIO SUJETO A CAMBIO SIN PREVIO AVISO\n*COTIZACIÓN VÁLIDA POR 8 DÍAS\n*EQUIPO NUEVO CON GARANTÍA DE UN AÑO'
+        '*PRECIO SUJETO A CAMBIO SIN PREVIO AVISO\n*COTIZACIN VLIDA POR 8 DAS\n*EQUIPO NUEVO CON GARANTA DE UN AO'
     );
 
     // Mano de Obra (por unidad manual)
@@ -319,14 +319,14 @@ export default function CotizadorFrenosPage() {
         return brands;
     }, [selectedModelo]);
 
-    // Compute breakdown with units multiplier — usa el precio correcto por marca seleccionada
+    // Compute breakdown with units multiplier  usa el precio correcto por marca seleccionada
     const breakdown = useMemo(() => {
         if (!selectedModelo) return null;
 
         const units = cantidadUnidades || 1;
         const totalTraslado = gastosTrasladoMXN * units;
 
-        // Precio del FRENO seg�n la marca seleccionada (no el campo legacy)
+        // Precio del FRENO segn la marca seleccionada (no el campo legacy)
         const precioFrenoUnitarioUSD = (() => {
             switch (selectedMarca) {
                 case 'pentar': return selectedModelo.pentar_precio_usd;
@@ -369,7 +369,7 @@ export default function CotizadorFrenosPage() {
             let osNumero = `OS-LOCAL-${Math.floor(Math.random() * 1000)}`;
             let cotId = "local-cot-" + Math.random();
 
-            // Intentar guardar en Supabase (no bloquea la impresi�n si falla)
+            // Intentar guardar en Supabase (no bloquea la impresin si falla)
             try {
                 // Fetch next numbers
                 const { count: cotCount, error: countErr1 } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
@@ -388,7 +388,7 @@ export default function CotizadorFrenosPage() {
 
                 const empresaUUID = empresaData?.[0]?.id || null;
 
-                // 1. Crear Cotizaci�n
+                // 1. Crear Cotizacin
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
                     .insert({
@@ -414,7 +414,7 @@ export default function CotizadorFrenosPage() {
                     cotId = cotData.id;
                     setSavedFolio(cotNumero);
 
-                    // Crear Orden de Servicio autom�ticamente
+                    // Crear Orden de Servicio automticamente
                     await supabase.from('ordenes_servicio').insert({
                         empresa_id:    empresaUUID,
                         empresa:       cliente?.nombre_comercial || 'Sin empresa',
@@ -426,7 +426,7 @@ export default function CotizadorFrenosPage() {
                         tipo:          'frenos',
                         prioridad:     'media',
                         tecnico:       '',
-                        descripcion:   `Cotizaci�n de frenos ${cotData.folio}`,
+                        descripcion:   `Cotizacin de frenos ${cotData.folio}`,
                         total:         breakdown.total.mxn,
                         subtotal:      breakdown.total.mxn / 1.16,
                         iva:           breakdown.total.mxn - (breakdown.total.mxn / 1.16),
@@ -453,7 +453,7 @@ export default function CotizadorFrenosPage() {
                 }
             }
         } catch (error: any) {
-            toast.error(`Error al generar la cotizaci�n: ${error.message || 'Error desconocido'}`);
+            toast.error(`Error al generar la cotizacin: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsCreating(false);
         }
@@ -461,7 +461,7 @@ export default function CotizadorFrenosPage() {
 
     return (
         <div className="space-y-6">
-            {/* ── Header ─────────────────────────────── */}
+            {/*  Header  */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black flex items-center gap-2">
@@ -469,7 +469,7 @@ export default function CotizadorFrenosPage() {
                         Cotizador de Frenos
                     </h2>
                     <p className="text-xs text-retarder-gray-500 mt-1">
-                        Selecciona un modelo para ver el desglose de precios con conversi�n USD → MXN en tiempo real
+                        Selecciona un modelo para ver el desglose de precios con conversin USD  MXN en tiempo real
                     </p>
                 </div>
 
@@ -486,7 +486,7 @@ export default function CotizadorFrenosPage() {
                             </div>
                             <div>
                                 <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Tipo de Cambio</p>
-                                <p className="text-[10px] text-retarder-gray-400">USD → MXN</p>
+                                <p className="text-[10px] text-retarder-gray-400">USD  MXN</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-1">
@@ -547,7 +547,7 @@ export default function CotizadorFrenosPage() {
                         <div className="space-y-2">
                             <input
                                 type="text"
-                                placeholder="🔍 Buscar cliente..."
+                                placeholder=" Buscar cliente..."
                                 value={clientSearch}
                                 onChange={(e) => setClientSearch(e.target.value)}
                                 className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-retarder-red transition-all"
@@ -577,7 +577,7 @@ export default function CotizadorFrenosPage() {
                             </div>
                             <div>
                                 <p className="text-[9px] font-semibold uppercase tracking-wider text-retarder-gray-400">Unidades</p>
-                                <p className="text-[10px] text-retarder-gray-400">Veh�culos a instalar</p>
+                                <p className="text-[10px] text-retarder-gray-400">Vehculos a instalar</p>
                             </div>
                         </div>
                         <input
@@ -624,7 +624,7 @@ export default function CotizadorFrenosPage() {
                         </div>
                     </motion.div>
 
-                    {/* Mano de Obra — Manual */}
+                    {/* Mano de Obra  Manual */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -658,7 +658,7 @@ export default function CotizadorFrenosPage() {
                     </motion.div>
                 </div>
             </div>
-            {/* ── Model Grid ─────────────────────────── */}
+            {/*  Model Grid  */}
             <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-3">
                     Selecciona un modelo de freno
@@ -684,7 +684,7 @@ export default function CotizadorFrenosPage() {
                 </div>
             </div>
 
-            {/* ── Brand Selector ────────────────────── */}
+            {/*  Brand Selector  */}
             <AnimatePresence>
                 {selectedModelo && availableBrands.length > 0 && (
                     <motion.div
@@ -694,7 +694,7 @@ export default function CotizadorFrenosPage() {
                         className="bg-white rounded-2xl border border-retarder-gray-200 shadow-sm p-5"
                     >
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-3">
-                            Selecciona la marca a cotizar — {selectedModelo.modelo}
+                            Selecciona la marca a cotizar  {selectedModelo.modelo}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {availableBrands.map((brand) => (
@@ -723,14 +723,14 @@ export default function CotizadorFrenosPage() {
                                         {brand.serie}
                                     </span>
                                     <span className="text-[10px] text-retarder-gray-400">
-                                        {brand.nm} NM · {formatUSD(brand.precio)} USD
+                                        {brand.nm} NM  {formatUSD(brand.precio)} USD
                                     </span>
                                 </button>
                             ))}
                         </div>
                         {availableBrands.length > 0 && (
                             <p className="text-[10px] text-retarder-gray-400 mt-3 text-center">
-                                Cotizando: <span className="font-bold text-retarder-red">{marcaInfo.nombre} {marcaInfo.serie}</span> ({marcaInfo.nm} NM) — {formatUSD(precioFrenoUSD)} USD
+                                Cotizando: <span className="font-bold text-retarder-red">{marcaInfo.nombre} {marcaInfo.serie}</span> ({marcaInfo.nm} NM)  {formatUSD(precioFrenoUSD)} USD
                             </p>
                         )}
                     </motion.div>
@@ -758,7 +758,7 @@ export default function CotizadorFrenosPage() {
                                         <CheckCircle2 size={24} />
                                     </div>
                                     <div>
-                                        <p className="text-green-800 font-black text-sm uppercase">¡Cotizaci�n Guardada Exitosamente!</p>
+                                        <p className="text-green-800 font-black text-sm uppercase">Cotizacin Guardada Exitosamente!</p>
                                         <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider">Folio: {savedFolio}. Redirigiendo al Pipeline en 5s...</p>
                                     </div>
                                 </div>
@@ -791,13 +791,13 @@ export default function CotizadorFrenosPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-6 sm:px-8 sm:py-8 border-b-2 border-retarder-gray-100 font-sans bg-white gap-6">
                                 <div className="flex items-center gap-6">
                                     <div className="bg-white p-3 border border-retarder-gray-100 rounded-xl shadow-sm">
-                                        <img src="/logo-retarder.png" alt="Retarder M�xico" className="h-24 w-auto object-contain" />
+                                        <img src="/logo-retarder.png" alt="Retarder Mxico" className="h-24 w-auto object-contain" />
                                     </div>
                                     <div className="h-14 w-[1px] bg-retarder-gray-200 mx-1" />
                                     <div className="space-y-0.5">
                                         <div className="bg-[#FFEB3B] px-3 py-1 mb-1 inline-block border-b-2 border-black/10">
                                             <h1 className="text-2xl font-black text-retarder-black leading-none tracking-tighter uppercase whitespace-nowrap">
-                                                RETARDER MÉXICO
+                                                RETARDER MXICO
                                             </h1>
                                         </div>
                                         <p className="text-[10px] text-retarder-gray-500 font-bold uppercase tracking-[0.2em]">Especialistas en Frenos Auxiliares</p>
@@ -805,7 +805,7 @@ export default function CotizadorFrenosPage() {
                                 </div>
                                 <div className="text-right flex flex-col justify-center">
                                     <div className="bg-retarder-red text-white px-4 py-1.5 rounded-lg mb-2 shadow-sm print:bg-white print:border-2 print:border-black">
-                                        <h2 className="text-sm font-black tracking-widest uppercase print:!text-black">Cotizaci�n Oficial</h2>
+                                        <h2 className="text-sm font-black tracking-widest uppercase print:!text-black">Cotizacin Oficial</h2>
                                     </div>
                                     <p className="text-[10px] text-retarder-gray-400 font-medium">Folio de Referencia:</p>
                                     <p className="text-[11px] text-retarder-black font-bold font-mono">Ref: {new Date().toISOString().slice(0, 10).replace(/-/g, '')}-FRENOS</p>
@@ -847,7 +847,7 @@ export default function CotizadorFrenosPage() {
                                         <h3 className="text-white font-bold text-xl mt-1 print:!text-black">
                                             {marcaInfo.nombre} {marcaInfo.serie} <span className="text-white/40 text-sm print:!text-black">({selectedModelo.modelo})</span>
                                         </h3>
-                                        <p className="text-white/50 text-xs mt-1 print:!text-black">Para: {clientes.find(c => c.id === selectedClienteId)?.nombre_comercial || 'Cliente no seleccionado'} · {marcaInfo.nm} NM · {selectedModelo.aplicacion}</p>
+                                        <p className="text-white/50 text-xs mt-1 print:!text-black">Para: {clientes.find(c => c.id === selectedClienteId)?.nombre_comercial || 'Cliente no seleccionado'}  {marcaInfo.nm} NM  {selectedModelo.aplicacion}</p>
                                     </div>
                                     <div className="text-right hidden sm:block">
                                         <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider print:!text-black">T.C. Extranjero</p>
@@ -873,14 +873,14 @@ export default function CotizadorFrenosPage() {
                                     delay={0.15}
                                 />
                                 <PriceLine
-                                    label="Soporter�a"
+                                    label="Soportera"
                                     icon={<Settings2 size={16} className="text-amber-500" />}
                                     usd={breakdown.soporteria.usd}
                                     mxn={breakdown.soporteria.mxn}
                                     delay={0.2}
                                 />
                                 <PriceLine
-                                    label="Material El�ctrico"
+                                    label="Material Elctrico"
                                     icon={<Zap size={16} className="text-yellow-500" />}
                                     usd={breakdown.material.usd}
                                     mxn={breakdown.material.mxn}
@@ -888,7 +888,7 @@ export default function CotizadorFrenosPage() {
                                 />
                                 {gastosTrasladoMXN > 0 && (
                                     <PriceLine
-                                        label={`Gastos de Traslado / Vi�ticos (${cantidadUnidades} u.)`}
+                                        label={`Gastos de Traslado / Viticos (${cantidadUnidades} u.)`}
                                         icon={<Package size={16} className="text-purple-500" />}
                                         usd={breakdown.traslado.mxn / tipoCambio}
                                         mxn={breakdown.traslado.mxn}
@@ -897,7 +897,7 @@ export default function CotizadorFrenosPage() {
                                 )}
                                 {manoObraInstalacionMXN > 0 && (
                                     <PriceLine
-                                        label={`Mano de Obra Instalaci�n`}
+                                        label={`Mano de Obra Instalacin`}
                                         icon={<Wrench size={16} className="text-orange-500" />}
                                         usd={breakdown.manoObra.mxn / tipoCambio}
                                         mxn={breakdown.manoObra.mxn}
@@ -926,7 +926,7 @@ export default function CotizadorFrenosPage() {
                                 </div>
                             </div>
 
-                            {/* ── Observaciones y Notas (editables + se imprimen) ── */}
+                            {/*  Observaciones y Notas (editables + se imprimen)  */}
                             <div className="px-6 py-5 border-t border-retarder-gray-200">
                                 {/* OBSERVACIONES */}
                                 <div className="mb-4">
@@ -936,7 +936,7 @@ export default function CotizadorFrenosPage() {
                                         onChange={(e) => setObservaciones(e.target.value)}
                                         rows={5}
                                         className="w-full text-xs text-retarder-gray-700 border border-retarder-gray-200 rounded-lg p-3 outline-none focus:border-retarder-red resize-y leading-relaxed print:border-none print:p-0 print:resize-none"
-                                        placeholder="Escribe las observaciones aqu�..."
+                                        placeholder="Escribe las observaciones aqu..."
                                     />
                                 </div>
 
@@ -948,11 +948,11 @@ export default function CotizadorFrenosPage() {
                                         onChange={(e) => setNotas(e.target.value)}
                                         rows={3}
                                         className="w-full text-xs text-retarder-red font-bold border border-retarder-gray-200 rounded-lg p-3 outline-none focus:border-retarder-red resize-y leading-relaxed print:border-none print:p-0 print:resize-none"
-                                        placeholder="Escribe las notas aqu�..."
+                                        placeholder="Escribe las notas aqu..."
                                     />
                                 </div>
 
-                                {/* Firma / Pie de P�gina */}
+                                {/* Firma / Pie de Pgina */}
                                 <div className="mt-8 pt-6 border-t border-retarder-gray-100 flex justify-between items-end">
                                     <div className="space-y-4 max-w-[50%]">
                                         <div className="space-y-1">
@@ -960,7 +960,7 @@ export default function CotizadorFrenosPage() {
                                             <img src="/logo-pentar.png" alt="Pentar Kloft" className="h-14 w-auto object-contain" />
                                         </div>
                                         <p className="text-[9px] text-retarder-gray-500 leading-tight">
-                                            Pentar Kloft Retarder es una marca registrada especializada en sistemas de frenado auxiliares electromagn�ticos de alta eficiencia.
+                                            Pentar Kloft Retarder es una marca registrada especializada en sistemas de frenado auxiliares electromagnticos de alta eficiencia.
                                         </p>
                                     </div>
                                     <div className="text-right space-y-6">
@@ -969,8 +969,8 @@ export default function CotizadorFrenosPage() {
                                             <p className="text-sm font-black text-retarder-black uppercase">
                                                 {formatUserName(user?.fullName) || 'CRISTINA VELASCO'}
                                             </p>
-                                            <p className="text-[10px] font-bold text-retarder-red uppercase">Área de Ventas</p>
-                                            <p className="text-[10px] font-medium text-retarder-gray-600 italic">Retarder M�xico S.A. de C.V.</p>
+                                            <p className="text-[10px] font-bold text-retarder-red uppercase">rea de Ventas</p>
+                                            <p className="text-[10px] font-medium text-retarder-gray-600 italic">Retarder Mxico S.A. de C.V.</p>
                                         </div>
                                         <div className="space-y-1 text-[9px] text-retarder-gray-400 font-medium">
                                             <p>Ventas: 55-7372-1633</p>
@@ -981,7 +981,7 @@ export default function CotizadorFrenosPage() {
                                 </div>
                                 <div className="mt-8 text-center border-t border-retarder-gray-50 pt-4">
                                     <p className="text-[9px] text-retarder-gray-300 font-medium uppercase tracking-[0.3em]">
-                                        Retarder M�xico © {new Date().getFullYear()} · Todos los derechos reservados
+                                        Retarder Mxico  {new Date().getFullYear()}  Todos los derechos reservados
                                     </p>
                                 </div>
                             </div>
@@ -1004,7 +1004,7 @@ export default function CotizadorFrenosPage() {
                                             className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all shadow-md bg-retarder-red text-white hover:bg-retarder-red-700 shadow-retarder-red/20"
                                         >
                                             <Printer size={16} />
-                                            IMPRIMIR COTIZACIÓN PDF
+                                            IMPRIMIR COTIZACIN PDF
                                         </button>
                                     </>
                                 ) : (
@@ -1017,7 +1017,7 @@ export default function CotizadorFrenosPage() {
                                                 onChange={e => setAutoPrint(e.target.checked)}
                                                 className="w-4 h-4 text-retarder-red rounded focus:ring-retarder-red border-retarder-gray-300"
                                             />
-                                            <label htmlFor="autoPrint" className="text-xs font-bold text-retarder-gray-500 cursor-pointer">IMPRIMIR AUTOMÁTICAMENTE</label>
+                                            <label htmlFor="autoPrint" className="text-xs font-bold text-retarder-gray-500 cursor-pointer">IMPRIMIR AUTOMTICAMENTE</label>
                                         </div>
                                         <button
                                             onClick={handleFinalize}

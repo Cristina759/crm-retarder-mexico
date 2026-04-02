@@ -37,7 +37,7 @@ import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
-// ── Types ───────────────────────────────────────────
+//  Types 
 
 interface ClienteCompact {
     id: string;
@@ -54,14 +54,14 @@ interface ClienteCompact {
     nombre_sucursal?: string;
 }
 
-// ── Cart Item ───────────────────────────────────────
+//  Cart Item 
 
 interface CartItem {
     refaccion: Refaccion;
     cantidad: number;
 }
 
-// ── Category Colors ─────────────────────────────────
+//  Category Colors 
 
 const CATEGORY_COLORS: Record<string, string> = {
     'CARDANES': 'bg-blue-100 text-blue-700',
@@ -75,7 +75,7 @@ const CATEGORY_COLORS: Record<string, string> = {
     'TORNILLO': 'bg-gray-100 text-gray-700',
 };
 
-// ── Price Line Component ────────────────────────────
+//  Price Line Component 
 
 function PriceLine({
     label,
@@ -124,7 +124,7 @@ function PriceLine({
     );
 }
 
-// ── Page Component ──────────────────────────────────
+//  Page Component 
 
 export default function CotizadorRefaccionesPage() {
     const router = useRouter();
@@ -149,10 +149,10 @@ export default function CotizadorRefaccionesPage() {
 
     // Editable Observations and Notes
     const [observaciones, setObservaciones] = useState(
-        '*ESTOS PRECIOS NO INCLUYEN INSTALACIÓN\n*TIEMPO DE ENTREGA: DE 3 A 5 DÍAS HÁBILES SEGÚN EXISTENCIA\n*ENVÍO POR CUENTA DEL CLIENTE\n*UNA VEZ REALIZADO EL PAGO SE GENERA LA GUÍA DE ENVÍO'
+        '*ESTOS PRECIOS NO INCLUYEN INSTALACIN\n*TIEMPO DE ENTREGA: DE 3 A 5 DAS HBILES SEGN EXISTENCIA\n*ENVO POR CUENTA DEL CLIENTE\n*UNA VEZ REALIZADO EL PAGO SE GENERA LA GUA DE ENVO'
     );
     const [notas, setNotas] = useState(
-        '*COTIZACIÓN VÁLIDA POR 15 DÍAS\n*EQUIPO NUEVO CON GARANTÍA CONTRA DEFECTOS DE FÁBRICA'
+        '*COTIZACIN VLIDA POR 15 DAS\n*EQUIPO NUEVO CON GARANTA CONTRA DEFECTOS DE FBRICA'
     );
 
     const [refacciones, setRefacciones] = useState<any[]>([]);
@@ -160,7 +160,7 @@ export default function CotizadorRefaccionesPage() {
 
     const ITEMS_PER_PAGE = 50;
 
-    // Carga de Clientes desde lista est�tica
+    // Carga de Clientes desde lista esttica
     const fetchClientes = useCallback(() => {
         setClientes(CLIENTES_REALES as any[]);
     }, []);
@@ -304,7 +304,7 @@ export default function CotizadorRefaccionesPage() {
                     cotNumero = `COT-${String(nextCotIdx).padStart(4, '0')}`;
                 }
 
-                // 1. Crear Cotizaci�n
+                // 1. Crear Cotizacin
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
                     .insert({
@@ -337,7 +337,7 @@ export default function CotizadorRefaccionesPage() {
                         prioridad: 'media',
                         vendedor: sellerName,
                         tecnico: '',
-                        descripcion: `Venta de refacciones. Cotizaci�n: ${cotNumero}. Items: ${cart.map(i => `${i.refaccion.codigo} (${i.cantidad})`).join(', ')}`,
+                        descripcion: `Venta de refacciones. Cotizacin: ${cotNumero}. Items: ${cart.map(i => `${i.refaccion.codigo} (${i.cantidad})`).join(', ')}`,
                         monto: total,
                         fecha_creado: fechaActual,
                         cotizacion_id: cotId
@@ -357,7 +357,7 @@ export default function CotizadorRefaccionesPage() {
                 }, 500);
             }
         } catch (error: any) {
-            toast.error(`Error al generar la cotizaci�n: ${error.message || 'Error desconocido'}`);
+            toast.error(`Error al generar la cotizacin: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsCreating(false);
         }
@@ -367,7 +367,7 @@ export default function CotizadorRefaccionesPage() {
 
     return (
         <div className="space-y-4">
-            {/* ── Header ───────────────────────────── */}
+            {/*  Header  */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 print:hidden">
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black flex items-center gap-2">
@@ -375,7 +375,7 @@ export default function CotizadorRefaccionesPage() {
                         Cotizador de Refacciones
                     </h2>
                     <p className="text-xs text-retarder-gray-500">
-                        {refacciones.length} productos · {REFACCION_CATEGORIAS.length} categor�as
+                        {refacciones.length} productos  {REFACCION_CATEGORIAS.length} categoras
                     </p>
                 </div>
 
@@ -423,7 +423,7 @@ export default function CotizadorRefaccionesPage() {
                         <Search size={14} className="text-retarder-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar c�digo, descripci�n, modelo..."
+                            placeholder="Buscar cdigo, descripcin, modelo..."
                             value={searchQuery}
                             onChange={e => {
                                 setSearchQuery(e.target.value);
@@ -455,7 +455,7 @@ export default function CotizadorRefaccionesPage() {
                         )}
                     >
                         <ShoppingCart size={16} />
-                        <span className="hidden sm:inline">Cotizaci�n</span>
+                        <span className="hidden sm:inline">Cotizacin</span>
                         {cartCount > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 bg-white text-retarder-red text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-retarder-red">
                                 {cartCount}
@@ -465,7 +465,7 @@ export default function CotizadorRefaccionesPage() {
                 </div>
             </div>
 
-            {/* ── Category Filters ────────────────── */}
+            {/*  Category Filters  */}
             <div className="flex gap-2 overflow-x-auto pb-1 print:hidden">
                 <button
                     onClick={() => {
@@ -500,10 +500,10 @@ export default function CotizadorRefaccionesPage() {
                 ))}
             </div>
 
-            {/* ── Results info ────────────────────── */}
+            {/*  Results info  */}
             <div className="flex items-center justify-between print:hidden">
                 <p className="text-xs text-retarder-gray-400">
-                    {filtered.length} resultado{filtered.length !== 1 ? 's' : ''} · P�gina {currentPage} de {totalPages || 1}
+                    {filtered.length} resultado{filtered.length !== 1 ? 's' : ''}  Pgina {currentPage} de {totalPages || 1}
                 </p>
                 {filtered.length > ITEMS_PER_PAGE && (
                     <div className="flex items-center gap-1">
@@ -512,21 +512,21 @@ export default function CotizadorRefaccionesPage() {
                             disabled={currentPage <= 1}
                             className="px-2 py-1 text-xs rounded border border-retarder-gray-200 hover:bg-retarder-gray-50 disabled:opacity-30"
                         >
-                            ← Anterior
+                             Anterior
                         </button>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage >= totalPages}
                             className="px-2 py-1 text-xs rounded border border-retarder-gray-200 hover:bg-retarder-gray-50 disabled:opacity-30"
                         >
-                            Siguiente →
+                            Siguiente 
                         </button>
                     </div>
                 )}
             </div>
 
             <div className="flex gap-4">
-                {/* ── Product Table ───────────────── */}
+                {/*  Product Table  */}
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -539,9 +539,9 @@ export default function CotizadorRefaccionesPage() {
                         <table className="w-full text-sm">
                             <thead className="bg-retarder-gray-50">
                                 <tr className="border-b border-retarder-gray-200">
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">C�digo</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Descripci�n</th>
-                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Categor�a</th>
+                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Cdigo</th>
+                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Descripcin</th>
+                                    <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Categora</th>
                                     <th className="text-left py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Modelo</th>
                                     <th className="text-right py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Precio</th>
                                     <th className="text-center py-3 px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase w-20"></th>
@@ -567,7 +567,7 @@ export default function CotizadorRefaccionesPage() {
                                             </span>
                                         </td>
                                         <td className="py-2.5 px-4 text-[10px] text-retarder-gray-400 hidden lg:table-cell max-w-[200px] truncate">
-                                            {ref.modelo_freno || '—'}
+                                            {ref.modelo_freno || ''}
                                         </td>
                                         <td className="py-2.5 px-4 text-right font-bold text-retarder-gray-800 whitespace-nowrap">{formatMXN(ref.precio_venta)}</td>
                                         <td className="py-2.5 px-4 text-center">
@@ -579,7 +579,7 @@ export default function CotizadorRefaccionesPage() {
                                                         ? 'bg-retarder-red/10 text-retarder-red'
                                                         : 'hover:bg-retarder-gray-100 text-retarder-gray-400 hover:text-retarder-red'
                                                 )}
-                                                title="Agregar a cotizaci�n"
+                                                title="Agregar a cotizacin"
                                             >
                                                 <Plus size={14} />
                                             </button>
@@ -591,7 +591,7 @@ export default function CotizadorRefaccionesPage() {
                     </div>
                 </motion.div>
 
-                {/* ── Cart Sidebar (UI Only) ────────── */}
+                {/*  Cart Sidebar (UI Only)  */}
                 <AnimatePresence>
                     {showCart && (
                         <motion.div
@@ -609,8 +609,8 @@ export default function CotizadorRefaccionesPage() {
                             <div className="bg-white rounded-xl border border-retarder-gray-200 shadow-lg overflow-hidden sticky top-4 max-h-[calc(100vh-2rem)] flex flex-col">
                                 <div className="bg-gradient-to-r from-retarder-black to-retarder-gray-800 px-4 py-3 flex items-center justify-between">
                                     <div>
-                                        <p className="text-white font-bold text-sm">Cotizaci�n</p>
-                                        <p className="text-white/50 text-[10px]">{cart.length} productos · {cartCount} unidades</p>
+                                        <p className="text-white font-bold text-sm">Cotizacin</p>
+                                        <p className="text-white/50 text-[10px]">{cart.length} productos  {cartCount} unidades</p>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <button onClick={clearCart} className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white" title="Vaciar"><Trash2 size={14} /></button>
@@ -686,12 +686,12 @@ export default function CotizadorRefaccionesPage() {
                                                 value={observaciones}
                                                 onChange={e => setObservaciones(e.target.value)}
                                                 className="w-full bg-white border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] outline-none focus:border-retarder-red min-h-[60px] resize-none"
-                                                placeholder="Notas internas o t�cnicas..."
+                                                placeholder="Notas internas o tcnicas..."
                                             />
                                         </div>
 
                                         <div className="flex flex-col gap-1.5 pb-2">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Notas Vigencia/Garant�a</label>
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-retarder-gray-400 px-1">Notas Vigencia/Garanta</label>
                                             <textarea
                                                 value={notas}
                                                 onChange={e => setNotas(e.target.value)}
@@ -720,7 +720,7 @@ export default function CotizadorRefaccionesPage() {
                                                     <CheckCircle2 size={24} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-green-800 font-black text-sm uppercase">¡Cotizaci�n Guardada Exitosamente!</p>
+                                                    <p className="text-green-800 font-black text-sm uppercase">Cotizacin Guardada Exitosamente!</p>
                                                     <p className="text-green-600 text-[10px] font-bold uppercase tracking-wider">Folio: {savedFolio}. Redirigiendo al Pipeline en 5s...</p>
                                                 </div>
                                             </div>
@@ -755,7 +755,7 @@ export default function CotizadorRefaccionesPage() {
                                                         onChange={e => setAutoPrint(e.target.checked)}
                                                         className="w-4 h-4 text-retarder-red rounded focus:ring-retarder-red border-retarder-gray-300"
                                                     />
-                                                    <label htmlFor="autoPrintRef" className="text-[10px] font-bold text-retarder-gray-400 cursor-pointer uppercase tracking-tight">Imprimir autom�ticamente al guardar</label>
+                                                    <label htmlFor="autoPrintRef" className="text-[10px] font-bold text-retarder-gray-400 cursor-pointer uppercase tracking-tight">Imprimir automticamente al guardar</label>
                                                 </div>
                                                 <button
                                                     onClick={handleFinalize}
@@ -778,17 +778,17 @@ export default function CotizadorRefaccionesPage() {
                 </AnimatePresence>
             </div>
 
-            {/* ── PROFESSIONAL PRINT AREA ──────────────── */}
+            {/*  PROFESSIONAL PRINT AREA  */}
             <AnimatePresence>
                 {cart.length > 0 && (
                     <div className="print-area hidden print:block bg-white p-0">
                         <div className="max-w-[800px] mx-auto bg-white overflow-hidden">
                             {/* PDF Header */}
                             <div className="flex items-center justify-between px-8 py-6 border-b-4 border-retarder-red">
-                                <div><img src="/logo-retarder.png" alt="Retarder M�xico Logo" className="h-24 object-contain" /></div>
+                                <div><img src="/logo-retarder.png" alt="Retarder Mxico Logo" className="h-24 object-contain" /></div>
                                 <div className="text-right">
-                                    <h2 className="text-xl font-black text-retarder-black tracking-tight uppercase">RETARDER MÉXICO</h2>
-                                    <p className="text-xs text-retarder-gray-500 font-medium">Cotizaci�n de Refacciones</p>
+                                    <h2 className="text-xl font-black text-retarder-black tracking-tight uppercase">RETARDER MXICO</h2>
+                                    <p className="text-xs text-retarder-gray-500 font-medium">Cotizacin de Refacciones</p>
                                     <p className="text-[10px] text-retarder-gray-400 mt-1">Fecha: {new Date().toLocaleDateString('es-MX')}</p>
                                 </div>
                             </div>
@@ -845,7 +845,7 @@ export default function CotizadorRefaccionesPage() {
                                         {traslado > 0 && (
                                             <tr className="bg-retarder-gray-50/30">
                                                 <td className="py-2 px-3 font-bold text-retarder-red">SERV-TRAS</td>
-                                                <td className="py-2 px-3 uppercase font-bold">Gastos de Traslado / Desplazamiento T�cnico</td>
+                                                <td className="py-2 px-3 uppercase font-bold">Gastos de Traslado / Desplazamiento Tcnico</td>
                                                 <td className="py-2 px-3 text-center">1</td>
                                                 <td className="py-2 px-3 text-right">{formatMXN(traslado)}</td>
                                                 <td className="py-2 px-3 text-right font-bold">{formatMXN(traslado)}</td>

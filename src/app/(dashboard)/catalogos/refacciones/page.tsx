@@ -127,7 +127,7 @@ export default function RefaccionesPage() {
 
     const handleSave = async () => {
         if (!formData.nombre || !formData.codigo) {
-            toast.error('Nombre y Código son obligatorios');
+            toast.error('Nombre y Cdigo son obligatorios');
             return;
         }
 
@@ -170,7 +170,7 @@ export default function RefaccionesPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!await confirmModal('Â¿Estás seguro de eliminar este artículo?')) return;
+        if (!await confirmModal('Ests seguro de eliminar este artculo?')) return;
         try {
             const { error } = await supabase
                 .from('catalogo_refacciones')
@@ -189,10 +189,10 @@ export default function RefaccionesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-retarder-black tracking-tight uppercase italic">
-                        Catálogo de <span className="text-retarder-red">Herramientas</span>
+                        Catlogo de <span className="text-retarder-red">Herramientas</span>
                     </h1>
                     <p className="text-sm text-retarder-gray-500 mt-1">
-                        Gestión de precios y existencias técnico-comerciales ({refacciones.length} piezas en sistema)
+                        Gestin de precios y existencias tcnico-comerciales ({refacciones.length} piezas en sistema)
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -217,7 +217,7 @@ export default function RefaccionesPage() {
                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors" />
                     <input
                         type="text"
-                        placeholder="Buscar por nombre, código o modelo de freno..."
+                        placeholder="Buscar por nombre, cdigo o modelo de freno..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         className="w-full bg-white border border-retarder-gray-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:ring-4 focus:ring-retarder-red/5 focus:border-retarder-red/20 outline-none transition-all"
@@ -258,9 +258,9 @@ export default function RefaccionesPage() {
                     <table className="w-full text-sm border-collapse">
                         <thead>
                             <tr className="bg-retarder-gray-50/50 border-b border-retarder-gray-100">
-                                <th className="text-left py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest">Herramienta / Refacción</th>
-                                <th className="text-left py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest hidden md:table-cell">Código</th>
-                                <th className="text-left py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest">Categoría</th>
+                                <th className="text-left py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest">Herramienta / Refaccin</th>
+                                <th className="text-left py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest hidden md:table-cell">Cdigo</th>
+                                <th className="text-left py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest">Categora</th>
                                 <th className="text-right py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest">P. Venta (MXN)</th>
                                 {isAdmin && <th className="text-center py-5 px-6 text-[10px] font-black text-retarder-gray-400 uppercase tracking-widest">Acciones</th>}
                             </tr>
@@ -270,14 +270,14 @@ export default function RefaccionesPage() {
                                 <tr>
                                     <td colSpan={5} className="py-20 text-center">
                                         <Loader2 size={40} className="text-retarder-red animate-spin mx-auto mb-4" />
-                                        <p className="text-retarder-gray-400 font-bold uppercase tracking-widest text-xs">Cargando catálogo...</p>
+                                        <p className="text-retarder-gray-400 font-bold uppercase tracking-widest text-xs">Cargando catlogo...</p>
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
                                     <td colSpan={5} className="py-20 text-center">
                                         <Package size={48} className="text-retarder-gray-200 mx-auto mb-4" />
-                                        <p className="text-retarder-gray-400 font-bold uppercase tracking-widest text-xs">No se encontraron artículos</p>
+                                        <p className="text-retarder-gray-400 font-bold uppercase tracking-widest text-xs">No se encontraron artculos</p>
                                     </td>
                                 </tr>
                             ) : (
@@ -355,7 +355,7 @@ export default function RefaccionesPage() {
                                         <h3 className="text-2xl font-black text-white tracking-tight italic uppercase">
                                             {isEditMode ? 'EDITAR' : 'NUEVA'} <span className="text-white/70">HERRAMIENTA</span>
                                         </h3>
-                                        <p className="text-white/60 text-xs font-medium mt-1">Actualiza precios y especificaciones técnicas.</p>
+                                        <p className="text-white/60 text-xs font-medium mt-1">Actualiza precios y especificaciones tcnicas.</p>
                                     </div>
                                     <button onClick={handleCloseForm} className="p-3 rounded-2xl bg-white/10 text-white hover:bg-white/20 transition-all"><X size={20} /></button>
                                 </div>
@@ -373,7 +373,7 @@ export default function RefaccionesPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Código / No. Parte</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Cdigo / No. Parte</label>
                                         <input
                                             type="text"
                                             value={formData.codigo}
@@ -382,7 +382,7 @@ export default function RefaccionesPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Categoría</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Categora</label>
                                         <select
                                             value={formData.categoria}
                                             onChange={e => setFormData({ ...formData, categoria: e.target.value })}
@@ -411,7 +411,7 @@ export default function RefaccionesPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-red px-1">Precio Venta Público (MXN)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-red px-1">Precio Venta Pblico (MXN)</label>
                                         <input
                                             type="number"
                                             value={formData.precio_venta}

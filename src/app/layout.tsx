@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CRM RETARDER MÃ‰XICO â€” Sistema de Gestión de Servicios',
-  description: 'CRM operativo para gestión de servicios técnicos, frenos retarder, refacciones y mantenimiento industrial. Distribuidor Autorizado Pentar Kloft.',
-  keywords: 'CRM, retarder, frenos, servicios técnicos, camiones, carga, Pentar Kloft',
+  title: 'CRM RETARDER MXICO  Sistema de Gestin de Servicios',
+  description: 'CRM operativo para gestin de servicios tcnicos, frenos retarder, refacciones y mantenimiento industrial. Distribuidor Autorizado Pentar Kloft.',
+  keywords: 'CRM, retarder, frenos, servicios tcnicos, camiones, carga, Pentar Kloft',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

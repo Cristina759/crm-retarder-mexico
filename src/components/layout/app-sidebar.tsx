@@ -48,7 +48,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Ventas',
         items: [
-            // { label: 'Nueva Cotización', href: '/ventas/nueva', icon: <ShoppingCart size={20} />, roles: ['admin', 'vendedor'] }, // TODO: ruta pendiente de implementar
+            // { label: 'Nueva Cotizacin', href: '/ventas/nueva', icon: <ShoppingCart size={20} />, roles: ['admin', 'vendedor'] }, // TODO: ruta pendiente de implementar
             { label: 'Cotizador de Frenos', href: '/ventas/frenos', icon: <Package size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Cotizador de Refacciones', href: '/ventas/refacciones', icon: <Wrench size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Cotizador de Servicios', href: '/ventas/servicios', icon: <ClipboardCheck size={20} />, roles: ['admin', 'vendedor'] },
@@ -58,13 +58,13 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Operaciones',
         items: [
-            { label: 'Ã“rdenes de Servicio', href: '/ordenes', icon: <OrdenIcon size={20} />, roles: ['admin', 'vendedor', 'tecnico', 'cliente'] },
+            { label: 'rdenes de Servicio', href: '/ordenes', icon: <OrdenIcon size={20} />, roles: ['admin', 'vendedor', 'tecnico', 'cliente'] },
             { label: 'Clientes', href: '/clientes', icon: <Building2 size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Inventario', href: '/inventario', icon: <Warehouse size={20} />, roles: ['admin'] },
         ],
     },
     {
-        title: 'Catálogos',
+        title: 'Catlogos',
         items: [
             { label: 'Frenos', href: '/catalogos/frenos', icon: <Package size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Herramientas', href: '/catalogos/refacciones', icon: <Wrench size={20} />, roles: ['admin', 'vendedor'] },
@@ -74,15 +74,15 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Admin',
         items: [
-            { label: 'Facturación', href: '/facturacion', icon: <Receipt size={20} />, roles: ['admin', 'direccion'] },
-            { label: 'Notas de Crédito', href: '/facturacion/notas-credito', icon: <CreditCard size={20} />, roles: ['admin', 'direccion'] },
+            { label: 'Facturacin', href: '/facturacion', icon: <Receipt size={20} />, roles: ['admin', 'direccion'] },
+            { label: 'Notas de Crdito', href: '/facturacion/notas-credito', icon: <CreditCard size={20} />, roles: ['admin', 'direccion'] },
             { label: 'Usuarios', href: '/configuracion/usuarios', icon: <Users size={20} />, roles: ['admin', 'direccion'] },
         ],
     },
 ];
 
 const footerNavItems: NavItem[] = [
-    { label: 'Configuración', href: '/configuracion/empresa', icon: <Settings size={20} />, roles: ['admin', 'direccion'] },
+    { label: 'Configuracin', href: '/configuracion/empresa', icon: <Settings size={20} />, roles: ['admin', 'direccion'] },
 ];
 
 export function AppSidebar() {
@@ -117,7 +117,7 @@ export function AppSidebar() {
                         className="overflow-hidden"
                     >
                         <p className="font-extrabold text-sm text-retarder-black leading-tight tracking-tight">RETARDER</p>
-                        <p className="text-[10px] text-retarder-yellow-600 font-bold leading-tight uppercase tracking-widest">MÃ‰XICO</p>
+                        <p className="text-[10px] text-retarder-yellow-600 font-bold leading-tight uppercase tracking-widest">MXICO</p>
                     </motion.div>
                 )}
             </Link>
@@ -176,7 +176,7 @@ export function AppSidebar() {
                 })}
             </nav>
 
-            {/* Footer Navigation (Configuración) */}
+            {/* Footer Navigation (Configuracin) */}
             <div className="px-2 pb-4">
                 {footerNavItems.filter(item => !item.roles || item.roles.includes(role as Rol)).map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -203,7 +203,7 @@ export function AppSidebar() {
                 })}
             </div>
 
-            {/* User Info & Collapse â€” desktop only section adjusted for mobile */}
+            {/* User Info & Collapse  desktop only section adjusted for mobile */}
             <div className="border-t border-retarder-gray-200 p-2 space-y-2">
                 <div className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg bg-retarder-gray-50 border border-retarder-gray-100",
@@ -238,7 +238,7 @@ export function AppSidebar() {
             <button
                 onClick={() => setMobileOpen(true)}
                 className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md border border-retarder-gray-200"
-                aria-label="Abrir menú"
+                aria-label="Abrir men"
             >
                 <Menu size={20} />
             </button>
@@ -264,7 +264,7 @@ export function AppSidebar() {
                             <button
                                 onClick={() => setMobileOpen(false)}
                                 className="absolute top-4 right-4 p-1 rounded-md hover:bg-retarder-gray-100"
-                                aria-label="Cerrar menú"
+                                aria-label="Cerrar men"
                             >
                                 <X size={18} />
                             </button>

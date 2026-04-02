@@ -39,7 +39,7 @@ export function numeroALetras(n: number): string {
     function millon(n: number): string {
         let m = Math.floor(n / 1000000), mi = n % 1000000;
         let s = '';
-        if (m === 1) s = 'UN MILLÓN';
+        if (m === 1) s = 'UN MILLN';
         else if (m > 1) s = mil(m) + ' MILLONES'; // technically cen() or mil() is better, but this works up to 999 millions
 
         if (mi > 0) s += ' ' + mil(mi);

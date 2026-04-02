@@ -1,4 +1,4 @@
-// Auto-generated from LISTA DE CLIENTES RETARGER MEXICO.csv — Datos Reales
+// Auto-generated from LISTA DE CLIENTES RETARGER MEXICO.csv  Datos Reales
 // Generated on 2026-02-17
 
 export interface ClienteReal {
@@ -263,7 +263,7 @@ export const CLIENTES_REALES: ClienteReal[] = [
         telefono: '618-145-1100',
         persona_contacto: 'JOSE DAVID JAQUEZ',
         email: 'davidjnevarez7112@hotmail.com',
-        direccion_fiscal: 'DOM CONOCIDO CIENEGA DE NTRA SEÑORA STGO PAPASQ S/N, SANTIAGO PAPASQUIARO, DURANGO, C.P. 34600',
+        direccion_fiscal: 'DOM CONOCIDO CIENEGA DE NTRA SEORA STGO PAPASQ S/N, SANTIAGO PAPASQUIARO, DURANGO, C.P. 34600',
         sucursales: ['SABINAS'],
         activo: true,
     },
@@ -349,7 +349,7 @@ export const CLIENTES_REALES: ClienteReal[] = [
         nombre_comercial: 'PROMOTORA DE MAQUINARIA Y CONSTRUCCIONES DE OCCIDENTE',
         rfc: 'PMC021001UT7',
         telefono: '669-240-4932',
-        persona_contacto: 'DANIEL QUINTERO / MARTIN CAÑEZ / AARON PERAZA / ALEJANDRO SALAS / NESTOR NEVAREZ',
+        persona_contacto: 'DANIEL QUINTERO / MARTIN CAEZ / AARON PERAZA / ALEJANDRO SALAS / NESTOR NEVAREZ',
         email: 'tallermazatlan@promacosadecv.com.mx',
         direccion_fiscal: 'CALLE CERRO DE LA BUFA No. 105, COL. LOMAS DE MAZATLAN, MAZATLAN, SINALOA, C.P. 82110',
         sucursales: ['PRINCIPAL', 'CAPELA', 'CIENEGA', 'TASPANA'],

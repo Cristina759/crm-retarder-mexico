@@ -1,4 +1,4 @@
-// Database types — generated from Supabase schema
+// Database types  generated from Supabase schema
 // These mirror the SQL schema in supabase/migrations/001_complete_schema.sql
 
 import type {
@@ -13,7 +13,7 @@ import type {
     MovimientoMotivo,
 } from '@/lib/utils/constants';
 
-// ── Core Entities ──────────────────────────────────
+//  Core Entities 
 
 export interface Empresa {
     id: string;
@@ -84,7 +84,7 @@ export interface Contacto {
     updated_at: string;
 }
 
-// ── Órdenes de Servicio ────────────────────────────
+//  rdenes de Servicio 
 
 export interface OrdenServicio {
     id: string;
@@ -154,7 +154,7 @@ export interface Encuesta {
     fecha_respuesta: string | null;
 }
 
-// ── Sales ──────────────────────────────────────────
+//  Sales 
 
 export interface Oportunidad {
     id: string;
@@ -210,7 +210,7 @@ export interface CotizacionItem {
     subtotal: number;
 }
 
-// ── Catalogs ───────────────────────────────────────
+//  Catalogs 
 
 export interface CatFreno {
     id: string;
@@ -245,7 +245,7 @@ export interface CatServicio {
     activo: boolean;
 }
 
-// ── Inventory ──────────────────────────────────────
+//  Inventory 
 
 export interface Inventario {
     id: string;
@@ -279,7 +279,7 @@ export interface MovimientoInventario {
     usuario?: Usuario;
 }
 
-// ── Other ──────────────────────────────────────────
+//  Other 
 
 export interface Recordatorio {
     id: string;

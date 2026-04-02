@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         // Validate the path starts with 'expedientes/' to prevent arbitrary deletions
         if (!filePath.startsWith('expedientes/')) {
             return NextResponse.json(
-                { error: 'Ruta de archivo no válida' },
+                { error: 'Ruta de archivo no vlida' },
                 { status: 400 }
             );
         }

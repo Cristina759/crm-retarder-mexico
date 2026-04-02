@@ -1,7 +1,7 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-// Clerk webhook â€” sync user creation/updates to Supabase
+// Clerk webhook  sync user creation/updates to Supabase
 export async function POST(req: NextRequest) {
     try {
         const payload = await req.json();

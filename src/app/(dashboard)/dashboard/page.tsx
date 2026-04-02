@@ -57,7 +57,7 @@ interface InventoryMini {
     stock_minimo: number;
 }
 
-// â”€â”€ Animated KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Animated KPI Card 
 
 function KpiCard({
     title,
@@ -111,7 +111,7 @@ function KpiCard({
     );
 }
 
-// â”€â”€ Sales Pipeline Chart (Cotizaciones) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Sales Pipeline Chart (Cotizaciones) 
 
 function SalesPipelineChart({ cotizaciones, className }: { cotizaciones: CotizacionMini[]; className?: string }) {
     // Real data from Supabase grouped by estado
@@ -173,7 +173,7 @@ function SalesPipelineChart({ cotizaciones, className }: { cotizaciones: Cotizac
     );
 }
 
-// â”€â”€ Ingresos Chart (Donut) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Ingresos Chart (Donut) 
 
 function IngresosChart({ total, cobrado, porCobrar, className }: { total: number; cobrado: number; porCobrar: number; className?: string }) {
     const cobradoPct = (cobrado / total) * 100;
@@ -188,7 +188,7 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
         >
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h3 className="font-black text-lg text-retarder-black tracking-tight uppercase">Ingresos por PerÃ­odo</h3>
+                    <h3 className="font-black text-lg text-retarder-black tracking-tight uppercase">Ingresos por Perodo</h3>
                     <p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest">Ene - Mar 2026</p>
                 </div>
                 <div className="flex flex-col items-end">
@@ -270,7 +270,7 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
     );
 }
 
-// â”€â”€ Pipeline Mini Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Pipeline Mini Chart 
 
 function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className?: string }) {
     // Group orders by state
@@ -290,7 +290,7 @@ function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className
             transition={{ duration: 0.4, delay: 0.3 }}
             className={cn("bg-white rounded-xl border border-retarder-gray-200 p-5 w-full h-full", className)}
         >
-            <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de Ã“rdenes de Servicio</h3>
+            <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de rdenes de Servicio</h3>
             <div className="space-y-2.5">
                 {pipelineData.map((item, i) => (
                     <div key={item.estado} className="flex items-center gap-3">
@@ -317,7 +317,7 @@ function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className
     );
 }
 
-// â”€â”€ Recent Ordenes Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Recent Ordenes Table 
 
 function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
     const displayOrdenes = ordenes.slice(0, 8);
@@ -330,7 +330,7 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
             className="bg-white rounded-xl border border-retarder-gray-200 p-5 col-span-full"
         >
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm text-retarder-black">Ã“rdenes Recientes</h3>
+                <h3 className="font-semibold text-sm text-retarder-black">rdenes Recientes</h3>
                 <Link href="/ordenes" className="text-xs text-retarder-red font-medium hover:underline">Ver todas</Link>
             </div>
             <div className="overflow-x-auto">
@@ -341,7 +341,7 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Tipo</th>
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                            <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">TÃ©cnico</th>
+                            <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Tcnico</th>
                             <th className="text-left py-2 px-3 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Prioridad</th>
                         </tr>
                     </thead>
@@ -409,7 +409,7 @@ function PriorityAttention({ alerts }: { alerts: PriorityAlert[] }) {
                     <Zap size={16} className="text-white fill-current" />
                 </div>
                 <div>
-                    <h3 className="text-base font-black tracking-tight uppercase">AtenciÃ³n Prioritaria</h3>
+                    <h3 className="text-base font-black tracking-tight uppercase">Atencin Prioritaria</h3>
                     <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Sistema Inteligente de Alertas</p>
                 </div>
             </div>
@@ -447,7 +447,7 @@ function PriorityAttention({ alerts }: { alerts: PriorityAlert[] }) {
     );
 }
 
-// â”€â”€ Main Dashboard Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Main Dashboard Page 
 
 export default function DashboardPage() {
     const { user } = useUser();
@@ -499,13 +499,13 @@ export default function DashboardPage() {
             // Calculate metrics
             const ordArray = (ordData as any[]) || [];
             
-            // 1. Venta Total: Sumar Ã³rdenes que ya estÃ¡n en proceso real o facturadas/pagadas
-            // Excluimos explÃ­citamente las cotizaciones enviadas que aÃºn no son Ã³rdenes reales
+            // 1. Venta Total: Sumar rdenes que ya estn en proceso real o facturadas/pagadas
+            // Excluimos explcitamente las cotizaciones enviadas que an no son rdenes reales
             const totalVentas = ordArray
                 .filter(o => o.estado !== 'cotizacion_enviada_al_cliente')
                 .reduce((acc, current) => acc + (Number(current.monto) || 0), 0);
 
-            // 2. FacturaciÃ³n Cobrada: Sumar solo lo que ya tiene marcado 'pagado' o estado 'pagado'
+            // 2. Facturacin Cobrada: Sumar solo lo que ya tiene marcado 'pagado' o estado 'pagado'
             const totalCobrado = ordArray
                 .filter(o => o.pagado === true || o.estado === 'pagado')
                 .reduce((acc, current) => acc + (Number(current.monto) || 0), 0);
@@ -520,7 +520,7 @@ export default function DashboardPage() {
             (invData as InventoryMini[] || []).slice(0, 2).forEach((item: InventoryMini) => {
                 alerts.push({
                     id: `inv-${item.id}`,
-                    title: `Stock CrÃ­tico: ${item.nombre}`,
+                    title: `Stock Crtico: ${item.nombre}`,
                     description: `Solo quedan ${item.stock_actual} unidades. Se requiere reabastecimiento urgente.`,
                     type: 'critical',
                     icon: <Warehouse size={18} />
@@ -600,16 +600,16 @@ export default function DashboardPage() {
                     <KpiCard
                         title="Venta Total (Base Real)"
                         value={formatMXN(stats.totalVentas)}
-                        subtitle={isAdmin ? "Total acumulado histÃ³rico" : "Mis ventas totales"}
+                        subtitle={isAdmin ? "Total acumulado histrico" : "Mis ventas totales"}
                         icon={<FileText size={22} />}
                         color="bg-blue-600"
                         trend={{ value: 'Datos Reales', positive: true }}
                         delay={0}
                     />
                     <KpiCard
-                        title="FacturaciÃ³n Cobrada"
+                        title="Facturacin Cobrada"
                         value={formatMXN(stats.totalCobrado)}
-                        subtitle="MXN â€” Total Pagado"
+                        subtitle="MXN  Total Pagado"
                         icon={<DollarSign size={22} />}
                         color="bg-emerald-600"
                         trend={{ value: 'Actualizado', positive: true }}
@@ -639,9 +639,9 @@ export default function DashboardPage() {
             {isTecnico && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <KpiCard
-                        title="Ã“rdenes Asignadas"
+                        title="rdenes Asignadas"
                         value={stats.ordenesTecnico}
-                        subtitle="Pendientes de atenciÃ³n"
+                        subtitle="Pendientes de atencin"
                         icon={<OrdenIcon size={22} />}
                         color="bg-retarder-gray-800"
                         delay={0}
@@ -685,7 +685,7 @@ export default function DashboardPage() {
             {isAdmin && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
-                        title="Ã“rdenes Reales"
+                        title="rdenes Reales"
                         value={ordenes.length}
                         subtitle="Registradas en sistema"
                         icon={<OrdenIcon size={22} />}
@@ -694,8 +694,8 @@ export default function DashboardPage() {
                     />
                     <KpiCard
                         title="Eficiencia"
-                        value={ordenes.length === 0 ? 'â€”' : `${Math.round((ordenes.filter(o => o.estado === 'servicio_concluido' || o.estado === 'pagado' || o.estado === 'documentacion_entregada').length / ordenes.length) * 100)}%`}
-                        subtitle="Ã“rdenes completadas"
+                        value={ordenes.length === 0 ? '' : `${Math.round((ordenes.filter(o => o.estado === 'servicio_concluido' || o.estado === 'pagado' || o.estado === 'documentacion_entregada').length / ordenes.length) * 100)}%`}
+                        subtitle="rdenes completadas"
                         icon={<Clock size={22} />}
                         color="bg-retarder-yellow"
                         delay={0.7}
