@@ -1271,7 +1271,7 @@ export default function CotizadorFrenosPage() {
                                     editable
                                     onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
                                 />
-                                {costoKitLedUSD > 0 && (
+                                {costoKitLedMXN > 0 && (
                                     <PriceLine
                                         label={breakdown.kitLed.label}
                                         icon={<Zap size={16} className="text-yellow-500" />}
