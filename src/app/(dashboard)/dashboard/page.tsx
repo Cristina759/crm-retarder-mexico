@@ -506,7 +506,8 @@ export default function DashboardPage() {
                 .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
 
             // 2. Facturacin Cobrada: Sumar solo lo que ya tiene marcado 'pagado' o estado 'pagado'
-            const totalCobrado = ordArray
+            const {data:nd}=await supabase.from("notas_credito").select("total");const totalNotas=(nd||[]).reduce((a,n)=>a+(Number(n.total)||0),0);
+const totalCobrado = ordArray
                 .filter(o => o.pagado === true || o.estado === 'pagado')
                 .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
 
@@ -554,7 +555,7 @@ export default function DashboardPage() {
             const ordenesHoy = ordArray.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
 
             // Live Statistics from Supabase
-            setStats({
+            setStats({totalNotas,
                 totalVentas: totalVentas,
                 totalCobrado: totalCobrado, // <-- AHORA ES REAL, no 75%
                 ordenesActivas,
