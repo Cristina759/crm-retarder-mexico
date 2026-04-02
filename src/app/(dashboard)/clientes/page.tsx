@@ -281,14 +281,18 @@ export default function ClientesPage() {
                 }
             }
 
-            fetchClientes();
+            await fetchClientes();
             handleCloseForm();
+            
+            // Si hay un cliente seleccionado, actualizamos su vista con los nuevos datos
             if (selectedCliente) {
-                // Refresh detail if open
-                const updated = clientes.find(c => c.id === selectedCliente.id);
-                if (updated) setSelectedCliente(updated);
-                else setSelectedCliente(null);
+                setSelectedCliente({
+                    ...selectedCliente,
+                    ...sanitizedData,
+                    persona_contacto: formData.persona_contacto
+                });
             }
+            toast.success(isEditMode ? 'Cliente actualizado correctamente' : 'Cliente creado correctamente');
         } catch (error: unknown) {
 
             const err = error as { code?: string; message?: string; details?: string; hint?: string };
