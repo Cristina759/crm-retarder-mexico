@@ -19,7 +19,8 @@ import {
     Check,
     DollarSign,
     RefreshCw,
-    CheckCircle2
+    CheckCircle2,
+    FileText
 } from 'lucide-react';
 import { cn, formatMXN } from '@/lib/utils';
 import {
@@ -146,6 +147,64 @@ export default function CotizadorRefaccionesPage() {
     const [traslado, setTraslado] = useState<number>(0);
     const [autoPrint, setAutoPrint] = useState(false); // Changed default to false
     const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
+
+    const [showForm, setShowForm] = useState(false);
+    const [newCot, setNewCot] = useState({ empresa_id: '', atencion_a: '', folio: '', fecha: '' });
+
+    const handleOpenCreateForm = async () => {
+        let nextFolio = 'COT-' + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        try {
+            const { count } = await supabase.from('cotizaciones').select('*', { count: 'exact', head: true });
+            if (count !== null) {
+                nextFolio = `COT-${String(count + 1).padStart(4, '0')}`;
+            }
+        } catch (err) {}
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        
+        setNewCot({
+            empresa_id: '',
+            atencion_a: '',
+            folio: nextFolio,
+            fecha: `${yyyy}-${mm}-${dd}`
+        });
+        setShowForm(true);
+    };
+
+    const handleCreateCot = async () => {
+        if (!newCot.empresa_id || !newCot.folio || !newCot.fecha) {
+            toast.error('Por favor selecciona la empresa, folio y fecha.');
+            return;
+        }
+        setIsCreating(true);
+        try {
+            const clienteMatch = clientes.find(c => c.id === newCot.empresa_id);
+            const { data, error } = await supabase.from('cotizaciones').insert({
+                empresa_id: newCot.empresa_id,
+                empresa: clienteMatch?.nombre_comercial || 'Sin empresa',
+                cliente: clienteMatch?.nombre_comercial || 'Sin empresa',
+                atencion_a: newCot.atencion_a,
+                folio: newCot.folio,
+                fecha: newCot.fecha,
+                estado: 'borrador',
+                subtotal: 0,
+                iva: 0,
+                total: 0,
+            }).select().single();
+
+            if (error) throw error;
+            toast.success('Cotización en borrador creada. Redirigiendo...');
+            setShowForm(false);
+            router.push('/cotizaciones'); 
+        } catch (err: any) {
+            toast.error(`Error al crear: ${err.message}`);
+        } finally {
+            setIsCreating(false);
+        }
+    };
 
     // Editable Observations and Notes
     const [observaciones, setObservaciones] = useState(
@@ -369,14 +428,17 @@ export default function CotizadorRefaccionesPage() {
         <div className="space-y-4">
             {/*  Header  */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 print:hidden">
-                <div>
+                <div className="flex flex-col">
                     <h2 className="text-xl font-bold text-retarder-black flex items-center gap-2">
                         <Wrench size={22} className="text-retarder-red" />
                         Cotizador de Refacciones
                     </h2>
-                    <p className="text-xs text-retarder-gray-500">
-                        {refacciones.length} productos  {REFACCION_CATEGORIAS.length} categoras
+                    <p className="text-xs text-retarder-gray-500 mb-3">
+                        {refacciones.length} productos  {REFACCION_CATEGORIAS.length} categorías
                     </p>
+                    <button onClick={handleOpenCreateForm} className="self-start flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
+                        <Plus size={16} /><span className="hidden sm:inline">Nueva Cotización Borrador</span>
+                    </button>
                 </div>
 
                 <div className="flex flex-col items-start gap-1 bg-white rounded-2xl border border-retarder-gray-200 px-5 py-3 shadow-sm">
@@ -936,8 +998,93 @@ export default function CotizadorRefaccionesPage() {
                     }
                     .print\\:hidden { display: none !important; }
                     textarea { border: none !important; overflow: hidden !important; }
-                }
             `}</style>
+            
+            {/* Create Modal */}
+            <AnimatePresence>
+                {showForm && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowForm(false)} className="fixed inset-0 bg-retarder-black/60 backdrop-blur-md z-40" />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 30 }}
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[2rem] shadow-2xl z-50 overflow-hidden"
+                        >
+                            <div className="p-8">
+                                <div className="flex items-start justify-between mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-[#FACC15]/20 flex items-center justify-center text-black">
+                                            <FileText size={24} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-black text-retarder-black">Nueva Cotización</h3>
+                                            <p className="text-xs text-retarder-gray-400 font-bold uppercase tracking-widest">Estado Borrador</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setShowForm(false)} className="p-2 rounded-xl bg-retarder-gray-50 text-retarder-gray-400 hover:bg-retarder-red/10 hover:text-retarder-red transition-all"><X size={20} /></button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Cliente / Empresa *</label>
+                                        <select 
+                                            value={newCot.empresa_id} 
+                                            onChange={e => setNewCot({...newCot, empresa_id: e.target.value})}
+                                            className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15]"
+                                        >
+                                            <option value="">-- Seleccionar Empresa --</option>
+                                            {CLIENTES_REALES.map(c => (
+                                                <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Atención a (Opcional)</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Nombre del cliente/contacto..." 
+                                            value={newCot.atencion_a} 
+                                            onChange={e => setNewCot({...newCot, atencion_a: e.target.value})}
+                                            className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15]"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Folio *</label>
+                                            <input 
+                                                type="text" 
+                                                value={newCot.folio} 
+                                                onChange={e => setNewCot({...newCot, folio: e.target.value})}
+                                                className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15] font-mono font-bold"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase text-retarder-gray-400 block px-1 mb-1">Fecha *</label>
+                                            <input 
+                                                type="date" 
+                                                value={newCot.fecha} 
+                                                onChange={e => setNewCot({...newCot, fecha: e.target.value})}
+                                                className="w-full bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#FACC15]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6 border-t border-retarder-gray-100 flex gap-3">
+                                        <button
+                                            onClick={handleCreateCot}
+                                            disabled={isCreating}
+                                            className="flex-1 py-3 bg-[#FACC15] text-black rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 transition-all"
+                                        >
+                                            {isCreating ? 'Creando...' : 'Crear y Añadir Conceptos'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div >
     );
 }
