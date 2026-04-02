@@ -394,6 +394,12 @@ export default function ClientesPage() {
                                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-retarder-gray-50 to-retarder-gray-100 border border-retarder-gray-100 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-retarder-red/5 group-hover:border-retarder-red/20 transition-all duration-500">
                                             <Building2 size={28} className="text-retarder-gray-400 group-hover:text-retarder-red transition-colors duration-500" />
                                         </div>
+                                        {e.nombre_sucursal && (
+                                            <p className="text-[10px] font-black text-retarder-red uppercase tracking-[0.2em] mb-1.5 flex items-center gap-1.5">
+                                                <MapPin size={10} className="shrink-0" />
+                                                {e.nombre_sucursal}
+                                            </p>
+                                        )}
                                         <h3 className="font-black text-lg text-retarder-black leading-tight group-hover:text-retarder-red transition-colors duration-300 line-clamp-2 min-h-[3.5rem]">
                                             {e.nombre_comercial}
                                         </h3>
