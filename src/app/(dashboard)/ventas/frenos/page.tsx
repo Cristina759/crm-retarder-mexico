@@ -531,12 +531,8 @@ export default function CotizadorFrenosPage() {
         // 1. Component values (per unit)
         const cardanes_usd = (ovs?.cardanes !== undefined ? ovs.cardanes : selectedModelo.cardanes_usd);
         const soporteria_usd = (ovs?.soporteria !== undefined ? ovs.soporteria : selectedModelo.soporteria_usd);
+        const material_usd = (ovs?.material !== undefined ? ovs.material : selectedModelo.material_electrico_usd);
         
-        // Material Eléctrico: Default from Excel state if no manual override in card
-        const material_usd = (ovs?.material !== undefined 
-            ? ovs.material 
-            : (selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0) / tipoCambio));
-            
         // Base Freno: residual from original total or specific override
         const default_freno_base = selectedModelo.precio_freno_usd - (selectedModelo.cardanes_usd + selectedModelo.material_electrico_usd + selectedModelo.soporteria_usd);
         const base_f_usd = (ovs?.freno_base !== undefined ? ovs.freno_base : default_freno_base);
@@ -544,16 +540,18 @@ export default function CotizadorFrenosPage() {
         // 2. Aggregate with units
         const unit_total_usd = base_f_usd + cardanes_usd + soporteria_usd + material_usd;
         
-        // Handle final preview price overrides (which override the entire equipment block)
+        // Handle final preview price overrides
         const f_usd = priceOverrides.freno?.usd ?? (unit_total_usd * units);
 
         // Other items
         const base_t_usd = (gastosTrasladoMXN * units) / tipoCambio;
         const t_usd = priceOverrides.traslado?.usd ?? base_t_usd;
 
-        const mo_usd = (priceOverrides.manoObra?.usd ?? (manoObraInstalacionMXN / tipoCambio));
+        // Mano de Obra: If not overridden, use the unit MO field * units
+        const base_mo_usd = (manoObraInstalacionMXN / tipoCambio);
+        const mo_usd = priceOverrides.manoObra?.usd ?? base_mo_usd;
 
-        const totalKitLedUSD = costoKitLedUSD * units;
+        const totalKitLedUSD = (priceOverrides.kitLed?.usd ?? costoKitLedUSD) * units;
         
         const total_usd = f_usd + totalKitLedUSD + t_usd + mo_usd;
         const total_mxn = total_usd * tipoCambio;
