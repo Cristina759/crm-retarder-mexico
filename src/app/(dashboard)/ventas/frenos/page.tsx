@@ -920,42 +920,7 @@ export default function CotizadorFrenosPage() {
                 </div>
             </div>
 
-            {/* Material Electrónico Sub-catalog Summary */}
-            {selectedModelo && (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-[2rem] border border-retarder-gray-200 p-6 shadow-sm overflow-hidden"
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-blue-50 rounded-xl">
-                                <Settings2 size={20} className="text-blue-600" />
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-black text-retarder-black uppercase tracking-wider">Configuración de Material Eléctrico</h4>
-                                <p className="text-[10px] text-retarder-gray-400 font-bold uppercase">Personaliza los componentes del kit</p>
-                            </div>
-                        </div>
-                        <button 
-                            onClick={() => setShowMaterialModal(true)}
-                            className="bg-retarder-black text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-retarder-gray-800 transition-all flex items-center gap-2"
-                        >
-                            <Plus size={14} /> Editar Sub-catálogo
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        <div className="bg-retarder-gray-50 p-3 rounded-2xl border border-retarder-gray-100">
-                            <p className="text-[9px] font-bold text-retarder-gray-400 uppercase">Total Items</p>
-                            <p className="text-sm font-black text-retarder-black">{selectedMaterialItems.length} componentes</p>
-                        </div>
-                        <div className="bg-retarder-gray-50 p-3 rounded-2xl border border-retarder-gray-100">
-                            <p className="text-[9px] font-bold text-retarder-gray-400 uppercase">Subtotal Kit (MXN)</p>
-                            <p className="text-sm font-black text-retarder-red">{formatMXN(selectedMaterialItems.reduce((acc, i) => acc + (i.cantidad * i.precio_unitario_mxn), 0))}</p>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
+
 
             {/* Material Eléctrico Modal */}
             <AnimatePresence>
