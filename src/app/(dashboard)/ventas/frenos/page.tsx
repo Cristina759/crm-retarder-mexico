@@ -566,6 +566,7 @@ export default function CotizadorFrenosPage() {
         return {
             freno: { 
                 label: priceOverrides.freno?.label ?? defaultLabel, 
+                accs: accs,
                 usd: f_usd, 
                 mxn: f_usd * tipoCambio 
             },
@@ -1269,15 +1270,27 @@ export default function CotizadorFrenosPage() {
 
                             {/* Price lines */}
                             <div className="p-6 space-y-3 relative group">
-                                <PriceLine
-                                    label={breakdown.freno.label}
-                                    icon={<Package size={16} className="text-retarder-red" />}
-                                    usd={breakdown.freno.usd}
-                                    mxn={breakdown.freno.mxn}
-                                    delay={0.1}
-                                    editable
-                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
-                                />
+                                <div>
+                                    <PriceLine
+                                        label={breakdown.freno.label}
+                                        icon={<Package size={16} className="text-retarder-red" />}
+                                        usd={breakdown.freno.usd}
+                                        mxn={breakdown.freno.mxn}
+                                        delay={0.1}
+                                        editable
+                                        onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
+                                    />
+                                    {breakdown.freno.accs.length > 0 && (
+                                        <div className="pl-14 -mt-1 mb-2 space-y-0.5 print:pl-6">
+                                            {breakdown.freno.accs.map((acc: string) => (
+                                                <p key={acc} className="text-[10px] text-retarder-gray-400 font-bold uppercase flex items-center gap-2 print:!text-black">
+                                                    <span className="w-1 h-1 bg-retarder-gray-300 rounded-full" />
+                                                    {acc}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                                 {costoKitLedMXN > 0 && (
                                     <PriceLine
                                         label={breakdown.kitLed.label}
