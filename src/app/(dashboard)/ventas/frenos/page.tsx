@@ -145,7 +145,7 @@ function PriceLine({
                     )}
                 </div>
                 <ArrowRight size={14} className={cn("hidden sm:block print:hidden", accent ? 'text-white/40' : 'text-retarder-gray-300')} />
-                <div className="text-right min-w-[100px] sm:min-w-[120px]">
+                <div className="text-right min-w-[100px] sm:min-w-[120px] print:hidden">
                     <p className={cn(
                         'text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider',
                         accent ? 'text-white/60 print:!text-black' : 'text-retarder-gray-400 print:!text-black'
@@ -1261,7 +1261,7 @@ export default function CotizadorFrenosPage() {
                                         </h3>
                                         <p className="text-white/50 text-xs mt-1 print:!text-black">Para: {clientes.find(c => c.id === selectedClienteId)?.nombre_comercial || 'Cliente no seleccionado'}  {marcaInfo.nm} NM  {selectedModelo.aplicacion}</p>
                                     </div>
-                                    <div className="text-right hidden sm:block">
+                                    <div className="text-right hidden sm:block print:hidden">
                                         <p className="text-white/60 text-[10px] font-semibold uppercase tracking-wider print:!text-black">T.C. Extranjero</p>
                                         <p className="text-white font-bold text-lg font-mono print:!text-black">${tipoCambio.toFixed(4)}</p>
                                     </div>
@@ -1337,7 +1337,7 @@ export default function CotizadorFrenosPage() {
                                 {/* Importe con letra */}
                                 <div className="mt-4 text-center pb-2">
                                     <p className="text-[10px] font-bold text-retarder-gray-500 uppercase tracking-widest bg-gray-50 inline-block px-4 py-1.5 rounded-full border border-gray-100 print:bg-transparent print:border-none print:text-xs print:!text-black print:font-black">
-                                        *({numeroALetras(breakdown.total.mxn)})*
+                                        *({numeroALetras(breakdown.total.usd, 'DOLARES', 'USD')})*
                                     </p>
                                 </div>
                             </div>

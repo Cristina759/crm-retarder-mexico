@@ -1,4 +1,4 @@
-export function numeroALetras(n: number): string {
+export function numeroALetras(n: number, currency = 'PESOS', suffix = 'M.N.'): string {
     const unidades = ['CERO', 'UN', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
     const decenas = ['DIEZ', 'ONCE', 'DOCE', 'TRECE', 'CATORCE', 'QUINCE', 'DIECISEIS', 'DIECISIETE', 'DIECIOCHO', 'DIECINUEVE'];
     const decenas2 = ['', '', 'VEINTI', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
@@ -7,7 +7,7 @@ export function numeroALetras(n: number): string {
     let num = Math.floor(n);
     let centavos = Math.round((n - num) * 100);
 
-    if (num === 0) return 'CERO PESOS ' + centavos.toString().padStart(2, '0') + '/100 M.N.';
+    if (num === 0) return 'CERO ' + currency + ' ' + centavos.toString().padStart(2, '0') + '/100 ' + suffix;
 
     function dec(n: number): string {
         if (n < 10) return unidades[n];
@@ -27,20 +27,23 @@ export function numeroALetras(n: number): string {
     }
 
     function mil(n: number): string {
-        let m = Math.floor(n / 1000), c = n % 1000;
+        const m = Math.floor(n / 1000), c = n % 1000;
         let s = '';
         if (m === 1) s = 'MIL';
-        else if (m > 1) s = cen(m) + ' MIL';
+        else if (m > 1) {
+            if (m < 1000) s = cen(m) + ' MIL';
+            else s = millon(m) + ' MIL'; // Over 999k
+        }
 
         if (c > 0) s += ' ' + cen(c);
         return s.trim();
     }
 
     function millon(n: number): string {
-        let m = Math.floor(n / 1000000), mi = n % 1000000;
+        const m = Math.floor(n / 1000000), mi = n % 1000000;
         let s = '';
-        if (m === 1) s = 'UN MILLN';
-        else if (m > 1) s = mil(m) + ' MILLONES'; // technically cen() or mil() is better, but this works up to 999 millions
+        if (m === 1) s = 'UN MILLON';
+        else if (m > 1) s = mil(m) + ' MILLONES';
 
         if (mi > 0) s += ' ' + mil(mi);
         return s.trim();
@@ -52,5 +55,5 @@ export function numeroALetras(n: number): string {
     else t = millon(num);
 
     let letras = t.trim();
-    return letras + ' PESOS ' + centavos.toString().padStart(2, '0') + '/100 M.N.';
+    return letras + ' ' + currency + ' ' + centavos.toString().padStart(2, '0') + '/100 ' + suffix;
 }
