@@ -95,15 +95,11 @@ export default function ClientesPage() {
 
             if (contactsError) console.error('Contacts Error:', contactsError);
 
-            const mapped: Cliente[] = (companies || []).map(emp => {
-                const companyContacts = allContacts?.filter(c => c.empresa_id === emp.id) || [];
-                const principal = companyContacts.find(c => c.es_contacto_principal) || companyContacts[0];
-                return {
-                    ...emp,
-                    persona_contacto: principal ? `${principal.nombre} ${principal.apellido}`.trim() : (emp as any).persona_contacto || null,
-                    contactos: companyContacts
-                };
-            });
+            const mapped: Cliente[] = (companies || []).map(emp => ({
+                ...emp,
+                persona_contacto: (emp as any).persona_contacto || null,
+                contactos: []
+            }));
 
             setClientes(mapped);
         } catch (err: any) {
@@ -207,6 +203,7 @@ export default function ClientesPage() {
                 nombre_titular: formData.nombre_titular.trim() || null,
                 nombre_sucursal: formData.nombre_sucursal.trim() || null,
                 rfc: formData.rfc.trim() || null,
+                persona_contacto: formData.persona_contacto.trim() || null,
                 telefono: formData.telefono.trim() || null,
                 telefono_2: formData.telefono_2.trim() || null,
                 telefono_3: formData.telefono_3.trim() || null,
@@ -217,79 +214,18 @@ export default function ClientesPage() {
             };
 
             if (isEditMode && selectedCliente) {
-                // UPDATE MODE
-
                 const { error: updateError } = await supabase
                     .from('empresas')
                     .update(sanitizedData)
                     .eq('id', selectedCliente.id);
 
                 if (updateError) throw updateError;
-
-                // Update principal contact
-                if (formData.persona_contacto) {
-                    const principal = selectedCliente.contactos?.find(c => c.es_contacto_principal);
-                    if (principal) {
-                        const { error: contactError } = await supabase
-                            .from('contactos')
-                            .update({
-                                nombre: formData.persona_contacto.trim(),
-                                apellido: '', // Clear apellido to avoid "Name Lastname" duplicates
-                                email: sanitizedData.email,
-                                telefono: sanitizedData.telefono,
-                            })
-                            .eq('id', principal.id);
-                        
-                        if (contactError) {
-                            console.error('Error updating contact:', contactError);
-                            throw new Error(`Error al actualizar el contacto: ${contactError.message}`);
-                        }
-                    } else {
-                        const { error: contactInsertError } = await supabase.from('contactos').insert([{
-                            empresa_id: selectedCliente.id,
-                            nombre: formData.persona_contacto.trim(),
-                            apellido: '',
-                            email: sanitizedData.email,
-                            telefono: sanitizedData.telefono,
-                            es_contacto_principal: true,
-                            activo: true
-                        }]);
-                        
-                        if (contactInsertError) {
-                            console.error('Error inserting contact:', contactInsertError);
-                            throw new Error(`Error al crear el contacto: ${contactInsertError.message}`);
-                        }
-                    }
-                }
             } else {
-                // CREATE MODE
-
-                // 1. Create company record
-                const { data: empresaData, error: empresaError } = await supabase
+                const { error: empresaError } = await supabase
                     .from('empresas')
-                    .insert([sanitizedData])
-                    .select();
+                    .insert([sanitizedData]);
 
-                if (empresaError) {
-                    throw empresaError;
-                }
-
-                // 2. Create contact if name is provided
-                if (formData.persona_contacto && empresaData && empresaData[0]) {
-                    const { error: contactoError } = await supabase
-                        .from('contactos')
-                        .insert([{
-                            empresa_id: empresaData[0].id,
-                            nombre: formData.persona_contacto,
-                            apellido: '', // Simple name
-                            email: sanitizedData.email,
-                            telefono: sanitizedData.telefono,
-                            es_contacto_principal: true,
-                            activo: true
-                        }]);
-
-                    if (contactoError) console.error('Error al crear contacto:', contactoError);
-                }
+                if (empresaError) throw empresaError;
             }
 
             await fetchClientes();
