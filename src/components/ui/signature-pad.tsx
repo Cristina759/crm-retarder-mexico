@@ -79,7 +79,7 @@ export function SignaturePad({ onSave, onClear, isLoading, defaultValue }: Signa
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
                                 <div className="text-center">
                                     <PenTool size={48} className="mx-auto mb-2 text-retarder-gray-400" />
-                                    <p className="text-xs font-bold text-retarder-gray-400 uppercase tracking-widest">Firme aquÃ­</p>
+                                    <p className="text-xs font-bold text-retarder-gray-400 uppercase tracking-widest">Firme aquí</p>
                                 </div>
                             </div>
                         )}

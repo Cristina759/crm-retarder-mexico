@@ -7,7 +7,7 @@ import { Package, Wrench, ClipboardCheck, ArrowRight } from 'lucide-react';
 const TIPOS_COTIZACION = [
     {
         title: 'Frenos (Retarders)',
-        description: 'Cotiza retarders electromagn√©ticos e hidr√°ulicos con precios en USD/MXN, incluye cardanes, soporter√≠a y material el√©ctrico.',
+        description: 'Cotiza retarders electromagnÈticos e hidr·ulicos con precios en USD/MXN, incluye cardanes, soporterÌa y material elÈctrico.',
         icon: <Package size={32} />,
         href: '/ventas/frenos',
         gradient: 'from-red-500 to-red-700',
@@ -18,7 +18,7 @@ const TIPOS_COTIZACION = [
     },
     {
         title: 'Refacciones',
-        description: 'Cotiza refacciones individuales: cardanes, crucetas, hules, torniller√≠a, placas y m√°s ‚Äî con precios actualizados.',
+        description: 'Cotiza refacciones individuales: cardanes, crucetas, hules, tornillerÌa, placas y m·s ‚Äî con precios actualizados.',
         icon: <Wrench size={32} />,
         href: '/ventas/refacciones',
         gradient: 'from-blue-500 to-blue-700',
@@ -29,7 +29,7 @@ const TIPOS_COTIZACION = [
     },
     {
         title: 'Servicios',
-        description: 'Cotiza mano de obra: instalaci√≥n, mantenimiento preventivo/correctivo, diagn√≥stico y servicios t√©cnicos especializados.',
+        description: 'Cotiza mano de obra: instalaciÛn, mantenimiento preventivo/correctivo, diagnÛstico y servicios tÈcnicos especializados.',
         icon: <ClipboardCheck size={32} />,
         href: '/ventas/servicios',
         gradient: 'from-emerald-500 to-emerald-700',
@@ -44,9 +44,9 @@ export default function NuevaCotizacionPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-xl font-bold text-retarder-black">Nueva Cotizaci√≥n</h2>
+                <h2 className="text-xl font-bold text-retarder-black">Nueva CotizaciÛn</h2>
                 <p className="text-sm text-retarder-gray-500 mt-1">
-                    Selecciona el tipo de cotizaci√≥n que deseas crear
+                    Selecciona el tipo de cotizaciÛn que deseas crear
                 </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function NuevaCotizacionPage() {
                 <div>
                     <p className="text-sm font-semibold text-retarder-black">Tip</p>
                     <p className="text-xs text-retarder-gray-500">
-                        Las cotizaciones aceptadas se pueden convertir autom√°ticamente en √ìrdenes de Servicio desde la secci√≥n &quot;Mis Cotizaciones&quot;.
+                        Las cotizaciones aceptadas se pueden convertir autom·ticamente en √ìrdenes de Servicio desde la secciÛn &quot;Mis Cotizaciones&quot;.
                     </p>
                 </div>
             </motion.div>

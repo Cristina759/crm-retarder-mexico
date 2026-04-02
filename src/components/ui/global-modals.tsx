@@ -69,7 +69,7 @@ export function GlobalModals() {
                                 className="bg-white rounded-xl shadow-2xl max-w-sm w-full overflow-hidden"
                             >
                                 <div className="p-6">
-                                    <h3 className="text-lg font-bold text-retarder-black mb-2">Confirmar AcciÃ³n</h3>
+                                    <h3 className="text-lg font-bold text-retarder-black mb-2">Confirmar Acción</h3>
                                     <p className="text-sm text-retarder-gray-600 leading-relaxed">
                                         {confirmState.message}
                                     </p>

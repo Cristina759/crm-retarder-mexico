@@ -26,9 +26,9 @@ export default function EmpresaConfigPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [config, setConfig] = useState<ConfigData>({
-        razon_social: 'Retarder MÃ©xico S.A. de C.V.',
+        razon_social: 'Retarder México S.A. de C.V.',
         rfc: 'RME123456789',
-        direccion: 'Calle Principal 123, Zona Industrial, Ciudad de MÃ©xico, CP 01234',
+        direccion: 'Calle Principal 123, Zona Industrial, Ciudad de México, CP 01234',
         telefono: '55-1234-5678',
         email: 'contacto@retardermexico.com',
         sitio_web: 'www.retardermexico.com',
@@ -77,7 +77,7 @@ export default function EmpresaConfigPage() {
                 });
 
             if (error) throw error;
-            toast.success('ConfiguraciÃ³n guardada correctamente');
+            toast.success('Configuración guardada correctamente');
         } catch (err: any) {
             toast.error(`Error al guardar: ${err.message}`);
         } finally {
@@ -95,7 +95,7 @@ export default function EmpresaConfigPage() {
             };
             reader.readAsDataURL(file);
 
-            // TODO: En una implementaciÃ³n real se subirÃ­a al bucket 'logos'
+            // TODO: En una implementación real se subiría al bucket 'logos'
             // Por ahora solo mantenemos el preview local para el demo si no hay bucket
         }
     };
@@ -108,8 +108,8 @@ export default function EmpresaConfigPage() {
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-retarder-black">ConfiguraciÃ³n de Empresa</h1>
-                    <p className="text-sm text-retarder-gray-500">Administra la informaciÃ³n general de Retarder MÃ©xico</p>
+                    <h1 className="text-2xl font-bold text-retarder-black">Configuración de Empresa</h1>
+                    <p className="text-sm text-retarder-gray-500">Administra la información general de Retarder México</p>
                 </div>
                 <button
                     onClick={handleSave}
@@ -182,10 +182,10 @@ export default function EmpresaConfigPage() {
                 >
                     <div className="bg-white rounded-2xl border border-retarder-gray-200 p-6 shadow-sm divide-y divide-retarder-gray-100">
                         <div className="pb-6">
-                            <h3 className="text-sm font-bold text-retarder-black mb-4">InformaciÃ³n General</h3>
+                            <h3 className="text-sm font-bold text-retarder-black mb-4">Información General</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">RazÃ³n Social</label>
+                                    <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Razón Social</label>
                                     <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                         <Building2 size={16} className="text-retarder-gray-400" />
                                         <input 
@@ -211,10 +211,10 @@ export default function EmpresaConfigPage() {
                         </div>
 
                         <div className="py-6">
-                            <h3 className="text-sm font-bold text-retarder-black mb-4">Contacto y UbicaciÃ³n</h3>
+                            <h3 className="text-sm font-bold text-retarder-black mb-4">Contacto y Ubicación</h3>
                             <div className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">DirecciÃ³n Matriz</label>
+                                    <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Dirección Matriz</label>
                                     <div className="flex items-start gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                         <MapPin size={16} className="text-retarder-gray-400 mt-0.5" />
                                         <textarea 
@@ -227,7 +227,7 @@ export default function EmpresaConfigPage() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">TelÃ©fono Principal</label>
+                                        <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Teléfono Principal</label>
                                         <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                             <Phone size={16} className="text-retarder-gray-400" />
                                             <input 
@@ -267,14 +267,14 @@ export default function EmpresaConfigPage() {
                         </div>
 
                         <div className="pt-6">
-                            <h3 className="text-sm font-bold text-retarder-black mb-4">ConfiguraciÃ³n de Divisa</h3>
+                            <h3 className="text-sm font-bold text-retarder-black mb-4">Configuración de Divisa</h3>
                             <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
                                 <div className="p-2 bg-amber-100 rounded-lg text-amber-700">
                                     <Globe size={20} />
                                 </div>
                                 <div>
                                     <p className="text-sm font-bold text-amber-900">Tipo de Cambio Automatizado</p>
-                                    <p className="text-xs text-amber-700 mt-1">El sistema utiliza el tipo de cambio oficial del dÃ­a para las cotizaciones en USD. Puedes ajustar el margen de protecciÃ³n aquÃ­.</p>
+                                    <p className="text-xs text-amber-700 mt-1">El sistema utiliza el tipo de cambio oficial del día para las cotizaciones en USD. Puedes ajustar el margen de protección aquí.</p>
                                     <div className="flex items-center gap-4 mt-3">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-semibold text-amber-900">Margen:</span>

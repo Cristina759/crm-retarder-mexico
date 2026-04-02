@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -164,7 +164,7 @@ export default function UsuariosPage() {
 
     // Delete custom user
     const handleDeleteUser = async (userId: string) => {
-        if (!await confirmModal('Â¿EstÃ¡s seguro de eliminar este colaborador?')) return;
+        if (!await confirmModal('¿Est�s seguro de eliminar este colaborador?')) return;
 
         try {
             const { error } = await supabase.from('usuarios').delete().eq('id', userId);
@@ -248,7 +248,7 @@ export default function UsuariosPage() {
 
         // Validate file size (10MB)
         if (file.size > 10 * 1024 * 1024) {
-            setUploadError('El archivo es demasiado grande. MÃ¡ximo 10MB.');
+            setUploadError('El archivo es demasiado grande. M�ximo 10MB.');
             return;
         }
 
@@ -333,7 +333,7 @@ export default function UsuariosPage() {
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
-    // Delete file â€” two-step: first click sets confirmation, second executes
+    // Delete file — two-step: first click sets confirmation, second executes
     const confirmTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     const handleDeleteStep1 = (doc: StoredDoc) => {
@@ -418,7 +418,7 @@ export default function UsuariosPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-retarder-black">GestiÃ³n de Usuarios</h1>
+                    <h1 className="text-2xl font-bold text-retarder-black">Gesti�n de Usuarios</h1>
                     <p className="text-sm text-retarder-gray-500">Administra accesos y expedientes de colaboradores</p>
                 </div>
                 {isAdmin && (
@@ -628,7 +628,7 @@ export default function UsuariosPage() {
                                                             <div className="flex items-center gap-2 mt-0.5">
                                                                 <span className="text-[10px] text-retarder-gray-400 uppercase">Documento Seguro</span>
                                                                 {doc.size > 0 && (
-                                                                    <span className="text-[10px] text-retarder-gray-300">â€¢ {formatSize(doc.size)}</span>
+                                                                    <span className="text-[10px] text-retarder-gray-300">• {formatSize(doc.size)}</span>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -658,12 +658,12 @@ export default function UsuariosPage() {
                                                                 }}
                                                                 disabled={deletingDoc === doc.name}
                                                                 className="p-1.5 rounded-lg transition-all disabled:opacity-50 text-white bg-red-500 hover:bg-red-600"
-                                                                title="Clic para confirmar eliminaciÃ³n"
+                                                                title="Clic para confirmar eliminaci�n"
                                                             >
                                                                 {deletingDoc === doc.name ? (
                                                                     <Loader2 size={14} className="animate-spin" />
                                                                 ) : (
-                                                                    <span className="text-[10px] font-bold px-1">Â¿SÃ­?</span>
+                                                                    <span className="text-[10px] font-bold px-1">¿S�?</span>
                                                                 )}
                                                             </button>
                                                         ) : (
@@ -762,7 +762,7 @@ export default function UsuariosPage() {
                                         type="text"
                                         value={formNombre}
                                         onChange={e => setFormNombre(e.target.value)}
-                                        placeholder="Ej: Carolina LÃ³pez GarcÃ­a"
+                                        placeholder="Ej: Carolina L�pez Garc�a"
                                         className="w-full border border-retarder-gray-200 rounded-xl px-4 py-3 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none"
                                     />
                                 </div>
@@ -876,7 +876,7 @@ export default function UsuariosPage() {
                                         type="text"
                                         value={formNombre}
                                         onChange={e => setFormNombre(e.target.value)}
-                                        placeholder="Ej: Carolina LÃ³pez GarcÃ­a"
+                                        placeholder="Ej: Carolina L�pez Garc�a"
                                         className="w-full border border-retarder-gray-200 rounded-xl px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 outline-none"
                                     />
                                 </div>

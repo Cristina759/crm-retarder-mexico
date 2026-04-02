@@ -19,17 +19,17 @@ export const ORDEN_ESTADOS = [
 export type OrdenEstado = (typeof ORDEN_ESTADOS)[number];
 
 export const ORDEN_ESTADO_LABELS: Record<OrdenEstado, string> = {
-    cotizacion_enviada_al_cliente: 'Cotizaci√≥n Enviada al Cliente',
-    cotizacion_aceptada: 'Cotizaci√≥n Aceptada',
-    asignacion_tecnico: 'Asignaci√≥n de T√©cnico',
+    cotizacion_enviada_al_cliente: 'CotizaciÛn Enviada al Cliente',
+    cotizacion_aceptada: 'CotizaciÛn Aceptada',
+    asignacion_tecnico: 'AsignaciÛn de TÈcnico',
     servicio_programado: 'Servicio Programado',
-    documentacion_enviada: 'Documentaci√≥n Enviada',
-    tecnico_en_contacto: 'T√©cnico en Contacto',
+    documentacion_enviada: 'DocumentaciÛn Enviada',
+    tecnico_en_contacto: 'TÈcnico en Contacto',
     servicio_en_proceso: 'Servicio en Proceso',
-    autorizacion_adicional: 'Autorizaci√≥n Adicional',
+    autorizacion_adicional: 'AutorizaciÛn Adicional',
     servicio_concluido: 'Servicio Concluido',
     evidencia_cargada: 'Evidencia Cargada',
-    documentacion_entregada: 'Documentaci√≥n Entregada',
+    documentacion_entregada: 'DocumentaciÛn Entregada',
     encuesta_enviada: 'Encuesta Enviada',
     facturado: 'Facturado',
     pagado: 'Pagado',
@@ -131,11 +131,11 @@ export const ORDEN_ESTADO_COLORS: Record<OrdenEstado, string> = {
 export type Rol = 'admin' | 'vendedor' | 'tecnico' | 'cliente' | 'direccion' | 'administracion';
 
 export const ROL_LABELS: Record<Rol, string> = {
-    admin: 'Admin/Direcci√≥n',
+    admin: 'Admin/DirecciÛn',
     vendedor: 'Vendedor',
-    tecnico: 'T√©cnico',
+    tecnico: 'TÈcnico',
     cliente: 'Cliente',
-    direccion: 'Admin/Direcci√≥n',
+    direccion: 'Admin/DirecciÛn',
     administracion: '√Årea Administrativa',
 };
 
@@ -166,7 +166,7 @@ export const PRIORIDAD_LABELS: Record<Prioridad, string> = {
 export const COTIZACION_ESTADO_LABELS: Record<CotizacionEstado, string> = {
     borrador: 'Borrador',
     enviada: 'Enviada',
-    negociacion: 'En Negociaci√≥n',
+    negociacion: 'En NegociaciÛn',
     aceptada: 'Aceptada',
     rechazada: 'Rechazada',
     vencida: 'Vencida',
@@ -184,8 +184,8 @@ export const COTIZACION_ESTADO_COLORS: Record<CotizacionEstado, string> = {
 export const TIPO_SERVICIO_LABELS: Record<TipoServicio, string> = {
     preventivo: 'Preventivo',
     correctivo: 'Correctivo',
-    instalacion: 'Instalaci√≥n',
-    diagnostico: 'Diagn√≥stico',
+    instalacion: 'InstalaciÛn',
+    diagnostico: 'DiagnÛstico',
     venta: 'Venta',
 };
 
@@ -235,7 +235,7 @@ export interface DemoOrden {
     cotizacion_numero?: string;
     numero_orden_fisica?: string;
     numero_orden_compra?: string;
-    // Campos de facturaci√≥n (datos reales)
+    // Campos de FacturaciÛn (datos reales)
     numero_factura?: string;
     mano_obra?: number;
     refacciones?: number;
@@ -264,79 +264,79 @@ export const TABULADOR_MANO_OBRA: ManoObraItem[] = [
     { id: 'e03', concepto: 'Cambio de bulbo de aire', precio_mxn: 300, categoria: 'electrico' },
     { id: 'e04', concepto: 'Cambio palanca', precio_mxn: 300, categoria: 'electrico' },
     { id: 'e05', concepto: 'Cambio caja de contactores', precio_mxn: 600, categoria: 'electrico' },
-    { id: 'e06', concepto: 'Cambio caja electr√≥nica', precio_mxn: 800, categoria: 'electrico' },
+    { id: 'e06', concepto: 'Cambio caja electrÛnica', precio_mxn: 800, categoria: 'electrico' },
     { id: 'e07', concepto: 'Cambio de foco piloto', precio_mxn: 100, categoria: 'electrico' },
-    { id: 'e08', concepto: 'Reparaci√≥n arn√©s sensor velocidad', precio_mxn: 150, categoria: 'electrico' },
+    { id: 'e08', concepto: 'ReparaciÛn arnÈs sensor velocidad', precio_mxn: 150, categoria: 'electrico' },
     { id: 'e09', concepto: 'Cambio de sensor de velocidad', precio_mxn: 350, categoria: 'electrico' },
-    { id: 'e10', concepto: 'Cambio arn√©s corriente (Cal 0) caja contactores / bater√≠a positivo', precio_mxn: 250, categoria: 'electrico' },
-    { id: 'e11', concepto: 'Cambio arn√©s de tierra (Cal 8) reparaci√≥n de maza negativo', precio_mxn: 250, categoria: 'electrico' },
-    { id: 'e12', concepto: 'Cambio de arn√©s (7 v√≠as)', precio_mxn: 800, categoria: 'electrico' },
-    { id: 'e13', concepto: 'Cambio de arn√©s de potencia (4 v√≠as)', precio_mxn: 350, categoria: 'electrico' },
-    { id: 'e14', concepto: 'Cambio arn√©s tierra (de freno a bater√≠as) rep. o fab. maza negativo', precio_mxn: 250, categoria: 'electrico' },
-    { id: 'e15', concepto: 'Reparaci√≥n de arn√©s de control (cambio de terminales) 4 l√≠neas block conex.', precio_mxn: 150, categoria: 'electrico' },
-    { id: 'e16', concepto: 'Sistema de control completo caja mec√°nica', precio_mxn: 2000, categoria: 'electrico' },
-    { id: 'e17', concepto: 'Fabricaci√≥n l√≠neas sensor c/conector', precio_mxn: 150, categoria: 'electrico' },
-    { id: 'e18', concepto: 'Sistema de control completo caja electr√≥nica', precio_mxn: 2500, categoria: 'electrico' },
+    { id: 'e10', concepto: 'Cambio arnÈs corriente (Cal 0) caja contactores / baterÌa positivo', precio_mxn: 250, categoria: 'electrico' },
+    { id: 'e11', concepto: 'Cambio arnÈs de tierra (Cal 8) reparaciÛn de maza negativo', precio_mxn: 250, categoria: 'electrico' },
+    { id: 'e12', concepto: 'Cambio de arnÈs (7 vÌas)', precio_mxn: 800, categoria: 'electrico' },
+    { id: 'e13', concepto: 'Cambio de arnÈs de potencia (4 vÌas)', precio_mxn: 350, categoria: 'electrico' },
+    { id: 'e14', concepto: 'Cambio arnÈs tierra (de freno a baterÌas) rep. o fab. maza negativo', precio_mxn: 250, categoria: 'electrico' },
+    { id: 'e15', concepto: 'ReparaciÛn de arnÈs de control (cambio de terminales) 4 lÌneas block conex.', precio_mxn: 150, categoria: 'electrico' },
+    { id: 'e16', concepto: 'Sistema de control completo caja mec·nica', precio_mxn: 2000, categoria: 'electrico' },
+    { id: 'e17', concepto: 'FabricaciÛn lÌneas sensor c/conector', precio_mxn: 150, categoria: 'electrico' },
+    { id: 'e18', concepto: 'Sistema de control completo caja electrÛnica', precio_mxn: 2500, categoria: 'electrico' },
     { id: 'e19', concepto: 'Cambio de interruptor', precio_mxn: 150, categoria: 'electrico' },
     { id: 'e20', concepto: 'Cambio de block conexiones', precio_mxn: 400, categoria: 'electrico' },
-    { id: 'e21', concepto: 'Reparaci√≥n l√≠neas de tablero', precio_mxn: 200, categoria: 'electrico' },
-    { id: 'e22', concepto: 'Reparaci√≥n l√≠neas de tablero alimentaci√≥n o port fusible', precio_mxn: 200, categoria: 'electrico' },
-    { id: 'e23', concepto: 'Reparaci√≥n arn√©s de 7 v√≠as (sin realizar cambio completo)', precio_mxn: 250, categoria: 'electrico' },
-    { id: 'e24', concepto: 'Reparaci√≥n caja contactores', precio_mxn: 300, categoria: 'electrico' },
+    { id: 'e21', concepto: 'ReparaciÛn lÌneas de tablero', precio_mxn: 200, categoria: 'electrico' },
+    { id: 'e22', concepto: 'ReparaciÛn lÌneas de tablero alimentaciÛn o port fusible', precio_mxn: 200, categoria: 'electrico' },
+    { id: 'e23', concepto: 'ReparaciÛn arnÈs de 7 vÌas (sin realizar cambio completo)', precio_mxn: 250, categoria: 'electrico' },
+    { id: 'e24', concepto: 'ReparaciÛn caja contactores', precio_mxn: 300, categoria: 'electrico' },
     { id: 'e25', concepto: 'Cambio de mega fusible o porta mega fusible', precio_mxn: 200, categoria: 'electrico' },
-    { id: 'e26', concepto: 'Instalaci√≥n de sistema el√©ctrico completo', precio_mxn: 3000, categoria: 'electrico' },
-    { id: 'e27', concepto: 'Revisi√≥n de consumos', precio_mxn: 500, categoria: 'electrico' },
+    { id: 'e26', concepto: 'InstalaciÛn de sistema elÈctrico completo', precio_mxn: 3000, categoria: 'electrico' },
+    { id: 'e27', concepto: 'RevisiÛn de consumos', precio_mxn: 500, categoria: 'electrico' },
 
     // ‚îÄ‚îÄ SISTEMA NEUM√ÅTICO ‚îÄ‚îÄ
-    { id: 'n01', concepto: 'Instalaci√≥n sistema neum√°tico', precio_mxn: 1000, categoria: 'neumatico' },
-    { id: 'n02', concepto: 'Reparaci√≥n sistema neum√°tico (bulbo)', precio_mxn: 300, categoria: 'neumatico' },
+    { id: 'n01', concepto: 'InstalaciÛn sistema neum·tico', precio_mxn: 1000, categoria: 'neumatico' },
+    { id: 'n02', concepto: 'ReparaciÛn sistema neum·tico (bulbo)', precio_mxn: 300, categoria: 'neumatico' },
     { id: 'n03', concepto: 'Cambio manguera', precio_mxn: 250, categoria: 'neumatico' },
 
     // ‚îÄ‚îÄ MEC√ÅNICO ‚îÄ‚îÄ
     { id: 'm01', concepto: 'Limpieza de frenos sin desarmar', precio_mxn: 400, categoria: 'mecanico' },
-    { id: 'm02', concepto: 'Instalaci√≥n mec√°nica o reinstalaci√≥n de freno', precio_mxn: 3500, categoria: 'mecanico' },
+    { id: 'm02', concepto: 'InstalaciÛn mec·nica o reinstalaciÛn de freno', precio_mxn: 3500, categoria: 'mecanico' },
     { id: 'm03', concepto: 'Solo bajar puro freno', precio_mxn: 1500, categoria: 'mecanico' },
     { id: 'm04', concepto: 'Cambio de soporte de chasis tipo "L" c/u', precio_mxn: 400, categoria: 'mecanico' },
     { id: 'm05', concepto: 'Cambio de rotor freno instalado c/u', precio_mxn: 600, categoria: 'mecanico' },
     { id: 'm06', concepto: 'Montaje de freno (axial) completo con kit de control', precio_mxn: 6000, categoria: 'mecanico' },
     { id: 'm07', concepto: 'Cambio de silentbloks', precio_mxn: 2500, categoria: 'mecanico' },
-    { id: 'm08', concepto: 'Cambio de ret√©n de freno', precio_mxn: 700, categoria: 'mecanico' },
-    { id: 'm09', concepto: 'Cambio o reparaci√≥n de arn√©s interior (conexi√≥n)', precio_mxn: 500, categoria: 'mecanico' },
+    { id: 'm08', concepto: 'Cambio de retÈn de freno', precio_mxn: 700, categoria: 'mecanico' },
+    { id: 'm09', concepto: 'Cambio o reparaciÛn de arnÈs interior (conexiÛn)', precio_mxn: 500, categoria: 'mecanico' },
     { id: 'm10', concepto: 'Bajar cardanes y desconectar arneses de freno', precio_mxn: 750, categoria: 'mecanico' },
     { id: 'm11', concepto: 'Montaje de cardanes y arneses de freno', precio_mxn: 750, categoria: 'mecanico' },
     { id: 'm12', concepto: 'Cambio de placas laterales c/u', precio_mxn: 300, categoria: 'mecanico' },
     { id: 'm13', concepto: 'Desarmado de freno quitando bobinas (siempre y cuando salgan)', precio_mxn: 1000, categoria: 'mecanico' },
-    { id: 'm14', concepto: 'Reparaci√≥n de freno (baleros, retenes, casquillos, armado)', precio_mxn: 2500, categoria: 'mecanico' },
-    { id: 'm15', concepto: 'Cambio kit de engrase sistema de lubricaci√≥n', precio_mxn: 570, categoria: 'mecanico' },
-    { id: 'm16', concepto: 'Cambio de 1 kit de reparaci√≥n de bobina', precio_mxn: 200, categoria: 'mecanico' },
-    { id: 'm17', concepto: 'Reparaci√≥n de cuerda de freno o placa lateral c/u', precio_mxn: 100, categoria: 'mecanico' },
+    { id: 'm14', concepto: 'ReparaciÛn de freno (baleros, retenes, casquillos, armado)', precio_mxn: 2500, categoria: 'mecanico' },
+    { id: 'm15', concepto: 'Cambio kit de engrase sistema de lubricaciÛn', precio_mxn: 570, categoria: 'mecanico' },
+    { id: 'm16', concepto: 'Cambio de 1 kit de reparaciÛn de bobina', precio_mxn: 200, categoria: 'mecanico' },
+    { id: 'm17', concepto: 'ReparaciÛn de cuerda de freno o placa lateral c/u', precio_mxn: 100, categoria: 'mecanico' },
     { id: 'm18', concepto: 'Refresco, cuerdas de tornillos, de cruceta c/u', precio_mxn: 100, categoria: 'mecanico' },
     { id: 'm19', concepto: 'Cambio seguros de crucetas', precio_mxn: 200, categoria: 'mecanico' },
     { id: 'm20', concepto: 'Cambio de cruceta', precio_mxn: 500, categoria: 'mecanico' },
     { id: 'm21', concepto: 'Cambio de bobina c/u', precio_mxn: 300, categoria: 'mecanico' },
     { id: 'm22', concepto: 'Cambio placa polar/rotor c/u', precio_mxn: 200, categoria: 'mecanico' },
-    { id: 'm23', concepto: 'Calibraci√≥n entre hierro rotor', precio_mxn: 550, categoria: 'mecanico' },
+    { id: 'm23', concepto: 'CalibraciÛn entre hierro rotor', precio_mxn: 550, categoria: 'mecanico' },
     { id: 'm24', concepto: 'Bajar y subir cardanes lado de freno caja y diferencial', precio_mxn: 1500, categoria: 'mecanico' },
     { id: 'm25', concepto: 'Cambio tornillo plato acople c/u', precio_mxn: 75, categoria: 'mecanico' },
-    { id: 'm26', concepto: 'Desinstalaci√≥n freno (con arn√©s)', precio_mxn: 2500, categoria: 'mecanico' },
+    { id: 'm26', concepto: 'DesinstalaciÛn freno (con arnÈs)', precio_mxn: 2500, categoria: 'mecanico' },
     { id: 'm27', concepto: 'Cambio de terminales', precio_mxn: 200, categoria: 'mecanico' },
-    { id: 'm28', concepto: 'Reconexi√≥n el√©ctrica', precio_mxn: 200, categoria: 'mecanico' },
+    { id: 'm28', concepto: 'ReconexiÛn elÈctrica', precio_mxn: 200, categoria: 'mecanico' },
     { id: 'm29', concepto: 'Subir freno', precio_mxn: 750, categoria: 'mecanico' },
     { id: 'm30', concepto: 'Cambio corta corriente', precio_mxn: 350, categoria: 'mecanico' },
 
     // ‚îÄ‚îÄ OTROS ‚îÄ‚îÄ
     { id: 'o01', concepto: 'Kit de luces LED', precio_mxn: 4250, categoria: 'otro' },
-    { id: 'o02', concepto: 'Pl√°ticas capacitaci√≥n a conductores o t√©cnicos', precio_mxn: 0, categoria: 'otro' },
+    { id: 'o02', concepto: 'Pl·ticas capacitaciÛn a conductores o tÈcnicos', precio_mxn: 0, categoria: 'otro' },
 ];
 
 export const MANO_OBRA_CATEGORIAS = {
-    electrico: { label: '‚ö° El√©ctrico', color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
-    mecanico: { label: 'üîß Mec√°nico', color: 'bg-blue-50 border-blue-200 text-blue-800' },
-    neumatico: { label: 'üí® Neum√°tico', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
+    electrico: { label: '‚ö° ElÈctrico', color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
+    mecanico: { label: 'üîß Mec·nico', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+    neumatico: { label: 'üí® Neum·tico', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
     otro: { label: 'üì¶ Otros', color: 'bg-gray-50 border-gray-200 text-gray-800' },
 };
 
-// ‚îÄ‚îÄ Cat√°logo de Frenos ‚Äî Precios en USD ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// ‚îÄ‚îÄ Cat·logo de Frenos ‚Äî Precios en USD ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
 
 export const DEFAULT_TIPO_CAMBIO = 17.7962;
 
@@ -389,75 +389,75 @@ export const CATALOGO_FRENOS: CatalogoFreno[] = [
         precio_freno_usd: 7000, torque_max: '525 NM', peso: '45 kg',
     },
     {
-        modelo: 'P5-1', descripcion: 'Freno Retarder para Veh√≠culos 6 a 10 Ton',
+        modelo: 'P5-1', descripcion: 'Freno Retarder para VehÌculos 6 a 10 Ton',
         pentar_serie: 'P5-1', pentar_nm: 1200, pentar_precio_usd: 7250,
         frenelsa_serie: 'F16-80', frenelsa_nm: 840, frenelsa_precio_usd: 6156,
         cofremex_serie: 'CFL-90', cofremex_nm: 900, cofremex_precio_usd: 0,
         cardanes_usd: 779.35, soporteria_usd: 498.00, material_electrico_usd: 779.03, // $13,869.25 MXN √∑ 17.7962
-        aplicacion: 'Veh√≠culos 6 a 10 Ton', tonelaje: '6 a 10', activo: true,
+        aplicacion: 'VehÌculos 6 a 10 Ton', tonelaje: '6 a 10', activo: true,
         precio_freno_usd: 7250, torque_max: '1200 NM', peso: '38 kg',
     },
     {
-        modelo: 'P5', descripcion: 'Freno Retarder para Veh√≠culos 10 a 15 Ton',
+        modelo: 'P5', descripcion: 'Freno Retarder para VehÌculos 10 a 15 Ton',
         pentar_serie: 'P5', pentar_nm: 1500, pentar_precio_usd: 7500,
         frenelsa_serie: 'F16-140', frenelsa_nm: 1350, frenelsa_precio_usd: 7236,
         cofremex_serie: 'CFK-140', cofremex_nm: 1400, cofremex_precio_usd: 0,
         cardanes_usd: 685.87, soporteria_usd: 498.00, material_electrico_usd: 779.03, // $12,206.00 MXN √∑ 17.7962
-        aplicacion: 'Veh√≠culos 10 a 15 Ton', tonelaje: '10 a 15', activo: true,
+        aplicacion: 'VehÌculos 10 a 15 Ton', tonelaje: '10 a 15', activo: true,
         precio_freno_usd: 7500, torque_max: '1500 NM', peso: '36 kg',
     },
     {
-        modelo: 'P7-1', descripcion: 'Freno Retarder para Veh√≠culos 15 a 20 Ton',
+        modelo: 'P7-1', descripcion: 'Freno Retarder para VehÌculos 15 a 20 Ton',
         pentar_serie: 'P7-1', pentar_nm: 1750, pentar_precio_usd: 8500,
         frenelsa_serie: 'F16-200', frenelsa_nm: 2150, frenelsa_precio_usd: 8316,
         cofremex_serie: 'CFK-200', cofremex_nm: 1650, cofremex_precio_usd: 0,
         cardanes_usd: 1018.53, soporteria_usd: 569.85, material_electrico_usd: 779.03, // $18,125.63 MXN √∑ 17.7962
-        aplicacion: 'Veh√≠culos 15 a 20 Ton', tonelaje: '15 a 20', activo: true,
+        aplicacion: 'VehÌculos 15 a 20 Ton', tonelaje: '15 a 20', activo: true,
         precio_freno_usd: 8500, torque_max: '1750 NM', peso: '52 kg',
     },
     {
-        modelo: 'P7', descripcion: 'Freno Retarder para Veh√≠culos 20 a 25 Ton',
+        modelo: 'P7', descripcion: 'Freno Retarder para VehÌculos 20 a 25 Ton',
         pentar_serie: 'P7', pentar_nm: 2050, pentar_precio_usd: 9500,
         frenelsa_serie: 'F16-280', frenelsa_nm: 1950, frenelsa_precio_usd: 9180,
         cofremex_serie: 'CFK-250', cofremex_nm: 1950, cofremex_precio_usd: 6900,
         cardanes_usd: 1018.53, soporteria_usd: 569.85, material_electrico_usd: 779.03, // $18,125.63 MXN √∑ 17.7962
-        aplicacion: 'Veh√≠culos 20 a 25 Ton', tonelaje: '20 a 25', activo: true,
+        aplicacion: 'VehÌculos 20 a 25 Ton', tonelaje: '20 a 25', activo: true,
         precio_freno_usd: 9500, torque_max: '2050 NM', peso: '50 kg',
     },
     {
-        modelo: 'P11-1', descripcion: 'Freno Retarder para Veh√≠culos 25 a 32 Ton',
+        modelo: 'P11-1', descripcion: 'Freno Retarder para VehÌculos 25 a 32 Ton',
         pentar_serie: 'P11-1', pentar_nm: 2850, pentar_precio_usd: 0,
         frenelsa_serie: 'F16-300', frenelsa_nm: 3000, frenelsa_precio_usd: 10260,
         cofremex_serie: 'CFK-300', cofremex_nm: 2140, cofremex_precio_usd: 0,
         cardanes_usd: 1018.53, soporteria_usd: 533.48, material_electrico_usd: 779.03, // F16-300 usa mismo cardan 1810 que P7 ‚Äî $18,125.63 MXN √∑ 17.7962
-        aplicacion: 'Veh√≠culos 25 a 32 Ton', tonelaje: '25 a 32', activo: true,
+        aplicacion: 'VehÌculos 25 a 32 Ton', tonelaje: '25 a 32', activo: true,
         precio_freno_usd: 10260, torque_max: '2850 NM', peso: '60 kg',
     },
     {
-        modelo: 'P11', descripcion: 'Freno Retarder para Veh√≠culos 32 a 50 Ton',
+        modelo: 'P11', descripcion: 'Freno Retarder para VehÌculos 32 a 50 Ton',
         pentar_serie: 'P11', pentar_nm: 3300, pentar_precio_usd: 0,
         frenelsa_serie: '', frenelsa_nm: 0, frenelsa_precio_usd: 0,
         cofremex_serie: 'CFK-310', cofremex_nm: 3074, cofremex_precio_usd: 8500,
         cardanes_usd: 844.76, soporteria_usd: 533.48, material_electrico_usd: 779.03,
-        aplicacion: 'Veh√≠culos 32 a 50 Ton', tonelaje: '32 a 50', activo: true,
+        aplicacion: 'VehÌculos 32 a 50 Ton', tonelaje: '32 a 50', activo: true,
         precio_freno_usd: 8500, torque_max: '3300 NM', peso: '62 kg',
     },
     {
-        modelo: 'P10', descripcion: 'Freno Retarder para Veh√≠culos 32 a 50 Ton',
+        modelo: 'P10', descripcion: 'Freno Retarder para VehÌculos 32 a 50 Ton',
         pentar_serie: 'P10', pentar_nm: 3300, pentar_precio_usd: 11000,
         frenelsa_serie: '', frenelsa_nm: 0, frenelsa_precio_usd: 0,
         cofremex_serie: 'CFK-360', cofremex_nm: 2605, cofremex_precio_usd: 0,
         cardanes_usd: 927.17, soporteria_usd: 533.48, material_electrico_usd: 779.03, // SPL250 cardanes ‚Äî $16,500.00 MXN √∑ 17.7962
-        aplicacion: 'Veh√≠culos 32 a 50 Ton', tonelaje: '32 a 50', activo: true,
+        aplicacion: 'VehÌculos 32 a 50 Ton', tonelaje: '32 a 50', activo: true,
         precio_freno_usd: 11000, torque_max: '3300 NM', peso: '65 kg',
     },
     {
-        modelo: 'P9', descripcion: 'Freno Retarder para Veh√≠culos 50 a 60 Ton',
+        modelo: 'P9', descripcion: 'Freno Retarder para VehÌculos 50 a 60 Ton',
         pentar_serie: 'P9', pentar_nm: 3800, pentar_precio_usd: 0,
         frenelsa_serie: '', frenelsa_nm: 0, frenelsa_precio_usd: 0,
         cofremex_serie: 'CFK-500', cofremex_nm: 3775, cofremex_precio_usd: 0,
         cardanes_usd: 844.76, soporteria_usd: 533.48, material_electrico_usd: 779.03,
-        aplicacion: 'Veh√≠culos 50 a 60 Ton', tonelaje: '50 a 60', activo: false,
+        aplicacion: 'VehÌculos 50 a 60 Ton', tonelaje: '50 a 60', activo: false,
         precio_freno_usd: 0, torque_max: '3800 NM', peso: '70 kg',
     },
 ];

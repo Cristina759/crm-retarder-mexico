@@ -77,7 +77,7 @@ const PERMISSIONS: Record<Rol, Partial<Record<Resource, Permission[]>>> = {
     },
 };
 
-// States a role can transition Ã³rdenes TO
+// States a role can transition órdenes TO
 const ESTADO_TRANSITIONS: Record<Rol, OrdenEstado[]> = {
     admin: [
         'cotizacion_enviada_al_cliente', 'cotizacion_aceptada',

@@ -92,7 +92,7 @@ export function KanbanColumn({ estado, ordenes, phase, index, onOrdenClick, onDe
                             : 'border-retarder-gray-200',
                     )}>
                         <p className="text-[10px] text-retarder-gray-400 font-medium">
-                            {isOver ? 'Soltar aquÃ­' : 'Sin Ã³rdenes'}
+                            {isOver ? 'Soltar aquí' : 'Sin órdenes'}
                         </p>
                     </div>
                 )}

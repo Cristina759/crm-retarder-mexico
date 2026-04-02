@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { DEFAULT_TIPO_CAMBIO } from '@/lib/utils/constants';
 
 /**
@@ -18,7 +18,7 @@ export function useExchangeRate() {
         setError(null);
 
         try {
-            // Intentar obtener el dato oficial del DOF vÃ­a Banxico
+            // Intentar obtener el dato oficial del DOF v�a Banxico
             const res = await fetch('/api/tc', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();

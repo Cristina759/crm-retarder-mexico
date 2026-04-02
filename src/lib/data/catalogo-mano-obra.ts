@@ -1,5 +1,5 @@
-// Catálogo de Mano de Obra — Tabulador TGR
-// Extraído del Excel "COSTOS CRM Henry.xlsx" — Hoja "Mano de Obra"
+// Cat�logo de Mano de Obra — Tabulador TGR
+// Extra�do del Excel "COSTOS CRM Henry.xlsx" — Hoja "Mano de Obra"
 
 export interface ConceptoManoObra {
     concepto: string;

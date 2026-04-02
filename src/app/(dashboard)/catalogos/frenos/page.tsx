@@ -29,7 +29,7 @@ export default function FrenosPage() {
         if (data && data.length > 0) {
             setClientes(data);
         } else {
-            // Si la tabla empresas estÃ¡ vacÃ­a, intentamos sacar nombres Ãºnicos de ordenes_servicio
+            // Si la tabla empresas está vacía, intentamos sacar nombres únicos de ordenes_servicio
             const { data: ordData } = await supabase.from('ordenes_servicio').select('empresa');
             if (ordData) {
                 const names = [...new Set(ordData.map(o => o.empresa))];
@@ -80,7 +80,7 @@ export default function FrenosPage() {
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-retarder-black">CatÃ¡logo de Frenos</h2>
+                    <h2 className="text-xl font-bold text-retarder-black">Catálogo de Frenos</h2>
                     <p className="text-xs text-retarder-gray-500">
                         {CATALOGO_FRENOS.length} modelos Â· {activeFremos.length} activos Â· 3 marcas:
                         <span className="font-semibold text-red-600 ml-1">Pentar</span> Â·
@@ -167,14 +167,14 @@ export default function FrenosPage() {
                         </div>
                         <div>
                             <p className="text-sm font-bold text-blue-800">{clientes.find(c => c.id === selectedClienteId)?.nombre_comercial}</p>
-                            <p className="text-[10px] text-blue-500">{clientOrders.length} Ã³rdenes registradas Â· Total: {formatMXN(clientOrders.reduce((s, o) => s + (o.monto || 0), 0))}</p>
+                            <p className="text-[10px] text-blue-500">{clientOrders.length} órdenes registradas Â· Total: {formatMXN(clientOrders.reduce((s, o) => s + (o.monto || 0), 0))}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                         {clientOrders.slice(0, 5).map(o => (
                             <span key={o.id} className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[9px] font-bold rounded-full">{o.numero}</span>
                         ))}
-                        {clientOrders.length > 5 && <span className="text-[9px] text-blue-500">+{clientOrders.length - 5} mÃ¡s</span>}
+                        {clientOrders.length > 5 && <span className="text-[9px] text-blue-500">+{clientOrders.length - 5} más</span>}
                     </div>
                 </motion.div>
             )}
@@ -249,18 +249,18 @@ export default function FrenosPage() {
 
                                 {/* Shared install costs */}
                                 <div className="pt-2 border-t border-retarder-gray-100">
-                                    <p className="text-[9px] font-semibold uppercase text-retarder-gray-400 mb-1.5">Costos de InstalaciÃ³n (USD)</p>
+                                    <p className="text-[9px] font-semibold uppercase text-retarder-gray-400 mb-1.5">Costos de Instalación (USD)</p>
                                     <div className="grid grid-cols-3 gap-1.5">
                                         <div className="bg-retarder-gray-50 rounded p-1.5 text-center">
                                             <p className="text-[8px] text-retarder-gray-400">Cardanes</p>
                                             <p className="text-[10px] font-bold text-retarder-gray-700">{formatUSD(freno.cardanes_usd)}</p>
                                         </div>
                                         <div className="bg-retarder-gray-50 rounded p-1.5 text-center">
-                                            <p className="text-[8px] text-retarder-gray-400">SoporterÃ­a</p>
+                                            <p className="text-[8px] text-retarder-gray-400">Soportería</p>
                                             <p className="text-[10px] font-bold text-retarder-gray-700">{formatUSD(freno.soporteria_usd)}</p>
                                         </div>
                                         <div className="bg-retarder-gray-50 rounded p-1.5 text-center">
-                                            <p className="text-[8px] text-retarder-gray-400">Mat. ElÃ©ctrico</p>
+                                            <p className="text-[8px] text-retarder-gray-400">Mat. Eléctrico</p>
                                             <p className="text-[10px] font-bold text-retarder-gray-700">{formatUSD(freno.material_electrico_usd)}</p>
                                         </div>
                                     </div>
@@ -284,11 +284,11 @@ export default function FrenosPage() {
                             <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
                                 {[
                                     { label: 'Modelo', placeholder: 'Ej: PK2' },
-                                    { label: 'DescripciÃ³n', placeholder: 'DescripciÃ³n del retarder' },
+                                    { label: 'Descripción', placeholder: 'Descripción del retarder' },
                                     { label: 'Pentar Serie', placeholder: 'Ej: PK2' },
                                     { label: 'Frenelsa Serie', placeholder: 'Ej: F12-60' },
                                     { label: 'Cofremex Serie', placeholder: 'Ej: CFK-60' },
-                                    { label: 'AplicaciÃ³n', placeholder: 'Tipo de vehÃ­culo y tonelaje' },
+                                    { label: 'Aplicación', placeholder: 'Tipo de vehículo y tonelaje' },
                                     { label: 'Precio Pentar (USD)', placeholder: '0.00' },
                                     { label: 'Precio Frenelsa (USD)', placeholder: '0.00' },
                                     { label: 'Precio Cofremex (USD)', placeholder: '0.00' },

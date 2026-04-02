@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -62,7 +62,7 @@ export default function FacturacionPage() {
     const fetchFacturas = useCallback(async () => {
         setLoading(true);
         try {
-            // Buscamos Ã³rdenes que estÃ©n en fase administrativa O tengan nÃºmero de factura
+            // Buscamos �rdenes que est�n en fase administrativa O tengan n�mero de factura
             const { data: d1, error: e1 } = await supabase
                 .from('ordenes_servicio')
                 .select('*')
@@ -115,10 +115,10 @@ export default function FacturacionPage() {
 
     const fetchDropdownData = useCallback(async () => {
         try {
-            // Clientes â€” lista estÃ¡tica
+            // Clientes — lista est�tica
             setClientes(CLIENTES_REALES.map(c => ({ id: c.id, nombre_comercial: c.nombre_comercial })));
 
-            // Ã“rdenes sin factura aÃºn
+            // Órdenes sin factura a�n
             const { data: oData } = await supabase
                 .from('ordenes_servicio')
                 .select('id, numero, empresa, monto, descripcion')
@@ -157,7 +157,7 @@ export default function FacturacionPage() {
 
     const handleCreateFactura = async () => {
         if (!newFactura.numero_factura || !newFactura.empresa) {
-            toast.error('Por favor completa los campos obligatorios (NÃºmero de factura y Empresa)');
+            toast.error('Por favor completa los campos obligatorios (N�mero de factura y Empresa)');
             return;
         }
 
@@ -183,7 +183,7 @@ export default function FacturacionPage() {
                         empresa: newFactura.empresa,
                         numero_factura: newFactura.numero_factura,
                         estado: 'facturado',
-                        descripcion: newFactura.concepto || 'FacturaciÃ³n Manual',
+                        descripcion: newFactura.concepto || 'Facturaci�n Manual',
                         monto: Number(newFactura.monto) || 0,
                         vendedor: 'Sistema'
                     }]);
@@ -203,7 +203,7 @@ export default function FacturacionPage() {
     };
 
     const handleDeleteFactura = async (factura: Factura) => {
-        if (!await confirmModal(`Â¿Eliminar la factura ${factura.numero_factura} de ${factura.empresa}?`)) return;
+        if (!await confirmModal(`¿Eliminar la factura ${factura.numero_factura} de ${factura.empresa}?`)) return;
         setLoading(true);
         try {
             const { error } = await supabase
@@ -231,13 +231,13 @@ export default function FacturacionPage() {
             if (nuevoEstado === 'pagada') {
                 let numeroFactura = factura.numero_factura;
                 if (!numeroFactura || numeroFactura === 'PENDIENTE') {
-                    const input = await promptModal('Ingresa el nÃºmero de factura antes de marcar como pagada:');
+                    const input = await promptModal('Ingresa el n�mero de factura antes de marcar como pagada:');
                     if (!input?.trim()) { setLoading(false); return; }
                     numeroFactura = input.trim();
                 }
                 updates = { estado: 'pagado', pagado: true, numero_factura: numeroFactura };
             } else {
-                const numeroFactura = await promptModal('Ingresa el nÃºmero de factura (ej. F-0001):');
+                const numeroFactura = await promptModal('Ingresa el n�mero de factura (ej. F-0001):');
                 if (!numeroFactura?.trim()) {
                     setLoading(false);
                     return;
@@ -264,7 +264,7 @@ export default function FacturacionPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-retarder-black">FacturaciÃ³n</h2>
+                    <h2 className="text-xl font-bold text-retarder-black">Facturaci�n</h2>
                     <p className="text-xs text-retarder-gray-500">{facturas.length} facturas registradas</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -348,7 +348,7 @@ export default function FacturacionPage() {
                                             </td>
                                             <td className="py-3 px-2 sm:px-4 text-right font-bold text-retarder-gray-800 whitespace-nowrap">{formatMXN(f.total)}</td>
                                             <td className="py-3 px-2 sm:px-4 text-xs text-retarder-gray-500 hidden sm:table-cell">
-                                                {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : 'â€”'}
+                                                {f.fecha_vencimiento ? formatDate(f.fecha_vencimiento) : '—'}
                                             </td>
                                             <td className="py-3 px-2 sm:px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1">
@@ -425,7 +425,7 @@ export default function FacturacionPage() {
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">NÃºmero de Factura</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">N�mero de Factura</label>
                                     <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
                                         <FileText size={14} className="text-retarder-gray-400" />
                                         <input 
@@ -470,7 +470,7 @@ export default function FacturacionPage() {
                                 <div>
                                     <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Concepto</label>
                                     <textarea 
-                                        placeholder="DescripciÃ³n de la factura..." 
+                                        placeholder="Descripci�n de la factura..." 
                                         rows={2} 
                                         value={newFactura.concepto}
                                         onChange={e => setNewFactura({...newFactura, concepto: e.target.value})}

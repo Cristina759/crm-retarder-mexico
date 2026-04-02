@@ -221,7 +221,7 @@ export default function OrdenesPage() {
                     o.tecnico?.trim().toLocaleLowerCase() === currentUserName
                 );
             } else {
-                // TÃ©cnico sin nombre en Clerk: solo muestra Ã³rdenes en fases siempre visibles
+                // Técnico sin nombre en Clerk: solo muestra órdenes en fases siempre visibles
                 result = result.filter(o => ESTADOS_SIEMPRE_VISIBLES.includes(o.estado));
             }
         } else if (isCliente && !isAdmin) {

@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const STORAGE_BUCKET = 'documentos';
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         // Validate the path starts with 'expedientes/' to prevent arbitrary deletions
         if (!filePath.startsWith('expedientes/')) {
             return NextResponse.json(
-                { error: 'Ruta de archivo no vÃ¡lida' },
+                { error: 'Ruta de archivo no v�lida' },
                 { status: 400 }
             );
         }
