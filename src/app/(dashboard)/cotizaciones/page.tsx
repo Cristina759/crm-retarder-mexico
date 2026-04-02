@@ -44,6 +44,7 @@ export default function CotizacionesPage() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterEstado, setFilterEstado] = useState<CotEstado | 'all'>('all');
+    // Forzar un nuevo deploy
     const [showForm, setShowForm] = useState(false);
     const [selectedCot, setSelectedCot] = useState<any | null>(null);
     const [selectedItems, setSelectedItems] = useState<any[]>([]);
