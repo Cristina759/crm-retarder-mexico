@@ -49,7 +49,7 @@ export function SignaturePad({ onSave, onClear, isLoading, defaultValue }: Signa
                             <div className="w-8 h-8 rounded-xl bg-retarder-red/10 flex items-center justify-center text-retarder-red">
                                 <PenTool size={16} />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-500">√Årea de Firma Digital</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-500">rea de Firma Digital</span>
                         </div>
                         {defaultValue && (
                             <span className="text-[8px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full uppercase tracking-widest">Ya firmada</span>
@@ -79,7 +79,7 @@ export function SignaturePad({ onSave, onClear, isLoading, defaultValue }: Signa
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
                                 <div className="text-center">
                                     <PenTool size={48} className="mx-auto mb-2 text-retarder-gray-400" />
-                                    <p className="text-xs font-bold text-retarder-gray-400 uppercase tracking-widest">Firme aquÌ</p>
+                                    <p className="text-xs font-bold text-retarder-gray-400 uppercase tracking-widest">Firme aqu</p>
                                 </div>
                             </div>
                         )}
