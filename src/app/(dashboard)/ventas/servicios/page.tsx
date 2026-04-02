@@ -551,9 +551,6 @@ export default function CotizadorServiciosPage() {
                     <p className="text-xs text-retarder-gray-500 mt-1 mb-3">
                         Selecciona el tipo de servicio y genera la cotización automáticamente
                     </p>
-                    <button onClick={handleOpenCreateForm} className="self-start flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
-                        <Plus size={16} /><span className="hidden sm:inline">Nueva Cotización Borrador</span>
-                    </button>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
