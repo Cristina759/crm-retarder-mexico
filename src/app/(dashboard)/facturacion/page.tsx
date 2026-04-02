@@ -65,13 +65,13 @@ export default function FacturacionPage() {
             // Buscamos órdenes que estén en fase administrativa O tengan número de factura
             const { data: d1, error: e1 } = await supabase
                 .from('ordenes_servicio')
-                .select('*')
+                .select('*, empresa:empresas(nombre_comercial)')
                 .in('estado', ['encuesta_enviada', 'facturado', 'pagado'])
                 .order('fecha_creado', { ascending: false });
 
             const { data: d2, error: e2 } = await supabase
                 .from('ordenes_servicio')
-                .select('*')
+                .select('*, empresa:empresas(nombre_comercial)')
                 .not('numero_factura', 'is', null)
                 .order('fecha_creado', { ascending: false });
 
@@ -90,11 +90,11 @@ export default function FacturacionPage() {
                     id: o.id,
                     numero_orden: o.numero || 'OS-N/A',
                     numero_factura: o.numero_factura || 'PENDIENTE',
-                    empresa: o.empresa,
-                    concepto: o.descripcion || (o.monto_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),
+                    empresa: o.empresa?.nombre_comercial,
+                    concepto: o.descripcion || (o.total_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),
                     subtotal: o.subtotal || 0,
                     iva: o.iva || 0,
-                    total: o.monto || 0,
+                    total: o.total || 0,
                     estado: estado,
                     fecha_emision: o.fecha_creado,
                     fecha_vencimiento: (() => {
@@ -419,7 +419,7 @@ export default function FacturacionPage() {
                                     >
                                         <option value="">-- Seleccionar Orden --</option>
                                         {ordenesPendientes.map(o => (
-                                            <option key={o.id} value={o.id}>{o.numero} - {o.empresa}</option>
+                                            <option key={o.id} value={o.id}>{o.numero} - {o.empresa?.nombre_comercial}</option>
                                         ))}
                                     </select>
                                 </div>
