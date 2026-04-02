@@ -600,7 +600,7 @@ const totalCobrado = ordArray
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
                         title="Venta Total (Base Real)"
-                        value={formatMXN(stats.totalVentas)}
+                        value={formatMXN((stats.totalVentas - stats.totalNotas))}
                         subtitle={isAdmin ? "Total acumulado histrico" : "Mis ventas totales"}
                         icon={<FileText size={22} />}
                         color="bg-blue-600"
@@ -618,7 +618,7 @@ const totalCobrado = ordArray
                     />
                     <KpiCard
                         title="Cuentas por Cobrar"
-                        value={formatMXN(stats.totalVentas - stats.totalCobrado)}
+                        value={formatMXN((stats.totalVentas - stats.totalNotas) - stats.totalCobrado)}
                         subtitle="Pendiente de pago"
                         icon={<Target size={22} />}
                         color="bg-purple-600"
@@ -670,9 +670,9 @@ const totalCobrado = ordArray
             {(isAdmin || isVendedor) && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <IngresosChart
-                        total={stats.totalVentas}
+                        total={(stats.totalVentas - stats.totalNotas)}
                         cobrado={stats.totalCobrado}
-                        porCobrar={stats.totalVentas - stats.totalCobrado}
+                        porCobrar={(stats.totalVentas - stats.totalNotas) - stats.totalCobrado}
                         className="lg:col-span-2"
                     />
                     <SalesPipelineChart
