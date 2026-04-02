@@ -107,7 +107,7 @@ export default function NotasCreditoPage() {
                 .select('id, numero_factura, empresa:empresas(nombre_comercial), total, estado, created_at')
                 .not('numero_factura', 'is', null)
                 .neq('numero_factura', '')
-                .order('fecha_creado', { ascending: false });
+                .order('created_at', { ascending: false });
 
             if (error) {
                 return;
@@ -118,9 +118,16 @@ export default function NotasCreditoPage() {
                 data.forEach(o => {
                     const nf = String(o.numero_factura || '').trim();
                     if (nf && !uniqueFacturas.has(nf)) {
+                        let empresaNombre = '';
+                        if (Array.isArray(o.empresa)) {
+                            empresaNombre = (o.empresa as any)[0]?.nombre_comercial || '';
+                        } else if (o.empresa && typeof o.empresa === 'object') {
+                            empresaNombre = (o.empresa as any).nombre_comercial || '';
+                        }
+
                         uniqueFacturas.set(nf, {
                             factura: nf,
-                            empresa: (o.empresa && typeof o.empresa === 'object' ? o.empresa.nombre_comercial : o.empresa) || '',
+                            empresa: empresaNombre || 'Sin empresa',
                             total: Number(o.total) || 0
                         });
                     }
@@ -231,8 +238,8 @@ export default function NotasCreditoPage() {
 
     // Stats  only count non-cancelled
     const stats = useMemo(() => ({
-        totalEmitido: notas.filter(n => n.estado !== 'cancelada').reduce((s, n) => s + n.total, 0),
-        totalAplicado: notas.filter(n => n.estado === 'aplicada').reduce((s, n) => s + n.total, 0),
+        totalEmitido: notas.filter(n => n.estado !== 'cancelada').reduce((s, n) => s + (Number(n.total) || 0), 0),
+        totalAplicado: notas.filter(n => n.estado === 'aplicada').reduce((s, n) => s + (Number(n.total) || 0), 0),
         emitidas: notas.filter(n => n.estado === 'emitida').length,
         aplicadas: notas.filter(n => n.estado === 'aplicada').length,
         canceladas: notas.filter(n => n.estado === 'cancelada').length,
@@ -381,7 +388,7 @@ export default function NotasCreditoPage() {
                                 </tr>
                             ) : (
                                 filtered.map((n, i) => {
-                                    const cfg = NC_ESTADO_CONFIG[n.estado];
+                                    const cfg = NC_ESTADO_CONFIG[n.estado as NCEstado] || NC_ESTADO_CONFIG.emitida;
                                     return (
                                         <motion.tr
                                             key={n.id}
@@ -394,13 +401,13 @@ export default function NotasCreditoPage() {
                                             )}
                                             onClick={() => setSelectedNota(n)}
                                         >
-                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs font-bold text-orange-600">{n.numero_nc}</td>
-                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{n.factura_relacionada}</td>
-                                            <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[100px] sm:max-w-[140px]">{n.empresa}</td>
-                                            <td className="py-3 px-2 sm:px-4 text-retarder-gray-500 text-xs truncate max-w-[120px] sm:max-w-[200px] hidden lg:table-cell">{n.motivo}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs font-bold text-orange-600">{n.numero_nc || 'N/A'}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-mono text-xs text-retarder-gray-600 hidden md:table-cell">{n.factura_relacionada || '---'}</td>
+                                            <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[100px] sm:max-w-[140px]">{n.empresa || 'N/A'}</td>
+                                            <td className="py-3 px-2 sm:px-4 text-retarder-gray-500 text-xs truncate max-w-[120px] sm:max-w-[200px] hidden lg:table-cell">{n.motivo || '---'}</td>
                                             <td className="py-3 px-2 sm:px-4">
-                                                <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg.color)}>
-                                                    {cfg.label}
+                                                <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', cfg?.color || 'bg-retarder-gray-100')}>
+                                                    {cfg?.label || n.estado}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-2 sm:px-4 text-right font-bold text-retarder-gray-800 whitespace-nowrap">
