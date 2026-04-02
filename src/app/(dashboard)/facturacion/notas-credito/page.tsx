@@ -120,7 +120,7 @@ export default function NotasCreditoPage() {
                     if (nf && !uniqueFacturas.has(nf)) {
                         uniqueFacturas.set(nf, {
                             factura: nf,
-                            empresa: o.empresa?.nombre_comercial || '',
+                            empresa: (o.empresa && typeof o.empresa === 'object' ? o.empresa.nombre_comercial : o.empresa) || '',
                             total: Number(o.total) || 0
                         });
                     }
