@@ -87,8 +87,25 @@ export default function CotizacionesPage() {
         setIsProcessing(true);
         try {
             const clienteMatch = CLIENTES_REALES.find(c => c.id === newCot.empresa_id);
+            
+            // Buscar UUID real de la base de datos
+            let realEmpresaId = null;
+            if (clienteMatch) {
+                try {
+                    const { data: dbCliente } = await supabase
+                        .from('clientes')
+                        .select('id')
+                        .eq('nombre_comercial', clienteMatch.nombre_comercial)
+                        .limit(1)
+                        .single();
+                    if (dbCliente) {
+                        realEmpresaId = dbCliente.id;
+                    }
+                } catch(e) {}
+            }
+
             const { data, error } = await supabase.from('cotizaciones').insert({
-                empresa_id: newCot.empresa_id,
+                empresa_id: realEmpresaId,
                 empresa: clienteMatch?.nombre_comercial || 'Sin empresa',
                 cliente: clienteMatch?.nombre_comercial || 'Sin empresa',
                 atencion_a: newCot.atencion_a,
