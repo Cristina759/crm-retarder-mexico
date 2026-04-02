@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useTransition, useCallback } from 'react';
 import Link from 'next/link';
@@ -19,7 +19,7 @@ type CotEstado = 'borrador' | 'enviada' | 'negociacion' | 'aceptada' | 'rechazad
 const ESTADO_CONFIG: Record<CotEstado, { label: string; color: string }> = {
     borrador: { label: 'Borrador', color: 'bg-gray-100 text-gray-600' },
     enviada: { label: 'Enviada', color: 'bg-blue-100 text-blue-700' },
-    negociacion: { label: 'Negociación', color: 'bg-orange-100 text-orange-700' },
+    negociacion: { label: 'NegociaciÃ³n', color: 'bg-orange-100 text-orange-700' },
     aceptada: { label: 'Aceptada', color: 'bg-emerald-100 text-emerald-700' },
     rechazada: { label: 'Rechazada', color: 'bg-red-100 text-red-700' },
     vencida: { label: 'Vencida', color: 'bg-amber-100 text-amber-700' },
@@ -27,11 +27,11 @@ const ESTADO_CONFIG: Record<CotEstado, { label: string; color: string }> = {
 
 const INITIAL_COTIZACIONES: DemoCotizacion[] = [
     { id: '1', numero: 'COT-00089', empresa: 'Transportes del Norte', vendedor: 'Ana G.', subtotal: 159482.76, iva: 25517.24, total: 185000, estado: 'enviada', vigencia_dias: 15, fecha: '2026-02-14', items: 5 },
-    { id: '2', numero: 'COT-00088', empresa: 'Logística Global', vendedor: 'Ana G.', subtotal: 81896.55, iva: 13103.45, total: 95000, estado: 'aceptada', vigencia_dias: 30, fecha: '2026-02-12', items: 3, orden_id: '5', orden_numero: 'OS-00047' },
+    { id: '2', numero: 'COT-00088', empresa: 'LogÃ­stica Global', vendedor: 'Ana G.', subtotal: 81896.55, iva: 13103.45, total: 95000, estado: 'aceptada', vigencia_dias: 30, fecha: '2026-02-12', items: 3, orden_id: '5', orden_numero: 'OS-00047' },
     { id: '3', numero: 'COT-00087', empresa: 'Carga Express MX', vendedor: 'Pedro V.', subtotal: 67241.38, iva: 10758.62, total: 78000, estado: 'aceptada', vigencia_dias: 15, fecha: '2026-02-11', items: 4, orden_id: '6', orden_numero: 'OS-00046' },
     { id: '4', numero: 'COT-00086', empresa: 'MegaFletes SA', vendedor: 'Pedro V.', subtotal: 36206.90, iva: 5793.10, total: 42000, estado: 'enviada', vigencia_dias: 30, fecha: '2026-02-13', items: 2 },
     { id: '5', numero: 'COT-00085', empresa: 'FreightMaster', vendedor: 'Ana G.', subtotal: 27586.21, iva: 4413.79, total: 32000, estado: 'aceptada', vigencia_dias: 15, fecha: '2026-02-10', items: 2 },
-    { id: '6', numero: 'COT-00084', empresa: 'Fletes del Pacífico', vendedor: 'Pedro V.', subtotal: 103448.28, iva: 16551.72, total: 120000, estado: 'borrador', vigencia_dias: 30, fecha: '2026-02-08', items: 6 },
+    { id: '6', numero: 'COT-00084', empresa: 'Fletes del PacÃ­fico', vendedor: 'Pedro V.', subtotal: 103448.28, iva: 16551.72, total: 120000, estado: 'borrador', vigencia_dias: 30, fecha: '2026-02-08', items: 6 },
     { id: '7', numero: 'COT-00083', empresa: 'Central de Carga Mty', vendedor: 'Ana G.', subtotal: 30172.41, iva: 4827.59, total: 35000, estado: 'aceptada', vigencia_dias: 15, fecha: '2026-02-04', items: 3, orden_id: '13', orden_numero: 'OS-00039' },
     { id: '8', numero: 'COT-00082', empresa: 'Express Guadalajara', vendedor: 'Pedro V.', subtotal: 50000, iva: 8000, total: 58000, estado: 'vencida', vigencia_dias: 15, fecha: '2026-01-15', items: 4 },
     { id: '9', numero: 'COT-00081', empresa: 'Transportes Oriente', vendedor: 'Ana G.', subtotal: 79310.34, iva: 12689.66, total: 92000, estado: 'rechazada', vigencia_dias: 30, fecha: '2026-01-20', items: 5 },
@@ -71,34 +71,32 @@ export default function CotizacionesPage() {
 
             setCotizaciones(formattedData);
         } catch (error: any) {
-            console.error('Error fetching cotizaciones:', error?.message || JSON.stringify(error));
         } finally {
             setLoading(false);
         }
     }, [supabase]);
 
     const handleDelete = useCallback((id: string) => {
-        // Envolvemos el confirm en un pequeño delay para que la interacción del click se registre primero
+        // Envolvemos el confirm en un pequeÃ±o delay para que la interacciÃ³n del click se registre primero
         // y no bloquee el "Interaction to Next Paint" (INP)
         setTimeout(async () => {
-            if (!await confirmModal('¿Estás seguro de que deseas eliminar esta cotización? Esto también eliminará cualquier Orden de Servicio vinculada. Esta acción no se puede deshacer.')) return;
+            if (!await confirmModal('Â¿EstÃ¡s seguro de que deseas eliminar esta cotizaciÃ³n? Esto tambiÃ©n eliminarÃ¡ cualquier Orden de Servicio vinculada. Esta acciÃ³n no se puede deshacer.')) return;
 
             setDeletingId(id);
             setIsProcessing(true);
 
             startTransition(async () => {
                 try {
-                    // 1. Primero eliminamos las órdenes de servicio vinculadas para evitar error de FK
+                    // 1. Primero eliminamos las Ã³rdenes de servicio vinculadas para evitar error de FK
                     const { error: osError } = await supabase
                         .from('ordenes_servicio')
                         .delete()
                         .eq('cotizacion_id', id);
 
                     if (osError) {
-                        console.warn('Error al eliminar órdenes vinculadas:', osError);
                     }
 
-                    // 2. Ahora eliminamos la cotización
+                    // 2. Ahora eliminamos la cotizaciÃ³n
                     const { error } = await supabase
                         .from('cotizaciones')
                         .delete()
@@ -109,8 +107,7 @@ export default function CotizacionesPage() {
                     await fetchCotizaciones();
                     setSelectedCot(null);
                 } catch (error: any) {
-                    console.error('Error deleting cotización:', error);
-                    toast.error(`Error al eliminar la cotización: ${error.message || 'Error desconocido'}`);
+                    toast.error(`Error al eliminar la cotizaciÃ³n: ${error.message || 'Error desconocido'}`);
                 } finally {
                     setIsProcessing(false);
                     setDeletingId(null);
@@ -133,7 +130,6 @@ export default function CotizacionesPage() {
                 setSelectedCot({ ...selectedCot, estado: nuevoEstado });
             }
         } catch (error) {
-            console.error('Error updating status:', error);
             toast.error('Error al actualizar el estado');
         } finally {
             setIsProcessing(false);
@@ -175,8 +171,8 @@ export default function CotizacionesPage() {
     const handleCreateOrden = async (cot: any) => {
         setIsProcessing(true);
         try {
-            // 1. Generar número de orden secuencial basado en el total existente en Supabase
-            // Fallback determinístico con timestamp si la query falla (evita colisiones)
+            // 1. Generar nÃºmero de orden secuencial basado en el total existente en Supabase
+            // Fallback determinÃ­stico con timestamp si la query falla (evita colisiones)
             const tsuffix = Date.now().toString().slice(-6);
             let osNum = `OS-T${tsuffix}`;
 
@@ -201,7 +197,7 @@ export default function CotizacionesPage() {
                 prioridad: 'media',
                 tecnico: '',
                 vendedor: cot.vendedor || '',
-                descripcion: `Creado desde Cotización ${cot.numero || cot.numero_cotizacion}`,
+                descripcion: `Creado desde CotizaciÃ³n ${cot.numero || cot.numero_cotizacion}`,
                 fecha_creado: new Date().toISOString().split('T')[0],
                 monto: cot.total,
                 cotizacion_id: cot.id
@@ -214,23 +210,22 @@ export default function CotizacionesPage() {
 
             if (insertError) throw insertError;
 
-            // 3. Actualizar la cotización con la referencia a la orden
+            // 3. Actualizar la cotizaciÃ³n con la referencia a la orden
             const { error: updateError } = await supabase
                 .from('cotizaciones')
                 .update({
                     orden_id: insertedData[0].id,
-                    // Si el esquema tiene orden_numero en la tabla cotizaciones, lo actualizamos también
-                    // Por si acaso, lo manejamos dinámicamente o confiamos en el join futuro
+                    // Si el esquema tiene orden_numero en la tabla cotizaciones, lo actualizamos tambiÃ©n
+                    // Por si acaso, lo manejamos dinÃ¡micamente o confiamos en el join futuro
                 })
                 .eq('id', cot.id);
 
-            // Nota: Si el esquema de cotizaciones NO tiene orden_id, esto fallará silenciosamente o dará error.
-            // He verificado que SÍ tiene orden_id en pasos anteriores.
+            // Nota: Si el esquema de cotizaciones NO tiene orden_id, esto fallarÃ¡ silenciosamente o darÃ¡ error.
+            // He verificado que SÃ tiene orden_id en pasos anteriores.
 
             await fetchCotizaciones();
-            toast.success(`¡Orden de Servicio ${osNum} creada exitosamente para ${cot.empresa}!`);
+            toast.success(`Â¡Orden de Servicio ${osNum} creada exitosamente para ${cot.empresa}!`);
         } catch (error: any) {
-            console.error('Error creating orden:', error);
             toast.error(`Error al crear la orden: ${error.message || 'Error desconocido'}`);
         } finally {
             setIsProcessing(false);
@@ -244,7 +239,7 @@ export default function CotizacionesPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h2 className="text-xl font-bold text-retarder-black">Cotizaciones</h2>
-                    <p className="text-xs text-retarder-gray-500">{cotizaciones.length} cotizaciones · Monto total: {formatMXN(totalMonto)}</p>
+                    <p className="text-xs text-retarder-gray-500">{cotizaciones.length} cotizaciones Â· Monto total: {formatMXN(totalMonto)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 bg-retarder-gray-100 rounded-lg px-3 py-2">
@@ -252,7 +247,7 @@ export default function CotizacionesPage() {
                         <input type="text" placeholder="Buscar..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="bg-transparent border-none outline-none text-sm w-40" />
                     </div>
                     <Link href="/ventas/nueva" className="flex items-center gap-2 px-4 py-2 bg-[#FACC15] text-black rounded-lg text-sm font-medium hover:bg-[#EAB308] transition-colors shadow-md shadow-yellow-500/20">
-                        <Plus size={16} /><span className="hidden sm:inline">Nueva Cotización</span>
+                        <Plus size={16} /><span className="hidden sm:inline">Nueva CotizaciÃ³n</span>
                     </Link>
                 </div>
             </div>
@@ -276,12 +271,12 @@ export default function CotizacionesPage() {
                     <table className="w-full text-sm">
                         <thead className="bg-retarder-gray-50">
                             <tr className="border-b border-retarder-gray-200">
-                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Cotización</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">CotizaciÃ³n</th>
                                 <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
                                 <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
                                 <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Total</th>
-                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">Vínculo</th>
-                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Acción</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden md:table-cell">VÃ­nculo</th>
+                                <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">AcciÃ³n</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -305,7 +300,7 @@ export default function CotizacionesPage() {
                                         <td className="py-3 px-2 sm:px-4">
                                             <div className="flex items-center gap-2">
                                                 <FileText size={14} className="text-retarder-gray-400" />
-                                                <span className="font-mono text-xs font-bold text-retarder-red">{c.folio || c.numero || '—'}</span>
+                                                <span className="font-mono text-xs font-bold text-retarder-red">{c.folio || c.numero || 'â€”'}</span>
                                             </div>
                                         </td>
                                         <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{c.empresa}</td>
@@ -322,7 +317,7 @@ export default function CotizacionesPage() {
                                                     {c.orden_numero}
                                                 </Link>
                                             ) : (
-                                                <span className="text-[10px] text-retarder-gray-400">—</span>
+                                                <span className="text-[10px] text-retarder-gray-400">â€”</span>
                                             )}
                                         </td>
                                         <td className="py-3 px-4 hidden sm:table-cell">
@@ -352,7 +347,7 @@ export default function CotizacionesPage() {
                                                                 ? "text-retarder-red animate-pulse"
                                                                 : "text-retarder-gray-400 hover:text-retarder-red hover:border-retarder-red/20"
                                                         )}
-                                                        title="Eliminar Cotización"
+                                                        title="Eliminar CotizaciÃ³n"
                                                     >
                                                         {deletingId === c.id ? (
                                                             <Loader2 size={14} className="animate-spin" />
@@ -415,7 +410,7 @@ export default function CotizacionesPage() {
                                                     <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedCot.tipo_cambio} MXN</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Publicación</p>
+                                                    <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha PublicaciÃ³n</p>
                                                     <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedCot.tipo_cambio_fecha || 'N/A'}</p>
                                                 </div>
                                             </div>

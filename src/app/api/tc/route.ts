@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +9,6 @@ export async function GET() {
     const BANXICO_TOKEN = process.env.BANXICO_TOKEN;
 
     if (!BANXICO_TOKEN) {
-        console.error('BANXICO_TOKEN no está definido');
         return NextResponse.json({
             rate: 20.50,
             source: 'Fallback (sin token)',
@@ -18,7 +17,7 @@ export async function GET() {
     }
 
     try {
-        // Fetch últimos 7 días para asegurar encontrar el FIX anterior (útil en fines de semana/puentes)
+        // Fetch Ãºltimos 7 dÃ­as para asegurar encontrar el FIX anterior (Ãºtil en fines de semana/puentes)
         const today = new Date();
         const past = new Date(today);
         past.setDate(today.getDate() - 7);
@@ -35,7 +34,7 @@ export async function GET() {
         });
 
         if (!res.ok) {
-            throw new Error(`Banxico respondió con status ${res.status}`);
+            throw new Error(`Banxico respondiÃ³ con status ${res.status}`);
         }
 
         const data = await res.json();
@@ -53,20 +52,20 @@ export async function GET() {
             year: 'numeric'
         });
 
-        // La regla del DOF: La tasa publicada HOY en el DOF es el FIX determinado el día hábil anterior.
-        // Por lo tanto, buscamos el dato más reciente cuya fecha sea MENOR a hoy.
-        // Si Banxico ya publicó el FIX de hoy (después de las 12pm), ese dato NO es el del DOF de hoy.
+        // La regla del DOF: La tasa publicada HOY en el DOF es el FIX determinado el dÃ­a hÃ¡bil anterior.
+        // Por lo tanto, buscamos el dato mÃ¡s reciente cuya fecha sea MENOR a hoy.
+        // Si Banxico ya publicÃ³ el FIX de hoy (despuÃ©s de las 12pm), ese dato NO es el del DOF de hoy.
 
-        // Invertimos para empezar por el más reciente
+        // Invertimos para empezar por el mÃ¡s reciente
         const sortedDatos = [...datos].sort((a, b) => {
             const [da, ma, ya] = a.fecha.split('/');
             const [db, mb, yb] = b.fecha.split('/');
             const timeA = new Date(parseInt(ya), parseInt(ma) - 1, parseInt(da)).getTime();
             const timeB = new Date(parseInt(yb), parseInt(mb) - 1, parseInt(db)).getTime();
-            return timeB - timeA; // Descendente (más reciente primero)
+            return timeB - timeA; // Descendente (mÃ¡s reciente primero)
         });
 
-        // Buscamos el primero que sea estrictamente anterior a hoy (Fórmulas DOF)
+        // Buscamos el primero que sea estrictamente anterior a hoy (FÃ³rmulas DOF)
         let datoOficial = sortedDatos.find(d => {
             const [dD, dM, dY] = d.fecha.split('/');
             const [tD, tM, tY] = nowMx.split('/');
@@ -75,7 +74,7 @@ export async function GET() {
             return dateD < dateT;
         });
 
-        // Si no hay ninguno anterior (caso raro), usamos el más reciente disponible
+        // Si no hay ninguno anterior (caso raro), usamos el mÃ¡s reciente disponible
         if (!datoOficial) {
             datoOficial = sortedDatos[0];
         }
@@ -91,12 +90,11 @@ export async function GET() {
             debug_today: nowMx
         });
     } catch (error) {
-        console.error('Banxico Fetch Error:', error);
 
         return NextResponse.json({
             rate: 20.50,
             tipoCambio: 20.50,
-            source: 'Fallback (error de conexión)',
+            source: 'Fallback (error de conexiÃ³n)',
             fecha: new Date().toLocaleDateString('es-MX'),
             error: (error as Error).message,
         });

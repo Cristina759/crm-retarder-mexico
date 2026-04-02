@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+﻿import { useState, useCallback, useEffect } from 'react';
 import { DEFAULT_TIPO_CAMBIO } from '@/lib/utils/constants';
 
 /**
@@ -18,7 +18,7 @@ export function useExchangeRate() {
         setError(null);
 
         try {
-            // Intentar obtener el dato oficial del DOF vía Banxico
+            // Intentar obtener el dato oficial del DOF vÃ­a Banxico
             const res = await fetch('/api/tc', { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
@@ -31,7 +31,6 @@ export function useExchangeRate() {
                 }
             }
         } catch (err) {
-            console.warn('Fallo al conectar con Banxico/DOF');
         }
 
         // Si falla la red, mantenemos el valor DOF conocido (DEFAULT_TIPO_CAMBIO)

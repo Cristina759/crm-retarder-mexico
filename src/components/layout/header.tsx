@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Bell, Search, Building2, Check, CheckCheck } from 'lucide-react';
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -73,7 +73,6 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                 setNotifications(data);
             }
         } catch (error) {
-            console.error('Error fetching real notifications:', error);
         }
     }, [user?.id]);
 
@@ -157,11 +156,11 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                         <Search size={16} className="text-retarder-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar órdenes, clientes..."
+                            placeholder="Buscar Ã³rdenes, clientes..."
                             className="bg-transparent border-none outline-none text-sm text-retarder-gray-700 placeholder-retarder-gray-400 w-full"
                         />
                         <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium text-retarder-gray-400 bg-white rounded border border-retarder-gray-200">
-                            ⌘K
+                            âŒ˜K
                         </kbd>
                     </div>
 
@@ -192,9 +191,9 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                                             <button
                                                 onClick={markAllAsRead}
                                                 className="text-[10px] flex items-center gap-1 font-bold text-retarder-gray-400 hover:text-blue-600 transition-colors"
-                                                title="Marcar todas como leídas"
+                                                title="Marcar todas como leÃ­das"
                                             >
-                                                <CheckCheck size={14} /> Leídas
+                                                <CheckCheck size={14} /> LeÃ­das
                                             </button>
                                         )}
                                     </div>
@@ -211,14 +210,14 @@ export function Header({ title = 'Dashboard', subtitle }: HeaderProps) {
                                                     <button
                                                         onClick={(e) => markAsRead(e, n.id)}
                                                         className="absolute right-2 top-2 p-1.5 rounded-lg text-retarder-gray-300 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
-                                                        title="Marcar leída"
+                                                        title="Marcar leÃ­da"
                                                     >
                                                         <Check size={14} />
                                                     </button>
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="text-xs text-retarder-gray-400 text-center py-6">Estás al día.<br />No hay notificaciones nuevas.</p>
+                                            <p className="text-xs text-retarder-gray-400 text-center py-6">EstÃ¡s al dÃ­a.<br />No hay notificaciones nuevas.</p>
                                         )}
                                     </div>
                                 </motion.div>

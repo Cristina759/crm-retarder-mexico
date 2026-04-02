@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +10,7 @@ import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
 
-// ── Types ────────────────────────────────────────────
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type ServTipo = 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico' | 'venta';
 
@@ -31,7 +31,7 @@ interface FormState {
     descripcion: string;
     precio_base_mxn: string;
     duracion_estimada_hrs: string;
-    requiere_equipo: string; // comma-separated string → array al guardar
+    requiere_equipo: string; // comma-separated string â†’ array al guardar
 }
 
 const FORM_INITIAL: FormState = {
@@ -43,17 +43,17 @@ const FORM_INITIAL: FormState = {
     requiere_equipo: '',
 };
 
-// ── Config ───────────────────────────────────────────
+// â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const TIPO_CONFIG: Record<ServTipo, { label: string; color: string; icon: string }> = {
-    preventivo:  { label: 'Preventivo',  color: 'bg-emerald-100 text-emerald-700', icon: '🛡️' },
-    correctivo:  { label: 'Correctivo',  color: 'bg-amber-100 text-amber-700',     icon: '🔧' },
-    instalacion: { label: 'Instalación', color: 'bg-blue-100 text-blue-700',       icon: '⚙️' },
-    diagnostico: { label: 'Diagnóstico', color: 'bg-purple-100 text-purple-700',   icon: '🔍' },
-    venta:       { label: 'Venta',       color: 'bg-retarder-red/10 text-retarder-red',   icon: '💰' },
+    preventivo:  { label: 'Preventivo',  color: 'bg-emerald-100 text-emerald-700', icon: 'ðŸ›¡ï¸' },
+    correctivo:  { label: 'Correctivo',  color: 'bg-amber-100 text-amber-700',     icon: 'ðŸ”§' },
+    instalacion: { label: 'InstalaciÃ³n', color: 'bg-blue-100 text-blue-700',       icon: 'âš™ï¸' },
+    diagnostico: { label: 'DiagnÃ³stico', color: 'bg-purple-100 text-purple-700',   icon: 'ðŸ”' },
+    venta:       { label: 'Venta',       color: 'bg-retarder-red/10 text-retarder-red',   icon: 'ðŸ’°' },
 };
 
-// ── Page ─────────────────────────────────────────────
+// â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function ServiciosPage() {
     const { isAdmin } = useRole();
@@ -71,7 +71,7 @@ export default function ServiciosPage() {
     // Confirm delete
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-    // ── Fetch ──────────────────────────────────────────
+    // â”€â”€ Fetch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const fetchServicios = useCallback(async () => {
         setLoading(true);
@@ -89,7 +89,6 @@ export default function ServiciosPage() {
                 duracion_estimada_hrs: s.duracion_estimada_hrs != null ? Number(s.duracion_estimada_hrs) : null,
             })));
         } catch (err) {
-            console.error('Error cargando servicios:', err);
             setServicios([]);
         } finally {
             setLoading(false);
@@ -100,7 +99,7 @@ export default function ServiciosPage() {
         fetchServicios();
     }, [fetchServicios]);
 
-    // ── Derived ───────────────────────────────────────
+    // â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const filtered = useMemo(() => {
         if (!searchQuery.trim()) return servicios;
@@ -111,7 +110,7 @@ export default function ServiciosPage() {
         );
     }, [servicios, searchQuery]);
 
-    // ── Modal helpers ──────────────────────────────────
+    // â”€â”€ Modal helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const openCreate = () => {
         setForm(FORM_INITIAL);
@@ -135,7 +134,7 @@ export default function ServiciosPage() {
         setForm(FORM_INITIAL);
     };
 
-    // ── CRUD ───────────────────────────────────────────
+    // â”€â”€ CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const handleSave = async () => {
         if (!form.nombre.trim()) {
@@ -144,7 +143,7 @@ export default function ServiciosPage() {
         }
         const precio = parseFloat(form.precio_base_mxn);
         if (isNaN(precio) || precio < 0) {
-            toast.info('Ingresa un precio base válido.');
+            toast.info('Ingresa un precio base vÃ¡lido.');
             return;
         }
 
@@ -176,7 +175,6 @@ export default function ServiciosPage() {
             closeModal();
             await fetchServicios();
         } catch (err: any) {
-            console.error('Error guardando servicio:', err);
             toast.error(`Error al guardar: ${err.message}`);
         } finally {
             setSaving(false);
@@ -191,7 +189,7 @@ export default function ServiciosPage() {
         }
         setDeleting(id);
         try {
-            // Soft delete — marca activo = false
+            // Soft delete â€” marca activo = false
             const { error } = await supabase
                 .from('catalogo_servicios')
                 .update({ activo: false })
@@ -200,14 +198,13 @@ export default function ServiciosPage() {
             setConfirmDeleteId(null);
             await fetchServicios();
         } catch (err: any) {
-            console.error('Error eliminando servicio:', err);
             toast.error(`Error al eliminar: ${err.message}`);
         } finally {
             setDeleting(null);
         }
     };
 
-    // ── Render ────────────────────────────────────────
+    // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     const isEditing = modal !== null && modal !== 'create';
 
@@ -216,7 +213,7 @@ export default function ServiciosPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-retarder-black">Catálogo de Servicios</h2>
+                    <h2 className="text-xl font-bold text-retarder-black">CatÃ¡logo de Servicios</h2>
                     <p className="text-xs text-retarder-gray-500">
                         {servicios.length} servicio{servicios.length !== 1 ? 's' : ''} registrado{servicios.length !== 1 ? 's' : ''}
                     </p>
@@ -259,7 +256,7 @@ export default function ServiciosPage() {
                     <p className="text-xs text-retarder-gray-300 mt-1">
                         {servicios.length === 0
                             ? 'Haz clic en "Nuevo Servicio" para agregar el primero.'
-                            : 'Intenta con otro término de búsqueda.'}
+                            : 'Intenta con otro tÃ©rmino de bÃºsqueda.'}
                     </p>
                 </div>
             ) : (
@@ -302,7 +299,7 @@ export default function ServiciosPage() {
                                                 {deleting === s.id
                                                     ? <Loader2 size={13} className="animate-spin" />
                                                     : confirmDeleteId === s.id
-                                                    ? '¿Confirmar?'
+                                                    ? 'Â¿Confirmar?'
                                                     : <Trash2 size={13} />}
                                             </button>
                                         </div>
@@ -312,10 +309,10 @@ export default function ServiciosPage() {
                                 {/* Name + description */}
                                 <h3 className="text-sm font-bold text-retarder-gray-800 mb-1">{s.nombre}</h3>
                                 <p className="text-[11px] text-retarder-gray-500 leading-relaxed mb-3">
-                                    {s.descripcion || '—'}
+                                    {s.descripcion || 'â€”'}
                                 </p>
 
-                                {/* Precio + Duración */}
+                                {/* Precio + DuraciÃ³n */}
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                     <div className="bg-retarder-gray-50 rounded-lg p-2 flex items-center gap-2">
                                         <DollarSign size={12} className="text-retarder-gray-400" />
@@ -327,9 +324,9 @@ export default function ServiciosPage() {
                                     <div className="bg-retarder-gray-50 rounded-lg p-2 flex items-center gap-2">
                                         <Clock size={12} className="text-retarder-gray-400" />
                                         <div>
-                                            <p className="text-[9px] text-retarder-gray-400 font-semibold">DURACIÓN</p>
+                                            <p className="text-[9px] text-retarder-gray-400 font-semibold">DURACIÃ“N</p>
                                             <p className="text-xs font-bold text-retarder-gray-800">
-                                                {s.duracion_estimada_hrs ? `${s.duracion_estimada_hrs} hrs` : '—'}
+                                                {s.duracion_estimada_hrs ? `${s.duracion_estimada_hrs} hrs` : 'â€”'}
                                             </p>
                                         </div>
                                     </div>
@@ -354,7 +351,7 @@ export default function ServiciosPage() {
                 </div>
             )}
 
-            {/* Modal — Crear / Editar */}
+            {/* Modal â€” Crear / Editar */}
             <AnimatePresence>
                 {modal !== null && (
                     <>
@@ -419,10 +416,10 @@ export default function ServiciosPage() {
                                     />
                                 </div>
 
-                                {/* Descripción */}
+                                {/* DescripciÃ³n */}
                                 <div>
                                     <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">
-                                        Descripción
+                                        DescripciÃ³n
                                     </label>
                                     <textarea
                                         placeholder="Describe el servicio..."
@@ -433,7 +430,7 @@ export default function ServiciosPage() {
                                     />
                                 </div>
 
-                                {/* Precio + Duración */}
+                                {/* Precio + DuraciÃ³n */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">
@@ -453,7 +450,7 @@ export default function ServiciosPage() {
                                     </div>
                                     <div>
                                         <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">
-                                            Duración (hrs)
+                                            DuraciÃ³n (hrs)
                                         </label>
                                         <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
                                             <Clock size={14} className="text-retarder-gray-400 shrink-0" />
@@ -477,7 +474,7 @@ export default function ServiciosPage() {
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Herramienta básica, Multímetro, ..."
+                                        placeholder="Herramienta bÃ¡sica, MultÃ­metro, ..."
                                         value={form.requiere_equipo}
                                         onChange={e => setForm(f => ({ ...f, requiere_equipo: e.target.value }))}
                                         className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none"

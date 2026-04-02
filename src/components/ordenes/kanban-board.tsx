@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -122,11 +122,10 @@ export function KanbanBoard({
                     .eq('id', id);
 
                 if (error) {
-                    console.error('Error al actualizar estado:', error);
                     toast.error('Error al guardar el cambio: ' + error.message);
                 }
                 
-                // Siempre refrescamos desde Supabase para mantener la sincronía
+                // Siempre refrescamos desde Supabase para mantener la sincronÃ­a
                 onRefresh();
             }
         }

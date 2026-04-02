@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+﻿import { createClient } from '@/lib/supabase/client';
 
 const supabase = createClient();
 
@@ -28,7 +28,6 @@ export const SurveyService = {
             if (createError) throw createError;
             return { data: created, error: null };
         } catch (error) {
-            console.error('Error in getOrCreateSurvey:', error);
             return { data: null, error };
         }
     },
@@ -55,7 +54,6 @@ export const SurveyService = {
             if (error) throw error;
             return { data, error: null };
         } catch (error) {
-            console.error('Error fetching survey by token:', error);
             return { data: null, error };
         }
     },
@@ -84,7 +82,6 @@ export const SurveyService = {
             if (error) throw error;
             return { data, error: null };
         } catch (error) {
-            console.error('Error submitting survey:', error);
             return { data: null, error };
         }
     }

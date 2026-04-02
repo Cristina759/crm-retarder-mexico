@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,7 +25,7 @@ import { useExchangeRate } from '@/hooks/useExchangeRate';
 import { toast, confirmModal, promptModal } from '@/lib/modals';
 
 const supabase = createClient();
-// ── Types ──
+// â”€â”€ Types â”€â”€
 
 type NCEstado = 'emitida' | 'aplicada' | 'cancelada';
 
@@ -45,7 +45,7 @@ interface NotaCredito {
     tipo_cambio_fecha?: string;
 }
 
-// ── Constants ──
+// â”€â”€ Constants â”€â”€
 
 const NC_ESTADO_CONFIG: Record<NCEstado, { label: string; color: string; icon: typeof Clock }> = {
     emitida: { label: 'Emitida', color: 'bg-blue-100 text-blue-700', icon: FileText },
@@ -54,10 +54,10 @@ const NC_ESTADO_CONFIG: Record<NCEstado, { label: string; color: string; icon: t
 };
 
 const MOTIVO_OPTIONS = [
-    'Devolución de producto',
+    'DevoluciÃ³n de producto',
     'Descuento post-venta',
-    'Error en facturación',
-    'Bonificación comercial',
+    'Error en facturaciÃ³n',
+    'BonificaciÃ³n comercial',
     'Ajuste de precio',
     'Otro',
 ] as const;
@@ -82,19 +82,17 @@ export default function NotasCreditoPage() {
     const [facturasDisponibles, setFacturasDisponibles] = useState<{ factura: string, empresa: string, total: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Fetch notas de crédito from Supabase
+    // Fetch notas de crÃ©dito from Supabase
     const fetchNotas = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase.from('notas_credito').select('*').order('created_at', { ascending: false });
             if (error) {
-                console.warn('Error fetching notas_credito:', error.message);
                 setNotas([]);
             } else {
                 setNotas(data || []);
             }
         } catch (e) {
-            console.warn('Tabla notas_credito no disponible');
             setNotas([]);
         } finally {
             setLoading(false);
@@ -112,7 +110,6 @@ export default function NotasCreditoPage() {
                 .order('fecha_creado', { ascending: false });
 
             if (error) {
-                console.error('Error fetching facturas:', error);
                 return;
             }
 
@@ -129,11 +126,9 @@ export default function NotasCreditoPage() {
                     }
                 });
                 const arr = Array.from(uniqueFacturas.values());
-                console.log(`[NotasCredito] Cargadas ${arr.length} facturas únicas desde Supabase.`, arr.slice(0, 3));
                 setFacturasDisponibles(arr);
             }
         } catch (err) {
-            console.error('Error inesperado fetching facturas:', err);
         }
     }, [supabase]);
 
@@ -154,7 +149,7 @@ export default function NotasCreditoPage() {
         return `NC-${String(count + 1).padStart(4, '0')}`;
     }, [notas]);
 
-    // Create nota de crédito in Supabase
+    // Create nota de crÃ©dito in Supabase
     const handleCreate = async () => {
         if (!formFactura || !formSubtotal) return;
 
@@ -180,7 +175,6 @@ export default function NotasCreditoPage() {
 
         const { error } = await supabase.from('notas_credito').insert(newNota);
         if (error) {
-            console.error('Error inserting nota de crédito:', error);
             toast.error(`Error al crear nota: ${error.message}`);
             return;
         }
@@ -197,10 +191,9 @@ export default function NotasCreditoPage() {
 
     // Delete nota from Supabase
     const handleDelete = async (id: string) => {
-        if (!await confirmModal('¿Estás seguro de eliminar esta nota de crédito?')) return;
+        if (!await confirmModal('Â¿EstÃ¡s seguro de eliminar esta nota de crÃ©dito?')) return;
         const { error } = await supabase.from('notas_credito').delete().eq('id', id);
         if (error) {
-            console.error('Error deleting nota:', error);
             toast.error(`Error al eliminar: ${error.message}`);
             return;
         }
@@ -212,7 +205,6 @@ export default function NotasCreditoPage() {
     const handleChangeEstado = async (id: string, estado: NCEstado) => {
         const { error } = await supabase.from('notas_credito').update({ estado }).eq('id', id);
         if (error) {
-            console.error('Error updating estado:', error);
             return;
         }
         if (selectedNota?.id === id) {
@@ -237,7 +229,7 @@ export default function NotasCreditoPage() {
         return result;
     }, [notas, searchQuery, filterEstado]);
 
-    // Stats — only count non-cancelled
+    // Stats â€” only count non-cancelled
     const stats = useMemo(() => ({
         totalEmitido: notas.filter(n => n.estado !== 'cancelada').reduce((s, n) => s + n.total, 0),
         totalAplicado: notas.filter(n => n.estado === 'aplicada').reduce((s, n) => s + n.total, 0),
@@ -256,7 +248,7 @@ export default function NotasCreditoPage() {
                             <ArrowDownLeft size={16} className="text-white" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-retarder-black">Notas de Crédito</h2>
+                            <h2 className="text-xl font-bold text-retarder-black">Notas de CrÃ©dito</h2>
                             <p className="text-xs text-retarder-gray-500">
                                 {notas.length} notas registradas
                             </p>
@@ -294,7 +286,7 @@ export default function NotasCreditoPage() {
                     <AlertCircle size={14} className="text-amber-600" />
                 </div>
                 <p className="text-xs text-amber-800">
-                    <strong>Las notas de crédito no se suman al total facturado de ventas.</strong>{' '}
+                    <strong>Las notas de crÃ©dito no se suman al total facturado de ventas.</strong>{' '}
                     Son documentos fiscales independientes que se emiten para ajustar o cancelar parcial/totalmente una factura.
                 </p>
             </motion.div>
@@ -374,15 +366,15 @@ export default function NotasCreditoPage() {
                                                 <ArrowDownLeft size={28} className="text-orange-400" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-retarder-gray-600">No hay notas de crédito</p>
-                                                <p className="text-xs text-retarder-gray-400 mt-0.5">Crea tu primera nota de crédito para comenzar</p>
+                                                <p className="text-sm font-semibold text-retarder-gray-600">No hay notas de crÃ©dito</p>
+                                                <p className="text-xs text-retarder-gray-400 mt-0.5">Crea tu primera nota de crÃ©dito para comenzar</p>
                                             </div>
                                             <button
                                                 onClick={() => setShowForm(true)}
                                                 className="mt-2 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg text-sm font-medium hover:from-orange-600 hover:to-red-700 transition-all shadow-md"
                                             >
                                                 <Plus size={14} />
-                                                Crear Nota de Crédito
+                                                Crear Nota de CrÃ©dito
                                             </button>
                                         </div>
                                     </td>
@@ -466,7 +458,7 @@ export default function NotasCreditoPage() {
                             <div className="flex items-center justify-between px-6 py-4 border-b border-retarder-gray-200 bg-gradient-to-r from-orange-500 to-red-600">
                                 <div>
                                     <h3 className="text-lg font-bold text-white">{selectedNota.numero_nc}</h3>
-                                    <p className="text-xs text-white/70">Nota de Crédito</p>
+                                    <p className="text-xs text-white/70">Nota de CrÃ©dito</p>
                                 </div>
                                 <button onClick={() => setSelectedNota(null)} className="p-2 rounded-lg hover:bg-white/10 text-white">
                                     <X size={18} />
@@ -502,7 +494,7 @@ export default function NotasCreditoPage() {
                                         <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedNota.factura_relacionada}</p>
                                     </div>
                                     <div className="bg-retarder-gray-50 rounded-xl p-3">
-                                        <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Emisión</p>
+                                        <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha EmisiÃ³n</p>
                                         <p className="text-sm font-bold text-retarder-black mt-0.5">{formatDate(selectedNota.fecha_emision)}</p>
                                     </div>
                                     {selectedNota.tipo_cambio && (
@@ -512,7 +504,7 @@ export default function NotasCreditoPage() {
                                                 <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedNota.tipo_cambio} MXN</p>
                                             </div>
                                             <div className="text-right">
-                                                <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha Publicación</p>
+                                                <p className="text-[10px] font-semibold uppercase text-retarder-gray-400">Fecha PublicaciÃ³n</p>
                                                 <p className="text-sm font-bold text-retarder-black mt-0.5">{selectedNota.tipo_cambio_fecha || 'N/A'}</p>
                                             </div>
                                         </div>
@@ -595,7 +587,7 @@ export default function NotasCreditoPage() {
                                         <ArrowDownLeft size={16} className="text-white" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">Nueva Nota de Crédito</h3>
+                                        <h3 className="text-lg font-bold text-white">Nueva Nota de CrÃ©dito</h3>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <p className="text-[10px] text-white/70">{nextNCNumber}</p>
                                             <span className="text-white/30 text-[10px]">|</span>
@@ -627,14 +619,14 @@ export default function NotasCreditoPage() {
                                         <option value="">Seleccionar factura...</option>
                                         {facturasDisponibles.map(f => (
                                             <option key={f.factura} value={f.factura}>
-                                                {f.factura} — {f.empresa} ({formatMXN(f.total)})
+                                                {f.factura} â€” {f.empresa} ({formatMXN(f.total)})
                                             </option>
                                         ))}
                                     </select>
                                     {selectedFacturaInfo && (
                                         <div className="mt-2 p-2 bg-retarder-gray-50 rounded-lg">
                                             <p className="text-[10px] text-retarder-gray-500">
-                                                <strong>{selectedFacturaInfo.empresa}</strong> · Total factura: {formatMXN(selectedFacturaInfo.total)}
+                                                <strong>{selectedFacturaInfo.empresa}</strong> Â· Total factura: {formatMXN(selectedFacturaInfo.total)}
                                             </p>
                                         </div>
                                     )}
@@ -741,7 +733,7 @@ export default function NotasCreditoPage() {
                                             : 'bg-retarder-gray-200 text-retarder-gray-400 cursor-not-allowed shadow-none'
                                     )}
                                 >
-                                    Crear Nota de Crédito
+                                    Crear Nota de CrÃ©dito
                                 </button>
                             </div>
                         </motion.div>

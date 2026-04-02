@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -94,8 +94,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             const { data, error: surveyError } = await SurveyService.getOrCreateSurvey(orden.id);
             if (!surveyError && data) setSurvey(data);
         } catch (e) {
-            // Tabla encuestas puede no existir aún — no bloquear el panel
-            console.warn('Survey fetch failed (tabla puede no existir):', e);
+            // Tabla encuestas puede no existir aÃºn â€” no bloquear el panel
         }
         setIsLoadingSurvey(false);
     };
@@ -114,7 +113,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         // Validar UUID para evitar error de sintaxis en DB
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orden.id);
         if (!isUUID) {
-            console.warn('ID de orden no es UUID, omitiendo fetch de evidencias reales.');
             setEvidencias([]);
             return;
         }
@@ -135,7 +133,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         setError(null);
 
         try {
-            // Validar UUID antes de cualquier operación de DB
+            // Validar UUID antes de cualquier operaciÃ³n de DB
             const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orden.id);
 
             const bucket = tipo === 'documento' ? 'documentos' : 'evidencias';
@@ -149,27 +147,25 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     orden_id: orden.id,
                     tipo: tipo as any,
                     archivo_url: url,
-                    descripcion: tipo === 'documento' ? 'Orden de Compra' : tipo === 'foto_antes' ? 'Evidencia Antes' : 'Evidencia Después',
+                    descripcion: tipo === 'documento' ? 'Orden de Compra' : tipo === 'foto_antes' ? 'Evidencia Antes' : 'Evidencia DespuÃ©s',
                 });
 
                 if (regError) throw regError;
                 await fetchEvidencias();
             } else {
-                console.warn('ID demo detectado, simulando registro de evidencia local.');
                 // Simular para la UI
                 const demoEvidencia: Evidencia = {
                     id: Math.random().toString(),
                     orden_id: orden.id,
                     tipo: tipo as any,
                     archivo_url: url,
-                    descripcion: tipo === 'documento' ? 'Orden de Compra (Demo)' : tipo === 'foto_antes' ? 'Evidencia Antes (Demo)' : 'Evidencia Después (Demo)',
+                    descripcion: tipo === 'documento' ? 'Orden de Compra (Demo)' : tipo === 'foto_antes' ? 'Evidencia Antes (Demo)' : 'Evidencia DespuÃ©s (Demo)',
                     subido_por: 'demo',
                     created_at: new Date().toISOString()
                 };
                 setEvidencias(prev => [demoEvidencia, ...prev]);
             }
         } catch (err: any) {
-            console.error('Error uploading file:', err);
             setError(`Error al subir archivo: ${err.message}`);
         } finally {
             setIsUploading(false);
@@ -204,7 +200,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                 if (regError) throw regError;
                 await fetchEvidencias();
             } else {
-                console.warn('ID demo, simulando guardar firma');
                 const demoEvidencia: Evidencia = {
                     id: Math.random().toString(),
                     orden_id: orden.id,
@@ -217,7 +212,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                 setEvidencias(prev => [demoEvidencia, ...prev]);
             }
         } catch (err: any) {
-            console.error('Error saving signature:', err);
             setError(`Error al guardar firma: ${err.message}`);
         } finally {
             setIsUploadingFirma(false);
@@ -240,7 +234,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         // Update local state immediately for snappy feel
         setLocalTecnico(newTecnico);
 
-        console.log('Intentando asignar técnico:', newTecnico, 'a la orden:', orden.id);
         setIsUpdatingTecnico(true);
         setError(null);
         try {
@@ -254,18 +247,14 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                 if (updateError) {
                     // Revert on error
                     setLocalTecnico(orden.tecnico || '');
-                    console.error('Error de Supabase:', updateError);
                     throw updateError;
                 }
-                console.log('Técnico actualizado con éxito:', data);
             } else {
-                console.warn('Simulando asignación de técnico para orden demo');
                 // No necesitamos llamar a la DB si no es UUID
             }
             if (onUpdate) onUpdate();
         } catch (err: any) {
-            console.error('Error updating tecnico:', err);
-            setError(`Error: ${err.message || 'No se pudo asignar el técnico.'}`);
+            setError(`Error: ${err.message || 'No se pudo asignar el tÃ©cnico.'}`);
         } finally {
             setIsUpdatingTecnico(false);
         }
@@ -283,25 +272,25 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
 
         try {
             // --- Business Validations ---
-            // Determinar si esta orden ya está en una fase avanzada (datos reales importados)
-            // Estas órdenes ya completaron su proceso real y no necesitan evidencias digitales
+            // Determinar si esta orden ya estÃ¡ en una fase avanzada (datos reales importados)
+            // Estas Ã³rdenes ya completaron su proceso real y no necesitan evidencias digitales
             const advancedStates: string[] = ['servicio_concluido', 'evidencia_cargada', 'documentacion_entregada', 'encuesta_enviada', 'facturado', 'pagado'];
             const isAlreadyAdvanced = advancedStates.includes(orden.estado);
 
-            // Solo aplicar validaciones estrictas a órdenes que están en fases tempranas
+            // Solo aplicar validaciones estrictas a Ã³rdenes que estÃ¡n en fases tempranas
             if (!isAlreadyAdvanced) {
-                // 2. Para avanzar a fase operativa: requiere técnico + Nº OS física + foto
+                // 2. Para avanzar a fase operativa: requiere tÃ©cnico + NÂº OS fÃ­sica + foto
                 const operativeStates = ['asignacion_tecnico', 'servicio_programado', 'documentacion_enviada', 'tecnico_en_contacto', 'servicio_en_proceso', 'autorizacion_adicional'];
                 if (operativeStates.includes(nextState)) {
                     if (!localTecnico) {
-                        throw new Error('Se requiere asignar un técnico antes de avanzar.');
+                        throw new Error('Se requiere asignar un tÃ©cnico antes de avanzar.');
                     }
                     if (!numeroOrdenFisica.trim()) {
-                        throw new Error('Se requiere capturar el Nº de Orden de Servicio Física (papel) antes de avanzar.');
+                        throw new Error('Se requiere capturar el NÂº de Orden de Servicio FÃ­sica (papel) antes de avanzar.');
                     }
                     const hasFotoOrden = evidencias.some(e => e.tipo === 'foto_antes');
                     if (!hasFotoOrden) {
-                        throw new Error('Se requiere subir la foto de la Orden de Servicio Física (papel) antes de avanzar.');
+                        throw new Error('Se requiere subir la foto de la Orden de Servicio FÃ­sica (papel) antes de avanzar.');
                     }
                 }
 
@@ -309,7 +298,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                 if (nextState === 'evidencia_cargada') {
                     const photosCount = evidencias.filter(e => e.tipo === 'foto_antes' || e.tipo === 'foto_despues').length;
                     if (photosCount < 2) {
-                        throw new Error('Se requiere cargar fotos de "Antes" y "Después" para avanzar.');
+                        throw new Error('Se requiere cargar fotos de "Antes" y "DespuÃ©s" para avanzar.');
                     }
                 }
             }
@@ -319,14 +308,14 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             if (nextState === 'pagado' && !isAlreadyAdvanced) {
                 const hasFotoOrden = evidencias.some(e => e.tipo === 'foto_antes');
                 if (!hasFotoOrden) {
-                    throw new Error('No se puede pasar a Pagado sin subir las FOTOS DE LA ORDEN física.');
+                    throw new Error('No se puede pasar a Pagado sin subir las FOTOS DE LA ORDEN fÃ­sica.');
                 }
                 const hasOC = evidencias.some(e => e.tipo === 'documento');
                 if (!hasOC) {
                     throw new Error('No se puede pasar a Pagado sin subir el documento de la ORDEN DE COMPRA (OC).');
                 }
                 if (!numeroOrdenCompra.trim()) {
-                    throw new Error('No se puede pasar a Pagado sin capturar el número de la ORDEN DE COMPRA (OC).');
+                    throw new Error('No se puede pasar a Pagado sin capturar el nÃºmero de la ORDEN DE COMPRA (OC).');
                 }
             }
 
@@ -340,7 +329,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                 try {
                     await SurveyService.getOrCreateSurvey(orden.id);
                 } catch (e) {
-                    console.warn('No se pudo crear encuesta (tabla puede no existir):', e);
                 }
             }
 
@@ -361,14 +349,14 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     .maybeSingle();
 
                 if (existing) {
-                    // La orden ya existe en Supabase — solo actualizar estado
+                    // La orden ya existe en Supabase â€” solo actualizar estado
                     const { error: updateError } = await supabase
                         .from('ordenes_servicio')
                         .update({ estado: nextState })
                         .eq('id', orden.id);
                     if (updateError) throw updateError;
                 } else {
-                    // La orden viene de DEMO_ORDENES y no existe en Supabase — insertarla
+                    // La orden viene de DEMO_ORDENES y no existe en Supabase â€” insertarla
                     const insertData: any = {
                         id: orden.id,
                         numero: orden.numero,
@@ -393,16 +381,14 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     if (insertError) throw insertError;
                 }
             } else {
-                console.warn('ID de orden no es UUID (posible dato demo):', orden.id);
-                // Si es demo, simulamos el éxito para el flujo de la UI
+                // Si es demo, simulamos el Ã©xito para el flujo de la UI
             }
 
             if (onUpdate) onUpdate();
             onClose(); // Close panel after successful advance
 
         } catch (err: any) {
-            console.error('Error advancing state:', err);
-            setError(err.message || 'Ocurrió un error al avanzar el estado.');
+            setError(err.message || 'OcurriÃ³ un error al avanzar el estado.');
         } finally {
             setIsAdvancing(false);
         }
@@ -411,25 +397,20 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
     const handleDeleteOrden = async () => {
         if (!orden) return;
 
-        console.log('🗑️ handleDeleteOrden llamado con id:', orden.id);
-        console.log('🔍 showDeleteConfirm actual:', showDeleteConfirm);
 
-        // Si no está en modo confirmación, activarlo
+        // Si no estÃ¡ en modo confirmaciÃ³n, activarlo
         if (!showDeleteConfirm) {
-            console.log('⏳ Primer clic: activando modo de confirmación');
             setShowDeleteConfirm(true);
-            // Auto-cancelar después de 5 segundos
+            // Auto-cancelar despuÃ©s de 5 segundos
             setTimeout(() => setShowDeleteConfirm(false), 5000);
             return;
         }
 
-        console.log('✅ Ejecutando DELETE en Supabase para el panel de detalles...');
         // Segundo clic: ejecutar borrado real
         setIsAdvancing(true);
         setError(null);
         try {
             if (isValidUUID(orden.id)) {
-                console.log('🔗 Limpiando dependencias para la orden (Panel):', orden.id);
                 
                 // 1. Desvincular de cotizaciones (si existe el campo orden_id)
                 try {
@@ -458,7 +439,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     .eq('id', orden.id);
                     
                 if (deleteError) {
-                    console.error('Error Supabase al borrar:', deleteError);
                     toast.error(`No se pudo eliminar la orden: ${deleteError.message}`);
                     throw deleteError;
                 }
@@ -469,7 +449,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             onClose();
         } catch (err: any) {
             setError('Error al eliminar la orden');
-            console.error(err);
         } finally {
             setIsAdvancing(false);
         }
@@ -565,7 +544,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-1.5 text-retarder-gray-400">
                                         <User size={14} />
-                                        <span className="text-[10px] font-semibold uppercase tracking-wide">Técnico</span>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide">TÃ©cnico</span>
                                     </div>
                                     {(orden.estado === 'asignacion_tecnico' || !localTecnico || orden.estado === 'cotizacion_aceptada') ? (
                                         <div className="relative pl-5">
@@ -578,7 +557,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     !localTecnico ? "border-retarder-red/50 bg-red-50/50 animate-pulse" : "border-retarder-gray-200"
                                                 )}
                                             >
-                                                <option value="">⚠️ Seleccionar técnico...</option>
+                                                <option value="">âš ï¸ Seleccionar tÃ©cnico...</option>
                                                 {TECNICOS.map(t => (
                                                     <option key={t} value={t}>{t}</option>
                                                 ))}
@@ -613,7 +592,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 />
                                 <InfoField
                                     icon={<CalendarDays size={14} />}
-                                    label="Fecha Creación"
+                                    label="Fecha CreaciÃ³n"
                                     value={formatDate(orden.fecha_creado)}
                                 />
                                 <InfoField
@@ -626,7 +605,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                             {/* Description */}
                             <div>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
-                                    Descripción
+                                    DescripciÃ³n
                                 </h3>
                                 <div className="bg-retarder-gray-50 rounded-xl p-4">
                                     <p className="text-sm text-retarder-gray-700 leading-relaxed">
@@ -639,7 +618,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                             {orden.cotizacion_numero && (
                                 <div>
                                     <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
-                                        Cotización Vinculada
+                                        CotizaciÃ³n Vinculada
                                     </h3>
                                     <Link
                                         href="/cotizaciones"
@@ -654,7 +633,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     {orden.cotizacion_numero}
                                                 </p>
                                                 <p className="text-[10px] text-blue-600">
-                                                    Ver detalles de cotización
+                                                    Ver detalles de cotizaciÃ³n
                                                 </p>
                                             </div>
                                         </div>
@@ -663,20 +642,20 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 </div>
                             )}
 
-                            {/* Orden de Servicio Física (Técnico) */}
+                            {/* Orden de Servicio FÃ­sica (TÃ©cnico) */}
                             <div>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
                                     <ClipboardList size={12} className="inline mr-1" />
-                                    Orden de Servicio Física
+                                    Orden de Servicio FÃ­sica
                                 </h3>
                                 <div className="bg-amber-50 border border-amber-200/50 rounded-xl p-4 space-y-3">
                                     <p className="text-[10px] text-amber-700 font-medium">
-                                        El técnico captura el número de la orden impresa y sube la foto del documento.
+                                        El tÃ©cnico captura el nÃºmero de la orden impresa y sube la foto del documento.
                                     </p>
 
-                                    {/* Número de orden física */}
+                                    {/* NÃºmero de orden fÃ­sica */}
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1 block">Nº Orden Física (Papel)</label>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1 block">NÂº Orden FÃ­sica (Papel)</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
@@ -697,14 +676,13 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                                 .eq('id', orden.id);
                                                             if (saveErr) throw saveErr;
                                                         } else {
-                                                            console.warn('Simulando guardado para orden demo');
                                                             // Simulamos un delay
                                                             await new Promise(resolve => setTimeout(resolve, 500));
                                                         }
                                                         setNumeroSaved(true);
                                                         if (onUpdate) onUpdate();
                                                     } catch (err: any) {
-                                                        setError(`Error al guardar número: ${err.message}`);
+                                                        setError(`Error al guardar nÃºmero: ${err.message}`);
                                                     } finally {
                                                         setIsSavingNumero(false);
                                                     }
@@ -723,7 +701,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                         </div>
                                     </div>
 
-                                    {/* Upload foto de orden física */}
+                                    {/* Upload foto de orden fÃ­sica */}
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1 block">Foto de la Orden Impresa</label>
                                         <label className={cn(
@@ -768,12 +746,12 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 </h3>
                                 <div className="bg-blue-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
                                     <p className="text-[10px] text-blue-700 font-medium">
-                                        Captura el número de la OC del cliente y sube el documento PDF/Imagen.
+                                        Captura el nÃºmero de la OC del cliente y sube el documento PDF/Imagen.
                                     </p>
 
-                                    {/* Número de orden de compra */}
+                                    {/* NÃºmero de orden de compra */}
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-1 block">Número de Orden de Compra (OC)</label>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-1 block">NÃºmero de Orden de Compra (OC)</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
@@ -795,7 +773,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
 
                                                             if (saveErr) throw saveErr;
                                                         } else {
-                                                            console.warn('Simulando guardado OC para orden demo');
                                                             await new Promise(resolve => setTimeout(resolve, 500));
                                                         }
                                                         setOCSaved(true);
@@ -894,7 +871,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                 disabled={isUploading}
                                             />
                                             <Upload size={14} className="text-retarder-gray-400" />
-                                            <span className="text-[10px] font-bold text-retarder-gray-600 uppercase">Añadir OC</span>
+                                            <span className="text-[10px] font-bold text-retarder-gray-600 uppercase">AÃ±adir OC</span>
                                         </label>
                                         <label className={cn(
                                             "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-retarder-gray-200 hover:border-retarder-red hover:bg-retarder-red/5 transition-all cursor-pointer",
@@ -974,7 +951,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                             {/* Satisfaction Survey Section */}
                             <div>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
-                                    Satisfacción del Cliente
+                                    SatisfacciÃ³n del Cliente
                                 </h3>
                                 <div className="bg-white border border-retarder-gray-200 rounded-xl p-4 space-y-3">
                                     {isLoadingSurvey ? (
@@ -993,7 +970,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     <p className="font-bold text-retarder-black">{survey.calificacion_general}/10</p>
                                                 </div>
                                                 <div className="text-center p-2 bg-retarder-gray-50 rounded-lg">
-                                                    <p className="text-[8px] text-retarder-gray-400 uppercase">Técnico</p>
+                                                    <p className="text-[8px] text-retarder-gray-400 uppercase">TÃ©cnico</p>
                                                     <p className="font-bold text-retarder-black">{survey.calificacion_tecnico}/5</p>
                                                 </div>
                                                 <div className="text-center p-2 bg-retarder-gray-50 rounded-lg">
@@ -1007,7 +984,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            <p className="text-xs text-retarder-gray-500">Genera y comparte este link con el cliente para que evalúe el servicio.</p>
+                                            <p className="text-xs text-retarder-gray-500">Genera y comparte este link con el cliente para que evalÃºe el servicio.</p>
                                             <div className="flex gap-2">
                                                 <div className="flex-1 bg-retarder-gray-50 border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] font-mono text-retarder-gray-400 truncate">
                                                     {survey ? `${window.location.origin}/encuesta/${survey.token_acceso}` : 'Generando...'}
@@ -1107,7 +1084,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     setIsUploadingFirma(true);
                                                     try {
                                                         const file = new File([blob], 'firma_cliente.png', { type: 'image/png' });
-                                                        // La lógica de guardado sigue igual pero usando el blob del componente
+                                                        // La lÃ³gica de guardado sigue igual pero usando el blob del componente
                                                         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orden.id);
                                                         const bucket = 'firmas';
                                                         const fileName = `${orden.id}/firma_cliente.png`;
@@ -1125,7 +1102,6 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                             if (regError) throw regError;
                                                             await fetchEvidencias();
                                                         } else {
-                                                            console.warn('ID demo, simulando guardar firma');
                                                             const demoEvidencia: Evidencia = {
                                                                 id: Math.random().toString(),
                                                                 orden_id: orden.id,
@@ -1191,7 +1167,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                             className="flex items-center gap-1.5 px-4 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-bold animate-pulse hover:bg-red-700 transition-all shadow-lg"
                                         >
                                             <Trash2 size={16} />
-                                            {isAdvancing ? 'Borrando...' : '¿Confirmar borrado?'}
+                                            {isAdvancing ? 'Borrando...' : 'Â¿Confirmar borrado?'}
                                         </button>
                                     ) : (
                                         <button

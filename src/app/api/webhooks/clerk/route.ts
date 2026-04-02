@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-// Clerk webhook — sync user creation/updates to Supabase
+// Clerk webhook â€” sync user creation/updates to Supabase
 export async function POST(req: NextRequest) {
     try {
         const payload = await req.json();
@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
                     );
 
                 if (error) {
-                    console.error('Error syncing user to Supabase:', error);
                     return NextResponse.json({ error: error.message }, { status: 500 });
                 }
 
@@ -43,7 +42,6 @@ export async function POST(req: NextRequest) {
                     .eq('clerk_user_id', id);
 
                 if (error) {
-                    console.error('Error deactivating user:', error);
                     return NextResponse.json({ error: error.message }, { status: 500 });
                 }
 
@@ -54,7 +52,6 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ message: 'Unhandled event type' }, { status: 200 });
         }
     } catch (error) {
-        console.error('Webhook error:', error);
         return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
     }
 }

@@ -3,26 +3,100 @@
 import { motion } from 'framer-motion';
 import { Building2, MapPin, Phone, Mail, Globe, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from '@/lib/modals';
+
+const supabase = createClient();
+
+interface ConfigData {
+    razon_social: string;
+    rfc: string;
+    direccion: string;
+    telefono: string;
+    email: string;
+    sitio_web: string;
+    margen_proteccion: number;
+    logo_url?: string;
+}
 
 export default function EmpresaConfigPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleSave = () => {
+    const [config, setConfig] = useState<ConfigData>({
+        razon_social: 'Retarder México S.A. de C.V.',
+        rfc: 'RME123456789',
+        direccion: 'Calle Principal 123, Zona Industrial, Ciudad de México, CP 01234',
+        telefono: '55-1234-5678',
+        email: 'contacto@retardermexico.com',
+        sitio_web: 'www.retardermexico.com',
+        margen_proteccion: 2.5
+    });
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            const { data, error } = await supabase
+                .from('configuracion_empresa')
+                .select('*')
+                .single();
+
+            if (!error && data) {
+                setConfig({
+                    razon_social: data.razon_social || '',
+                    rfc: data.rfc || '',
+                    direccion: data.direccion || '',
+                    telefono: data.telefono || '',
+                    email: data.email || '',
+                    sitio_web: data.sitio_web || '',
+                    margen_proteccion: data.margen_proteccion || 2.5,
+                    logo_url: data.logo_url
+                });
+                if (data.logo_url) setLogoPreview(data.logo_url);
+            }
+        };
+        fetchConfig();
+    }, []);
+
+    const handleSave = async () => {
         setIsSaving(true);
-        setTimeout(() => setIsSaving(false), 1000);
+        try {
+            // Primero intentamos obtener el ID del registro existente
+            const { data: existing } = await supabase
+                .from('configuracion_empresa')
+                .select('id')
+                .maybeSingle();
+
+            const { error } = await supabase
+                .from('configuracion_empresa')
+                .upsert({
+                    ...(existing?.id ? { id: existing.id } : {}),
+                    ...config,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) throw error;
+            toast.success('Configuración guardada correctamente');
+        } catch (err: any) {
+            toast.error(`Error al guardar: ${err.message}`);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setLogoPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
+
+            // TODO: En una implementación real se subiría al bucket 'logos'
+            // Por ahora solo mantenemos el preview local para el demo si no hay bucket
         }
     };
 
@@ -114,13 +188,23 @@ export default function EmpresaConfigPage() {
                                     <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Razón Social</label>
                                     <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                         <Building2 size={16} className="text-retarder-gray-400" />
-                                        <input type="text" defaultValue="Retarder México S.A. de C.V." className="bg-transparent border-none outline-none text-sm w-full font-medium" />
+                                        <input 
+                                            type="text" 
+                                            value={config.razon_social} 
+                                            onChange={(e) => setConfig({...config, razon_social: e.target.value})}
+                                            className="bg-transparent border-none outline-none text-sm w-full font-medium" 
+                                        />
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">RFC</label>
                                     <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
-                                        <input type="text" defaultValue="RME123456789" className="bg-transparent border-none outline-none text-sm w-full font-mono font-medium" />
+                                        <input 
+                                            type="text" 
+                                            value={config.rfc} 
+                                            onChange={(e) => setConfig({...config, rfc: e.target.value})}
+                                            className="bg-transparent border-none outline-none text-sm w-full font-mono font-medium" 
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -133,7 +217,12 @@ export default function EmpresaConfigPage() {
                                     <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Dirección Matriz</label>
                                     <div className="flex items-start gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                         <MapPin size={16} className="text-retarder-gray-400 mt-0.5" />
-                                        <textarea rows={2} defaultValue="Calle Principal 123, Zona Industrial, Ciudad de México, CP 01234" className="bg-transparent border-none outline-none text-sm w-full font-medium resize-none" />
+                                        <textarea 
+                                            rows={2} 
+                                            value={config.direccion} 
+                                            onChange={(e) => setConfig({...config, direccion: e.target.value})}
+                                            className="bg-transparent border-none outline-none text-sm w-full font-medium resize-none" 
+                                        />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -141,14 +230,24 @@ export default function EmpresaConfigPage() {
                                         <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Teléfono Principal</label>
                                         <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                             <Phone size={16} className="text-retarder-gray-400" />
-                                            <input type="text" defaultValue="55-1234-5678" className="bg-transparent border-none outline-none text-sm w-full font-medium" />
+                                            <input 
+                                                type="text" 
+                                                value={config.telefono} 
+                                                onChange={(e) => setConfig({...config, telefono: e.target.value})}
+                                                className="bg-transparent border-none outline-none text-sm w-full font-medium" 
+                                            />
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Email Corporativo</label>
                                         <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                             <Mail size={16} className="text-retarder-gray-400" />
-                                            <input type="email" defaultValue="contacto@retardermexico.com" className="bg-transparent border-none outline-none text-sm w-full font-medium" />
+                                            <input 
+                                                type="email" 
+                                                value={config.email} 
+                                                onChange={(e) => setConfig({...config, email: e.target.value})}
+                                                className="bg-transparent border-none outline-none text-sm w-full font-medium" 
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -156,7 +255,12 @@ export default function EmpresaConfigPage() {
                                     <label className="text-[10px] font-bold uppercase text-retarder-gray-400 ml-1">Sitio Web</label>
                                     <div className="flex items-center gap-2 px-3 py-2.5 bg-retarder-gray-50 border border-retarder-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-retarder-red/10 focus-within:border-retarder-red transition-all">
                                         <Globe size={16} className="text-retarder-gray-400" />
-                                        <input type="text" defaultValue="www.retardermexico.com" className="bg-transparent border-none outline-none text-sm w-full font-medium" />
+                                        <input 
+                                            type="text" 
+                                            value={config.sitio_web} 
+                                            onChange={(e) => setConfig({...config, sitio_web: e.target.value})}
+                                            className="bg-transparent border-none outline-none text-sm w-full font-medium" 
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -174,7 +278,13 @@ export default function EmpresaConfigPage() {
                                     <div className="flex items-center gap-4 mt-3">
                                         <div className="flex items-center gap-2">
                                             <span className="text-xs font-semibold text-amber-900">Margen:</span>
-                                            <input type="number" defaultValue="2.5" className="w-16 px-2 py-1 rounded bg-white border border-amber-200 text-sm font-bold text-amber-900" />
+                                            <input 
+                                                type="number" 
+                                                step="0.1"
+                                                value={config.margen_proteccion} 
+                                                onChange={(e) => setConfig({...config, margen_proteccion: parseFloat(e.target.value)})}
+                                                className="w-16 px-2 py-1 rounded bg-white border border-amber-200 text-sm font-bold text-amber-900" 
+                                            />
                                             <span className="text-xs font-bold text-amber-900">%</span>
                                         </div>
                                     </div>

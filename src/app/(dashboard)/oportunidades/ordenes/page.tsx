@@ -89,7 +89,6 @@ export default function OrdenesPage() {
             if (error) throw error;
             setOrdenes(data || []);
         } catch (error) {
-            console.error('Error fetching ordenes:', error);
             setOrdenes([]);
         } finally {
             setLoading(false);
@@ -134,7 +133,6 @@ export default function OrdenesPage() {
             setEmpresaSearch('');
             setNewOrden({ numero: '', empresa: '', tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
         } catch (error) {
-            console.error('Error creating orden:', error);
             toast.error('Error al crear la orden');
         } finally {
             setIsSaving(false);
@@ -143,14 +141,14 @@ export default function OrdenesPage() {
 
     const isValidUUID = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-    // Paso 1: primer clic en el bote de basura → pone el ID en confirmDeleteId
-    // Paso 2: segundo clic (botón rojo "Confirmar") → ejecuta el borrado real
+    // Paso 1: primer clic en el bote de basura â†’ pone el ID en confirmDeleteId
+    // Paso 2: segundo clic (botÃ³n rojo "Confirmar") â†’ ejecuta el borrado real
     const handleDeleteOrden = async (id: string) => {
-        // Si ya está en modo confirmar para este ID, ejecutar el borrado
+        // Si ya estÃ¡ en modo confirmar para este ID, ejecutar el borrado
         if (confirmDeleteId === id) {
             setIsDeleting(true);
             try {
-                // Borrar de Supabase si es UUID válido
+                // Borrar de Supabase si es UUID vÃ¡lido
                 if (isValidUUID(id)) {
                     // 1. Desvincular de cotizaciones (si existe el campo orden_id)
                     try {
@@ -172,7 +170,6 @@ export default function OrdenesPage() {
                     const { error } = await supabase.from('ordenes_servicio').delete().eq('id', id);
                     
                     if (error) {
-                        console.error('Error Supabase al borrar:', error);
                         toast.error(`No se pudo eliminar la orden: ${error.message}`);
                         return;
                     }
@@ -182,14 +179,13 @@ export default function OrdenesPage() {
                 setOrdenes(prev => prev.filter(o => o.id !== id));
                 setConfirmDeleteId(null);
             } catch (error) {
-                console.error('Error deleting orden:', error);
             } finally {
                 setIsDeleting(false);
             }
         } else {
-            // Primer clic: poner en modo confirmación
+            // Primer clic: poner en modo confirmaciÃ³n
             setConfirmDeleteId(id);
-            // Auto-cancelar después de 4 segundos si no confirma
+            // Auto-cancelar despuÃ©s de 4 segundos si no confirma
             setTimeout(() => setConfirmDeleteId(prev => prev === id ? null : prev), 4000);
         }
     };
@@ -198,7 +194,7 @@ export default function OrdenesPage() {
     const filteredOrdenes = useMemo(() => {
         let result = ordenes;
 
-        // Role-based filtering — Fase Cierre orders are always visible for all roles
+        // Role-based filtering â€” Fase Cierre orders are always visible for all roles
         if (isVendedor && !isAdmin) {
             if (currentUserName) {
                 result = result.filter(o => {
@@ -215,11 +211,8 @@ export default function OrdenesPage() {
                     o.tecnico?.trim().toLocaleLowerCase() === currentUserName
                 );
             } else {
-                const fallback = 'Israel Garcia'.toLocaleLowerCase();
-                result = result.filter(o =>
-                    ESTADOS_SIEMPRE_VISIBLES.includes(o.estado) ||
-                    o.tecnico?.trim().toLocaleLowerCase() === fallback
-                );
+                // Técnico sin nombre en Clerk: solo muestra órdenes en fases siempre visibles
+                result = result.filter(o => ESTADOS_SIEMPRE_VISIBLES.includes(o.estado));
             }
         } else if (isCliente && !isAdmin) {
             const clientCompany = (user?.publicMetadata as CustomMetadata)?.company;
@@ -275,9 +268,9 @@ export default function OrdenesPage() {
             {/* Header Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-retarder-black">Pipeline de Órdenes de Servicio</h2>
+                    <h2 className="text-xl font-bold text-retarder-black">Pipeline de Ã“rdenes de Servicio</h2>
                     <p className="text-xs text-retarder-gray-500">
-                        {stats.total} órdenes en el pipeline · 14 estados · {visiblePhases.length} fases
+                        {stats.total} Ã³rdenes en el pipeline Â· 14 estados Â· {visiblePhases.length} fases
                         {process.env.NODE_ENV === 'development' && currentUserName && (
                             <span className="ml-2 text-[10px] text-retarder-red/50">
                                 (Filtrando por: {currentUserName})
@@ -422,7 +415,7 @@ export default function OrdenesPage() {
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Folio / OS</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Técnico</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">TÃ©cnico</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden xl:table-cell">Monto</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Fecha</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
@@ -433,7 +426,7 @@ export default function OrdenesPage() {
                                         <tr>
                                             <td colSpan={7} className="py-12 text-center">
                                                 <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
-                                                <p className="text-xs text-retarder-gray-400">Cargando órdenes...</p>
+                                                <p className="text-xs text-retarder-gray-400">Cargando Ã³rdenes...</p>
                                             </td>
                                         </tr>
                                     ) : (
@@ -468,9 +461,9 @@ export default function OrdenesPage() {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="py-3 px-2 sm:px-4 text-retarder-gray-600 hidden lg:table-cell truncate max-w-[120px]">{o.tecnico || '—'}</td>
+                                                    <td className="py-3 px-2 sm:px-4 text-retarder-gray-600 hidden lg:table-cell truncate max-w-[120px]">{o.tecnico || 'â€”'}</td>
                                                     <td className="py-3 px-2 sm:px-4 text-right text-retarder-gray-600 font-bold hidden xl:table-cell whitespace-nowrap">
-                                                        {o.monto ? formatMXN(o.monto) : '—'}
+                                                        {o.monto ? formatMXN(o.monto) : 'â€”'}
                                                     </td>
                                                     <td className="py-3 px-2 sm:px-4 text-right text-retarder-gray-400 text-[10px] hidden sm:table-cell">
                                                         {o.fecha_creado}
@@ -488,7 +481,7 @@ export default function OrdenesPage() {
                                                                         className="flex items-center gap-1 px-2 py-1 bg-retarder-red text-white text-[10px] font-bold rounded-lg animate-pulse hover:bg-red-700 transition-colors"
                                                                     >
                                                                         <Trash2 size={12} />
-                                                                        {isDeleting ? 'Borrando...' : '¿Confirmar?'}
+                                                                        {isDeleting ? 'Borrando...' : 'Â¿Confirmar?'}
                                                                     </button>
                                                                 ) : (
                                                                     <button
@@ -539,10 +532,10 @@ export default function OrdenesPage() {
                                     <p className="text-sm font-semibold text-retarder-gray-700 mb-4">Selecciona el tipo de servicio:</p>
                                     <div className="grid grid-cols-2 gap-3">
                                         {[
-                                            { id: 'preventivo', label: '🛡️ Preventivo', desc: 'Mantenimiento regular' },
-                                            { id: 'correctivo', label: '🔧 Correctivo', desc: 'Reparación de falla' },
-                                            { id: 'instalacion', label: '⚙️ Instalación', desc: 'Equipo nuevo' },
-                                            { id: 'diagnostico', label: '🔍 Diagnóstico', desc: 'Revisión técnica' }
+                                            { id: 'preventivo', label: 'ðŸ›¡ï¸ Preventivo', desc: 'Mantenimiento regular' },
+                                            { id: 'correctivo', label: 'ðŸ”§ Correctivo', desc: 'ReparaciÃ³n de falla' },
+                                            { id: 'instalacion', label: 'âš™ï¸ InstalaciÃ³n', desc: 'Equipo nuevo' },
+                                            { id: 'diagnostico', label: 'ðŸ” DiagnÃ³stico', desc: 'RevisiÃ³n tÃ©cnica' }
                                         ].map((t) => (
                                             <button
                                                 key={t.id}
@@ -567,7 +560,7 @@ export default function OrdenesPage() {
                                     <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
                                         <div className="flex items-center gap-2 p-3 bg-retarder-red/5 border border-retarder-red/10 rounded-xl mb-2">
                                             <div className="w-10 h-10 rounded-lg bg-retarder-red/10 flex items-center justify-center text-retarder-red text-xl">
-                                                {newOrden.tipo === 'preventivo' ? '🛡️' : newOrden.tipo === 'correctivo' ? '🔧' : newOrden.tipo === 'instalacion' ? '⚙️' : '🔍'}
+                                                {newOrden.tipo === 'preventivo' ? 'ðŸ›¡ï¸' : newOrden.tipo === 'correctivo' ? 'ðŸ”§' : newOrden.tipo === 'instalacion' ? 'âš™ï¸' : 'ðŸ”'}
                                             </div>
                                             <div>
                                                 <p className="text-xs font-bold text-retarder-red uppercase tracking-wider">{TIPO_SERVICIO_LABELS[newOrden.tipo]}</p>
@@ -582,7 +575,7 @@ export default function OrdenesPage() {
                                                     <Search size={13} className="text-retarder-gray-400 shrink-0" />
                                                     <input
                                                         type="text"
-                                                        placeholder="🔍 Buscar cliente..."
+                                                        placeholder="ðŸ” Buscar cliente..."
                                                         value={empresaSearch}
                                                         onChange={e => setEmpresaSearch(e.target.value)}
                                                         className="flex-1 outline-none text-sm"
@@ -609,14 +602,14 @@ export default function OrdenesPage() {
                                                 onChange={e => setNewOrden({ ...newOrden, prioridad: e.target.value as 'baja' | 'media' | 'alta' | 'urgente' })}
                                                 className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none bg-white"
                                             >
-                                                <option value="baja">🟢 Baja</option>
-                                                <option value="media">🟡 Media</option>
-                                                <option value="alta">🟠 Alta</option>
-                                                <option value="urgente">🔴 Urgente</option>
+                                                <option value="baja">ðŸŸ¢ Baja</option>
+                                                <option value="media">ðŸŸ¡ Media</option>
+                                                <option value="alta">ðŸŸ  Alta</option>
+                                                <option value="urgente">ðŸ”´ Urgente</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Número de Orden de Servicio (Manual)</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">NÃºmero de Orden de Servicio (Manual)</label>
                                             <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
                                                 <OrdenIcon size={14} className="text-retarder-gray-400" />
                                                 <input type="text" placeholder="Ej: OS-1234" value={newOrden.numero || ''} onChange={e => setNewOrden({ ...newOrden, numero: e.target.value })} className="flex-1 outline-none text-sm" />
@@ -624,10 +617,10 @@ export default function OrdenesPage() {
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Técnico</label>
+                                                <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">TÃ©cnico</label>
                                                 <div className="flex items-center gap-2 border border-retarder-gray-200 rounded-lg px-3 py-2.5 focus-within:border-retarder-red focus-within:ring-2 focus-within:ring-retarder-red/10">
                                                     <User size={14} className="text-retarder-gray-400" />
-                                                    <input type="text" placeholder="Asignar técnico" value={newOrden.tecnico} onChange={e => setNewOrden({ ...newOrden, tecnico: e.target.value })} className="flex-1 outline-none text-sm" />
+                                                    <input type="text" placeholder="Asignar tÃ©cnico" value={newOrden.tecnico} onChange={e => setNewOrden({ ...newOrden, tecnico: e.target.value })} className="flex-1 outline-none text-sm" />
                                                 </div>
                                             </div>
                                             <div>
@@ -639,7 +632,7 @@ export default function OrdenesPage() {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">Descripción</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-1 block">DescripciÃ³n</label>
                                             <textarea placeholder="Describe el servicio requerido..." value={newOrden.descripcion} onChange={e => setNewOrden({ ...newOrden, descripcion: e.target.value })} rows={3} className="w-full border border-retarder-gray-200 rounded-lg px-3 py-2.5 text-sm focus:border-retarder-red focus:ring-2 focus:ring-retarder-red/10 outline-none resize-none" />
                                         </div>
                                         <div>
@@ -651,7 +644,7 @@ export default function OrdenesPage() {
                                         </div>
                                     </div>
                                     <div className="px-6 py-4 border-t border-retarder-gray-200 bg-retarder-gray-50 flex gap-2">
-                                        <button onClick={() => setStep(1)} className="flex-1 px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-600 hover:bg-white transition-colors">Atrás</button>
+                                        <button onClick={() => setStep(1)} className="flex-1 px-4 py-2.5 border border-retarder-gray-200 rounded-xl text-sm font-medium text-retarder-gray-600 hover:bg-white transition-colors">AtrÃ¡s</button>
                                         <button onClick={handleCreateOrden} className="flex-1 px-4 py-2.5 bg-retarder-red text-white rounded-xl text-sm font-semibold hover:bg-retarder-red-700 transition-colors shadow-md shadow-retarder-red/20">Crear Orden</button>
                                     </div>
                                 </>

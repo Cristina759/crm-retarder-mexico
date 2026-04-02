@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+﻿import { createClient } from '@/lib/supabase/client';
 
 const supabase = createClient();
 
@@ -28,7 +28,6 @@ export const StorageService = {
 
             return { url: publicUrl, error: null };
         } catch (error) {
-            console.error(`Error uploading to ${bucket}:`, error);
             return { url: '', error };
         }
     },
@@ -53,7 +52,6 @@ export const StorageService = {
             if (error) throw error;
             return { data, error: null };
         } catch (error) {
-            console.error('Error registering evidence:', error);
             return { data: null, error };
         }
     },
@@ -72,7 +70,6 @@ export const StorageService = {
             if (error) throw error;
             return { data, error: null };
         } catch (error) {
-            console.error('Error fetching evidences:', error);
             return { data: [], error };
         }
     }

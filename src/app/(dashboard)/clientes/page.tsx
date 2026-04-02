@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -80,17 +80,14 @@ export default function ClientesPage() {
         setLoading(true);
         setError(null);
         try {
-            console.log('Fetching companies...');
             const { data: companies, error: companiesError } = await supabase
                 .from('empresas')
                 .select('*');
 
             if (companiesError) {
-                console.error('Empresas Error:', companiesError);
                 throw companiesError;
             }
 
-            console.log('Fetched companies:', companies?.length);
 
             const { data: allContacts, error: contactsError } = await supabase
                 .from('contactos')
@@ -108,10 +105,8 @@ export default function ClientesPage() {
                 };
             });
 
-            console.log('Mapped clients:', mapped.length);
             setClientes(mapped);
         } catch (err: any) {
-            console.error('Full fetch error:', err);
             setError(`Error de base de datos: ${err.message || 'Desconocido'}`);
         } finally {
             setLoading(false);
@@ -155,7 +150,7 @@ export default function ClientesPage() {
     };
 
     async function handleDelete(id: string) {
-        if (!await confirmModal('¿Estás seguro de que deseas eliminar este cliente? Esta acción no se puede deshacer.')) return;
+        if (!await confirmModal('Â¿EstÃ¡s seguro de que deseas eliminar este cliente? Esta acciÃ³n no se puede deshacer.')) return;
 
         try {
             const { error } = await supabase
@@ -168,7 +163,6 @@ export default function ClientesPage() {
             fetchClientes();
             setSelectedCliente(null);
         } catch (err: any) {
-            console.error('Error deleting client:', err);
             toast.error(`Error al eliminar: ${err.message}`);
         }
     }
@@ -202,7 +196,7 @@ export default function ClientesPage() {
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
-            toast.error('ERROR CRÍTICO: Las variables de entorno de Supabase no están configuradas en Vercel. Por favor contacta al administrador.');
+            toast.error('ERROR CRÃTICO: Las variables de entorno de Supabase no estÃ¡n configuradas en Vercel. Por favor contacta al administrador.');
             return;
         }
 
@@ -224,7 +218,6 @@ export default function ClientesPage() {
 
             if (isEditMode && selectedCliente) {
                 // UPDATE MODE
-                console.log('Actualizando cliente:', selectedCliente.id, sanitizedData);
 
                 const { error: updateError } = await supabase
                     .from('empresas')
@@ -259,7 +252,6 @@ export default function ClientesPage() {
                 }
             } else {
                 // CREATE MODE
-                console.log('Intentando guardar cliente v1.2:', sanitizedData);
 
                 // 1. Create company record
                 const { data: empresaData, error: empresaError } = await supabase
@@ -268,7 +260,6 @@ export default function ClientesPage() {
                     .select();
 
                 if (empresaError) {
-                    console.error('Detailed Empresa Error:', empresaError);
                     throw empresaError;
                 }
 
@@ -299,7 +290,6 @@ export default function ClientesPage() {
                 else setSelectedCliente(null);
             }
         } catch (error: unknown) {
-            console.error('Error saving cliente (Full Object):', error);
 
             const err = error as { code?: string; message?: string; details?: string; hint?: string };
             const code = err.code || 'SIN_CODIGO';
@@ -308,11 +298,11 @@ export default function ClientesPage() {
             const hint = err.hint || 'Sin sugerencias';
 
             if (code === '23505') {
-                toast.error('CONFLITO: Ya existe una empresa con ese RFC. Intenta con uno distinto o búscalo en la lista.');
+                toast.error('CONFLITO: Ya existe una empresa con ese RFC. Intenta con uno distinto o bÃºscalo en la lista.');
             } else if (code === '42501') {
-                toast.error('ERROR DE PERMISOS (RLS): No tienes permisos para insertar en la tabla empresas. Verifica las políticas en Supabase.');
+                toast.error('ERROR DE PERMISOS (RLS): No tienes permisos para insertar en la tabla empresas. Verifica las polÃ­ticas en Supabase.');
             } else {
-                toast.error(`Error al guardar cliente (v1.2):\n\nCódigo: ${code}\nMensaje: ${message}\nDetalles: ${details}\nSugerencia: ${hint}`);
+                toast.error(`Error al guardar cliente (v1.2):\n\nCÃ³digo: ${code}\nMensaje: ${message}\nDetalles: ${details}\nSugerencia: ${hint}`);
             }
         } finally {
             setIsSaving(false);
@@ -331,7 +321,7 @@ export default function ClientesPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-retarder-black">Clientes <span className="text-xs font-normal text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded">V1.3.1-DIAG</span></h1>
-                        <p className="text-sm text-retarder-gray-500 mt-1">Gestión integral de empresas y contactos (Total: {clientes.length})</p>
+                        <p className="text-sm text-retarder-gray-500 mt-1">GestiÃ³n integral de empresas y contactos (Total: {clientes.length})</p>
                     </div>
                     <div className="flex items-center gap-3">
                         {/* View toggle removed to force card view */}
@@ -480,8 +470,8 @@ export default function ClientesPage() {
                                                 <Phone size={14} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[9px] font-black text-retarder-gray-400 uppercase tracking-widest">Teléfono</p>
-                                                <p className="text-xs font-bold text-retarder-black">{e.telefono || '—'}</p>
+                                                <p className="text-[9px] font-black text-retarder-gray-400 uppercase tracking-widest">TelÃ©fono</p>
+                                                <p className="text-xs font-bold text-retarder-black">{e.telefono || 'â€”'}</p>
                                             </div>
                                         </div>
 
@@ -509,7 +499,7 @@ export default function ClientesPage() {
                                                 </div>
                                             ))
                                         ) : (
-                                            <span className="text-[9px] text-retarder-gray-400 font-black uppercase tracking-widest">Métricas: 0</span>
+                                            <span className="text-[9px] text-retarder-gray-400 font-black uppercase tracking-widest">MÃ©tricas: 0</span>
                                         )}
                                         {e.sucursales && e.sucursales.length > 3 && (
                                             <div className="w-7 h-7 rounded-full bg-retarder-black border-2 border-white flex items-center justify-center text-[8px] font-black text-white">
@@ -535,7 +525,7 @@ export default function ClientesPage() {
                             <Building2 size={40} className="text-retarder-gray-200" />
                         </div>
                         <h3 className="text-lg font-bold text-retarder-gray-900">No se encontraron clientes</h3>
-                        <p className="text-sm text-retarder-gray-400 mt-1 max-w-xs mx-auto">Prueba ajustando los términos de búsqueda o agrega un nuevo cliente al sistema.</p>
+                        <p className="text-sm text-retarder-gray-400 mt-1 max-w-xs mx-auto">Prueba ajustando los tÃ©rminos de bÃºsqueda o agrega un nuevo cliente al sistema.</p>
                     </motion.div>
                 )
             }
@@ -578,25 +568,25 @@ export default function ClientesPage() {
                                             <div className="space-y-2">
                                                 <div className="flex gap-3 text-sm text-retarder-gray-700 font-medium">
                                                     <Building2 className="text-retarder-red flex-shrink-0 mt-0.5" size={16} />
-                                                    <p><strong>Titular:</strong> {selectedCliente.nombre_titular || '—'}</p>
+                                                    <p><strong>Titular:</strong> {selectedCliente.nombre_titular || 'â€”'}</p>
                                                 </div>
                                                 <div className="flex gap-3 text-sm text-retarder-gray-700 font-medium">
                                                     <MapPinned className="text-retarder-red flex-shrink-0 mt-0.5" size={16} />
-                                                    <p><strong>Sucursal:</strong> {selectedCliente.nombre_sucursal || '—'}</p>
+                                                    <p><strong>Sucursal:</strong> {selectedCliente.nombre_sucursal || 'â€”'}</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="group">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">Dirección Fiscal</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">DirecciÃ³n Fiscal</label>
                                             <div className="flex gap-3 text-sm text-retarder-gray-700 font-medium">
                                                 <MapPin className="text-retarder-red flex-shrink-0 mt-0.5" size={16} />
-                                                <p className="leading-relaxed">{selectedCliente.direccion_fiscal || 'Sin dirección registrada'}</p>
+                                                <p className="leading-relaxed">{selectedCliente.direccion_fiscal || 'Sin direcciÃ³n registrada'}</p>
                                             </div>
                                         </div>
 
                                         <div className="group">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">Información de contacto</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 mb-2 block">InformaciÃ³n de contacto</label>
                                             <div className="space-y-3">
                                                 <div className="flex items-center gap-3 text-sm text-retarder-gray-700 font-medium">
                                                     <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
@@ -609,7 +599,7 @@ export default function ClientesPage() {
                                                         <div className="w-6 h-6 rounded-full bg-emerald-50 flex items-center justify-center">
                                                             <Phone className="text-emerald-600" size={12} />
                                                         </div>
-                                                        <span>{selectedCliente.telefono || 'Teléfono 1 no registrado'}</span>
+                                                        <span>{selectedCliente.telefono || 'TelÃ©fono 1 no registrado'}</span>
                                                     </div>
                                                     {selectedCliente.telefono_2 && (
                                                         <div className="flex items-center gap-3 text-sm text-retarder-gray-700 font-medium">
@@ -671,7 +661,7 @@ export default function ClientesPage() {
                                         {(isAdmin || isVendedor || isAdministrativo) && (
                                             <button className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 bg-white border border-dashed border-retarder-gray-300 rounded-xl text-xs font-bold text-retarder-gray-500 hover:border-retarder-red hover:text-retarder-red transition-all">
                                                 <Plus size={14} />
-                                                <span>Añadir Sucursal</span>
+                                                <span>AÃ±adir Sucursal</span>
                                             </button>
                                         )}
                                     </div>
@@ -760,7 +750,7 @@ export default function ClientesPage() {
                                             </div>
                                             <input
                                                 type="text"
-                                                placeholder="RFC de 12 o 13 carác"
+                                                placeholder="RFC de 12 o 13 carÃ¡c"
                                                 maxLength={13}
                                                 className="w-full bg-retarder-gray-50 border-2 border-transparent focus:border-retarder-red/20 focus:bg-white rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-retarder-black uppercase transition-all outline-none"
                                                 value={formData.rfc}
@@ -770,7 +760,7 @@ export default function ClientesPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Nombre Titular (Dueño/Legal)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Nombre Titular (DueÃ±o/Legal)</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <User size={18} />
@@ -820,7 +810,7 @@ export default function ClientesPage() {
 
                                     {/* Phones */}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Teléfono 1</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">TelÃ©fono 1</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <Phone size={18} />
@@ -836,7 +826,7 @@ export default function ClientesPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Teléfono 2</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">TelÃ©fono 2</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <Phone size={18} />
@@ -852,7 +842,7 @@ export default function ClientesPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Teléfono 3</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">TelÃ©fono 3</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <Phone size={18} />
@@ -902,13 +892,13 @@ export default function ClientesPage() {
 
                                     {/* Tax Address */}
                                     <div className="md:col-span-2 space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">Dirección Fiscal</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-retarder-gray-400 px-1">DirecciÃ³n Fiscal</label>
                                         <div className="relative group">
                                             <div className="absolute left-4 top-4 text-retarder-gray-400 group-focus-within:text-retarder-red transition-colors">
                                                 <MapPin size={18} />
                                             </div>
                                             <textarea
-                                                placeholder="Calle, número, colonia, CP, Ciudad y Estado"
+                                                placeholder="Calle, nÃºmero, colonia, CP, Ciudad y Estado"
                                                 className="w-full bg-retarder-gray-50 border-2 border-transparent focus:border-retarder-red/20 focus:bg-white rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-retarder-black min-h-[100px] transition-all outline-none resize-none"
                                                 value={formData.direccion_fiscal}
                                                 onChange={e => setFormData({ ...formData, direccion_fiscal: e.target.value })}
