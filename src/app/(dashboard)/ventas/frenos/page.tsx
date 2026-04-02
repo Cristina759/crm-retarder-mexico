@@ -168,14 +168,21 @@ function ModelCard({
     tipoCambio,
     onClick,
     index,
+    priceOverride,
+    onPriceChange,
+    onShowMaterial,
 }: {
     freno: CatalogoFreno;
     selected: boolean;
     tipoCambio: number;
     onClick: () => void;
     index: number;
+    priceOverride?: number;
+    onPriceChange: (val: number) => void;
+    onShowMaterial: () => void;
 }) {
-    const totalUSD = freno.precio_freno_usd + freno.cardanes_usd + freno.soporteria_usd + freno.material_electrico_usd;
+    const currentPriceUSD = priceOverride ?? freno.precio_freno_usd;
+    const totalUSD = currentPriceUSD + freno.cardanes_usd + freno.soporteria_usd + freno.material_electrico_usd;
     const totalMXN = totalUSD * tipoCambio;
 
     return (
@@ -261,10 +268,35 @@ function ModelCard({
                 </div>
 
                 {/* Price */}
-                <div className="pt-2 border-t border-retarder-gray-100">
-                    <p className="text-[9px] font-semibold uppercase text-retarder-gray-400">Precio Freno (Pentar)</p>
-                    <p className="text-sm font-bold text-retarder-gray-700">{formatUSD(freno.precio_freno_usd)} USD</p>
-                    <p className="text-[10px] text-retarder-gray-400 mt-0.5">Total instalado: <span className="font-semibold text-retarder-red">{formatMXN(totalMXN)}</span></p>
+                <div className="pt-2 border-t border-retarder-gray-100 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                            <p className="text-[9px] font-semibold uppercase text-retarder-gray-400">Precio Freno ({freno.pentar_serie})</p>
+                            <div className="flex items-center gap-1 group/price">
+                                <span className="text-xs font-bold text-retarder-black">$</span>
+                                <input 
+                                    type="number" 
+                                    step="any"
+                                    value={currentPriceUSD}
+                                    onChange={(e) => onPriceChange(parseFloat(e.target.value) || 0)}
+                                    className="w-20 bg-retarder-gray-50 border border-transparent hover:border-retarder-red/30 focus:border-retarder-red rounded px-1.5 py-0.5 text-sm font-bold text-retarder-black outline-none transition-all"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className="text-[10px] font-bold text-retarder-gray-400">USD</span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShowMaterial();
+                            }}
+                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                            title="Editar Material Eléctrico"
+                        >
+                            <Settings2 size={16} />
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-retarder-gray-400">Total instalado: <span className="font-semibold text-retarder-red">{formatMXN(totalMXN)}</span></p>
                 </div>
             </div>
         </motion.button>
@@ -298,6 +330,9 @@ export default function CotizadorFrenosPage() {
     const [manualFolio, setManualFolio] = useState('');
     const [manualAtencion, setManualAtencion] = useState('');
 
+    // Pre-selection price overrides for specific models
+    const [modelPriceOverrides, setModelPriceOverrides] = useState<Record<string, number>>({});
+
     // Material Eléctrico Sub-catalog state
     const [showMaterialModal, setShowMaterialModal] = useState(false);
     const [selectedMaterialItems, setSelectedMaterialItems] = useState<MaterialElectricoItem[]>(MATERIAL_ELECTRICO_BASE);
@@ -305,7 +340,7 @@ export default function CotizadorFrenosPage() {
     // Clear overrides when model changes
     useEffect(() => {
         setPriceOverrides({});
-        setSelectedMaterialItems(MATERIAL_ELECTRICO_BASE);
+        // We DON'T clear modelPriceOverrides here because user might want to keep them while browsing models
     }, [selectedModelo, selectedMarca, cantidadUnidades]);
 
     const handleOpenCreateForm = async () => {
@@ -451,6 +486,10 @@ export default function CotizadorFrenosPage() {
 
         const units = cantidadUnidades || 1;
         const baseFrenoUSD = (() => {
+            // Apply model-specific override if it exists
+            const override = modelPriceOverrides[selectedModelo.modelo];
+            if (override !== undefined) return override;
+
             switch (selectedMarca) {
                 case 'pentar': return selectedModelo.pentar_precio_usd;
                 case 'frenelsa': return selectedModelo.frenelsa_precio_usd;
@@ -1011,6 +1050,9 @@ export default function CotizadorFrenosPage() {
                             freno={freno}
                             selected={selectedModelo?.modelo === freno.modelo}
                             tipoCambio={tipoCambio}
+                            priceOverride={modelPriceOverrides[freno.modelo]}
+                            onPriceChange={(val) => setModelPriceOverrides(p => ({ ...p, [freno.modelo]: val }))}
+                            onShowMaterial={() => setShowMaterialModal(true)}
                             onClick={() => {
                                 setSelectedModelo(freno);
                                 // Auto-select first available brand
