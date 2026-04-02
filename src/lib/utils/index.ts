@@ -8,23 +8,23 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format currency in MXN
  */
-export function formatMXN(amount: number): string {
+export function formatMXN(amount: number = 0): string {
     return new Intl.NumberFormat('es-MX', {
         style: 'currency',
         currency: 'MXN',
         minimumFractionDigits: 2,
-    }).format(amount);
+    }).format(amount || 0);
 }
 
 /**
  * Format currency in USD
  */
-export function formatUSD(amount: number): string {
+export function formatUSD(amount: number = 0): string {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
         minimumFractionDigits: 2,
-    }).format(amount);
+    }).format(amount || 0);
 }
 
 /**
