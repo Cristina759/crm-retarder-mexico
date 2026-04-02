@@ -83,11 +83,21 @@ export default function OrdenesPage() {
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
-                .select('*')
-                .order('fecha_creado', { ascending: false });
+                .select('*, empresa:empresas(nombre_comercial)')
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setOrdenes(data || []);
+
+            const mapped = (data || []).map((o: any) => ({
+                ...o,
+                empresa: o.empresa?.nombre_comercial || 'Sin empresa',
+                monto: o.total,
+                fecha_creado: o.fecha_real || o.created_at,
+                numero: o.numero_orden_fisica,
+                prioridad: o.prioridad || 'media',
+            }));
+
+            setOrdenes(mapped);
         } catch (error) {
             setOrdenes([]);
         } finally {
