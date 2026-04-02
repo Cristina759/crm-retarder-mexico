@@ -453,36 +453,23 @@ export default function CotizadorFrenosPage() {
         })();
 
         // Apply overrides or defaults
-        const f_usd = priceOverrides.freno?.usd ?? (baseFrenoUSD * units);
-        const c_usd = priceOverrides.cardanes?.usd ?? (selectedModelo.cardanes_usd * units);
-        const s_usd = priceOverrides.soporteria?.usd ?? (selectedModelo.soporteria_usd * units);
-        const m_usd = priceOverrides.material?.usd ?? (selectedModelo.material_electrico_usd * units);
+        const base_f_usd = priceOverrides.freno?.usd ?? (baseFrenoUSD * units);
+        const c_usd = selectedModelo.cardanes_usd * units;
+        const s_usd = selectedModelo.soporteria_usd * units;
+        const m_usd = selectedModelo.material_electrico_usd * units;
+
+        // Roll up the cost of cardanes, soporteria and material into the Freno price
+        const f_usd = priceOverrides.freno?.usd ?? (base_f_usd + c_usd + s_usd + m_usd);
 
         const totalTraslado = gastosTrasladoMXN * units;
-        
-        const total_usd = f_usd + c_usd + s_usd + m_usd;
+        const total_usd = f_usd;
         const total_mxn = (total_usd * tipoCambio) + totalTraslado + manoObraInstalacionMXN;
 
         return {
             freno: { 
-                label: priceOverrides.freno?.label ?? 'Freno (Retarder)', 
+                label: priceOverrides.freno?.label ?? 'Equipo Freno (Retarder) Incluye Accesorios', 
                 usd: f_usd, 
                 mxn: f_usd * tipoCambio 
-            },
-            cardanes: { 
-                label: priceOverrides.cardanes?.label ?? 'Cardanes', 
-                usd: c_usd, 
-                mxn: c_usd * tipoCambio 
-            },
-            soporteria: { 
-                label: priceOverrides.soporteria?.label ?? 'Soportería', 
-                usd: s_usd, 
-                mxn: s_usd * tipoCambio 
-            },
-            material: { 
-                label: priceOverrides.material?.label ?? 'Material Eléctrico', 
-                usd: m_usd, 
-                mxn: m_usd * tipoCambio 
             },
             traslado: { mxn: totalTraslado },
             manoObra: { mxn: manoObraInstalacionMXN },
@@ -1024,36 +1011,6 @@ export default function CotizadorFrenosPage() {
                                     editable
                                     onLabelChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, label: v } }))}
                                     onUsdChange={v => setPriceOverrides(p => ({ ...p, freno: { ...p.freno, usd: v } }))}
-                                />
-                                <PriceLine
-                                    label={breakdown.cardanes.label}
-                                    icon={<Wrench size={16} className="text-blue-500" />}
-                                    usd={breakdown.cardanes.usd}
-                                    mxn={breakdown.cardanes.mxn}
-                                    delay={0.15}
-                                    editable
-                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, cardanes: { ...p.cardanes, label: v } }))}
-                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, cardanes: { ...p.cardanes, usd: v } }))}
-                                />
-                                <PriceLine
-                                    label={breakdown.soporteria.label}
-                                    icon={<Settings2 size={16} className="text-amber-500" />}
-                                    usd={breakdown.soporteria.usd}
-                                    mxn={breakdown.soporteria.mxn}
-                                    delay={0.2}
-                                    editable
-                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, soporteria: { ...p.soporteria, label: v } }))}
-                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, soporteria: { ...p.soporteria, usd: v } }))}
-                                />
-                                <PriceLine
-                                    label={breakdown.material.label}
-                                    icon={<Zap size={16} className="text-yellow-500" />}
-                                    usd={breakdown.material.usd}
-                                    mxn={breakdown.material.mxn}
-                                    delay={0.25}
-                                    editable
-                                    onLabelChange={v => setPriceOverrides(p => ({ ...p, material: { ...p.material, label: v } }))}
-                                    onUsdChange={v => setPriceOverrides(p => ({ ...p, material: { ...p.material, usd: v } }))}
                                 />
                                 {gastosTrasladoMXN > 0 && (
                                     <PriceLine
