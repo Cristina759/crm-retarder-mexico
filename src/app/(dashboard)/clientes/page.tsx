@@ -230,24 +230,35 @@ export default function ClientesPage() {
                 if (formData.persona_contacto) {
                     const principal = selectedCliente.contactos?.find(c => c.es_contacto_principal);
                     if (principal) {
-                        await supabase
+                        const { error: contactError } = await supabase
                             .from('contactos')
                             .update({
-                                nombre: formData.persona_contacto,
+                                nombre: formData.persona_contacto.trim(),
+                                apellido: '', // Clear apellido to avoid "Name Lastname" duplicates
                                 email: sanitizedData.email,
                                 telefono: sanitizedData.telefono,
                             })
                             .eq('id', principal.id);
+                        
+                        if (contactError) {
+                            console.error('Error updating contact:', contactError);
+                            throw new Error(`Error al actualizar el contacto: ${contactError.message}`);
+                        }
                     } else {
-                        await supabase.from('contactos').insert([{
+                        const { error: contactInsertError } = await supabase.from('contactos').insert([{
                             empresa_id: selectedCliente.id,
-                            nombre: formData.persona_contacto,
+                            nombre: formData.persona_contacto.trim(),
                             apellido: '',
                             email: sanitizedData.email,
                             telefono: sanitizedData.telefono,
                             es_contacto_principal: true,
                             activo: true
                         }]);
+                        
+                        if (contactInsertError) {
+                            console.error('Error inserting contact:', contactInsertError);
+                            throw new Error(`Error al crear el contacto: ${contactInsertError.message}`);
+                        }
                     }
                 }
             } else {
