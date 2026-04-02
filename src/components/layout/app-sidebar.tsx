@@ -48,7 +48,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Ventas',
         items: [
-            // { label: 'Nueva Cotizaci√≥n', href: '/ventas/nueva', icon: <ShoppingCart size={20} />, roles: ['admin', 'vendedor'] }, // TODO: ruta pendiente de implementar
+            // { label: 'Nueva CotizaciÛn', href: '/ventas/nueva', icon: <ShoppingCart size={20} />, roles: ['admin', 'vendedor'] }, // TODO: ruta pendiente de implementar
             { label: 'Cotizador de Frenos', href: '/ventas/frenos', icon: <Package size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Cotizador de Refacciones', href: '/ventas/refacciones', icon: <Wrench size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Cotizador de Servicios', href: '/ventas/servicios', icon: <ClipboardCheck size={20} />, roles: ['admin', 'vendedor'] },
@@ -64,7 +64,7 @@ const navGroups: { title: string; items: NavItem[] }[] = [
         ],
     },
     {
-        title: 'Cat√°logos',
+        title: 'Cat·logos',
         items: [
             { label: 'Frenos', href: '/catalogos/frenos', icon: <Package size={20} />, roles: ['admin', 'vendedor'] },
             { label: 'Herramientas', href: '/catalogos/refacciones', icon: <Wrench size={20} />, roles: ['admin', 'vendedor'] },
@@ -74,15 +74,15 @@ const navGroups: { title: string; items: NavItem[] }[] = [
     {
         title: 'Admin',
         items: [
-            { label: 'Facturaci√≥n', href: '/facturacion', icon: <Receipt size={20} />, roles: ['admin', 'direccion'] },
-            { label: 'Notas de Cr√©dito', href: '/facturacion/notas-credito', icon: <CreditCard size={20} />, roles: ['admin', 'direccion'] },
+            { label: 'FacturaciÛn', href: '/facturacion', icon: <Receipt size={20} />, roles: ['admin', 'direccion'] },
+            { label: 'Notas de CrÈdito', href: '/facturacion/notas-credito', icon: <CreditCard size={20} />, roles: ['admin', 'direccion'] },
             { label: 'Usuarios', href: '/configuracion/usuarios', icon: <Users size={20} />, roles: ['admin', 'direccion'] },
         ],
     },
 ];
 
 const footerNavItems: NavItem[] = [
-    { label: 'Configuraci√≥n', href: '/configuracion/empresa', icon: <Settings size={20} />, roles: ['admin', 'direccion'] },
+    { label: 'ConfiguraciÛn', href: '/configuracion/empresa', icon: <Settings size={20} />, roles: ['admin', 'direccion'] },
 ];
 
 export function AppSidebar() {
@@ -176,7 +176,7 @@ export function AppSidebar() {
                 })}
             </nav>
 
-            {/* Footer Navigation (Configuraci√≥n) */}
+            {/* Footer Navigation (ConfiguraciÛn) */}
             <div className="px-2 pb-4">
                 {footerNavItems.filter(item => !item.roles || item.roles.includes(role as Rol)).map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -238,7 +238,7 @@ export function AppSidebar() {
             <button
                 onClick={() => setMobileOpen(true)}
                 className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md border border-retarder-gray-200"
-                aria-label="Abrir men√∫"
+                aria-label="Abrir men˙"
             >
                 <Menu size={20} />
             </button>
@@ -264,7 +264,7 @@ export function AppSidebar() {
                             <button
                                 onClick={() => setMobileOpen(false)}
                                 className="absolute top-4 right-4 p-1 rounded-md hover:bg-retarder-gray-100"
-                                aria-label="Cerrar men√∫"
+                                aria-label="Cerrar men˙"
                             >
                                 <X size={18} />
                             </button>
