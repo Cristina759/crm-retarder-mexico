@@ -349,10 +349,18 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     .maybeSingle();
 
                 if (existing) {
-                    // La orden ya existe en Supabase  solo actualizar estado
+                    // La orden ya existe en Supabase  actualizar estado y campos adicionales
+                    const updateData: any = { 
+                        estado: nextState,
+                        updated_at: new Date().toISOString()
+                    };
+                    if (numeroOrdenFisica.trim()) updateData.numero_orden_fisica = numeroOrdenFisica.trim();
+                    if (numeroOrdenCompra.trim()) updateData.numero_orden_compra = numeroOrdenCompra.trim();
+                    if (orden.empresa_id) updateData.empresa_id = orden.empresa_id;
+
                     const { error: updateError } = await supabase
                         .from('ordenes_servicio')
-                        .update({ estado: nextState })
+                        .update(updateData)
                         .eq('id', orden.id);
                     if (updateError) throw updateError;
                 } else {
@@ -372,8 +380,9 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                     };
                     if (orden.cotizacion_id) insertData.cotizacion_id = orden.cotizacion_id;
                     if (orden.cotizacion_numero) insertData.cotizacion_numero = orden.cotizacion_numero;
-                    if (orden.numero_orden_fisica) insertData.numero_orden_fisica = orden.numero_orden_fisica;
-                    if (orden.numero_orden_compra) insertData.numero_orden_compra = orden.numero_orden_compra;
+                    if (numeroOrdenFisica.trim()) insertData.numero_orden_fisica = numeroOrdenFisica.trim();
+                    if (numeroOrdenCompra.trim()) insertData.numero_orden_compra = numeroOrdenCompra.trim();
+                    if (orden.empresa_id) insertData.empresa_id = orden.empresa_id;
 
                     const { error: insertError } = await supabase
                         .from('ordenes_servicio')
@@ -701,7 +710,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                         </div>
                                     </div>
 
-                                    {/* Upload foto de orden fsica */}
+                                    {/* Subir foto de orden física */}
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wider text-amber-800 mb-1 block">Foto de la Orden Impresa</label>
                                         <label className={cn(
@@ -721,7 +730,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                         </label>
                                     </div>
 
-                                    {/* Show uploaded order photos */}
+                                    {/* Mostrar fotos de orden subidas */}
                                     {evidencias.filter(e => e.tipo === 'foto_antes').length > 0 && (
                                         <div className="space-y-1.5">
                                             <p className="text-[9px] font-bold text-amber-800 uppercase">Fotos cargadas:</p>
@@ -746,12 +755,12 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 </h3>
                                 <div className="bg-blue-50 border border-blue-200/50 rounded-xl p-4 space-y-3">
                                     <p className="text-[10px] text-blue-700 font-medium">
-                                        Captura el nmero de la OC del cliente y sube el documento PDF/Imagen.
+                                        Captura el número de la OC del cliente y sube el documento PDF/Imagen.
                                     </p>
 
-                                    {/* Nmero de orden de compra */}
+                                    {/* Número de orden de compra */}
                                     <div>
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-1 block">Nmero de Orden de Compra (OC)</label>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-blue-800 mb-1 block">Número de Orden de Compra (OC)</label>
                                         <div className="flex gap-2">
                                             <input
                                                 type="text"
@@ -871,7 +880,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                 disabled={isUploading}
                                             />
                                             <Upload size={14} className="text-retarder-gray-400" />
-                                            <span className="text-[10px] font-bold text-retarder-gray-600 uppercase">Aadir OC</span>
+                                            <span className="text-[10px] font-bold text-retarder-gray-600 uppercase">Añadir OC</span>
                                         </label>
                                         <label className={cn(
                                             "flex items-center justify-center gap-2 p-2.5 rounded-xl border-2 border-dashed border-retarder-gray-200 hover:border-retarder-red hover:bg-retarder-red/5 transition-all cursor-pointer",
@@ -948,10 +957,10 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                 </div>
                             </div>
 
-                            {/* Satisfaction Survey Section */}
+                             {/* Sección de Satisfacción del Cliente */}
                             <div>
                                 <h3 className="text-[10px] font-semibold uppercase tracking-wider text-retarder-gray-400 mb-2">
-                                    Satisfaccin del Cliente
+                                    Satisfacción del Cliente
                                 </h3>
                                 <div className="bg-white border border-retarder-gray-200 rounded-xl p-4 space-y-3">
                                     {isLoadingSurvey ? (
@@ -970,7 +979,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     <p className="font-bold text-retarder-black">{survey.calificacion_general}/10</p>
                                                 </div>
                                                 <div className="text-center p-2 bg-retarder-gray-50 rounded-lg">
-                                                    <p className="text-[8px] text-retarder-gray-400 uppercase">Tecnico</p>
+                                                    <p className="text-[8px] text-retarder-gray-400 uppercase">Técnico</p>
                                                     <p className="font-bold text-retarder-black">{survey.calificacion_tecnico}/5</p>
                                                 </div>
                                                 <div className="text-center p-2 bg-retarder-gray-50 rounded-lg">
@@ -984,7 +993,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            <p className="text-xs text-retarder-gray-500">Genera y comparte este link con el cliente para que evale el servicio.</p>
+                                            <p className="text-xs text-retarder-gray-500">Genera y comparte este link con el cliente para que evalúe el servicio.</p>
                                             <div className="flex gap-2">
                                                 <div className="flex-1 bg-retarder-gray-50 border border-retarder-gray-200 rounded-lg px-3 py-2 text-[10px] font-mono text-retarder-gray-400 truncate">
                                                     {survey ? `${window.location.origin}/encuesta/${survey.token_acceso}` : 'Generando...'}

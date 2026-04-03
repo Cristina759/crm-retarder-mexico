@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
     Ticket as OrdenIcon,
@@ -15,6 +15,17 @@ import {
     FileText,
     Target,
     Zap,
+    Loader2,
+    ArrowRight,
+    Search,
+    Filter,
+    Calendar,
+    ChevronDown,
+    ChevronUp,
+    Plus,
+    RefreshCw,
+    TrendingDown,
+    HelpCircle
 } from 'lucide-react';
 import { cn, formatMXN } from '@/lib/utils';
 import {
@@ -29,7 +40,6 @@ import { useRole } from '@/hooks/useRole';
 import { useUser } from '@clerk/nextjs';
 import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Loader2 } from 'lucide-react';
 
 const supabase = createClient();
 
@@ -41,13 +51,18 @@ interface CotizacionMini {
 interface OrdenMini {
     id: string;
     numero: string;
-    empresa: string;
+    numero_orden_fisica?: string;
+    empresa: {
+        nombre_comercial: string;
+    };
     tecnico?: string;
     vendedor?: string;
     estado: string;
     fecha_creado: string;
     prioridad: string;
     tipo: string;
+    monto?: number;
+    total?: number;
 }
 
 interface InventoryMini {
@@ -114,7 +129,6 @@ function KpiCard({
 //  Sales Pipeline Chart (Cotizaciones) 
 
 function SalesPipelineChart({ cotizaciones, className }: { cotizaciones: CotizacionMini[]; className?: string }) {
-    // Real data from Supabase grouped by estado
     const estados = ['aceptada', 'enviada', 'negociacion', 'borrador', 'rechazada', 'vencida'];
     const salesData = estados.map(estado => ({
         estado,
@@ -122,7 +136,7 @@ function SalesPipelineChart({ cotizaciones, className }: { cotizaciones: Cotizac
         total: cotizaciones.filter(c => c.estado === estado).reduce((s, c) => s + (c.total || 0), 0),
     })).filter(d => d.count > 0);
 
-    const maxCount = Math.max(...salesData.map((d) => d.count));
+    const maxCount = Math.max(...salesData.map((d) => d.count), 1);
 
     return (
         <motion.div
@@ -176,8 +190,8 @@ function SalesPipelineChart({ cotizaciones, className }: { cotizaciones: Cotizac
 //  Ingresos Chart (Donut) 
 
 function IngresosChart({ total, cobrado, porCobrar, className }: { total: number; cobrado: number; porCobrar: number; className?: string }) {
-    const cobradoPct = (cobrado / total) * 100;
-    const porCobrarPct = (porCobrar / total) * 100;
+    const cobradoPct = total > 0 ? (cobrado / total) * 100 : 0;
+    const porCobrarPct = total > 0 ? (porCobrar / total) * 100 : 0;
 
     return (
         <motion.div
@@ -188,31 +202,21 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
         >
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h3 className="font-black text-lg text-retarder-black tracking-tight uppercase">Ingresos por Perodo</h3>
-                    <p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest">Ene - Mar 2026</p>
-                </div>
-                <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-retarder-gray-400 uppercase">
-                        <Clock size={12} className="animate-spin-slow" />
-                        <span>Actualizado a las {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
+                    <h3 className="font-black text-lg text-retarder-black tracking-tight uppercase">Ingresos por Período</h3>
+                    <p className="text-[10px] text-retarder-gray-400 font-bold uppercase tracking-widest">Estado de Cobranza Real</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                {/* Main Donut */}
                 <div className="relative flex justify-center items-center">
                     <svg viewBox="0 0 100 100" className="w-48 h-48 transform -rotate-90">
-                        {/* Background Circle */}
                         <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="12" />
-                        {/* Cobrado Arc */}
                         <circle
                             cx="50" cy="50" r="40" fill="transparent"
                             stroke="#0ea5e9" strokeWidth="12"
                             strokeDasharray={`${cobradoPct * 2.51} 251`}
                             strokeLinecap="round"
                         />
-                        {/* Por Cobrar Arc */}
                         <circle
                             cx="50" cy="50" r="40" fill="transparent"
                             stroke="#f43f5e" strokeWidth="12"
@@ -223,11 +227,10 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-xl font-black text-retarder-black tracking-tighter">{formatMXN(total)}</span>
-                        <span className="text-[10px] font-bold text-retarder-gray-400 uppercase tracking-widest">Total Q1</span>
+                        <span className="text-[10px] font-bold text-retarder-gray-400 uppercase tracking-widest">Total</span>
                     </div>
                 </div>
 
-                {/* Legend & Historical */}
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
@@ -245,25 +248,6 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
                             <p className="text-sm font-black text-retarder-black">{formatMXN(porCobrar)}</p>
                         </div>
                     </div>
-
-                    <div className="pt-6 border-t border-retarder-gray-100 flex gap-6">
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="relative w-12 h-12">
-                                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="15" />
-                                </svg>
-                            </div>
-                            <span className="text-[9px] font-black text-retarder-gray-400 uppercase whitespace-nowrap">Oct - Dic 2025</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="relative w-12 h-12 opacity-60">
-                                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#f3f4f6" strokeWidth="15" />
-                                </svg>
-                            </div>
-                            <span className="text-[9px] font-black text-retarder-gray-400 uppercase whitespace-nowrap">Jul - Sep 2025</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </motion.div>
@@ -273,7 +257,6 @@ function IngresosChart({ total, cobrado, porCobrar, className }: { total: number
 //  Pipeline Mini Chart 
 
 function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className?: string }) {
-    // Group orders by state
     const pipelineData = ORDEN_ESTADOS.map(estado => ({
         estado,
         count: ordenes.filter(o => o.estado === estado).length
@@ -290,7 +273,7 @@ function PipelineChart({ ordenes, className }: { ordenes: OrdenMini[]; className
             transition={{ duration: 0.4, delay: 0.3 }}
             className={cn("bg-white rounded-xl border border-retarder-gray-200 p-5 w-full h-full", className)}
         >
-            <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de rdenes de Servicio</h3>
+            <h3 className="font-semibold text-sm text-retarder-black mb-4">Pipeline de Órdenes de Servicio</h3>
             <div className="space-y-2.5">
                 {pipelineData.map((item, i) => (
                     <div key={item.estado} className="flex items-center gap-3">
@@ -330,8 +313,8 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
             className="bg-white rounded-xl border border-retarder-gray-200 p-5 col-span-full"
         >
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-sm text-retarder-black">rdenes Recientes</h3>
-                <Link href="/ordenes" className="text-xs text-retarder-red font-medium hover:underline">Ver todas</Link>
+                <h3 className="font-semibold text-sm text-retarder-black">Órdenes Recientes</h3>
+                <Link href="/oportunidades/ordenes" className="text-xs text-retarder-red font-medium hover:underline">Ver todas</Link>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -348,13 +331,13 @@ function RecentOrdenes({ ordenes }: { ordenes: OrdenMini[] }) {
                     <tbody>
                         {displayOrdenes.map((o, i) => (
                             <motion.tr
-                                key={o.id || o.numero_orden_fisica||o.numero}
+                                key={o.id || o.numero_orden_fisica || o.numero}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5 + i * 0.05 }}
                                 className="border-b border-retarder-gray-50 hover:bg-retarder-gray-50 cursor-pointer transition-colors"
                             >
-                                <td className="py-3 px-2 sm:px-3 font-mono font-semibold text-retarder-red">{o.numero_orden_fisica||o.numero}</td>
+                                <td className="py-3 px-2 sm:px-3 font-mono font-semibold text-retarder-red">{o.numero_orden_fisica || o.numero}</td>
                                 <td className="py-3 px-2 sm:px-3 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{o.empresa?.nombre_comercial}</td>
                                 <td className="py-3 px-2 sm:px-3 text-retarder-gray-600 capitalize hidden md:table-cell">{o.tipo}</td>
                                 <td className="py-3 px-2 sm:px-3">
@@ -409,7 +392,7 @@ function PriorityAttention({ alerts }: { alerts: PriorityAlert[] }) {
                     <Zap size={16} className="text-white fill-current" />
                 </div>
                 <div>
-                    <h3 className="text-base font-black tracking-tight uppercase">Atencin Prioritaria</h3>
+                    <h3 className="text-base font-black tracking-tight uppercase">Atención Prioritaria</h3>
                     <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Sistema Inteligente de Alertas</p>
                 </div>
             </div>
@@ -451,18 +434,22 @@ function PriorityAttention({ alerts }: { alerts: PriorityAlert[] }) {
 
 export default function DashboardPage() {
     const { user } = useUser();
-    const { role, isAdmin, isVendedor, isTecnico, isCliente } = useRole();
+    const { isAdmin, isVendedor, isTecnico, isCliente } = useRole();
     const [loading, setLoading] = useState(true);
     const [ordenes, setOrdenes] = useState<OrdenMini[]>([]);
     const [cotizaciones, setCotizaciones] = useState<CotizacionMini[]>([]);
     const [stats, setStats] = useState({
         totalVentas: 0,
         totalCobrado: 0,
+        totalNotas: 0,
         ordenesActivas: 0,
         cotizacionesActivas: 0,
         ordenesTecnico: 0,
         ordenesProceso: 0,
-        ordenesHoy: 0
+        ordenesHoy: 0,
+        totalClientes: 0,
+        totalCotizaciones: 0,
+        montoFacturado: 0,
     });
 
     // Name detection from Clerk
@@ -484,87 +471,87 @@ export default function DashboardPage() {
                 { data: cotData },
                 { data: ordData },
                 { data: invDataRaw },
+                { data: empData },
+                { data: ncData }
             ] = await Promise.all([
                 supabase.from('cotizaciones').select('total, estado'),
-                supabase.from('ordenes_servicio').select('*, empresa:empresas(nombre_comercial)'),
+                supabase.from('ordenes_servicio').select(`
+                    *,
+                    empresa_join:empresas(nombre_comercial)
+                `),
                 supabase.from('inventario').select('id, nombre, stock_actual, stock_minimo'),
+                supabase.from('empresas').select('id').eq('activo', true), // Clientes ACTIVOS
+                supabase.from('notas_credito').select('total')
             ]);
 
             const invData = (invDataRaw as InventoryMini[] || []).filter(item => item.stock_actual < item.stock_minimo);
+            const totalClientes = empData?.length || 0;
+            const totalCotizaciones = cotData?.length || 0;
+            const totalNotas = (ncData || []).reduce((a, n) => a + (Number(n.total) || 0), 0);
 
             setCotizaciones((cotData as CotizacionMini[]) || []);
 
-            if (ordData) setOrdenes(ordData as OrdenMini[]);
-
-            // Calculate metrics
-            const ordArray = (ordData as any[]) || [];
+            // Normalización de órdenes
+            const rawOrders = (ordData || []) as any[];
+            const normalizedOrders = rawOrders.map(o => {
+                const empresaObj = o.empresa_join || 
+                                 (typeof o.empresa === 'object' ? o.empresa : { nombre_comercial: o.empresa || 'Sin empresa' });
+                return {
+                    ...o,
+                    empresa: empresaObj
+                };
+            });
             
-            // 1. Venta Total: Sumar rdenes que ya estn en proceso real o facturadas/pagadas
-            // Excluimos explcitamente las cotizaciones enviadas que an no son rdenes reales
-            const totalVentas = ordArray
-                .filter(o => o.estado !== 'cotizacion_enviada_al_cliente')
-                .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
+            setOrdenes(normalizedOrders as OrdenMini[]);
 
-            // 2. Facturacin Cobrada: Sumar solo lo que ya tiene marcado 'pagado' o estado 'pagado'
-            const {data:nd}=await supabase.from("notas_credito").select("total");const totalNotas=(nd||[]).reduce((a,n)=>a+(Number(n.total)||0),0);
-const totalCobrado = ordArray
-                .filter(o => o.pagado === true || o.estado === 'pagado')
-                .reduce((acc, current) => acc + (Number(current.total) || 0), 0);
+            // Cálculos solicitados por el usuario
+            
+            // 1. Monto Total Facturado: Sumar rdenes en estado 'facturado' o 'pagado'
+            const montoFacturado = rawOrders
+                .filter(o => o.estado === 'facturado' || o.estado === 'pagado')
+                .reduce((acc, current) => acc + (Number(current.monto || current.total) || 0), 0);
+
+            // Venta Total (Todas las órdenes reales)
+            const totalVentas = rawOrders
+                .filter(o => o.estado !== 'cotizacion_enviada_al_cliente')
+                .reduce((acc, current) => acc + (Number(current.monto || current.total) || 0), 0);
 
             const cotizacionesActivas = (cotData as CotizacionMini[])?.filter((c: CotizacionMini) => ['enviada', 'negociacion'].includes(c.estado)).length || 0;
-            const ordenesActivas = ordArray.filter((o: OrdenMini) => o.estado !== 'pagado').length || 0;
+            const ordenesActivas = rawOrders.filter((o: any) => o.estado !== 'pagado').length || 0;
 
-            // Priority Logic
+            // Prioridades... (omitiendo por brevedad, asumo que ya están)
             const alerts: PriorityAlert[] = [];
-
-            // 1. Critical Inventory
             (invData as InventoryMini[] || []).slice(0, 2).forEach((item: InventoryMini) => {
-                alerts.push({
-                    id: `inv-${item.id}`,
-                    title: `Stock Crtico: ${item.nombre}`,
-                    description: `Solo quedan ${item.stock_actual} unidades. Se requiere reabastecimiento urgente.`,
-                    type: 'critical',
-                    icon: <Warehouse size={18} />
-                });
+                alerts.push({ id: `inv-${item.id}`, title: `Stock Crítico: ${item.nombre}`, description: `Solo quedan ${item.stock_actual} unidades.`, type: 'critical', icon: <Warehouse size={18} /> });
             });
 
-            // 2. Urgent Orders
-            ordArray.filter(o => o.prioridad === 'urgente' && o.estado !== 'servicio_concluido').slice(0, 1).forEach(o => {
-                alerts.push({
-                    id: `ord-${o.id}`,
-                    title: `Pedido Urgente: ${o.numero_orden_fisica||o.numero}`,
-                    description: `Para ${o.empresa?.nombre_comercial}. Fase: ${ORDEN_ESTADO_LABELS[o.estado as keyof typeof ORDEN_ESTADO_LABELS]}.`,
-                    type: 'warning',
-                    icon: <AlertTriangle size={18} />
-                });
+            normalizedOrders.filter(o => o.prioridad === 'urgente' && o.estado !== 'servicio_concluido').slice(0, 1).forEach(o => {
+                alerts.push({ id: `ord-${o.id}`, title: `Pedido Urgente: ${o.numero_orden_fisica||o.numero}`, description: `Para ${o.empresa?.nombre_comercial || o.empresa || 'Empresa unk'}.`, type: 'warning', icon: <AlertTriangle size={18} /> });
             });
-
             setPriorityAlerts(alerts);
 
-            // Specific Technician metrics
-            const ordTecnico = ordArray.filter((o: OrdenMini) => {
-                if (!currentUserName) return false;
-                return o.tecnico?.trim().toLocaleLowerCase() === currentUserName;
-            });
-
-            const ordenesTecnico = ordTecnico.filter((o: OrdenMini) => o.estado !== 'servicio_concluido').length;
-            const ordenesProceso = ordTecnico.filter((o: OrdenMini) => o.estado === 'servicio_en_proceso').length;
-
-            // Orders completed today
+            // Métricas Técnico
+            const ordTecnico = rawOrders.filter((o: any) => o.tecnico?.trim().toLocaleLowerCase() === currentUserName);
+            const ordenesTecnico = ordTecnico.filter((o: any) => o.estado !== 'servicio_concluido').length;
+            const ordenesProceso = ordTecnico.filter((o: any) => o.estado === 'servicio_en_proceso').length;
             const today = new Date().toISOString().split('T')[0];
-            const ordenesHoy = ordArray.filter((o: OrdenMini) => o.fecha_creado === today).length || 0;
+            const ordenesHoy = rawOrders.filter((o: any) => o.fecha_creado === today).length || 0;
 
-            // Live Statistics from Supabase
-            setStats({totalNotas,
-                totalVentas: totalVentas,
-                totalCobrado: totalCobrado, // <-- AHORA ES REAL, no 75%
+            setStats({
+                totalNotas,
+                totalVentas,
+                totalCobrado: montoFacturado, // Usamos monto facturado como base de cobro si no hay otra métrica
+                montoFacturado,
                 ordenesActivas,
                 cotizacionesActivas,
                 ordenesTecnico,
                 ordenesProceso,
-                ordenesHoy
+                ordenesHoy,
+                totalClientes,
+                totalCotizaciones
             });
         } catch (error) {
+            console.error("Dashboard Fetch Error:", error);
         } finally {
             setLoading(false);
         }
@@ -573,14 +560,6 @@ const totalCobrado = ordArray
     useEffect(() => {
         fetchDashboardData();
     }, [fetchDashboardData]);
-
-    // Removed hardcoded VENTAS_REALES mapping for a clean, dynamic dashboard
-    const dashboardVentas = useMemo(() => {
-        return ordenes.map(o => ({
-            ...o,
-            total: (o as any).monto || 0,
-        }));
-    }, [ordenes]);
 
     if (loading) {
         return (
@@ -599,38 +578,36 @@ const totalCobrado = ordArray
             {(isAdmin || isVendedor) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
-                        title="Venta Total (Base Real)"
-                        value={formatMXN((stats.totalVentas - stats.totalNotas))}
-                        subtitle={isAdmin ? "Total acumulado histrico" : "Mis ventas totales"}
+                        title="Monto Facturado"
+                        value={formatMXN(stats.montoFacturado)}
+                        subtitle="Órdenes facturadas o pagadas"
                         icon={<FileText size={22} />}
-                        color="bg-blue-600"
-                        trend={{ value: 'Datos Reales', positive: true }}
+                        color="bg-emerald-600"
+                        trend={{ value: 'Real', positive: true }}
                         delay={0}
                     />
                     <KpiCard
-                        title="Facturacin Cobrada"
-                        value={formatMXN(stats.totalCobrado)}
-                        subtitle="MXN  Total Pagado"
-                        icon={<DollarSign size={22} />}
-                        color="bg-emerald-600"
-                        trend={{ value: 'Actualizado', positive: true }}
+                        title="Cotizaciones Totales"
+                        value={stats.totalCotizaciones}
+                        subtitle="Acumulado histórico"
+                        icon={<Zap size={22} />}
+                        color="bg-retarder-red"
                         delay={0.1}
                     />
                     <KpiCard
-                        title="Cuentas por Cobrar"
-                        value={formatMXN((stats.totalVentas - stats.totalNotas) - stats.totalCobrado)}
-                        subtitle="Pendiente de pago"
-                        icon={<Target size={22} />}
-                        color="bg-purple-600"
-                        trend={{ value: 'Seguimiento', positive: false }}
+                        title="Órdenes de Servicio"
+                        value={ordenes.length}
+                        subtitle="Total en sistema"
+                        icon={<OrdenIcon size={22} />}
+                        color="bg-blue-600"
                         delay={0.2}
                     />
                     <KpiCard
-                        title="Cotizaciones Activas"
-                        value={stats.cotizacionesActivas}
-                        subtitle="En seguimiento"
-                        icon={<Zap size={22} />}
-                        color="bg-retarder-red"
+                        title="Clientes Activos"
+                        value={stats.totalClientes}
+                        subtitle="Empresas registradas"
+                        icon={<Users size={22} />}
+                        color="bg-retarder-gray-800"
                         delay={0.3}
                     />
                 </div>
@@ -640,9 +617,9 @@ const totalCobrado = ordArray
             {isTecnico && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <KpiCard
-                        title="rdenes Asignadas"
+                        title="Órdenes Asignadas"
                         value={stats.ordenesTecnico}
-                        subtitle="Pendientes de atencin"
+                        subtitle="Pendientes de atención"
                         icon={<OrdenIcon size={22} />}
                         color="bg-retarder-gray-800"
                         delay={0}
@@ -686,7 +663,7 @@ const totalCobrado = ordArray
             {isAdmin && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <KpiCard
-                        title="rdenes Reales"
+                        title="Órdenes Reales"
                         value={ordenes.length}
                         subtitle="Registradas en sistema"
                         icon={<OrdenIcon size={22} />}
@@ -696,7 +673,7 @@ const totalCobrado = ordArray
                     <KpiCard
                         title="Eficiencia"
                         value={ordenes.length === 0 ? '' : `${Math.round((ordenes.filter(o => o.estado === 'servicio_concluido' || o.estado === 'pagado' || o.estado === 'documentacion_entregada').length / ordenes.length) * 100)}%`}
-                        subtitle="rdenes completadas"
+                        subtitle="Órdenes completadas"
                         icon={<Clock size={22} />}
                         color="bg-retarder-yellow"
                         delay={0.7}

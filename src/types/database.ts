@@ -111,6 +111,14 @@ export interface OrdenServicio {
     notas_internas: string | null;
     created_at: string;
     updated_at: string;
+    numero_orden_fisica: string | null;
+    numero_orden_compra: string | null;
+    cotizacion_numero: string | null;
+    monto: number | null;
+    vendedor: string | null;
+    tecnico: string | null;
+    empresa: string | null;
+    fecha_creado: string | null;
     // Joined fields
     empresa?: Empresa;
     contacto?: Contacto;

@@ -440,7 +440,7 @@ export default function OrdenesPage() {
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Folio / OS</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Empresa</th>
                                         <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Estado</th>
-                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Tecnico</th>
+                                        <th className="text-left py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden lg:table-cell">Técnico</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden xl:table-cell">Monto</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase hidden sm:table-cell">Fecha</th>
                                         <th className="text-right py-3 px-2 sm:px-4 text-[10px] font-semibold text-retarder-gray-400 uppercase">Acciones</th>
@@ -451,7 +451,7 @@ export default function OrdenesPage() {
                                         <tr>
                                             <td colSpan={7} className="py-12 text-center">
                                                 <Loader2 size={24} className="mx-auto text-retarder-red animate-spin mb-2" />
-                                                <p className="text-xs text-retarder-gray-400">Cargando Ordenes...</p>
+                                                <p className="text-xs text-retarder-gray-400">Cargando Órdenes...</p>
                                             </td>
                                         </tr>
                                     ) : (
@@ -558,9 +558,9 @@ export default function OrdenesPage() {
                                     <div className="grid grid-cols-2 gap-3">
                                         {[
                                             { id: 'preventivo', label: ' Preventivo', desc: 'Mantenimiento regular' },
-                                            { id: 'correctivo', label: ' Correctivo', desc: 'Reparacin de falla' },
-                                            { id: 'instalacion', label: ' Instalacin', desc: 'Equipo nuevo' },
-                                            { id: 'diagnostico', label: ' Diagnstico', desc: 'Revisin tcnica' }
+                                            { id: 'correctivo', label: ' Correctivo', desc: 'Reparación de falla' },
+                                            { id: 'instalacion', label: ' Instalación', desc: 'Equipo nuevo' },
+                                            { id: 'diagnostico', label: ' Diagnóstico', desc: 'Revisión técnica' }
                                         ].map((t) => (
                                             <button
                                                 key={t.id}
