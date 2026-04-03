@@ -50,8 +50,8 @@ export function KanbanBoard({
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
 
-    // Permisos de drag: solo director y administradora
-    const canDrag = userRole === 'director' || userRole === 'administradora' || userRole === 'admin';
+    // Permisos de drag: administradores, directores, administración y vendedores
+    const canDrag = ['admin', 'direccion', 'administracion', 'vendedor'].includes(userRole || '');
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -123,9 +123,11 @@ export function KanbanBoard({
 
                 if (error) {
                     toast.error('Error al guardar el cambio: ' + error.message);
+                } else {
+                    toast.success(`Estado actualizado: ${ORDEN_ESTADO_LABELS[estado]}`);
                 }
                 
-                // Siempre refrescamos desde Supabase para mantener la sincrona
+                // Siempre refrescamos desde Supabase para mantener la sincronía
                 onRefresh();
             }
         }

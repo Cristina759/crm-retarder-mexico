@@ -31,7 +31,7 @@ export const ORDEN_ESTADO_LABELS: Record<OrdenEstado, string> = {
     evidencia_cargada: 'Evidencia Cargada',
     documentacion_entregada: 'Documentacin Entregada',
     encuesta_enviada: 'Encuesta Enviada',
-    facturado: 'Facturado',
+    facturado: 'Facturación',
     pagado: 'Pagado',
 };
 
