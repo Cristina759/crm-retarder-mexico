@@ -222,11 +222,28 @@ export default function CotizacionesPage() {
 
             if (error) throw error;
 
+            // Normalizar estados de Supabase al enum local
+            const ESTADO_MAP: Record<string, CotEstado> = {
+                borrador: 'borrador',
+                enviada: 'enviada',
+                enviada_al_cliente: 'enviada',
+                negociacion: 'negociacion',
+                en_negociacion: 'negociacion',
+                aceptada: 'aceptada',
+                aprobada: 'aceptada',
+                rechazada: 'rechazada',
+                cancelada: 'rechazada',
+                vencida: 'vencida',
+                expirada: 'vencida',
+            };
+
             // Resolve empresa name from CLIENTES_REALES using empresa_id
             const formattedData = (data || []).map((c: any) => {
                 const clienteMatch = CLIENTES_REALES.find(cl => cl.id === c.empresa_id);
+                const estadoNormalizado: CotEstado = ESTADO_MAP[c.estado?.toLowerCase()] || 'enviada';
                 return {
                     ...c,
+                    estado: estadoNormalizado,
                     empresa: clienteMatch?.nombre_comercial || c.empresa || c.empresa_id || 'Sin empresa',
                 };
             });
@@ -468,8 +485,8 @@ export default function CotizacionesPage() {
                                         </td>
                                         <td className="py-3 px-2 sm:px-4 font-medium text-retarder-gray-800 truncate max-w-[120px] sm:max-w-[200px]">{c.empresa}</td>
                                         <td className="py-3 px-2 sm:px-4">
-                                            <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', ESTADO_CONFIG[c.estado].color)}>
-                                                {ESTADO_CONFIG[c.estado].label}
+                                            <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap', (ESTADO_CONFIG[c.estado as CotEstado] ?? ESTADO_CONFIG['enviada']).color)}>
+                                                {(ESTADO_CONFIG[c.estado as CotEstado] ?? ESTADO_CONFIG['enviada']).label}
                                             </span>
                                         </td>
                                         <td className="py-3 px-2 sm:px-4 text-right font-semibold text-retarder-gray-800 whitespace-nowrap">{formatMXN(c.total)}</td>
@@ -568,8 +585,8 @@ export default function CotizacionesPage() {
                                         </div>
                                         <div className="p-4 rounded-2xl bg-retarder-gray-50 border border-retarder-gray-100">
                                             <label className="text-[10px] font-black uppercase text-retarder-gray-400 block mb-1">Estado Actual</label>
-                                            <span className={cn('inline-block px-3 py-1 rounded-full text-xs font-bold mt-1', ESTADO_CONFIG[selectedCot.estado as CotEstado].color)}>
-                                                {ESTADO_CONFIG[selectedCot.estado as CotEstado].label}
+                                            <span className={cn('inline-block px-3 py-1 rounded-full text-xs font-bold mt-1', (ESTADO_CONFIG[selectedCot.estado as CotEstado] ?? ESTADO_CONFIG['enviada']).color)}>
+                                                {(ESTADO_CONFIG[selectedCot.estado as CotEstado] ?? ESTADO_CONFIG['enviada']).label}
                                             </span>
                                         </div>
                                         <div className="col-span-2 space-y-3">
