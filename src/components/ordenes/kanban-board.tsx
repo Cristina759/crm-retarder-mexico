@@ -50,7 +50,13 @@ export function KanbanBoard({
     const supabase = createClient();
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
+
+    // Refs para el scroll sincronizado
     const scrollRef = useRef<HTMLDivElement>(null);
+    const topScrollRef = useRef<HTMLDivElement>(null);
+    const innerRef = useRef<HTMLDivElement>(null);
+    const [innerWidth, setInnerWidth] = useState(0);
+    const isSyncingRef = useRef(false);
 
     // Permisos de drag: administradores, directores, administración y vendedores
     const canDrag = ['admin', 'direccion', 'administracion', 'vendedor'].includes(userRole || '');
@@ -70,11 +76,69 @@ export function KanbanBoard({
         setIsMounted(true);
     }, []);
 
+    // Medir el ancho real del contenido para el scrollbar superior
+    useEffect(() => {
+        if (!isMounted) return;
+        const inner = innerRef.current;
+        if (!inner) return;
+
+        const ro = new ResizeObserver(() => {
+            setInnerWidth(inner.scrollWidth);
+        });
+        ro.observe(inner);
+        setInnerWidth(inner.scrollWidth);
+        return () => ro.disconnect();
+    }, [isMounted]);
+
+    // Sincronizar scrollbars superior ↔ inferior
+    useEffect(() => {
+        if (!isMounted) return;
+        const main = scrollRef.current;
+        const top = topScrollRef.current;
+        if (!main || !top) return;
+
+        const syncTop = () => {
+            if (isSyncingRef.current) return;
+            isSyncingRef.current = true;
+            top.scrollLeft = main.scrollLeft;
+            isSyncingRef.current = false;
+        };
+        const syncMain = () => {
+            if (isSyncingRef.current) return;
+            isSyncingRef.current = true;
+            main.scrollLeft = top.scrollLeft;
+            isSyncingRef.current = false;
+        };
+
+        main.addEventListener('scroll', syncTop, { passive: true });
+        top.addEventListener('scroll', syncMain, { passive: true });
+        return () => {
+            main.removeEventListener('scroll', syncTop);
+            top.removeEventListener('scroll', syncMain);
+        };
+    }, [isMounted]);
+
+    // Wheel vertical → scroll horizontal (con preventDefault real, no-passive)
+    useEffect(() => {
+        if (!isMounted) return;
+        const el = scrollRef.current;
+        if (!el) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            // Solo interceptar si el scroll es predominantemente vertical
+            if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+        };
+
+        el.addEventListener('wheel', handleWheel, { passive: false });
+        return () => el.removeEventListener('wheel', handleWheel);
+    }, [isMounted]);
+
     const getOrdenesForEstado = useCallback(
         (estado: OrdenEstado) => ordenes
             .filter(o => o.estado === estado)
             .sort((a, b) => {
-                // Ordenar por fecha_creado ascendente (más antigua arriba), luego por numero_orden como fallback
                 const dateA = a.fecha_creado ? new Date(a.fecha_creado).getTime() : 0;
                 const dateB = b.fecha_creado ? new Date(b.fecha_creado).getTime() : 0;
                 if (dateA !== dateB) return dateA - dateB;
@@ -82,16 +146,6 @@ export function KanbanBoard({
             }),
         [ordenes],
     );
-
-    const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-        // Si hay scroll vertical disponible en el target, no interceptar
-        const el = scrollRef.current;
-        if (!el) return;
-        // Solo redirigir si el delta es predominantemente vertical
-        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-            el.scrollLeft += e.deltaY;
-        }
-    }, []);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         if (!canDrag) return;
@@ -146,8 +200,7 @@ export function KanbanBoard({
                 } else {
                     toast.success(`Estado actualizado: ${ORDEN_ESTADO_LABELS[estado]}`);
                 }
-                
-                // Siempre refrescamos desde Supabase para mantener la sincronía
+
                 onRefresh();
             }
         }
@@ -163,12 +216,21 @@ export function KanbanBoard({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
+            {/* Scrollbar superior sticky — espejo del scrollbar inferior */}
+            <div
+                ref={topScrollRef}
+                className="overflow-x-auto sticky top-0 z-20 bg-retarder-gray-50/90 backdrop-blur-sm border-b border-retarder-gray-200 mb-2"
+                style={{ scrollbarWidth: 'thin', scrollbarColor: '#e5e7eb #f9fafb' }}
+            >
+                <div style={{ width: innerWidth || '100%', height: 12 }} />
+            </div>
+
+            {/* Kanban scrollable principal */}
             <div
                 ref={scrollRef}
-                onWheel={handleWheel}
                 className="overflow-x-auto pb-4 kanban-scroll"
             >
-                <div className="flex gap-0 min-w-max">
+                <div ref={innerRef} className="flex gap-0 min-w-max">
                     {ORDEN_PHASES.map((phase) => (
                         <div key={phase.id} className="flex flex-col">
                             {/* Encabezado de Fase */}
