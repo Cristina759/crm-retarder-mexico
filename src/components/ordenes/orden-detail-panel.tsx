@@ -58,6 +58,32 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
     const sigCanvas = useRef<SignatureCanvas>(null);
     const [isUploadingFirma, setIsUploadingFirma] = useState(false);
 
+    // Resolved signed URLs for R2 objects (keyed by evidencia.id)
+    const [resolvedUrls, setResolvedUrls] = useState<Record<string, string>>({});
+
+    /**
+     * For each evidencia: if archivo_url starts with "http" it's a direct URL (Supabase
+     * Storage fallback or old record) — use as-is.  Otherwise it's an R2 object key —
+     * call /api/r2-url to generate a fresh signed URL.
+     */
+    const resolveEvidenciaUrls = async (list: Evidencia[]) => {
+        const entries = await Promise.all(
+            list.map(async (e) => {
+                if (!e.archivo_url) return [e.id, ''] as const;
+                if (e.archivo_url.startsWith('http')) return [e.id, e.archivo_url] as const;
+                try {
+                    const res = await fetch(`/api/r2-url?key=${encodeURIComponent(e.archivo_url)}`);
+                    if (!res.ok) return [e.id, ''] as const;
+                    const { url } = await res.json();
+                    return [e.id, url as string] as const;
+                } catch {
+                    return [e.id, ''] as const;
+                }
+            }),
+        );
+        setResolvedUrls(Object.fromEntries(entries));
+    };
+
     // Sync local state when orden changes
     useEffect(() => {
         if (orden) {
@@ -121,6 +147,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
         const { data, error: fetchError } = await StorageService.getEvidences(orden.id);
         if (!fetchError) {
             setEvidencias(data || []);
+            await resolveEvidenciaUrls(data || []);
         }
         setIsLoadingEvidencias(false);
     };
@@ -139,31 +166,38 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             const bucket = tipo === 'documento' ? 'documentos' : 'evidencias';
             const fileName = `${orden.id}/${tipo}_${Date.now()}_${file.name}`;
 
-            const { url, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
+            const { url, key, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
             if (uploadError) throw uploadError;
+
+            // Store the R2 key in DB so URLs can be refreshed on-demand.
+            // If there's no key (Supabase Storage fallback), store the public URL.
+            const storedValue = key || url;
 
             if (isUUID) {
                 const { error: regError } = await StorageService.registerEvidence({
                     orden_id: orden.id,
                     tipo: tipo as any,
-                    archivo_url: url,
-                    descripcion: tipo === 'documento' ? 'Orden de Compra' : tipo === 'foto_antes' ? 'Evidencia Antes' : 'Evidencia Despus',
+                    archivo_url: storedValue,
+                    descripcion: tipo === 'documento' ? 'Orden de Compra' : tipo === 'foto_antes' ? 'Evidencia Antes' : 'Evidencia Después',
                 });
 
                 if (regError) throw regError;
                 await fetchEvidencias();
             } else {
-                // Simular para la UI
+                // Demo mode — keep signed URL directly (not persisted)
+                const demoId = Math.random().toString();
                 const demoEvidencia: Evidencia = {
-                    id: Math.random().toString(),
+                    id: demoId,
                     orden_id: orden.id,
                     tipo: tipo as any,
-                    archivo_url: url,
-                    descripcion: tipo === 'documento' ? 'Orden de Compra (Demo)' : tipo === 'foto_antes' ? 'Evidencia Antes (Demo)' : 'Evidencia Despus (Demo)',
+                    archivo_url: storedValue,
+                    descripcion: tipo === 'documento' ? 'Orden de Compra (Demo)' : tipo === 'foto_antes' ? 'Evidencia Antes (Demo)' : 'Evidencia Después (Demo)',
                     subido_por: 'demo',
                     created_at: new Date().toISOString()
                 };
                 setEvidencias(prev => [demoEvidencia, ...prev]);
+                // Register the signed URL so it can be displayed immediately
+                setResolvedUrls(prev => ({ ...prev, [demoId]: url }));
             }
         } catch (err: any) {
             setError(`Error al subir archivo: ${err.message}`);
@@ -187,29 +221,33 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
             const bucket = 'firmas';
             const fileName = `${orden.id}/firma_cliente.png`;
 
-            const { url, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
+            const { url, key, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
             if (uploadError) throw uploadError;
+
+            const storedValue = key || url;
 
             if (isUUID) {
                 const { error: regError } = await StorageService.registerEvidence({
                     orden_id: orden.id,
                     tipo: 'firma',
-                    archivo_url: url,
+                    archivo_url: storedValue,
                     descripcion: 'Firma del Cliente',
                 });
                 if (regError) throw regError;
                 await fetchEvidencias();
             } else {
+                const demoId = Math.random().toString();
                 const demoEvidencia: Evidencia = {
-                    id: Math.random().toString(),
+                    id: demoId,
                     orden_id: orden.id,
                     tipo: 'firma',
-                    archivo_url: url,
+                    archivo_url: storedValue,
                     descripcion: 'Firma del Cliente (Demo)',
                     subido_por: 'demo',
                     created_at: new Date().toISOString()
                 };
                 setEvidencias(prev => [demoEvidencia, ...prev]);
+                setResolvedUrls(prev => ({ ...prev, [demoId]: url }));
             }
         } catch (err: any) {
             setError(`Error al guardar firma: ${err.message}`);
@@ -735,7 +773,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                         <div className="space-y-1.5">
                                             <p className="text-[9px] font-bold text-amber-800 uppercase">Fotos cargadas:</p>
                                             {evidencias.filter(e => e.tipo === 'foto_antes').map(e => (
-                                                <a key={e.id} href={e.archivo_url} target="_blank" rel="noopener noreferrer"
+                                                <a key={e.id} href={resolvedUrls[e.id] || '#'} target="_blank" rel="noopener noreferrer"
                                                     className="flex items-center gap-2 p-2 bg-white rounded-lg border border-amber-100 hover:shadow-sm transition-shadow text-xs text-amber-900 font-medium">
                                                     <ImageIcon size={14} className="text-amber-500" />
                                                     <span className="truncate flex-1">{e.descripcion || 'Foto de orden'}</span>
@@ -816,11 +854,11 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     <div className="flex items-center gap-2 overflow-hidden">
                                                         <FileText size={16} className="text-blue-500 shrink-0" />
                                                         <span className="text-xs font-bold text-retarder-gray-800 truncate">
-                                                            {e.archivo_url.split('/').pop()?.split('_').slice(2).join('_') || 'Orden de Compra'}
+                                                            {e.descripcion || e.archivo_url.split('/').pop() || 'Orden de Compra'}
                                                         </span>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <a href={e.archivo_url} target="_blank" rel="noopener noreferrer"
+                                                        <a href={resolvedUrls[e.id] || '#'} target="_blank" rel="noopener noreferrer"
                                                             className="p-1.5 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors" title="Ver archivo">
                                                             <EyeIcon size={14} />
                                                         </a>
@@ -926,7 +964,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <a
-                                                            href={e.archivo_url}
+                                                            href={resolvedUrls[e.id] || '#'}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="p-1.5 rounded-lg hover:bg-retarder-gray-100 text-retarder-gray-400 hover:text-blue-500 transition-colors"
@@ -1083,7 +1121,7 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                     <div className="bg-white border border-retarder-gray-200 rounded-xl p-4 space-y-3">
                                         {evidencias.find(e => e.tipo === 'firma') ? (
                                             <SignaturePad
-                                                defaultValue={evidencias.find(e => e.tipo === 'firma')?.archivo_url}
+                                                defaultValue={resolvedUrls[evidencias.find(e => e.tipo === 'firma')!.id]}
                                                 onSave={() => { }}
                                             />
                                         ) : (
@@ -1098,29 +1136,33 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
                                                         const bucket = 'firmas';
                                                         const fileName = `${orden.id}/firma_cliente.png`;
 
-                                                        const { url, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
+                                                        const { url, key, error: uploadError } = await StorageService.uploadFile(file, bucket, fileName);
                                                         if (uploadError) throw uploadError;
+
+                                                        const storedValue = key || url;
 
                                                         if (isUUID) {
                                                             const { error: regError } = await StorageService.registerEvidence({
                                                                 orden_id: orden.id,
                                                                 tipo: 'firma',
-                                                                archivo_url: url,
+                                                                archivo_url: storedValue,
                                                                 descripcion: 'Firma del Cliente',
                                                             });
                                                             if (regError) throw regError;
                                                             await fetchEvidencias();
                                                         } else {
+                                                            const demoId = Math.random().toString();
                                                             const demoEvidencia: Evidencia = {
-                                                                id: Math.random().toString(),
+                                                                id: demoId,
                                                                 orden_id: orden.id,
                                                                 tipo: 'firma',
-                                                                archivo_url: url,
+                                                                archivo_url: storedValue,
                                                                 descripcion: 'Firma del Cliente (Demo)',
                                                                 subido_por: 'demo',
                                                                 created_at: new Date().toISOString()
                                                             };
                                                             setEvidencias(prev => [demoEvidencia, ...prev]);
+                                                            setResolvedUrls(prev => ({ ...prev, [demoId]: url }));
                                                         }
                                                     } catch (err: any) {
                                                         setError(`Error al guardar firma: ${err.message}`);

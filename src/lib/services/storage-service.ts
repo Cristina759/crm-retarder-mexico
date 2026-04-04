@@ -11,7 +11,7 @@ export type StorageBucket = 'evidencias' | 'documentos' | 'firmas';
 async function uploadToR2(
     file: File,
     folder: string,
-): Promise<{ url: string; error: any }> {
+): Promise<{ url: string; key?: string; error: any }> {
     try {
         const formData = new FormData();
         formData.append('file', file);
@@ -27,8 +27,8 @@ async function uploadToR2(
             throw new Error(body.error || `Upload failed: ${res.status}`);
         }
 
-        const { url } = await res.json();
-        return { url, error: null };
+        const { url, key } = await res.json();
+        return { url, key, error: null };
     } catch (error) {
         return { url: '', error };
     }
@@ -42,12 +42,12 @@ export const StorageService = {
         file: File,
         bucket: StorageBucket,
         path: string,
-    ): Promise<{ url: string; error: any }> {
-        // Try R2
+    ): Promise<{ url: string; key?: string; error: any }> {
+        // Try R2 — returns { url: signedUrl, key: r2ObjectKey }
         const r2Result = await uploadToR2(file, bucket);
         if (!r2Result.error) return r2Result;
 
-        // Fallback: Supabase Storage
+        // Fallback: Supabase Storage (no R2 key in this path)
         try {
             const { data, error } = await supabase.storage
                 .from(bucket)
@@ -59,7 +59,7 @@ export const StorageService = {
                 .from(bucket)
                 .getPublicUrl(data.path);
 
-            return { url: publicUrl, error: null };
+            return { url: publicUrl, key: undefined, error: null };
         } catch (error) {
             return { url: '', error };
         }
