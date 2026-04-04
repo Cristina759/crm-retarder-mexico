@@ -63,6 +63,9 @@ export default function OrdenesPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showHistorial, setShowHistorial] = useState(false);
+    const [historialOrdenes, setHistorialOrdenes] = useState<any[]>([]);
+    const [loadingHistorial, setLoadingHistorial] = useState(false);
     const [newOrden, setNewOrden] = useState<{ numero: string; empresa: string; empresa_id?: string | null; tipo: 'preventivo' | 'correctivo' | 'instalacion' | 'diagnostico'; prioridad: 'baja' | 'media' | 'alta' | 'urgente'; tecnico: string; vendedor: string; descripcion: string; monto: string }>({ numero: '', empresa: '', empresa_id: null, tipo: 'preventivo', prioridad: 'media', tecnico: '', vendedor: '', descripcion: '', monto: '' });
     const [empresaSearch, setEmpresaSearch] = useState('');
 
@@ -78,12 +81,41 @@ export default function OrdenesPage() {
         return formatUserName(name).toLowerCase();
     }, [user]);
 
+    const fetchHistorial = useCallback(async () => {
+        setLoadingHistorial(true);
+        try {
+            const { data, error } = await supabase
+                .from('ordenes_servicio')
+                .select('*, empresa_join:empresas(nombre_comercial)')
+                .eq('archivada', true)
+                .order('updated_at', { ascending: false });
+
+            if (error) throw error;
+
+            const mapped = (data || []).map((o: any) => ({
+                ...o,
+                empresa: o.empresa_join?.nombre_comercial || o.empresa || 'Sin empresa',
+                monto: Number(o.monto || o.total || 0),
+                fecha_creado: o.fecha_real || o.created_at,
+                numero: o.numero_orden_fisica,
+            }));
+
+            setHistorialOrdenes(mapped);
+        } catch {
+            setHistorialOrdenes([]);
+        } finally {
+            setLoadingHistorial(false);
+        }
+    }, [supabase]);
+
     const fetchOrdenes = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
                 .from('ordenes_servicio')
                 .select('*, empresa_join:empresas(nombre_comercial)')
+                // Exclude archived orders from the active pipeline
+                .or('archivada.is.null,archivada.eq.false')
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -340,6 +372,25 @@ export default function OrdenesPage() {
                         </button>
                     </div>
 
+                    {/* Historial button */}
+                    <button
+                        onClick={() => {
+                            const next = !showHistorial;
+                            setShowHistorial(next);
+                            if (next) fetchHistorial();
+                        }}
+                        className={cn(
+                            'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all border',
+                            showHistorial
+                                ? 'bg-slate-700 text-white border-slate-700'
+                                : 'bg-white text-slate-600 border-retarder-gray-200 hover:bg-slate-50',
+                        )}
+                        title="Ver órdenes pagadas y archivadas"
+                    >
+                        <FileText size={14} />
+                        <span className="hidden sm:inline">Historial</span>
+                    </button>
+
                     {/* New orden button (Admin/Vendedor only) - REMOVED AS PER USER REQUEST to enforce quote-first flow */}
                     {/* {(isAdmin || isVendedor) && (
                         <button onClick={() => setShowNewOrden(true)} className="flex items-center gap-2 px-4 py-2 bg-retarder-red text-white rounded-lg text-sm font-medium hover:bg-retarder-red-700 transition-colors shadow-md shadow-retarder-red/20">
@@ -529,6 +580,109 @@ export default function OrdenesPage() {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Historial de Órdenes Archivadas */}
+            <AnimatePresence>
+                {showHistorial && (
+                    <motion.div
+                        key="historial"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm"
+                    >
+                        <div className="flex items-center justify-between px-5 py-3 bg-slate-700 text-white">
+                            <div className="flex items-center gap-2">
+                                <FileText size={16} />
+                                <span className="text-sm font-bold">Historial — Órdenes Pagadas</span>
+                                <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                                    {historialOrdenes.length} registros
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowHistorial(false)}
+                                className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            {loadingHistorial ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 size={24} className="animate-spin text-slate-400 mr-2" />
+                                    <span className="text-xs text-slate-400">Cargando historial...</span>
+                                </div>
+                            ) : historialOrdenes.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-sm text-slate-400 font-medium">Sin órdenes archivadas</p>
+                                    <p className="text-xs text-slate-300 mt-1">Las órdenes marcadas como "Pagado" aparecerán aquí.</p>
+                                </div>
+                            ) : (
+                                <table className="w-full text-sm">
+                                    <thead className="bg-slate-50 border-b border-slate-100">
+                                        <tr>
+                                            <th className="text-left py-3 px-4 text-[10px] font-bold text-slate-500 uppercase">N° OS</th>
+                                            <th className="text-left py-3 px-4 text-[10px] font-bold text-slate-500 uppercase">Empresa</th>
+                                            <th className="text-left py-3 px-4 text-[10px] font-bold text-slate-500 uppercase hidden md:table-cell">Técnico</th>
+                                            <th className="text-left py-3 px-4 text-[10px] font-bold text-slate-500 uppercase hidden lg:table-cell">N° Factura</th>
+                                            <th className="text-right py-3 px-4 text-[10px] font-bold text-slate-500 uppercase hidden xl:table-cell">Monto</th>
+                                            <th className="text-right py-3 px-4 text-[10px] font-bold text-slate-500 uppercase hidden sm:table-cell">Fecha Pago</th>
+                                            <th className="text-right py-3 px-4 text-[10px] font-bold text-slate-500 uppercase">Ver</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {historialOrdenes.map((o, i) => (
+                                            <motion.tr
+                                                key={o.id}
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ delay: i * 0.02 }}
+                                                className="border-b border-slate-50 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                onClick={() => setSelectedOrden(o)}
+                                            >
+                                                <td className="py-3 px-4">
+                                                    <span className="font-mono text-xs font-bold text-slate-700">
+                                                        {o.numero_orden_fisica || o.numero || `#${o.numero_orden || '—'}`}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Building2 size={13} className="text-slate-300 hidden sm:block" />
+                                                        <span className="text-slate-700 font-medium truncate max-w-[140px]">{o.empresa}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-500 text-xs hidden md:table-cell">{o.tecnico || '—'}</td>
+                                                <td className="py-3 px-4 hidden lg:table-cell">
+                                                    <span className="font-mono text-xs text-emerald-600 font-bold">{o.numero_factura || '—'}</span>
+                                                </td>
+                                                <td className="py-3 px-4 text-right hidden xl:table-cell">
+                                                    <span className="text-xs font-bold text-slate-700">
+                                                        {o.monto ? formatMXN(o.monto) : '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-3 px-4 text-right text-[10px] text-slate-400 hidden sm:table-cell">
+                                                    {o.updated_at ? new Date(o.updated_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' }) : o.fecha_creado}
+                                                </td>
+                                                <td className="py-3 px-4 text-right">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setSelectedOrden(o); }}
+                                                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                                        title="Ver detalle"
+                                                    >
+                                                        <Eye size={14} />
+                                                    </button>
+                                                </td>
+                                            </motion.tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
                     </motion.div>
                 )}

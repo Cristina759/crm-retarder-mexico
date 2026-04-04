@@ -171,13 +171,22 @@ export function KanbanBoard({
             pendingEstadoChange.current = null;
 
             if (isValidUUID(id)) {
+                const isPagado = estado === 'pagado';
+                const updatePayload: Record<string, any> = {
+                    estado,
+                    updated_at: new Date().toISOString(),
+                };
+                if (isPagado) updatePayload.archivada = true;
+
                 const { error } = await supabase
                     .from('ordenes_servicio')
-                    .update({ estado, updated_at: new Date().toISOString() })
+                    .update(updatePayload)
                     .eq('id', id);
 
                 if (error) {
                     toast.error('Error al guardar el cambio: ' + error.message);
+                } else if (isPagado) {
+                    toast.success('Orden marcada como Pagada y archivada del pipeline.');
                 } else {
                     toast.success(`Estado actualizado: ${ORDEN_ESTADO_LABELS[estado]}`);
                 }

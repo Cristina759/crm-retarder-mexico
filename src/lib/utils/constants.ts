@@ -244,6 +244,7 @@ export interface DemoOrden {
     subtotal?: number;
     iva?: number;
     pagado?: boolean;
+    archivada?: boolean;
 }
 
 

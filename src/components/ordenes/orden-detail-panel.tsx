@@ -388,10 +388,11 @@ export function OrdenDetailPanel({ orden, onClose, onUpdate }: OrdenDetailPanelP
 
                 if (existing) {
                     // La orden ya existe en Supabase  actualizar estado y campos adicionales
-                    const updateData: any = { 
+                    const updateData: any = {
                         estado: nextState,
                         updated_at: new Date().toISOString()
                     };
+                    if (nextState === 'pagado') updateData.archivada = true;
                     if (numeroOrdenFisica.trim()) updateData.numero_orden_fisica = numeroOrdenFisica.trim();
                     if (numeroOrdenCompra.trim()) updateData.numero_orden_compra = numeroOrdenCompra.trim();
                     if (orden.empresa_id) updateData.empresa_id = orden.empresa_id;
