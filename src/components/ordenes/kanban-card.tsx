@@ -145,7 +145,9 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 <div className="flex items-center gap-1">
                     <Clock size={10} className="text-retarder-gray-300" />
                     <span className="text-[9px] text-retarder-gray-400">
-                        {orden.fecha_creado}
+                        {orden.fecha_creado
+                            ? new Date(orden.fecha_creado).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: '2-digit' })
+                            : 'S/F'}
                     </span>
                 </div>
                 {orden.monto && (

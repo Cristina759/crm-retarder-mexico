@@ -139,10 +139,10 @@ export function KanbanBoard({
         (estado: OrdenEstado) => ordenes
             .filter(o => o.estado === estado)
             .sort((a, b) => {
+                // Más reciente arriba (descendente)
                 const dateA = a.fecha_creado ? new Date(a.fecha_creado).getTime() : 0;
                 const dateB = b.fecha_creado ? new Date(b.fecha_creado).getTime() : 0;
-                if (dateA !== dateB) return dateA - dateB;
-                return (a.numero_orden || 0) - (b.numero_orden || 0);
+                return dateB - dateA;
             }),
         [ordenes],
     );
