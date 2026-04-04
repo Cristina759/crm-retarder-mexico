@@ -3,22 +3,55 @@ import { createClient } from '@/lib/supabase/client';
 const supabase = createClient();
 
 export type StorageBucket = 'evidencias' | 'documentos' | 'firmas';
+
+/**
+ * Upload a file to Cloudflare R2 via the /api/upload endpoint.
+ * Falls back to Supabase Storage if the API call fails.
+ */
+async function uploadToR2(
+    file: File,
+    folder: string,
+): Promise<{ url: string; error: any }> {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', folder);
+
+        const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || `Upload failed: ${res.status}`);
+        }
+
+        const { url } = await res.json();
+        return { url, error: null };
+    } catch (error) {
+        return { url: '', error };
+    }
+}
+
 export const StorageService = {
     /**
-     * Uploads a file to a specific Supabase Storage bucket.
+     * Uploads a file — tries R2 first, falls back to Supabase Storage.
      */
     async uploadFile(
         file: File,
         bucket: StorageBucket,
-        path: string
+        path: string,
     ): Promise<{ url: string; error: any }> {
+        // Try R2
+        const r2Result = await uploadToR2(file, bucket);
+        if (!r2Result.error) return r2Result;
+
+        // Fallback: Supabase Storage
         try {
             const { data, error } = await supabase.storage
                 .from(bucket)
-                .upload(path, file, {
-                    cacheControl: '3600',
-                    upsert: true,
-                });
+                .upload(path, file, { cacheControl: '3600', upsert: true });
 
             if (error) throw error;
 
@@ -72,5 +105,5 @@ export const StorageService = {
         } catch (error) {
             return { data: [], error };
         }
-    }
+    },
 };
