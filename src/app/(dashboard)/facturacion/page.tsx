@@ -67,13 +67,13 @@ export default function FacturacionPage() {
                 .from('ordenes_servicio')
                 .select('*, empresa:empresas(nombre_comercial)')
                 .in('estado', ['encuesta_enviada', 'facturado', 'pagado'])
-                .order('fecha_creado', { ascending: false });
+                .order('updated_at', { ascending: false });
 
             const { data: d2, error: e2 } = await supabase
                 .from('ordenes_servicio')
                 .select('*, empresa:empresas(nombre_comercial)')
                 .not('numero_factura', 'is', null)
-                .order('fecha_creado', { ascending: false });
+                .order('updated_at', { ascending: false });
 
             if (e1) throw e1;
             if (e2) throw e2;
@@ -88,7 +88,7 @@ export default function FacturacionPage() {
                 
                 return {
                     id: o.id,
-                    numero_orden: o.numero || 'OS-N/A',
+                    numero_orden: o.numero_orden_fisica || (o.numero_orden ? `#${o.numero_orden}` : 'OS-N/A'),
                     numero_factura: o.numero_factura || 'PENDIENTE',
                     empresa: (o.empresa && typeof o.empresa === 'object' ? o.empresa.nombre_comercial : o.empresa) || 'S/N',
                     concepto: o.descripcion || (o.total_refacciones > 0 ? 'Refacciones y Mano de Obra' : 'Servicios y Mano de Obra'),

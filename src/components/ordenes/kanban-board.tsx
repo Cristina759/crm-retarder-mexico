@@ -52,7 +52,10 @@ export function KanbanBoard({
     const [isMounted, setIsMounted] = useState(false);
 
     const scrollRef = useRef<HTMLDivElement>(null);
+    const topScrollRef = useRef<HTMLDivElement>(null);
     const innerRef = useRef<HTMLDivElement>(null);
+    const [innerWidth, setInnerWidth] = useState(0);
+    const isSyncingRef = useRef(false);
 
     // Permisos de drag: administradores, directores, administración y vendedores
     const canDrag = ['admin', 'direccion', 'administracion', 'vendedor'].includes(userRole || '');
@@ -71,6 +74,30 @@ export function KanbanBoard({
     useEffect(() => {
         setIsMounted(true);
     }, []);
+
+    // Medir ancho del contenido para el scrollbar superior
+    useEffect(() => {
+        if (!isMounted) return;
+        const inner = innerRef.current;
+        if (!inner) return;
+        const ro = new ResizeObserver(() => setInnerWidth(inner.scrollWidth));
+        ro.observe(inner);
+        setInnerWidth(inner.scrollWidth);
+        return () => ro.disconnect();
+    }, [isMounted]);
+
+    // Sincronizar scrollbar superior ↔ scrollbar inferior
+    useEffect(() => {
+        if (!isMounted) return;
+        const main = scrollRef.current;
+        const top = topScrollRef.current;
+        if (!main || !top) return;
+        const syncTop = () => { if (isSyncingRef.current) return; isSyncingRef.current = true; top.scrollLeft = main.scrollLeft; isSyncingRef.current = false; };
+        const syncMain = () => { if (isSyncingRef.current) return; isSyncingRef.current = true; main.scrollLeft = top.scrollLeft; isSyncingRef.current = false; };
+        main.addEventListener('scroll', syncTop, { passive: true });
+        top.addEventListener('scroll', syncMain, { passive: true });
+        return () => { main.removeEventListener('scroll', syncTop); top.removeEventListener('scroll', syncMain); };
+    }, [isMounted]);
 
     // Wheel vertical → scroll horizontal (con preventDefault real, no-passive)
     useEffect(() => {
@@ -93,9 +120,9 @@ export function KanbanBoard({
         (estado: OrdenEstado) => ordenes
             .filter(o => o.estado === estado)
             .sort((a, b) => {
-                // Más reciente arriba (descendente)
-                const dateA = a.fecha_creado ? new Date(a.fecha_creado).getTime() : 0;
-                const dateB = b.fecha_creado ? new Date(b.fecha_creado).getTime() : 0;
+                // Ordenar por updated_at desc: la tarjeta recién movida queda arriba
+                const dateA = (a as any).updated_at ? new Date((a as any).updated_at).getTime() : new Date(a.fecha_creado).getTime();
+                const dateB = (b as any).updated_at ? new Date((b as any).updated_at).getTime() : new Date(b.fecha_creado).getTime();
                 return dateB - dateA;
             }),
         [ordenes],
@@ -146,7 +173,7 @@ export function KanbanBoard({
             if (isValidUUID(id)) {
                 const { error } = await supabase
                     .from('ordenes_servicio')
-                    .update({ estado })
+                    .update({ estado, updated_at: new Date().toISOString() })
                     .eq('id', id);
 
                 if (error) {
@@ -170,10 +197,20 @@ export function KanbanBoard({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            {/* Kanban scrollable principal */}
+            {/* Scrollbar superior sticky */}
+            <div
+                ref={topScrollRef}
+                className="overflow-x-auto sticky top-0 z-20 bg-retarder-gray-50/90 backdrop-blur-sm border-b border-retarder-gray-200 mb-2"
+                style={{ scrollbarWidth: 'thin', scrollbarColor: '#d1d5db #f9fafb' }}
+            >
+                <div style={{ width: innerWidth || '100%', height: 10 }} />
+            </div>
+
+            {/* Kanban scrollable principal — scrollbar nativo oculto */}
             <div
                 ref={scrollRef}
-                className="overflow-x-auto pb-4 kanban-scroll"
+                className="overflow-x-auto pb-0 kanban-scroll"
+                style={{ scrollbarWidth: 'none' }}
             >
                 <div ref={innerRef} className="flex gap-0 min-w-max">
                     {ORDEN_PHASES.map((phase) => (
