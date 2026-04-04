@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import {
     ORDEN_ESTADOS,
     ORDEN_PHASES,
+    ORDEN_ESTADO_LABELS,
     type OrdenEstado,
     type DemoOrden,
 } from '@/lib/utils/constants';
@@ -49,6 +50,7 @@ export function KanbanBoard({
     const supabase = createClient();
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     // Permisos de drag: administradores, directores, administración y vendedores
     const canDrag = ['admin', 'direccion', 'administracion', 'vendedor'].includes(userRole || '');
@@ -69,9 +71,27 @@ export function KanbanBoard({
     }, []);
 
     const getOrdenesForEstado = useCallback(
-        (estado: OrdenEstado) => ordenes.filter(o => o.estado === estado),
+        (estado: OrdenEstado) => ordenes
+            .filter(o => o.estado === estado)
+            .sort((a, b) => {
+                // Ordenar por fecha_creado ascendente (más antigua arriba), luego por numero_orden como fallback
+                const dateA = a.fecha_creado ? new Date(a.fecha_creado).getTime() : 0;
+                const dateB = b.fecha_creado ? new Date(b.fecha_creado).getTime() : 0;
+                if (dateA !== dateB) return dateA - dateB;
+                return (a.numero_orden || 0) - (b.numero_orden || 0);
+            }),
         [ordenes],
     );
+
+    const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+        // Si hay scroll vertical disponible en el target, no interceptar
+        const el = scrollRef.current;
+        if (!el) return;
+        // Solo redirigir si el delta es predominantemente vertical
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            el.scrollLeft += e.deltaY;
+        }
+    }, []);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         if (!canDrag) return;
@@ -143,7 +163,11 @@ export function KanbanBoard({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="overflow-x-auto pb-4 kanban-scroll">
+            <div
+                ref={scrollRef}
+                onWheel={handleWheel}
+                className="overflow-x-auto pb-4 kanban-scroll"
+            >
                 <div className="flex gap-0 min-w-max">
                     {ORDEN_PHASES.map((phase) => (
                         <div key={phase.id} className="flex flex-col">

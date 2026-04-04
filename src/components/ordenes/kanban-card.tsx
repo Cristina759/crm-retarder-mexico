@@ -94,11 +94,15 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 </div>
             )}
 
-            {/* Folio (Cotizacin) + Priority */}
+            {/* Número de Orden + Priority */}
             <div className="flex items-center justify-between mb-2">
                 <span className="font-mono text-[10px] font-bold text-retarder-gray-500 tracking-tight flex items-center gap-1">
                     <FileText size={10} className="text-retarder-red" />
-                    {orden.numero || orden.descripcion?.match(/COT-\d+/)?.[0] || 'S/F'}
+                    {orden.numero
+                        ? `OS-${orden.numero}`
+                        : orden.numero_orden
+                            ? `#${orden.numero_orden}`
+                            : orden.descripcion?.match(/COT-\d+/)?.[0] || 'S/N'}
                 </span>
                 <span
                     className={cn(
@@ -113,7 +117,7 @@ export function KanbanCard({ orden, onClick, onDelete, isDragOverlay, confirmDel
                 </span>
             </div>
 
-            {/* Service Order Number (Manual) */}
+            {/* Número de OS físico si existe */}
             {orden.numero && (
                 <p className="text-[10px] font-bold text-retarder-red mb-1">
                     OS: {orden.numero}

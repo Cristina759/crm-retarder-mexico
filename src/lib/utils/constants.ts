@@ -222,6 +222,7 @@ export interface DemoCotizacion {
 export interface DemoOrden {
     id: string;
     numero: string;
+    numero_orden?: number;
     empresa: string;
     tipo: TipoServicio;
     estado: OrdenEstado;
