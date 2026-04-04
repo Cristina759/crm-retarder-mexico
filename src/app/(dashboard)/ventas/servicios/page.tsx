@@ -267,8 +267,6 @@ export default function CotizadorServiciosPage() {
 
             const { data, error } = await supabase.from('cotizaciones').insert({
                 empresa_id: realEmpresaId,
-                empresa: clienteMatch?.nombre_comercial || 'Sin empresa',
-                cliente: clienteMatch?.nombre_comercial || 'Sin empresa',
                 atencion_a: newCot.atencion_a,
                 folio: newCot.folio,
                 fecha: newCot.fecha,
@@ -491,19 +489,31 @@ export default function CotizadorServiciosPage() {
 
                 cotNumero = `COT-${String(nextCotIdx).padStart(4, '0')}`;
 
+                // Buscar empresa_id real para handleFinalize
+                let finEmpresaId: string | null = null;
+                if (cliente) {
+                    try {
+                        const { data: dbEmp } = await supabase
+                            .from('empresas')
+                            .select('id')
+                            .eq('nombre_comercial', cliente.nombre_comercial)
+                            .limit(1)
+                            .single();
+                        if (dbEmp) finEmpresaId = dbEmp.id;
+                    } catch (e) {}
+                }
+
                 const { data: cotData, error: cotError } = await supabase
                     .from('cotizaciones')
                     .insert({
+                        empresa_id: finEmpresaId,
                         numero: cotNumero,
-                        empresa: cliente?.nombre_comercial || 'Sin empresa',
-                        vendedor: sellerName,
                         subtotal: subtotal,
                         iva: iva,
                         total: total,
                         estado: 'enviada',
                         fecha: fechaActual,
                         vigencia_dias: 15,
-                        notas: `TC: ${tipoCambio} MXN (${tcFecha || 'N/A'})`
                     })
                     .select()
                     .single();
@@ -515,14 +525,13 @@ export default function CotizadorServiciosPage() {
                 await supabase
                     .from('ordenes_servicio')
                     .insert({
-                        numero: '', // Se captura manualmente
                         empresa: cliente?.nombre_comercial || 'Sin empresa',
-                        tipo: activeService.id,
+                        tipo_servicio: activeService.id,
                         estado: 'cotizacion_enviada_al_cliente',
                         prioridad: 'media',
                         vendedor: sellerName,
                         tecnico: '',
-                        descripcion: `Servicio ${activeService.label}. Cotizacin: ${cotNumero}.`,
+                        descripcion: `Servicio ${activeService.label}. Cotización: ${cotNumero}.`,
                         monto: total,
                         fecha_creado: fechaActual,
                         cotizacion_id: cotId
