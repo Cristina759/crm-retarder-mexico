@@ -51,12 +51,8 @@ export function KanbanBoard({
     const [activeOrden, setActiveOrden] = useState<DemoOrden | null>(null);
     const [isMounted, setIsMounted] = useState(false);
 
-    // Refs para el scroll sincronizado
     const scrollRef = useRef<HTMLDivElement>(null);
-    const topScrollRef = useRef<HTMLDivElement>(null);
     const innerRef = useRef<HTMLDivElement>(null);
-    const [innerWidth, setInnerWidth] = useState(0);
-    const isSyncingRef = useRef(false);
 
     // Permisos de drag: administradores, directores, administración y vendedores
     const canDrag = ['admin', 'direccion', 'administracion', 'vendedor'].includes(userRole || '');
@@ -75,48 +71,6 @@ export function KanbanBoard({
     useEffect(() => {
         setIsMounted(true);
     }, []);
-
-    // Medir el ancho real del contenido para el scrollbar superior
-    useEffect(() => {
-        if (!isMounted) return;
-        const inner = innerRef.current;
-        if (!inner) return;
-
-        const ro = new ResizeObserver(() => {
-            setInnerWidth(inner.scrollWidth);
-        });
-        ro.observe(inner);
-        setInnerWidth(inner.scrollWidth);
-        return () => ro.disconnect();
-    }, [isMounted]);
-
-    // Sincronizar scrollbars superior ↔ inferior
-    useEffect(() => {
-        if (!isMounted) return;
-        const main = scrollRef.current;
-        const top = topScrollRef.current;
-        if (!main || !top) return;
-
-        const syncTop = () => {
-            if (isSyncingRef.current) return;
-            isSyncingRef.current = true;
-            top.scrollLeft = main.scrollLeft;
-            isSyncingRef.current = false;
-        };
-        const syncMain = () => {
-            if (isSyncingRef.current) return;
-            isSyncingRef.current = true;
-            main.scrollLeft = top.scrollLeft;
-            isSyncingRef.current = false;
-        };
-
-        main.addEventListener('scroll', syncTop, { passive: true });
-        top.addEventListener('scroll', syncMain, { passive: true });
-        return () => {
-            main.removeEventListener('scroll', syncTop);
-            top.removeEventListener('scroll', syncMain);
-        };
-    }, [isMounted]);
 
     // Wheel vertical → scroll horizontal (con preventDefault real, no-passive)
     useEffect(() => {
@@ -216,15 +170,6 @@ export function KanbanBoard({
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            {/* Scrollbar superior sticky — espejo del scrollbar inferior */}
-            <div
-                ref={topScrollRef}
-                className="overflow-x-auto sticky top-0 z-20 bg-retarder-gray-50/90 backdrop-blur-sm border-b border-retarder-gray-200 mb-2"
-                style={{ scrollbarWidth: 'thin', scrollbarColor: '#e5e7eb #f9fafb' }}
-            >
-                <div style={{ width: innerWidth || '100%', height: 12 }} />
-            </div>
-
             {/* Kanban scrollable principal */}
             <div
                 ref={scrollRef}
