@@ -6,7 +6,7 @@ import { Plus, Search, TrendingUp, Building2, DollarSign, User, Target, X } from
 import { cn, formatMXN } from '@/lib/utils';
 import { useRole } from '@/hooks/useRole';
 
-type OppEstado = 'prospecto' | 'cotizacion_en_proceso' | 'cotizacion_enviada' | 'seguimiento' | 'negociacion' | 'ganada' | 'perdida';
+type OppEstado = 'prospecto' | 'cotizacion_en_proceso' | 'cotizacion_enviada' | 'seguimiento' | 'negociacion' | 'ganado' | 'perdido';
 type OppTipo = 'frenos' | 'refacciones' | 'servicios';
 
 interface DemoOportunidad {
@@ -22,13 +22,13 @@ interface DemoOportunidad {
 }
 
 const ESTADO_PIPELINE: { id: OppEstado; label: string; color: string; bgLight: string; textColor: string }[] = [
-    { id: 'prospecto', label: 'Prospecto', color: 'bg-gray-400', bgLight: 'bg-gray-50', textColor: 'text-gray-600' },
-    { id: 'cotizacion_en_proceso', label: 'Cot. en Proceso', color: 'bg-blue-500', bgLight: 'bg-blue-50', textColor: 'text-blue-700' },
-    { id: 'cotizacion_enviada', label: 'Cot. Enviada', color: 'bg-purple-500', bgLight: 'bg-purple-50', textColor: 'text-purple-700' },
-    { id: 'seguimiento', label: 'Seguimiento', color: 'bg-indigo-500', bgLight: 'bg-indigo-50', textColor: 'text-indigo-700' },
-    { id: 'negociacion', label: 'Negociación', color: 'bg-amber-500', bgLight: 'bg-amber-50', textColor: 'text-amber-700' },
-    { id: 'ganada', label: 'Ganada', color: 'bg-emerald-500', bgLight: 'bg-emerald-50', textColor: 'text-emerald-700' },
-    { id: 'perdida', label: 'Perdida', color: 'bg-red-500', bgLight: 'bg-red-50', textColor: 'text-red-700' },
+    { id: 'prospecto',             label: 'Prospecto',       color: 'bg-gray-400',    bgLight: 'bg-gray-50',    textColor: 'text-gray-600' },
+    { id: 'cotizacion_en_proceso', label: 'Cot. en proceso', color: 'bg-blue-500',    bgLight: 'bg-blue-50',    textColor: 'text-blue-700' },
+    { id: 'cotizacion_enviada',    label: 'Cot. enviada',    color: 'bg-purple-500',  bgLight: 'bg-purple-50',  textColor: 'text-purple-700' },
+    { id: 'seguimiento',           label: 'Seguimiento',     color: 'bg-indigo-500',  bgLight: 'bg-indigo-50',  textColor: 'text-indigo-700' },
+    { id: 'negociacion',           label: 'Negociación',     color: 'bg-amber-500',   bgLight: 'bg-amber-50',   textColor: 'text-amber-700' },
+    { id: 'ganado',                label: 'Ganado',          color: 'bg-emerald-500', bgLight: 'bg-emerald-50', textColor: 'text-emerald-700' },
+    { id: 'perdido',               label: 'Perdido',         color: 'bg-red-500',     bgLight: 'bg-red-50',     textColor: 'text-red-700' },
 ];
 
 const TIPO_COLORS: Record<OppTipo, string> = {
@@ -42,11 +42,11 @@ const DEMO_OPORTUNIDADES: DemoOportunidad[] = [
     { id: '2', empresa: 'Fletes Azteca', vendedor: 'Pedro V.', tipo: 'servicios', descripcion: 'Contrato mantenimiento anual', estado: 'cotizacion_enviada', monto_estimado: 340000, probabilidad: 50, fecha: '2026-02-08' },
     { id: '3', empresa: 'Carga Express MX', vendedor: 'Ana G.', tipo: 'refacciones', descripcion: 'Paquete refacciones crucetas y hules', estado: 'cotizacion_en_proceso', monto_estimado: 85000, probabilidad: 30, fecha: '2026-02-12' },
     { id: '4', empresa: 'LogiTrax', vendedor: 'Pedro V.', tipo: 'frenos', descripcion: 'Retarder P7 para camin nuevo', estado: 'prospecto', monto_estimado: 120000, probabilidad: 15, fecha: '2026-02-14' },
-    { id: '5', empresa: 'MegaFletes SA', vendedor: 'Ana G.', tipo: 'servicios', descripcion: 'Diagnstico flota completa 20 unidades', estado: 'ganada', monto_estimado: 180000, probabilidad: 100, fecha: '2026-01-28' },
+    { id: '5', empresa: 'MegaFletes SA', vendedor: 'Ana G.', tipo: 'servicios', descripcion: 'Diagnstico flota completa 20 unidades', estado: 'ganado', monto_estimado: 180000, probabilidad: 100, fecha: '2026-01-28' },
     { id: '6', empresa: 'FreightMaster', vendedor: 'Pedro V.', tipo: 'frenos', descripcion: 'Upgrade retarder PK a PK1', estado: 'negociacion', monto_estimado: 450000, probabilidad: 60, fecha: '2026-02-05' },
     { id: '7', empresa: 'Rpidos del Bajo', vendedor: 'Ana G.', tipo: 'refacciones', descripcion: 'Stock anual placas y tornillera', estado: 'seguimiento', monto_estimado: 65000, probabilidad: 40, fecha: '2026-02-07' },
-    { id: '8', empresa: 'Transportes Sierra', vendedor: 'Pedro V.', tipo: 'servicios', descripcion: 'Instalacin 5 unidades', estado: 'perdida', monto_estimado: 275000, probabilidad: 0, fecha: '2026-01-15' },
-    { id: '9', empresa: 'Logstica Global', vendedor: 'Ana G.', tipo: 'frenos', descripcion: 'Retarder P5-1 para 8 tractocamiones', estado: 'ganada', monto_estimado: 720000, probabilidad: 100, fecha: '2026-01-20' },
+    { id: '8', empresa: 'Transportes Sierra', vendedor: 'Pedro V.', tipo: 'servicios', descripcion: 'Instalacin 5 unidades', estado: 'perdido', monto_estimado: 275000, probabilidad: 0, fecha: '2026-01-15' },
+    { id: '9', empresa: 'Logstica Global', vendedor: 'Ana G.', tipo: 'frenos', descripcion: 'Retarder P5-1 para 8 tractocamiones', estado: 'ganado', monto_estimado: 720000, probabilidad: 100, fecha: '2026-01-20' },
     { id: '10', empresa: 'Auto Transportes LP', vendedor: 'Pedro V.', tipo: 'refacciones', descripcion: 'Cardn + material elctrico', estado: 'prospecto', monto_estimado: 42000, probabilidad: 10, fecha: '2026-02-15' },
 ];
 
