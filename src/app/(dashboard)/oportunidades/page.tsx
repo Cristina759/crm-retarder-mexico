@@ -74,6 +74,7 @@ function EmpresaCombobox({ empresas, value, onChange }: {
     const [showNueva, setShowNueva] = useState(false);
     const [nueva, setNueva] = useState({ nombre_comercial: '', telefono: '', email: '' });
     const [saving, setSaving] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
     const ref = useRef<HTMLDivElement>(null);
 
     const filtered = useMemo(() => {
@@ -104,17 +105,29 @@ function EmpresaCombobox({ empresas, value, onChange }: {
 
     const handleRegistrar = async () => {
         if (!nueva.nombre_comercial.trim()) return;
+        setErrorMsg('');
         setSaving(true);
         const supabase = createClient();
         const { data, error } = await supabase
             .from('empresas')
-            .insert({ razon_social: nueva.nombre_comercial, nombre_comercial: nueva.nombre_comercial, telefono: nueva.telefono || null, email: nueva.email || null, activo: true })
+            .insert({
+                razon_social: nueva.nombre_comercial.trim(),
+                nombre_comercial: nueva.nombre_comercial.trim(),
+                telefono: nueva.telefono.trim() || null,
+                email: nueva.email.trim() || null,
+                activo: true,
+            })
             .select('id, razon_social, nombre_comercial')
             .single();
         setSaving(false);
-        if (!error && data) {
+        if (error) {
+            setErrorMsg(error.message || 'Error al registrar la empresa');
+            return;
+        }
+        if (data) {
             onChange(data.id, data.nombre_comercial ?? data.razon_social);
             setQuery(data.nombre_comercial ?? data.razon_social);
+            setNueva({ nombre_comercial: '', telefono: '', email: '' });
             setShowNueva(false);
             setOpen(false);
         }
@@ -191,8 +204,11 @@ function EmpresaCombobox({ empresas, value, onChange }: {
                                     className="flex-1 outline-none text-sm"
                                 />
                             </div>
+                            {errorMsg && (
+                                <p className="text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5">{errorMsg}</p>
+                            )}
                             <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowNueva(false)} className="flex-1 py-1.5 text-xs border border-retarder-gray-200 rounded-lg text-retarder-gray-500 hover:bg-retarder-gray-50">
+                                <button type="button" onClick={() => { setShowNueva(false); setErrorMsg(''); }} className="flex-1 py-1.5 text-xs border border-retarder-gray-200 rounded-lg text-retarder-gray-500 hover:bg-retarder-gray-50">
                                     Cancelar
                                 </button>
                                 <button type="button" onClick={handleRegistrar} disabled={saving || !nueva.nombre_comercial.trim()} className="flex-1 py-1.5 text-xs bg-retarder-red text-white rounded-lg font-semibold disabled:opacity-50">
