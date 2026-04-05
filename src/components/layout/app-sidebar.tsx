@@ -91,7 +91,6 @@ export function AppSidebar() {
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const { role, isLoaded } = useRole();
-    console.log('ROL ACTUAL:', role, 'isLoaded:', isLoaded);
     const { user } = useUser();
 
     const sidebarContent = (
