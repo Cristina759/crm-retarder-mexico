@@ -19,10 +19,10 @@ export default function SignInPage() {
                 {/* Logo / Brand */}
                 <div className="text-center">
                     <h1 className="text-3xl font-bold text-white tracking-tight">
-                        RETARDER <span className="text-retarder-red">MXICO</span>
+                        RETARDER <span className="text-retarder-red">MÉXICO</span>
                     </h1>
                     <p className="text-retarder-gray-400 text-sm mt-1">
-                        Sistema de Gestin de Servicios
+                        Sistema de Gestión de Servicios
                     </p>
                 </div>
 
