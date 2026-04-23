@@ -464,7 +464,7 @@ export default function CotizadorFrenosPage() {
   const trasladoN    = parseFloat(traslado) || 0;
   const manoObraN    = parseFloat(manoObra) || 0;
   const kitLedN      = parseFloat(kitLed)   || 0;
-  const extrasMXN    = trasladoN + manoObraN + kitLedN;
+  const extrasMXN    = (trasladoN + manoObraN + kitLedN) * unidadesN;
   const baseIVA      = subtotalMXN + extrasMXN;
   const iva          = Math.round(baseIVA * 0.16 * 100) / 100;
   const totalMXN     = baseIVA + iva;
@@ -657,17 +657,51 @@ export default function CotizadorFrenosPage() {
               <span className="text-gray-400">× TC ${fmt(tc)}</span>
               <span>{fmtMXN(subtotalMXN)}</span>
             </div>
-            {trasladoN > 0 && <div className="flex justify-between text-xs text-gray-400"><span>Traslado</span><span>{fmtMXN(trasladoN)}</span></div>}
-            {manoObraN > 0 && <div className="flex justify-between text-xs text-gray-400"><span>Mano de obra</span><span>{fmtMXN(manoObraN)}</span></div>}
-            {kitLedN   > 0 && <div className="flex justify-between text-xs text-gray-400"><span>Kit LED</span><span>{fmtMXN(kitLedN)}</span></div>}
+            {trasladoN > 0 && (
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Traslado ×{unidadesN}</span>
+                <span className="flex gap-3">
+                  <span>{fmtMXN(trasladoN * unidadesN)}</span>
+                  <span className="text-gray-500">${fmt(trasladoUSD * unidadesN)} USD</span>
+                </span>
+              </div>
+            )}
+            {manoObraN > 0 && (
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Mano de obra ×{unidadesN}</span>
+                <span className="flex gap-3">
+                  <span>{fmtMXN(manoObraN * unidadesN)}</span>
+                  <span className="text-gray-500">${fmt(manoObraUSD * unidadesN)} USD</span>
+                </span>
+              </div>
+            )}
+            {kitLedN > 0 && (
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Kit LED ×{unidadesN}</span>
+                <span className="flex gap-3">
+                  <span>{fmtMXN(kitLedN * unidadesN)}</span>
+                  <span className="text-gray-500">${fmt(kitLedUSD * unidadesN)} USD</span>
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-gray-300">
-              <span>IVA 16%</span><span>{fmtMXN(iva)}</span>
+              <span>IVA 16%</span>
+              <span className="flex gap-3">
+                <span>{fmtMXN(iva)}</span>
+                <span className="text-gray-500">${fmt(ivaUSD)} USD</span>
+              </span>
             </div>
           </div>
 
-          <div className="border-t border-gray-600 pt-3 flex items-center justify-between">
-            <span className="font-bold text-base text-white">Total MXN</span>
-            <span className="text-3xl font-black text-yellow-400">{fmtMXN(totalMXN)}</span>
+          <div className="border-t border-gray-600 pt-3 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-base text-white">Total MXN</span>
+              <span className="text-3xl font-black text-yellow-400">{fmtMXN(totalMXN)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-sm text-gray-400">Total USD</span>
+              <span className="text-lg font-black text-white">${fmt(totalFinalUSD)} USD</span>
+            </div>
           </div>
         </div>
       )}
