@@ -120,37 +120,33 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
   try {
     const { data, error } = await supabaseAdmin
       .from('notas_credito')
-      .select('id, numero_nc, os_id, empresa_id, monto, descripcion, created_at')
+      .select('id, numero_nc, empresa_id, monto, descripcion, created_at')
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
 
-    const rows = (data ?? []).map(r => ({ ...r, fecha: (r as { created_at?: string }).created_at ?? '' })) as unknown as Array<Omit<NotaCreditoRow, 'empresas' | 'orden'> & {
+    const rows = (data ?? []).map(r => ({
+      ...r,
+      os_id: null as string | null,
+      fecha: (r as { created_at?: string }).created_at ?? '',
+    })) as unknown as Array<Omit<NotaCreditoRow, 'empresas' | 'orden'> & {
       empresa_id: string | null;
       os_id: string | null;
     }>;
 
     const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter((x): x is string => !!x)));
-    const osIds      = Array.from(new Set(rows.map(r => r.os_id).filter((x): x is string => !!x)));
 
-    const [empresasRes, ordenesRes] = await Promise.all([
-      empresaIds.length
-        ? supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre_comercial: string }> }),
-      osIds.length
-        ? supabaseAdmin.from('ordenes_servicio').select('id, numero').in('id', osIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; numero: string }> }),
-    ]);
+    const { data: empresasData } = empresaIds.length
+      ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
+      : { data: [] as Array<{ id: string; nombre_comercial: string }> };
 
-    const empresaMap = new Map((empresasRes.data ?? []).map(e => [e.id, e.nombre_comercial]));
-    const ordenMap   = new Map((ordenesRes.data ?? []).map(o => [o.id, o.numero]));
+    const empresaMap = new Map((empresasData ?? []).map(e => [e.id, e.nombre_comercial]));
 
     const enriched: NotaCreditoRow[] = rows.map(r => ({
       ...r,
       empresas: r.empresa_id && empresaMap.has(r.empresa_id)
         ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
-      orden:    r.os_id && ordenMap.has(r.os_id)
-        ? { numero: ordenMap.get(r.os_id)! } : null,
+      orden: null,
     })) as NotaCreditoRow[];
 
     return { data: enriched, error: null };
@@ -166,8 +162,9 @@ export async function crearNotaCredito(datos: {
   descripcion?: string;
   fecha?: string;
 }): Promise<{ error: string | null }> {
-  const { fecha: _fecha, ...rest } = datos;
+  const { fecha: _fecha, os_id: _os_id, ...rest } = datos;
   void _fecha;
+  void _os_id;
   const { error } = await supabaseAdmin
     .from('notas_credito')
     .insert(rest);

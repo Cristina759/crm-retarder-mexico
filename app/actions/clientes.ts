@@ -43,7 +43,7 @@ export type ClienteDetalle = ClienteRow & {
 };
 
 const SELECT_CLIENTE = `
-  id, nombre_comercial, rfc, sucursal,
+  id, nombre_comercial, rfc,
   telefono, telefono2, telefono3,
   email, email2,
   contacto1_nombre, contacto1_cargo,
@@ -62,7 +62,7 @@ export async function obtenerClientes(): Promise<{ data: ClienteRow[]; error: st
 
     if (error) return { data: [] as ClienteRow[], error: error.message };
 
-    const rows = (data ?? []).map(r => ({ ...r, razon_social: null })) as unknown as (ClienteRow & { id: string })[];
+    const rows = (data ?? []).map(r => ({ ...r, razon_social: null, sucursal: null })) as unknown as (ClienteRow & { id: string })[];
     const ids = rows.map(e => e.id);
 
     const { data: osCounts } = await supabaseAdmin
@@ -106,6 +106,7 @@ export async function obtenerClienteDetalle(id: string): Promise<{ data: Cliente
     const detalle: ClienteDetalle = {
       ...(emp as unknown as ClienteRow),
       razon_social: null,
+      sucursal: null,
       total_os: (os ?? []).length,
       ordenes: (os ?? []) as ClienteDetalle['ordenes'],
       cotizaciones: (cots ?? []) as ClienteDetalle['cotizaciones'],
