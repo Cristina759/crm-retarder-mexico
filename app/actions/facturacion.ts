@@ -120,12 +120,12 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
   try {
     const { data, error } = await supabaseAdmin
       .from('notas_credito')
-      .select('*')
-      .order('fecha', { ascending: false });
+      .select('id, numero_nc, os_id, empresa_id, monto, descripcion, created_at')
+      .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
 
-    const rows = (data ?? []) as unknown as Array<Omit<NotaCreditoRow, 'empresas' | 'orden'> & {
+    const rows = (data ?? []).map(r => ({ ...r, fecha: (r as { created_at?: string }).created_at ?? '' })) as unknown as Array<Omit<NotaCreditoRow, 'empresas' | 'orden'> & {
       empresa_id: string | null;
       os_id: string | null;
     }>;
@@ -166,9 +166,11 @@ export async function crearNotaCredito(datos: {
   descripcion?: string;
   fecha?: string;
 }): Promise<{ error: string | null }> {
+  const { fecha: _fecha, ...rest } = datos;
+  void _fecha;
   const { error } = await supabaseAdmin
     .from('notas_credito')
-    .insert(datos);
+    .insert(rest);
   if (error) return { error: error.message };
   return { error: null };
 }

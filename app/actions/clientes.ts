@@ -43,7 +43,7 @@ export type ClienteDetalle = ClienteRow & {
 };
 
 const SELECT_CLIENTE = `
-  id, nombre_comercial, razon_social, rfc, sucursal,
+  id, nombre_comercial, rfc, sucursal,
   telefono, telefono2, telefono3,
   email, email2,
   contacto1_nombre, contacto1_cargo,
@@ -62,7 +62,7 @@ export async function obtenerClientes(): Promise<{ data: ClienteRow[]; error: st
 
     if (error) return { data: [] as ClienteRow[], error: error.message };
 
-    const rows = (data ?? []) as unknown as (ClienteRow & { id: string })[];
+    const rows = (data ?? []).map(r => ({ ...r, razon_social: null })) as unknown as (ClienteRow & { id: string })[];
     const ids = rows.map(e => e.id);
 
     const { data: osCounts } = await supabaseAdmin
@@ -96,19 +96,20 @@ export async function obtenerClienteDetalle(id: string): Promise<{ data: Cliente
         .order('created_at', { ascending: false }),
       supabaseAdmin
         .from('notas_credito')
-        .select('id, numero_nc, monto, fecha')
+        .select('id, numero_nc, monto, created_at')
         .eq('empresa_id', id)
-        .order('fecha', { ascending: false }),
+        .order('created_at', { ascending: false }),
     ]);
 
     if (!emp) return { data: null, error: 'Cliente no encontrado' };
 
     const detalle: ClienteDetalle = {
       ...(emp as unknown as ClienteRow),
+      razon_social: null,
       total_os: (os ?? []).length,
       ordenes: (os ?? []) as ClienteDetalle['ordenes'],
       cotizaciones: (cots ?? []) as ClienteDetalle['cotizaciones'],
-      notas_credito: (ncs ?? []) as ClienteDetalle['notas_credito'],
+      notas_credito: (ncs ?? []).map(n => ({ ...n, fecha: (n as { created_at?: string }).created_at ?? '' })) as ClienteDetalle['notas_credito'],
     };
     return { data: detalle, error: null };
   } catch (e) {
