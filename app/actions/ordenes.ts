@@ -47,19 +47,31 @@ function generarAbrev(nombre: string, fallback: string): string {
   );
 }
 
-const SELECT_OS = '*, empresas:empresa_id(nombre_comercial)';
+async function enriquecerOS<T extends { empresa_id: string }>(rows: T[]): Promise<Array<T & { empresas: { nombre_comercial: string } | null; tecnico: null }>> {
+  const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
+  const { data: empresas } = empresaIds.length
+    ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
+    : { data: [] as Array<{ id: string; nombre_comercial: string }> };
+  const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
+  return rows.map(r => ({
+    ...r,
+    empresas: empresaMap.has(r.empresa_id) ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
+    tecnico: null,
+  }));
+}
 
 // ── obtenerOrdenes ────────────────────────────────────────────────────────────
 export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string | null }> {
   try {
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select(SELECT_OS)
+      .select('*')
       .eq('archivada', false)
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    return { data: (data ?? []) as unknown as OSRow[], error: null };
+    const enriched = await enriquecerOS((data ?? []) as Array<{ empresa_id: string }>);
+    return { data: enriched as unknown as OSRow[], error: null };
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
@@ -68,12 +80,13 @@ export async function obtenerOrdenesArchivadas(): Promise<{ data: OSRow[]; error
   try {
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select(SELECT_OS)
+      .select('*')
       .eq('archivada', true)
       .order('updated_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    return { data: (data ?? []) as unknown as OSRow[], error: null };
+    const enriched = await enriquecerOS((data ?? []) as Array<{ empresa_id: string }>);
+    return { data: enriched as unknown as OSRow[], error: null };
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
@@ -82,12 +95,14 @@ export async function obtenerOrdenPorId(id: string): Promise<{ data: OSRow | nul
   try {
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select(SELECT_OS)
+      .select('*')
       .eq('id', id)
       .single();
 
     if (error) return { data: null, error: error.message };
-    return { data: data as unknown as OSRow, error: null };
+    if (!data) return { data: null, error: null };
+    const [enriched] = await enriquecerOS([data as { empresa_id: string }]);
+    return { data: enriched as unknown as OSRow, error: null };
   } catch (e) { return { data: null, error: String(e) }; }
 }
 

@@ -37,9 +37,7 @@ export interface NotaCreditoRow {
 
 const SELECT_FACTURA = `
   id, numero, numero_factura, monto_factura, concepto_factura,
-  fecha_vencimiento, estado_facturacion, created_at,
-  empresas:empresa_id(nombre_comercial),
-  tecnico:tecnico_id(nombre)
+  fecha_vencimiento, estado_facturacion, created_at, empresa_id
 `;
 
 // ── obtenerFacturas ───────────────────────────────────────────────────────────
@@ -52,7 +50,22 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    return { data: (data ?? []) as unknown as FacturaRow[], error: null };
+
+    const rows = (data ?? []) as unknown as Array<Omit<FacturaRow, 'empresas' | 'tecnico'> & { empresa_id: string }>;
+    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
+
+    const { data: empresas } = empresaIds.length
+      ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
+      : { data: [] as Array<{ id: string; nombre_comercial: string }> };
+    const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
+
+    const enriched: FacturaRow[] = rows.map(r => ({
+      ...r,
+      empresas: empresaMap.has(r.empresa_id) ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
+      tecnico: null,
+    })) as FacturaRow[];
+
+    return { data: enriched, error: null };
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
@@ -107,11 +120,40 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
   try {
     const { data, error } = await supabaseAdmin
       .from('notas_credito')
-      .select('*, empresas:empresa_id(nombre_comercial), orden:os_id(numero)')
+      .select('*')
       .order('fecha', { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    return { data: (data ?? []) as unknown as NotaCreditoRow[], error: null };
+
+    const rows = (data ?? []) as unknown as Array<Omit<NotaCreditoRow, 'empresas' | 'orden'> & {
+      empresa_id: string | null;
+      os_id: string | null;
+    }>;
+
+    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter((x): x is string => !!x)));
+    const osIds      = Array.from(new Set(rows.map(r => r.os_id).filter((x): x is string => !!x)));
+
+    const [empresasRes, ordenesRes] = await Promise.all([
+      empresaIds.length
+        ? supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; nombre_comercial: string }> }),
+      osIds.length
+        ? supabaseAdmin.from('ordenes_servicio').select('id, numero').in('id', osIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; numero: string }> }),
+    ]);
+
+    const empresaMap = new Map((empresasRes.data ?? []).map(e => [e.id, e.nombre_comercial]));
+    const ordenMap   = new Map((ordenesRes.data ?? []).map(o => [o.id, o.numero]));
+
+    const enriched: NotaCreditoRow[] = rows.map(r => ({
+      ...r,
+      empresas: r.empresa_id && empresaMap.has(r.empresa_id)
+        ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
+      orden:    r.os_id && ordenMap.has(r.os_id)
+        ? { numero: ordenMap.get(r.os_id)! } : null,
+    })) as NotaCreditoRow[];
+
+    return { data: enriched, error: null };
   } catch (e) { return { data: [], error: String(e) }; }
 }
 

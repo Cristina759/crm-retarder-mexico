@@ -14,7 +14,7 @@ export async function obtenerOportunidades(): Promise<{
   try {
     const { data, error } = await supabaseAdmin
       .from('oportunidades')
-      .select('*, empresas:empresa_id(nombre_comercial)')
+      .select('*')
       .order('created_at', { ascending: false });
 
     console.log('[obtenerOportunidades] result:', { count: data?.length, error });
@@ -23,7 +23,26 @@ export async function obtenerOportunidades(): Promise<{
       console.error('[obtenerOportunidades] Supabase error:', JSON.stringify(error));
       return { data: [], error: error.message };
     }
-    return { data: (data ?? []) as unknown as OportunidadRow[], error: null };
+
+    const rows = (data ?? []) as unknown as Array<Omit<OportunidadRow, 'empresas' | 'vendedor'> & { empresa_id: string }>;
+    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
+
+    const { data: empresas } = empresaIds.length
+      ? await supabaseAdmin
+          .from('empresas')
+          .select('id, nombre_comercial')
+          .in('id', empresaIds)
+      : { data: [] as Array<{ id: string; nombre_comercial: string }> };
+
+    const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
+
+    const enriched: OportunidadRow[] = rows.map(r => ({
+      ...r,
+      empresas: empresaMap.has(r.empresa_id) ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
+      vendedor: null,
+    })) as OportunidadRow[];
+
+    return { data: enriched, error: null };
   } catch (e) {
     console.error('[obtenerOportunidades] excepción:', e);
     return { data: [], error: String(e) };
