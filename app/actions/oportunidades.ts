@@ -14,7 +14,7 @@ export async function obtenerOportunidades(): Promise<{
   try {
     const { data, error } = await supabaseAdmin
       .from('oportunidades')
-      .select('*, empresas:empresa_id(nombre_comercial), vendedor:vendedor_id(nombre)')
+      .select('*, empresas:empresa_id(nombre_comercial)')
       .order('created_at', { ascending: false });
 
     console.log('[obtenerOportunidades] result:', { count: data?.length, error });

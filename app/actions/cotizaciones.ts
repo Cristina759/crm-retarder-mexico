@@ -19,7 +19,7 @@ export async function obtenerCotizaciones(): Promise<{
   try {
     const { data, error } = await supabaseAdmin
       .from('cotizaciones')
-      .select('*, empresas:empresa_id(nombre_comercial), vendedor:vendedor_id(nombre), oportunidad:oportunidad_id(estado)')
+      .select('*, empresas:empresa_id(nombre_comercial), oportunidad:oportunidad_id(estado)')
       .order('created_at', { ascending: false });
 
     if (error) {

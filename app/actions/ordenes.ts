@@ -47,7 +47,7 @@ function generarAbrev(nombre: string, fallback: string): string {
   );
 }
 
-const SELECT_OS = '*, empresas:empresa_id(nombre_comercial), tecnico:tecnico_id(nombre)';
+const SELECT_OS = '*, empresas:empresa_id(nombre_comercial)';
 
 // ── obtenerOrdenes ────────────────────────────────────────────────────────────
 export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string | null }> {

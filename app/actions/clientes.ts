@@ -86,7 +86,7 @@ export async function obtenerClienteDetalle(id: string): Promise<{ data: Cliente
       supabaseAdmin.from('empresas').select(SELECT_CLIENTE).eq('id', id).single(),
       supabaseAdmin
         .from('ordenes_servicio')
-        .select('id, numero, numero_os_manual, estado, fase, created_at, monto_factura, estado_facturacion, numero_factura, tecnico:tecnico_id(nombre)')
+        .select('id, numero, numero_os_manual, estado, fase, created_at, monto_factura, estado_facturacion, numero_factura')
         .eq('empresa_id', id)
         .order('created_at', { ascending: false }),
       supabaseAdmin
