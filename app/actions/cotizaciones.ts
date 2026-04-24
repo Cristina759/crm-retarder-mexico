@@ -190,6 +190,19 @@ export async function buscarEmpresas(query: string): Promise<EmpresaBusquedaResu
 
 // ── eliminarCotizacion ────────────────────────────────────────────────────────
 export async function eliminarCotizacion(id: string): Promise<{ error: string | null }> {
+  // Obtener oportunidad vinculada antes de borrar
+  const { data: cot } = await supabaseAdmin
+    .from('cotizaciones')
+    .select('oportunidad_id')
+    .eq('id', id)
+    .single();
+
+  // Desligar ordenes_servicio que apunten a esta cotización
+  await supabaseAdmin
+    .from('ordenes_servicio')
+    .update({ cotizacion_id: null })
+    .eq('cotizacion_id', id);
+
   const { error } = await supabaseAdmin
     .from('cotizaciones')
     .delete()
@@ -199,5 +212,11 @@ export async function eliminarCotizacion(id: string): Promise<{ error: string | 
     console.error('[eliminarCotizacion]', error);
     return { error: error.message };
   }
+
+  // Borrar oportunidad vinculada si existe
+  if (cot?.oportunidad_id) {
+    await supabaseAdmin.from('oportunidades').delete().eq('id', cot.oportunidad_id);
+  }
+
   return { error: null };
 }
