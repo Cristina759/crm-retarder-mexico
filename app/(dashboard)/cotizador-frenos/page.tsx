@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
-import { Loader2, RefreshCw, Check, FileText, Printer, Mail, Building2 } from 'lucide-react';
-import { crearCotizacion, buscarEmpresas } from '@/app/actions/cotizaciones';
-import type { EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
+import { Loader2, RefreshCw, Check, FileText, Printer, Mail } from 'lucide-react';
+import { crearCotizacion } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
 import type { UsuarioRow } from '@/app/actions/types';
 
@@ -347,46 +346,6 @@ export default function CotizadorFrenosPage() {
 
   void usuarios; // cargado para uso futuro (vendedores)
 
-  // ── Autocomplete de cliente ──────────────────────────────────────────────────
-  const [sugerencias,      setSugerencias]      = useState<EmpresaBusquedaResult[]>([]);
-  const [showSugerencias,  setShowSugerencias]  = useState(false);
-  const [buscandoCliente,  setBuscandoCliente]  = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autocompleteRef = useRef<HTMLDivElement>(null);
-
-  const handleEmpresaChange = (val: string) => {
-    setEmpresa(val);
-    setShowSugerencias(false);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (val.trim().length < 2) { setSugerencias([]); return; }
-    debounceRef.current = setTimeout(async () => {
-      setBuscandoCliente(true);
-      const results = await buscarEmpresas(val);
-      setSugerencias(results);
-      setShowSugerencias(results.length > 0);
-      setBuscandoCliente(false);
-    }, 320);
-  };
-
-  const handleSeleccionarEmpresa = (emp: EmpresaBusquedaResult) => {
-    setEmpresa(emp.nombre_comercial);
-    if (emp.rfc)   setRfc(emp.rfc);
-    if (emp.email) setEmailCliente(emp.email);
-    setSugerencias([]);
-    setShowSugerencias(false);
-  };
-
-  // Cerrar dropdown al hacer click fuera
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (autocompleteRef.current && !autocompleteRef.current.contains(e.target as Node)) {
-        setShowSugerencias(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
   // ── Fetch TC DOF — cascade: DOF → Banxico → paginasweb + caché localStorage ─
   const fetchTC = useCallback(async () => {
     setCargandoTC(true);
@@ -477,7 +436,6 @@ export default function CotizadorFrenosPage() {
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
-    if (!empresa.trim()) { setErrorGuardar('Escribe la empresa / razón social.'); return; }
     if (!marcaActual)    { setErrorGuardar('Selecciona un modelo de freno.'); return; }
 
     setGuardando(true);
@@ -739,43 +697,19 @@ export default function CotizadorFrenosPage() {
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div ref={autocompleteRef} className="relative">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Empresa / Razón social *</label>
-            <div className={`flex items-center border rounded-xl px-3 h-10 gap-2 transition-colors ${showSugerencias ? 'border-[#c0392b]' : 'border-gray-300 focus-within:border-red-400'}`}>
-              <Building2 size={15} className="text-gray-400 flex-shrink-0" />
-              <input
-                type="text"
-                value={empresa}
-                onChange={e => handleEmpresaChange(e.target.value)}
-                onFocus={() => sugerencias.length > 0 && setShowSugerencias(true)}
-                placeholder="Buscar empresa por nombre..."
-                className="flex-1 text-sm font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300"
-              />
-              {buscandoCliente && <Loader2 size={13} className="animate-spin text-gray-400 flex-shrink-0" />}
-            </div>
-            {showSugerencias && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
-                {sugerencias.map(emp => (
-                  <button
-                    key={emp.id}
-                    type="button"
-                    onMouseDown={() => handleSeleccionarEmpresa(emp)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors border-b border-gray-100 last:border-0"
-                  >
-                    <p className="text-sm font-semibold text-gray-800 leading-tight">{emp.nombre_comercial}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {[emp.rfc, emp.email].filter(Boolean).join(' · ')}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Empresa / Razón social</label>
+            <input
+              type="text" value={empresa} onChange={e => setEmpresa(e.target.value)}
+              placeholder="Nombre de la empresa..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Email</label>
             <input
               type="email" value={emailCliente} onChange={e => setEmailCliente(e.target.value)}
-              placeholder="Se autocompleta al seleccionar cliente..."
+              placeholder="correo@ejemplo.com"
               className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
             />
           </div>
@@ -805,14 +739,14 @@ export default function CotizadorFrenosPage() {
         <div className="flex gap-2">
           <button
             onClick={() => window.print()}
-            disabled={!marcaActual || !empresa.trim()}
+            disabled={!marcaActual}
             className="flex-1 h-12 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
             <Printer size={16} /> Imprimir / PDF
           </button>
           <button
             onClick={() => alert('Próximamente: envío de cotización por correo electrónico')}
-            disabled={!marcaActual || !empresa.trim()}
+            disabled={!marcaActual}
             title={emailCliente ? `Enviar a ${emailCliente}` : 'Agrega un email de cliente'}
             className="flex-1 h-12 bg-white border-2 border-[#c0392b] text-[#c0392b] hover:bg-red-50 font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
