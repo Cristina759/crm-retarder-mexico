@@ -16,7 +16,7 @@ export interface FacturaRow {
   monto_factura: number | null;
   concepto_factura: string | null;
   fecha_vencimiento: string | null;
-  estado_facturacion: EstadoFacturacion;
+  estado_facturacion: EstadoFacturacion | null;
   created_at: string;
   empresa_nombre: string | null;
 }

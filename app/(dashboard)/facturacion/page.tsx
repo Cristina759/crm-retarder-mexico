@@ -96,8 +96,8 @@ export default function FacturacionPage() {
                 <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">{fmtMXN(r.monto_factura)}</td>
                 <td className="px-4 py-3 text-xs text-gray-500">{fmtFecha(r.fecha_vencimiento)}</td>
                 <td className="px-4 py-3">
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_COLOR[r.estado_facturacion] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {r.estado_facturacion.replace('_', ' ')}
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_COLOR[r.estado_facturacion ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {(r.estado_facturacion ?? '—').replace(/_/g, ' ')}
                   </span>
                 </td>
               </tr>
