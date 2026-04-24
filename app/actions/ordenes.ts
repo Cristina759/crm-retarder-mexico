@@ -66,11 +66,12 @@ export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string |
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
       .select('*')
-      .eq('archivada', false)
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    const enriched = await enriquecerOS((data ?? []) as Array<{ empresa_id: string }>);
+    const rows = (data ?? []) as Array<{ empresa_id: string; archivada?: boolean | null }>;
+    const activas = rows.filter(r => r.archivada !== true);
+    const enriched = await enriquecerOS(activas);
     return { data: enriched as unknown as OSRow[], error: null };
   } catch (e) { return { data: [], error: String(e) }; }
 }
@@ -81,11 +82,12 @@ export async function obtenerOrdenesArchivadas(): Promise<{ data: OSRow[]; error
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
       .select('*')
-      .eq('archivada', true)
       .order('updated_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
-    const enriched = await enriquecerOS((data ?? []) as Array<{ empresa_id: string }>);
+    const rows = (data ?? []) as Array<{ empresa_id: string; archivada?: boolean | null }>;
+    const archivadas = rows.filter(r => r.archivada === true);
+    const enriched = await enriquecerOS(archivadas);
     return { data: enriched as unknown as OSRow[], error: null };
   } catch (e) { return { data: [], error: String(e) }; }
 }
@@ -112,12 +114,11 @@ export async function crearOrdenServicio(input: {
   oportunidad_id?: string;
 }): Promise<{ error: string | null }> {
   // Verificar duplicado activo (no archivada)
-  const { data: existente } = await supabaseAdmin
+  const { data: activasEmpresa } = await supabaseAdmin
     .from('ordenes_servicio')
-    .select('id, numero')
-    .eq('empresa_id', input.empresa_id)
-    .eq('archivada', false)
-    .maybeSingle();
+    .select('id, numero, archivada')
+    .eq('empresa_id', input.empresa_id);
+  const existente = (activasEmpresa ?? []).find((r: { archivada?: boolean | null }) => r.archivada !== true);
 
   if (existente) {
     console.log('[crearOrdenServicio] Ya existe OS activa:', existente.numero);

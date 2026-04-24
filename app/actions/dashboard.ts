@@ -6,18 +6,19 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 export async function obtenerResumenGeneral() {
   try {
     const [
-      { count: osActivas },
+      { data: osAll },
       { data: facturas },
       { data: oportunidades },
       { count: empresas },
       { data: notas },
     ] = await Promise.all([
-      supabaseAdmin.from('ordenes_servicio').select('id', { count: 'exact', head: true }).eq('archivada', false),
+      supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
       supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion').in('estado', ['facturado', 'pagado']),
       supabaseAdmin.from('oportunidades').select('monto, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
+    const osActivas = (osAll ?? []).filter((r: { archivada?: boolean | null }) => r.archivada !== true).length;
 
     const totalFacturado   = (facturas ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
     const totalCobrado     = (facturas ?? []).filter(r => r.estado_facturacion === 'pagada').reduce((s, r) => s + (r.monto_factura ?? 0), 0);
@@ -25,7 +26,7 @@ export async function obtenerResumenGeneral() {
     const piplineValor     = (oportunidades ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
 
     return {
-      osActivas:       osActivas ?? 0,
+      osActivas,
       totalFacturado,
       totalCobrado,
       totalNetoCobrado: totalCobrado - totalNotasCredito,
@@ -41,10 +42,11 @@ export async function obtenerOSporEstado() {
   try {
     const { data } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select('estado')
-      .eq('archivada', false);
+      .select('estado, archivada');
     const counts: Record<string, number> = {};
-    (data ?? []).forEach(r => { counts[r.estado] = (counts[r.estado] ?? 0) + 1; });
+    (data ?? [])
+      .filter((r: { archivada?: boolean | null }) => r.archivada !== true)
+      .forEach(r => { counts[r.estado] = (counts[r.estado] ?? 0) + 1; });
     return Object.entries(counts).map(([estado, count]) => ({ estado, count }));
   } catch { return []; }
 }
