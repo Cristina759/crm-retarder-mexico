@@ -314,7 +314,6 @@ export default function CotizadorFrenosPage() {
   const [modelos,      setModelos]      = useState<ModeloState[]>(initModelos);
   const [modeloSelId,  setModeloSelId]  = useState<string | null>(null);
 
-  const [cliente,      setCliente]      = useState('');
   const [unidades,     setUnidades]     = useState('1');
   const [traslado,     setTraslado]     = useState('');
   const [manoObra,     setManoObra]     = useState('');
@@ -355,8 +354,8 @@ export default function CotizadorFrenosPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
-  const handleClienteChange = (val: string) => {
-    setCliente(val);
+  const handleEmpresaChange = (val: string) => {
+    setEmpresa(val);
     setShowSugerencias(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (val.trim().length < 2) { setSugerencias([]); return; }
@@ -370,7 +369,6 @@ export default function CotizadorFrenosPage() {
   };
 
   const handleSeleccionarEmpresa = (emp: EmpresaBusquedaResult) => {
-    setCliente(emp.nombre_comercial);
     setEmpresa(emp.nombre_comercial);
     if (emp.rfc)   setRfc(emp.rfc);
     if (emp.email) setEmailCliente(emp.email);
@@ -479,7 +477,7 @@ export default function CotizadorFrenosPage() {
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
-    if (!cliente.trim()) { setErrorGuardar('Escribe el nombre del cliente.'); return; }
+    if (!empresa.trim()) { setErrorGuardar('Escribe la empresa / razón social.'); return; }
     if (!marcaActual)    { setErrorGuardar('Selecciona un modelo de freno.'); return; }
 
     setGuardando(true);
@@ -488,7 +486,7 @@ export default function CotizadorFrenosPage() {
 
     try {
       const { data, error } = await crearCotizacion({
-        empresa_nombre: cliente.trim(),
+        empresa_nombre: empresa.trim(),
         vendedor_id:    null,
         tipo:           `frenos-${modeloState!.id}-${modeloState!.marcaSelId}`,
         subtotal:       Math.round(baseIVA * 100) / 100,
@@ -710,43 +708,6 @@ export default function CotizadorFrenosPage() {
       <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
         <p className="text-xs font-bold uppercase tracking-wider text-gray-700">Datos de la cotización</p>
 
-        {/* Cliente con autocomplete */}
-        <div ref={autocompleteRef} className="relative">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
-            Cliente *
-          </label>
-          <div className={`flex items-center border rounded-xl px-3 h-11 gap-2 transition-colors ${showSugerencias ? 'border-[#c0392b]' : 'border-gray-300 focus-within:border-[#c0392b]'}`}>
-            <Building2 size={15} className="text-gray-400 flex-shrink-0" />
-            <input
-              type="text"
-              value={cliente}
-              onChange={e => handleClienteChange(e.target.value)}
-              onFocus={() => sugerencias.length > 0 && setShowSugerencias(true)}
-              placeholder="Buscar cliente por nombre..."
-              className="flex-1 text-sm font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300"
-            />
-            {buscandoCliente && <Loader2 size={13} className="animate-spin text-gray-400 flex-shrink-0" />}
-          </div>
-          {/* Dropdown sugerencias */}
-          {showSugerencias && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
-              {sugerencias.map(emp => (
-                <button
-                  key={emp.id}
-                  type="button"
-                  onMouseDown={() => handleSeleccionarEmpresa(emp)}
-                  className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors border-b border-gray-100 last:border-0"
-                >
-                  <p className="text-sm font-semibold text-gray-800 leading-tight">{emp.nombre_comercial}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
-                    {[emp.rfc, emp.email].filter(Boolean).join(' · ')}
-                  </p>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Folio */}
           <div>
@@ -778,13 +739,37 @@ export default function CotizadorFrenosPage() {
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Empresa / Razón social</label>
-            <input
-              type="text" value={empresa} onChange={e => setEmpresa(e.target.value)}
-              placeholder="Se autocompleta al seleccionar cliente..."
-              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-            />
+          <div ref={autocompleteRef} className="relative">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Empresa / Razón social *</label>
+            <div className={`flex items-center border rounded-xl px-3 h-10 gap-2 transition-colors ${showSugerencias ? 'border-[#c0392b]' : 'border-gray-300 focus-within:border-red-400'}`}>
+              <Building2 size={15} className="text-gray-400 flex-shrink-0" />
+              <input
+                type="text"
+                value={empresa}
+                onChange={e => handleEmpresaChange(e.target.value)}
+                onFocus={() => sugerencias.length > 0 && setShowSugerencias(true)}
+                placeholder="Buscar empresa por nombre..."
+                className="flex-1 text-sm font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300"
+              />
+              {buscandoCliente && <Loader2 size={13} className="animate-spin text-gray-400 flex-shrink-0" />}
+            </div>
+            {showSugerencias && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+                {sugerencias.map(emp => (
+                  <button
+                    key={emp.id}
+                    type="button"
+                    onMouseDown={() => handleSeleccionarEmpresa(emp)}
+                    className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors border-b border-gray-100 last:border-0"
+                  >
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">{emp.nombre_comercial}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      {[emp.rfc, emp.email].filter(Boolean).join(' · ')}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Email</label>
@@ -820,14 +805,14 @@ export default function CotizadorFrenosPage() {
         <div className="flex gap-2">
           <button
             onClick={() => window.print()}
-            disabled={!marcaActual || !cliente.trim()}
+            disabled={!marcaActual || !empresa.trim()}
             className="flex-1 h-12 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
             <Printer size={16} /> Imprimir / PDF
           </button>
           <button
             onClick={() => alert('Próximamente: envío de cotización por correo electrónico')}
-            disabled={!marcaActual || !cliente.trim()}
+            disabled={!marcaActual || !empresa.trim()}
             title={emailCliente ? `Enviar a ${emailCliente}` : 'Agrega un email de cliente'}
             className="flex-1 h-12 bg-white border-2 border-[#c0392b] text-[#c0392b] hover:bg-red-50 font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
@@ -849,7 +834,7 @@ export default function CotizadorFrenosPage() {
         )}
         <button
           onClick={handleGuardar}
-          disabled={guardando || !marcaActual || !cliente.trim()}
+          disabled={guardando || !marcaActual || !empresa.trim()}
           className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-black text-base rounded-2xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2 shadow-lg"
         >
           {guardando
@@ -897,8 +882,7 @@ export default function CotizadorFrenosPage() {
 
             {/* Bloque cliente */}
             <div className="p-client-block">
-              <div className="p-client-name">{cliente}</div>
-              {empresa && <div className="p-client-row"><span className="p-client-lbl">Empresa:</span> {empresa}</div>}
+              <div className="p-client-name">{empresa}</div>
               {rfc && <div className="p-client-row"><span className="p-client-lbl">RFC:</span> {rfc}</div>}
               {direccion && <div className="p-client-row"><span className="p-client-lbl">Dirección:</span> {direccion}</div>}
               {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
