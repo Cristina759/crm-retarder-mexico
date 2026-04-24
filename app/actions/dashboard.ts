@@ -13,7 +13,7 @@ export async function obtenerResumenGeneral() {
       { data: notas },
     ] = await Promise.all([
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
-      supabaseAdmin.from('ordenes_servicio').select('*').in('estado', ['facturado', 'pagado']),
+      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion').in('estado', ['facturado', 'pagado']),
       supabaseAdmin.from('oportunidades').select('monto, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('notas_credito').select('monto'),

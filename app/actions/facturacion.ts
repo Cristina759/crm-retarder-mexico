@@ -24,6 +24,7 @@ export interface FacturaRow {
 export interface NotaCreditoRow {
   id: string;
   numero_nc: string | null;
+  os_id: string | null;
   empresa_id: string | null;
   monto: number;
   descripcion: string | null;
@@ -36,7 +37,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   try {
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select('*')
+      .select('id, numero, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id')
       .in('estado', ['facturado', 'pagado'])
       .order('created_at', { ascending: false });
 
@@ -44,8 +45,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = (data ?? []) as any[];
-
-    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
+    const empresaIds = Array.from(new Set(rows.map((r: { empresa_id: string }) => r.empresa_id).filter(Boolean)));
     const { data: empresas } = empresaIds.length
       ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
       : { data: [] as Array<{ id: string; nombre_comercial: string }> };
@@ -54,11 +54,11 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     const enriched: FacturaRow[] = rows.map(r => ({
       id:                 r.id,
       numero:             r.numero,
-      numero_factura:     r.numero_factura,
-      monto_factura:      r.monto_factura,
-      concepto_factura:   r.concepto_factura,
-      fecha_vencimiento:  r.fecha_vencimiento,
-      estado_facturacion: r.estado_facturacion,
+      numero_factura:     r.numero_factura ?? null,
+      monto_factura:      r.monto_factura ?? null,
+      concepto_factura:   r.concepto_factura ?? null,
+      fecha_vencimiento:  r.fecha_vencimiento ?? null,
+      estado_facturacion: r.estado_facturacion ?? null,
       created_at:         r.created_at,
       empresa_nombre:     empresaMap.get(r.empresa_id) ?? null,
     }));
@@ -98,22 +98,27 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
   try {
     const { data, error } = await supabaseAdmin
       .from('notas_credito')
-      .select('*')
+      .select('id, numero_nc, os_id, empresa_id, monto, descripcion, created_at')
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rows = (data ?? []) as any[];
-
-    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter((x): x is string => !!x)));
+    const empresaIds = Array.from(new Set(rows.map((r: { empresa_id: string | null }) => r.empresa_id).filter((x): x is string => !!x)));
     const { data: empresas } = empresaIds.length
       ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
       : { data: [] as Array<{ id: string; nombre_comercial: string }> };
     const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
     const enriched: NotaCreditoRow[] = rows.map(r => ({
-      ...r,
+      id:             r.id,
+      numero_nc:      r.numero_nc ?? null,
+      os_id:          r.os_id ?? null,
+      empresa_id:     r.empresa_id ?? null,
+      monto:          r.monto,
+      descripcion:    r.descripcion ?? null,
+      created_at:     r.created_at,
       empresa_nombre: (r.empresa_id && empresaMap.get(r.empresa_id)) ?? null,
     }));
 
@@ -124,53 +129,38 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
 // ── crearNotaCredito ──────────────────────────────────────────────────────────
 export async function crearNotaCredito(datos: {
   numero_nc?: string;
+  os_id?: string;
   empresa_id?: string;
   monto: number;
   descripcion?: string;
 }): Promise<{ error: string | null }> {
-  const { error } = await supabaseAdmin
-    .from('notas_credito')
-    .insert(datos);
+  const { error } = await supabaseAdmin.from('notas_credito').insert(datos);
   if (error) return { error: error.message };
   return { error: null };
 }
 
 // ── eliminarNotaCredito ───────────────────────────────────────────────────────
 export async function eliminarNotaCredito(id: string): Promise<{ error: string | null }> {
-  const { error } = await supabaseAdmin
-    .from('notas_credito')
-    .delete()
-    .eq('id', id);
+  const { error } = await supabaseAdmin.from('notas_credito').delete().eq('id', id);
   if (error) return { error: error.message };
   return { error: null };
 }
 
-// ── resumenFacturacion (para dashboard) ───────────────────────────────────────
+// ── resumenFacturacion ────────────────────────────────────────────────────────
 export async function obtenerResumenFacturacion(): Promise<{
-  totalFacturado: number;
-  totalCobrado: number;
-  pendientes: number;
-  vencidas: number;
-  totalNotasCredito: number;
-  error: string | null;
+  totalFacturado: number; totalCobrado: number; pendientes: number;
+  vencidas: number; totalNotasCredito: number; error: string | null;
 }> {
   try {
     const [{ data: facts }, { data: ncs }] = await Promise.all([
-      supabaseAdmin
-        .from('ordenes_servicio')
-        .select('*')
-        .in('estado', ['facturado', 'pagado']),
-      supabaseAdmin
-        .from('notas_credito')
-        .select('monto'),
+      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion').in('estado', ['facturado', 'pagado']),
+      supabaseAdmin.from('notas_credito').select('monto'),
     ]);
-
-    const totalFacturado = (facts ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
-    const totalCobrado   = (facts ?? []).filter(r => r.estado_facturacion === 'pagada').reduce((s, r) => s + (r.monto_factura ?? 0), 0);
-    const pendientes     = (facts ?? []).filter(r => ['pendiente_facturar', 'facturada', 'enviada_cliente'].includes(r.estado_facturacion)).length;
-    const vencidas       = (facts ?? []).filter(r => r.estado_facturacion === 'vencida').length;
+    const totalFacturado    = (facts ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
+    const totalCobrado      = (facts ?? []).filter(r => r.estado_facturacion === 'pagada').reduce((s, r) => s + (r.monto_factura ?? 0), 0);
+    const pendientes        = (facts ?? []).filter(r => ['pendiente_facturar', 'facturada', 'enviada_cliente'].includes(r.estado_facturacion ?? '')).length;
+    const vencidas          = (facts ?? []).filter(r => r.estado_facturacion === 'vencida').length;
     const totalNotasCredito = (ncs ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
-
     return { totalFacturado, totalCobrado, pendientes, vencidas, totalNotasCredito, error: null };
   } catch (e) { return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: String(e) }; }
 }
