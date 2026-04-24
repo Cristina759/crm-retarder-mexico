@@ -18,52 +18,59 @@ export interface FacturaRow {
   fecha_vencimiento: string | null;
   estado_facturacion: EstadoFacturacion;
   created_at: string;
-  empresas: { nombre_comercial: string } | null;
-  tecnico: { nombre: string } | null;
+  empresa_nombre: string | null;
 }
 
 export interface NotaCreditoRow {
   id: string;
   numero_nc: string | null;
-  os_id: string | null;
   empresa_id: string | null;
   monto: number;
   descripcion: string | null;
-  fecha: string;
   created_at: string;
-  empresas: { nombre_comercial: string } | null;
-  orden: { numero: string } | null;
+  empresa_nombre: string | null;
 }
-
-const SELECT_FACTURA = `
-  id, numero, numero_factura, monto_factura, concepto_factura,
-  fecha_vencimiento, estado_facturacion, created_at, empresa_id
-`;
 
 // ── obtenerFacturas ───────────────────────────────────────────────────────────
 export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: string | null }> {
   try {
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select(SELECT_FACTURA)
+      .select('id, numero, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id')
       .in('estado', ['facturado', 'pagado'])
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
 
-    const rows = (data ?? []) as unknown as Array<Omit<FacturaRow, 'empresas' | 'tecnico'> & { empresa_id: string }>;
-    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
+    const rows = (data ?? []) as Array<{
+      id: string;
+      numero: string;
+      numero_factura: string | null;
+      monto_factura: number | null;
+      concepto_factura: string | null;
+      fecha_vencimiento: string | null;
+      estado_facturacion: EstadoFacturacion;
+      created_at: string;
+      empresa_id: string;
+    }>;
 
+    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
     const { data: empresas } = empresaIds.length
       ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
       : { data: [] as Array<{ id: string; nombre_comercial: string }> };
     const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
     const enriched: FacturaRow[] = rows.map(r => ({
-      ...r,
-      empresas: empresaMap.has(r.empresa_id) ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
-      tecnico: null,
-    })) as FacturaRow[];
+      id:                 r.id,
+      numero:             r.numero,
+      numero_factura:     r.numero_factura,
+      monto_factura:      r.monto_factura,
+      concepto_factura:   r.concepto_factura,
+      fecha_vencimiento:  r.fecha_vencimiento,
+      estado_facturacion: r.estado_facturacion,
+      created_at:         r.created_at,
+      empresa_nombre:     empresaMap.get(r.empresa_id) ?? null,
+    }));
 
     return { data: enriched, error: null };
   } catch (e) { return { data: [], error: String(e) }; }
@@ -80,26 +87,6 @@ export async function actualizarFactura(id: string, datos: {
   const { error } = await supabaseAdmin
     .from('ordenes_servicio')
     .update({ ...datos, updated_at: new Date().toISOString() })
-    .eq('id', id);
-  if (error) return { error: error.message };
-  return { error: null };
-}
-
-// ── limpiarDatosFactura ───────────────────────────────────────────────────────
-/** Borra los datos de factura y regresa la OS al estado anterior (documentacion_entregada) */
-export async function limpiarDatosFactura(id: string): Promise<{ error: string | null }> {
-  const { error } = await supabaseAdmin
-    .from('ordenes_servicio')
-    .update({
-      numero_factura:     null,
-      monto_factura:      null,
-      concepto_factura:   null,
-      fecha_vencimiento:  null,
-      estado_facturacion: 'pendiente_facturar',
-      estado:             'documentacion_entregada',
-      fase:               3,
-      updated_at:         new Date().toISOString(),
-    })
     .eq('id', id);
   if (error) return { error: error.message };
   return { error: null };
@@ -125,29 +112,25 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
 
     if (error) return { data: [], error: error.message };
 
-    const rows = (data ?? []).map(r => ({
-      ...r,
-      os_id: null as string | null,
-      fecha: (r as { created_at?: string }).created_at ?? '',
-    })) as unknown as Array<Omit<NotaCreditoRow, 'empresas' | 'orden'> & {
+    const rows = (data ?? []) as Array<{
+      id: string;
+      numero_nc: string | null;
       empresa_id: string | null;
-      os_id: string | null;
+      monto: number;
+      descripcion: string | null;
+      created_at: string;
     }>;
 
     const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter((x): x is string => !!x)));
-
-    const { data: empresasData } = empresaIds.length
+    const { data: empresas } = empresaIds.length
       ? await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
       : { data: [] as Array<{ id: string; nombre_comercial: string }> };
-
-    const empresaMap = new Map((empresasData ?? []).map(e => [e.id, e.nombre_comercial]));
+    const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
     const enriched: NotaCreditoRow[] = rows.map(r => ({
       ...r,
-      empresas: r.empresa_id && empresaMap.has(r.empresa_id)
-        ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
-      orden: null,
-    })) as NotaCreditoRow[];
+      empresa_nombre: (r.empresa_id && empresaMap.get(r.empresa_id)) ?? null,
+    }));
 
     return { data: enriched, error: null };
   } catch (e) { return { data: [], error: String(e) }; }
@@ -156,18 +139,13 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
 // ── crearNotaCredito ──────────────────────────────────────────────────────────
 export async function crearNotaCredito(datos: {
   numero_nc?: string;
-  os_id?: string;
   empresa_id?: string;
   monto: number;
   descripcion?: string;
-  fecha?: string;
 }): Promise<{ error: string | null }> {
-  const { fecha: _fecha, os_id: _os_id, ...rest } = datos;
-  void _fecha;
-  void _os_id;
   const { error } = await supabaseAdmin
     .from('notas_credito')
-    .insert(rest);
+    .insert(datos);
   if (error) return { error: error.message };
   return { error: null };
 }
