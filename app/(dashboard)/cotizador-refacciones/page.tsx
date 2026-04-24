@@ -340,13 +340,13 @@ export default function CotizadorRefaccionesPage() {
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm">
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
-            Cliente / Contacto *
+            Atención a *
           </label>
           <input
             type="text"
             value={cliente}
             onChange={e => setCliente(e.target.value)}
-            placeholder="Nombre del cliente o contacto..."
+            placeholder="Nombre de la persona a quien va dirigida..."
             className="w-full text-sm font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-400"
           />
         </div>
