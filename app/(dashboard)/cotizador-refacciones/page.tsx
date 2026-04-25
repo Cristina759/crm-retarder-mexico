@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import QRCode from 'qrcode';
 import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Printer, Search, BookOpen, X } from 'lucide-react';
-import { crearCotizacion } from '@/app/actions/cotizaciones';
+import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 import { obtenerRefacciones } from '@/app/actions/catalogos';
 import type { RefaccionRow } from '@/app/actions/catalogos';
 
@@ -205,6 +205,9 @@ function ModalCatalogo({
 export default function CotizadorRefaccionesPage() {
   const [cliente, setCliente] = useState('');
   const [empresa, setEmpresa] = useState('');
+  const [empresaId, setEmpresaId] = useState('');
+  const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
+  const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
   const [emailCliente, setEmailCliente] = useState('');
   const [folio, setFolio] = useState(() => generarFolio());
 
@@ -290,7 +293,8 @@ export default function CotizadorRefaccionesPage() {
 
     try {
       const { data, error } = await crearCotizacion({
-        empresa_nombre: cliente.trim(),
+        empresa_id:     empresaId || undefined,
+        empresa_nombre: empresa.trim() || cliente.trim(),
         vendedor_id: null,
         tipo: 'refacciones',
         subtotal: Math.round(subtotal * 100) / 100,
@@ -351,9 +355,51 @@ export default function CotizadorRefaccionesPage() {
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">Empresa</label>
-            <input type="text" value={empresa} onChange={e => setEmpresa(e.target.value)} placeholder="Razón social..." className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300" />
+          <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm relative">
+            <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-0.5 flex items-center gap-1">
+              Empresa
+              {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
+            </label>
+            <input
+              type="text"
+              value={empresa}
+              onChange={async e => {
+                const q = e.target.value;
+                setEmpresa(q);
+                setEmpresaId('');
+                if (q.length >= 2) {
+                  setBuscandoEmpresa(true);
+                  const res = await buscarEmpresas(q);
+                  setSugerenciasEmpresa(res);
+                  setBuscandoEmpresa(false);
+                } else {
+                  setSugerenciasEmpresa([]);
+                }
+              }}
+              placeholder="Razón social..."
+              className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300"
+            />
+            {buscandoEmpresa && <Loader2 size={11} className="absolute right-3 top-3 animate-spin text-gray-400" />}
+            {sugerenciasEmpresa.length > 0 && !empresaId && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                {sugerenciasEmpresa.map(emp => (
+                  <button
+                    key={emp.id}
+                    type="button"
+                    onClick={() => {
+                      setEmpresa(emp.nombre_comercial);
+                      setEmpresaId(emp.id);
+                      if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                      setSugerenciasEmpresa([]);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
+                  >
+                    <p className="text-xs font-semibold text-gray-800">{emp.nombre_comercial}</p>
+                    {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm">
             <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">Email</label>

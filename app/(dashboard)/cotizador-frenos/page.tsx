@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { Loader2, RefreshCw, Check, FileText, Printer, Mail } from 'lucide-react';
-import { crearCotizacion } from '@/app/actions/cotizaciones';
+import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
 import type { UsuarioRow } from '@/app/actions/types';
 
@@ -340,6 +340,9 @@ export default function CotizadorFrenosPage() {
   const [qrDataUrl,    setQrDataUrl]   = useState('');
 
   const [empresa,      setEmpresa]      = useState('');
+  const [empresaId,    setEmpresaId]    = useState('');
+  const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
+  const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
   const [rfc,          setRfc]          = useState('');
   const [direccion,    setDireccion]    = useState('');
   const [emailCliente, setEmailCliente] = useState('');
@@ -444,6 +447,7 @@ export default function CotizadorFrenosPage() {
 
     try {
       const { data, error } = await crearCotizacion({
+        empresa_id:     empresaId || undefined,
         empresa_nombre: empresa.trim(),
         vendedor_id:    null,
         tipo:           `frenos-${modeloState!.id}-${modeloState!.marcaSelId}`,
@@ -697,13 +701,53 @@ export default function CotizadorFrenosPage() {
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Empresa / Razón social</label>
-            <input
-              type="text" value={empresa} onChange={e => setEmpresa(e.target.value)}
-              placeholder="Nombre de la empresa..."
-              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-            />
+          <div className="relative">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
+              Empresa / Razón social
+              {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={empresa}
+                onChange={async e => {
+                  const q = e.target.value;
+                  setEmpresa(q);
+                  setEmpresaId('');
+                  if (q.length >= 2) {
+                    setBuscandoEmpresa(true);
+                    const res = await buscarEmpresas(q);
+                    setSugerenciasEmpresa(res);
+                    setBuscandoEmpresa(false);
+                  } else {
+                    setSugerenciasEmpresa([]);
+                  }
+                }}
+                placeholder="Nombre de la empresa..."
+                className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+              />
+              {buscandoEmpresa && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+            </div>
+            {sugerenciasEmpresa.length > 0 && !empresaId && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                {sugerenciasEmpresa.map(emp => (
+                  <button
+                    key={emp.id}
+                    type="button"
+                    onClick={() => {
+                      setEmpresa(emp.nombre_comercial);
+                      setEmpresaId(emp.id);
+                      if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                      setSugerenciasEmpresa([]);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
+                  >
+                    <p className="text-sm font-semibold text-gray-800">{emp.nombre_comercial}</p>
+                    {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Email</label>
