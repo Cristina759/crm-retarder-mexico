@@ -6,6 +6,8 @@ import {
   obtenerCotizaciones,
   crearCotizacion,
   eliminarCotizacion,
+  buscarEmpresas,
+  type EmpresaBusquedaResult,
 } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
 import type { CotizacionRow, UsuarioRow } from '@/app/actions/types';
@@ -34,6 +36,7 @@ function formatFecha(iso: string) {
 
 // ── Modal nueva cotización ────────────────────────────────────────────────────
 interface FormState {
+  empresa_id: string;
   empresa_nombre: string;
   vendedor_id: string;
   tipo: string;
@@ -42,6 +45,7 @@ interface FormState {
 }
 
 const FORM_INICIAL: FormState = {
+  empresa_id: '',
   empresa_nombre: '',
   vendedor_id: '',
   tipo: 'frenos',
@@ -61,6 +65,8 @@ function ModalNuevaCotizacion({
   const [form, setForm] = useState<FormState>(FORM_INICIAL);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sugerencias, setSugerencias] = useState<EmpresaBusquedaResult[]>([]);
+  const [buscando, setBuscando] = useState(false);
 
   const subtotal = parseFloat(form.subtotal) || 0;
   const iva      = Math.round(subtotal * 0.16 * 100) / 100;
@@ -75,6 +81,7 @@ function ModalNuevaCotizacion({
     setError(null);
 
     const { error: err } = await crearCotizacion({
+      empresa_id:     form.empresa_id   || undefined,
       empresa_nombre: form.empresa_nombre.trim(),
       vendedor_id:    form.vendedor_id || null,
       tipo:           form.tipo,
@@ -105,21 +112,52 @@ function ModalNuevaCotizacion({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Empresa */}
-          <div>
+          <div className="relative">
             <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">
-              Empresa *
+              Cliente *
             </label>
-            <div className="flex items-center gap-2 border border-gray-200 rounded-2xl px-3 h-11 focus-within:border-red-400 transition-colors">
-              <Building2 size={15} className="text-gray-400 flex-shrink-0" />
+            <div className={`flex items-center gap-2 border rounded-2xl px-3 h-11 transition-colors ${form.empresa_id ? 'border-green-400 bg-green-50' : 'border-gray-200 focus-within:border-red-400'}`}>
+              <Building2 size={15} className={form.empresa_id ? 'text-green-500' : 'text-gray-400'} />
               <input
                 type="text"
                 value={form.empresa_nombre}
-                onChange={e => setForm(f => ({ ...f, empresa_nombre: e.target.value }))}
-                placeholder="Nombre del cliente..."
+                onChange={async e => {
+                  const q = e.target.value;
+                  setForm(f => ({ ...f, empresa_nombre: q, empresa_id: '' }));
+                  if (q.length >= 2) {
+                    setBuscando(true);
+                    const res = await buscarEmpresas(q);
+                    setSugerencias(res);
+                    setBuscando(false);
+                  } else {
+                    setSugerencias([]);
+                  }
+                }}
+                placeholder="Buscar cliente registrado..."
                 className="flex-1 outline-none text-sm bg-transparent"
                 required
               />
+              {buscando && <Loader2 size={13} className="animate-spin text-gray-400" />}
+              {form.empresa_id && <span className="text-[10px] font-bold text-green-600">✓</span>}
             </div>
+            {sugerencias.length > 0 && !form.empresa_id && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+                {sugerencias.map(e => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => {
+                      setForm(f => ({ ...f, empresa_id: e.id, empresa_nombre: e.nombre_comercial }));
+                      setSugerencias([]);
+                    }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors"
+                  >
+                    <p className="text-sm font-semibold text-gray-800">{e.nombre_comercial}</p>
+                    {e.rfc && <p className="text-[11px] text-gray-400">{e.rfc}</p>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Tipo + Vendedor */}
