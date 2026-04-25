@@ -501,7 +501,7 @@ export default function CotizacionesPage() {
           <thead>
             <tr className="border-b border-gray-100">
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Folio</th>
-              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Empresa</th>
+              <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Cliente</th>
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Tipo</th>
               <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-400">Total MXN</th>
               <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-400">Estado</th>
