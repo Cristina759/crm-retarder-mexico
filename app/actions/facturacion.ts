@@ -37,7 +37,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   try {
     const { data, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select('id, numero, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id')
+      .select('*')
       .in('estado', ['facturado', 'pagado'])
       .order('created_at', { ascending: false });
 
@@ -98,7 +98,7 @@ export async function obtenerNotasCredito(): Promise<{ data: NotaCreditoRow[]; e
   try {
     const { data, error } = await supabaseAdmin
       .from('notas_credito')
-      .select('id, numero_nc, os_id, empresa_id, monto, descripcion, created_at')
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) return { data: [], error: error.message };
@@ -153,7 +153,7 @@ export async function obtenerResumenFacturacion(): Promise<{
 }> {
   try {
     const [{ data: facts }, { data: ncs }] = await Promise.all([
-      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion').in('estado', ['facturado', 'pagado']),
+      supabaseAdmin.from('ordenes_servicio').select('*').in('estado', ['facturado', 'pagado']),
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
     const totalFacturado    = (facts ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);

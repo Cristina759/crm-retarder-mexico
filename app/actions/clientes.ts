@@ -58,7 +58,7 @@ export async function obtenerClientes(): Promise<{ data: ClienteRow[]; error: st
   try {
     const { data, error } = await supabaseAdmin
       .from('empresas')
-      .select(SELECT_CLIENTE)
+      .select('*')
       .order('nombre_comercial');
 
     if (error) return { data: [], error: error.message };
@@ -83,10 +83,10 @@ export async function obtenerClientes(): Promise<{ data: ClienteRow[]; error: st
 export async function obtenerClienteDetalle(id: string): Promise<{ data: ClienteDetalle | null; error: string | null }> {
   try {
     const [{ data: emp, error: empErr }, { data: os }, { data: cots }, { data: ncs }] = await Promise.all([
-      supabaseAdmin.from('empresas').select(SELECT_CLIENTE).eq('id', id).single(),
-      supabaseAdmin.from('ordenes_servicio').select('id, numero, numero_os_manual, estado, fase, created_at, monto_factura, estado_facturacion, numero_factura').eq('empresa_id', id).order('created_at', { ascending: false }),
+      supabaseAdmin.from('empresas').select('*').eq('id', id).single(),
+      supabaseAdmin.from('ordenes_servicio').select('*').eq('empresa_id', id).order('created_at', { ascending: false }),
       supabaseAdmin.from('cotizaciones').select('id, folio, tipo, estado, total_mxn, created_at').eq('empresa_id', id).order('created_at', { ascending: false }),
-      supabaseAdmin.from('notas_credito').select('id, numero_nc, monto, created_at').eq('empresa_id', id).order('created_at', { ascending: false }),
+      supabaseAdmin.from('notas_credito').select('*').eq('empresa_id', id).order('created_at', { ascending: false }),
     ]);
     if (empErr || !emp) return { data: null, error: empErr?.message ?? 'Cliente no encontrado' };
     const detalle: ClienteDetalle = {
