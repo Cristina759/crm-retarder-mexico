@@ -83,7 +83,6 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
         .from('empresas')
         .insert({
           nombre_comercial: input.empresa_nombre.trim(),
-          razon_social:     input.empresa_nombre.trim(),
         })
         .select('id')
         .single();
