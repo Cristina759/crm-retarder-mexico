@@ -119,7 +119,6 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
     .insert({
       folio,
       empresa_id,
-      oportunidad_id: opp.id,
       vendedor_id:    input.vendedor_id ?? null,
       tipo:           input.tipo,
       estado:         'enviada',
