@@ -96,6 +96,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
     .from('oportunidades')
     .insert({
       empresa_id,
+      tipo:         input.tipo.split('-')[0] as 'frenos' | 'refacciones' | 'servicios',
       titulo:       `Cotización ${input.tipo} — ${input.empresa_nombre}`,
       estado:       'cotizacion_enviada',
       probabilidad: 40,
