@@ -114,9 +114,9 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
   // 3. Crear cotización
   const folio = await generarFolio();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: cotData, error: cotError } = await (supabaseAdmin.rpc as any)('insertar_cotizacion', {
-    payload: {
+  const { data: cot, error: cotError } = await supabaseAdmin
+    .from('cotizaciones')
+    .insert({
       folio,
       empresa_id,
       vendedor_id: input.vendedor_id ?? null,
@@ -126,10 +126,10 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       iva:         input.iva,
       total_mxn:   input.total_mxn,
       notas:       input.notas ?? null,
-    },
-  });
+    })
+    .select()
+    .single();
 
-  const cot = cotData as { id: string; folio: string } | null;
   if (cotError || !cot) {
     console.error('[crearCotizacion] cotización:', cotError);
     return { data: null, error: cotError?.message ?? 'Error al insertar cotización' };
