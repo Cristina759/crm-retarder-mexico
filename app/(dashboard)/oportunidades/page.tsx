@@ -104,7 +104,7 @@ function OppCard({
       <p className="text-xs text-gray-500 mt-1 pl-5 truncate">{opp.titulo}</p>
 
       <div className="flex items-center justify-between mt-2 pl-5">
-        <span className="text-sm font-bold text-gray-800">{formatMXN(opp.monto)}</span>
+        <span className="text-sm font-bold text-gray-800">{formatMXN(opp.monto_estimado)}</span>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] text-gray-400">{opp.vendedor?.nombre ?? '—'}</span>
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white ${estadoInfo?.color}`}>
@@ -130,7 +130,7 @@ function KanbanColumn({
   deletingId: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: estado.id });
-  const monto = oportunidades.reduce((s, o) => s + (o.monto ?? 0), 0);
+  const monto = oportunidades.reduce((s, o) => s + (o.monto_estimado ?? 0), 0);
 
   return (
     <div className={`flex-shrink-0 w-60 flex flex-col rounded-2xl border ${estado.border} ${estado.bg} overflow-hidden`}>
@@ -205,7 +205,7 @@ function TablaView({
                     {e?.label ?? opp.estado}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatMXN(opp.monto)}</td>
+                <td className="px-4 py-3 text-right font-semibold text-gray-800">{formatMXN(opp.monto_estimado)}</td>
                 <td className="px-4 py-3 text-right text-gray-500">{opp.probabilidad}%</td>
                 <td className="px-4 py-3 text-gray-500">{opp.vendedor?.nombre ?? '—'}</td>
                 <td className="px-4 py-3 text-right">
@@ -257,7 +257,7 @@ export default function OportunidadesPage() {
   );
 
   const totalMonto = useMemo(
-    () => oportunidades.filter(o => o.estado !== 'perdido').reduce((s, o) => s + (o.monto ?? 0), 0),
+    () => oportunidades.filter(o => o.estado !== 'perdido').reduce((s, o) => s + (o.monto_estimado ?? 0), 0),
     [oportunidades]
   );
 

@@ -14,7 +14,7 @@ export async function obtenerResumenGeneral() {
     ] = await Promise.all([
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
       supabaseAdmin.from('ordenes_servicio').select('*').in('estado', ['facturado', 'pagado']),
-      supabaseAdmin.from('oportunidades').select('monto, estado').neq('estado', 'perdido'),
+      supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
@@ -23,7 +23,7 @@ export async function obtenerResumenGeneral() {
     const totalFacturado   = (facturas ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
     const totalCobrado     = (facturas ?? []).filter(r => r.estado_facturacion === 'pagada').reduce((s, r) => s + (r.monto_factura ?? 0), 0);
     const totalNotasCredito = (notas ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
-    const piplineValor     = (oportunidades ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
+    const piplineValor     = (oportunidades ?? []).reduce((s, r) => s + (r.monto_estimado ?? 0), 0);
 
     return {
       osActivas,
@@ -56,7 +56,7 @@ export async function obtenerResumenVentas() {
   try {
     const [{ data: cotizaciones }, { data: oportunidades }] = await Promise.all([
       supabaseAdmin.from('cotizaciones').select('total_mxn, estado, created_at'),
-      supabaseAdmin.from('oportunidades').select('monto, estado, created_at, probabilidad'),
+      supabaseAdmin.from('oportunidades').select('monto_estimado, estado, created_at, probabilidad'),
     ]);
 
     const total          = (cotizaciones ?? []).reduce((s, c) => s + (c.total_mxn ?? 0), 0);

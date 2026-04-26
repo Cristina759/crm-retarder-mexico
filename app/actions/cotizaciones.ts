@@ -99,7 +99,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       titulo:       `Cotización ${input.tipo} — ${input.empresa_nombre}`,
       estado:       'cotizacion_enviada',
       probabilidad: 40,
-      monto:        input.total_mxn,
+      monto_estimado: input.total_mxn,
       vendedor_id:  input.vendedor_id ?? null,
     })
     .select('id')

@@ -116,7 +116,7 @@ export async function crearOportunidad(
       titulo:       input.titulo,
       estado:       input.estado       ?? 'lead',
       probabilidad: input.probabilidad ?? 50,
-      monto:        input.monto        ?? 0,
+      monto_estimado: input.monto_estimado ?? 0,
       vendedor_id:  input.vendedor_id  ?? null,
     })
     .select('id')

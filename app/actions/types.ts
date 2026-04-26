@@ -24,7 +24,7 @@ export interface OportunidadRow {
   titulo: string;
   estado: OportunidadEstado;
   probabilidad: number;
-  monto: number;
+  monto_estimado: number;
   vendedor_id: string | null;
   created_at: string;
   updated_at: string;
@@ -39,7 +39,7 @@ export interface CrearOportunidadInput {
   vendedor_id?: string | null;
   estado?: OportunidadEstado;
   probabilidad?: number;
-  monto?: number;
+  monto_estimado?: number;
 }
 
 // ── Cotizaciones ──────────────────────────────────────────────────────────────
