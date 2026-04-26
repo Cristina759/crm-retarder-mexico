@@ -127,7 +127,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       total_mxn:      input.total_mxn,
       notas:          input.notas ?? null,
     })
-    .select('*')
+    .select('id, folio, empresa_id, tipo, estado, total_mxn')
     .single();
 
   if (cotError) {
