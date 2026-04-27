@@ -114,26 +114,28 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
   // 3. Crear cotización
   const folio = await generarFolio();
 
-  const { data: cot, error: cotError } = await supabaseAdmin
-    .from('cotizaciones')
-    .insert({
-      folio,
-      empresa_id,
-      vendedor_id: input.vendedor_id ?? null,
-      tipo:        input.tipo,
-      estado:      'enviada',
-      subtotal:    input.subtotal,
-      iva:         input.iva,
-      total_mxn:   input.total_mxn,
-      notas:       input.notas ?? null,
-    })
-    .select()
-    .single();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: cotData, error: cotError } = await (supabaseAdmin.rpc as any)(
+    'crear_cotizacion_v2',
+    {
+      p_folio:       folio,
+      p_empresa_id:  empresa_id,
+      p_vendedor_id: input.vendedor_id ?? null,
+      p_tipo:        input.tipo,
+      p_estado:      'enviada',
+      p_subtotal:    input.subtotal,
+      p_iva:         input.iva,
+      p_total_mxn:   input.total_mxn,
+      p_notas:       input.notas ?? null,
+    },
+  );
 
-  if (cotError || !cot) {
+  if (cotError || !cotData || !cotData[0]) {
     console.error('[crearCotizacion] cotización:', cotError);
     return { data: null, error: cotError?.message ?? 'Error al insertar cotización' };
   }
+
+  const cot = cotData[0] as { id: string; folio: string };
 
   console.log('[crearCotizacion] creada:', cot.folio ?? cot.id);
   return { data: { id: cot.id, folio: cot.folio ?? '' }, error: null };
