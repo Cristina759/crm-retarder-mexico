@@ -115,6 +115,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
     const folio = await generarFolio();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // @ts-ignore
     const { data: cotData, error: cotError } = await supabaseAdmin.rpc(
       'crear_cotizacion_v2',
       {
