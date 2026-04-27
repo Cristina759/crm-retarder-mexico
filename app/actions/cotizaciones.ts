@@ -1,5 +1,4 @@
-F'use server';
-
+'use server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { CotizacionRow, CrearCotizacionInput } from './types';
 
