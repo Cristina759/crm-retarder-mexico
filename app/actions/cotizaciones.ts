@@ -121,7 +121,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
 
     if (cotError) return { data: null, error: `Error Cotización: ${cotError.message}` };
 
-    return { data: { id: cot.id, folio: cot.folio }, error: null };
+    return { data: { id: cot.id, folio: cot.folio ?? '' }, error: null };
     
   } catch (err: any) {
     console.error('[crearCotizacion] EXCEPCIÓN:', err);
