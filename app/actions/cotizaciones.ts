@@ -66,20 +66,24 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
   error: string | null;
 }> {
   try {
-    // 1. Resolver Empresa
+    // 1. Resolver o crear empresa
     let empresa_id = input.empresa_id ?? null;
+
     if (!empresa_id) {
-      const { data: nueva, error: eErr } = await supabaseAdmin
+      const { data: nueva, error: empError } = await supabaseAdmin
         .from('empresas')
-        .insert({ nombre_comercial: input.empresa_nombre.trim() })
+        .insert({
+          nombre_comercial: input.empresa_nombre.trim(),
+        })
         .select('id')
         .single();
-      if (eErr) throw new Error(`Error Empresa: ${eErr.message}`);
+
+      if (empError) return { data: null, error: `Error Empresa: ${empError.message}` };
       empresa_id = nueva.id;
     }
 
-    // 2. Crear Oportunidad (Crucial para el Pipeline)
-    const { data: opp, error: oErr } = await supabaseAdmin
+    // 2. Crear oportunidad vinculada
+    const { data: opp, error: oppError } = await supabaseAdmin
       .from('oportunidades')
       .insert({
         empresa_id,
@@ -92,11 +96,13 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       })
       .select('id')
       .single();
-    if (oErr) throw new Error(`Error Oportunidad: ${oErr.message}`);
 
-    // 3. Generar Folio e Insertar Cotización Directa
+    if (oppError) return { data: null, error: `Error Oportunidad: ${oppError.message}` };
+
+    // 3. Crear cotización directa (Sin RPC para evitar errores de caché)
     const folio = await generarFolio();
-    const { data: cot, error: cErr } = await supabaseAdmin
+
+    const { data: cot, error: cotError } = await supabaseAdmin
       .from('cotizaciones')
       .insert({
         folio,
@@ -113,13 +119,13 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       .select('id, folio')
       .single();
 
-    if (cErr) throw new Error(`Error Cotización: ${cErr.message}`);
+    if (cotError) return { data: null, error: `Error Cotización: ${cotError.message}` };
 
     return { data: { id: cot.id, folio: cot.folio }, error: null };
     
   } catch (err: any) {
-    console.error('CRITICAL_ERROR:', err.message);
-    return { data: null, error: err.message };
+    console.error('[crearCotizacion] EXCEPCIÓN:', err);
+    return { data: null, error: err.message ?? 'Error inesperado en el servidor' };
   }
 }
   // ── actualizarCotizacion ──────────────────────────────────────────────────────
