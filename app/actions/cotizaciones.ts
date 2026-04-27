@@ -65,55 +65,52 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
   data: { id: string; folio: string } | null;
   error: string | null;
 }> {
-  // 1. Resolver o crear empresa
-  let empresa_id = input.empresa_id ?? null;
-
-  if (!empresa_id) {
-    const { data: existente } = await supabaseAdmin
-      .from('empresas')
-      .select('id')
-      .ilike('nombre_comercial', input.empresa_nombre.trim())
-      .maybeSingle();
-
-    if (existente?.id) {
-      empresa_id = existente.id;
-    } else {
-      const { data: nueva, error: empError } = await supabaseAdmin
-        .from('empresas')
-        .insert({
-          nombre_comercial: input.empresa_nombre.trim(),
-        })
-        .select('id')
-        .single();
-      if (empError) return { data: null, error: empError.message };
-      empresa_id = nueva.id;
-    }
-  }
-
-  // 2. Crear oportunidad vinculada
-  const { data: opp, error: oppError } = await supabaseAdmin
-    .from('oportunidades')
-    .insert({
-      empresa_id,
-      tipo:         input.tipo.split('-')[0] as 'frenos' | 'refacciones' | 'servicios',
-      titulo:       `Cotización ${input.tipo} — ${input.empresa_nombre}`,
-      estado:       'cotizacion_enviada',
-      probabilidad: 40,
-      monto_estimado: input.total_mxn,
-      vendedor_id:  input.vendedor_id ?? null,
-    })
-    .select('id')
-    .single();
-
-  if (oppError) {
-    console.error('[crearCotizacion] oportunidad:', oppError);
-    return { data: null, error: oppError.message };
-  }
-
-  // 3. Crear cotización
-  const folio = await generarFolio();
-
   try {
+    // 1. Resolver o crear empresa
+    let empresa_id = input.empresa_id ?? null;
+
+    if (!empresa_id) {
+      const { data: existente } = await supabaseAdmin
+        .from('empresas')
+        .select('id')
+        .ilike('nombre_comercial', input.empresa_nombre.trim())
+        .maybeSingle();
+
+      if (existente?.id) {
+        empresa_id = existente.id;
+      } else {
+        const { data: nueva, error: empError } = await supabaseAdmin
+          .from('empresas')
+          .insert({
+            nombre_comercial: input.empresa_nombre.trim(),
+          })
+          .select('id')
+          .single();
+        if (empError) return { data: null, error: `Error Empresa: ${empError.message}` };
+        empresa_id = nueva.id;
+      }
+    }
+
+    // 2. Crear oportunidad vinculada
+    const { data: opp, error: oppError } = await supabaseAdmin
+      .from('oportunidades')
+      .insert({
+        empresa_id,
+        tipo:         input.tipo.split('-')[0] as any,
+        titulo:       `Cotización ${input.tipo} — ${input.empresa_nombre}`,
+        estado:       'cotizacion_enviada',
+        probabilidad: 40,
+        monto_estimado: input.total_mxn,
+        vendedor_id:  input.vendedor_id ?? null,
+      })
+      .select('id')
+      .single();
+
+    if (oppError) return { data: null, error: `Error Oportunidad: ${oppError.message}` };
+
+    // 3. Crear cotización
+    const folio = await generarFolio();
+
     const { data: cotData, error: cotError } = await supabaseAdmin
       .from('cotizaciones')
       .insert({
@@ -138,10 +135,9 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
 
     console.log('[crearCotizacion] creada:', cotData.folio ?? cotData.id);
     return { data: { id: cotData.id, folio: cotData.folio ?? '' }, error: null };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error inesperado';
-    console.error('[crearCotizacion] catch:', err);
-    return { data: null, error: message };
+  } catch (err: any) {
+    console.error('[crearCotizacion] EXCEPCIÓN:', err);
+    return { data: null, error: err.message ?? 'Error inesperado en el servidor' };
   }
 }
 
