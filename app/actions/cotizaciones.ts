@@ -1,4 +1,4 @@
-'use server';
+F'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { CotizacionRow, CrearCotizacionInput } from './types';
@@ -115,21 +115,21 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
   const folio = await generarFolio();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: cotData, error: cotError } = await (supabaseAdmin.rpc as any)(
-    'crear_cotizacion_v2',
-    {
-      p_folio:       folio,
-      p_empresa_id:  empresa_id,
-      p_vendedor_id: input.vendedor_id ?? null,
-      p_tipo:        input.tipo,
-      p_estado:      'enviada',
-      p_subtotal:    input.subtotal,
-      p_iva:         input.iva,
-      p_total_mxn:   input.total_mxn,
-      p_notas:       input.notas ?? null,
-    },
-  );
-
+   // Cambiamos la llamada para asegurar que no use cache
+ const { data: cotData, error: cotError } = await supabaseAdmin.rpc(
+      'crear_cotizacion_v2',
+      {
+        p_folio: folio,
+        p_empresa_id: empresa_id,
+        p_vendedor_id: input.vendedor_id ?? null,
+        p_tipo: input.tipo,
+        p_estado: 'enviada',
+        p_subtotal: input.subtotal,
+        p_iva: input.iva,
+        p_total_mxn: input.total_mxn,
+        p_notas: input.notas ?? null,
+      }
+    );
   if (cotError || !cotData || !cotData[0]) {
     console.error('[crearCotizacion] cotización:', cotError);
     return { data: null, error: cotError?.message ?? 'Error al insertar cotización' };
