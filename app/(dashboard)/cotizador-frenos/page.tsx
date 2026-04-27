@@ -5,7 +5,9 @@ import QRCode from 'qrcode';
 import { Loader2, RefreshCw, Check, FileText, Printer, Mail } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
+import { obtenerClientes } from '@/app/actions/clientes';
 import type { UsuarioRow } from '@/app/actions/types';
+import { ChevronDown } from 'lucide-react';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface Componente {
@@ -347,7 +349,25 @@ export default function CotizadorFrenosPage() {
   const [direccion,    setDireccion]    = useState('');
   const [emailCliente, setEmailCliente] = useState('');
 
+  const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
+
   void usuarios; // cargado para uso futuro (vendedores)
+
+  const cargarTodosLosClientes = async () => {
+    setBuscandoEmpresa(true);
+    const { data, error } = await obtenerClientes();
+    if (!error && data) {
+      setTodosLosClientes(data.map(c => ({
+        id: c.id,
+        nombre_comercial: c.nombre_comercial || c.razon_social || 'Sin nombre',
+        rfc: c.rfc,
+        email: c.email,
+        telefono: c.telefono
+      })));
+    }
+    setBuscandoEmpresa(false);
+  };
 
   // ── Fetch TC DOF — cascade: DOF → Banxico → paginasweb + caché localStorage ─
   const fetchTC = useCallback(async () => {
@@ -491,9 +511,15 @@ export default function CotizadorFrenosPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6 pb-16">
-
-      {/* Header: solo TC */}
-      <div className="flex justify-end">
+      
+      {/* Título de la página */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-[#0f2d55] tracking-tight">Cotizador de Frenos</h1>
+          <p className="text-gray-500 text-sm font-medium">Configura y genera cotizaciones premium para retardadores</p>
+        </div>
+        
+        {/* Header: solo TC */}
         <div className="w-full sm:w-64 bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm flex items-center gap-2">
           <div className="flex-1">
             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipo de cambio DOF</p>
@@ -710,10 +736,14 @@ export default function CotizadorFrenosPage() {
               <input
                 type="text"
                 value={empresa}
+                onFocus={() => {
+                  if (todosLosClientes.length === 0) cargarTodosLosClientes();
+                }}
                 onChange={async e => {
                   const q = e.target.value;
                   setEmpresa(q);
                   setEmpresaId('');
+                  setMostrarTodos(false);
                   if (q.length >= 2) {
                     setBuscandoEmpresa(true);
                     const res = await buscarEmpresas(q);
@@ -724,12 +754,22 @@ export default function CotizadorFrenosPage() {
                   }
                 }}
                 placeholder="Nombre de la empresa..."
-                className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+                className="w-full border border-gray-300 rounded-xl pl-3 pr-10 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
               />
-              {buscandoEmpresa && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+              <button
+                type="button"
+                onClick={() => setMostrarTodos(!mostrarTodos)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <ChevronDown size={18} className={`transition-transform ${mostrarTodos ? 'rotate-180' : ''}`} />
+              </button>
+              {buscandoEmpresa && <Loader2 size={13} className="absolute right-10 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
             </div>
-            {sugerenciasEmpresa.length > 0 && !empresaId && (
-              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+            
+            {/* Submenú: Sugerencias de búsqueda */}
+            {sugerenciasEmpresa.length > 0 && !empresaId && !mostrarTodos && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coincidencias</div>
                 {sugerenciasEmpresa.map(emp => (
                   <button
                     key={emp.id}
@@ -740,12 +780,45 @@ export default function CotizadorFrenosPage() {
                       if (!emailCliente && emp.email) setEmailCliente(emp.email);
                       setSugerenciasEmpresa([]);
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
+                    className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors flex items-center justify-between"
                   >
-                    <p className="text-sm font-semibold text-gray-800">{emp.nombre_comercial}</p>
-                    {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                    <div>
+                      <p className="text-sm font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                    </div>
+                    <Check size={14} className="text-red-500 opacity-0 group-hover:opacity-100" />
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Submenú: Todos los clientes */}
+            {mostrarTodos && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                  <span>Todos los clientes</span>
+                  {buscandoEmpresa && <Loader2 size={10} className="animate-spin" />}
+                </div>
+                {todosLosClientes.length > 0 ? (
+                  todosLosClientes.map(emp => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onClick={() => {
+                        setEmpresa(emp.nombre_comercial);
+                        setEmpresaId(emp.id);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setMostrarTodos(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <p className="text-sm font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                    </button>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-xs text-gray-400">Cargando clientes...</div>
+                )}
               </div>
             )}
           </div>
