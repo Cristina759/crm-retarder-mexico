@@ -66,18 +66,22 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
   error: string | null;
 }> {
   try {
+    // 1. Resolver Empresa
     let empresa_id = input.empresa_id ?? null;
     if (!empresa_id) {
-      const { data: existente } = await supabaseAdmin.from('empresas').select('id').ilike('nombre_comercial', input.empresa_nombre.trim()).maybeSingle();
-      if (existente?.id) { empresa_id = existente.id; } 
-      else {
-        const { data: nueva, error: empError } = await supabaseAdmin.from('empresas').insert({ nombre_comercial: input.empresa_nombre.trim() }).select('id').single();
-        if (empError) return { data: null, error: empError.message };
-        empresa_id = nueva.id;
-      }
+      const { data: nueva, error: eErr } = await supabaseAdmin
+        .from('empresas')
+        .insert({ nombre_comercial: input.empresa_nombre.trim() })
+        .select('id')
+        .single();
+      if (eErr) throw new Error(`Error Empresa: ${eErr.message}`);
+      empresa_id = nueva.id;
     }
 
-    const { data: opp, error: oppError } = await supabaseAdmin.from('oportunidades').insert({
+    // 2. Crear Oportunidad (Crucial para el Pipeline)
+    const { data: opp, error: oErr } = await supabaseAdmin
+      .from('oportunidades')
+      .insert({
         empresa_id,
         tipo: input.tipo.split('-')[0] as any,
         titulo: `Cotización ${input.tipo} - ${input.empresa_nombre}`,
@@ -85,36 +89,36 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
         probabilidad: 40,
         monto_estimado: input.total_mxn,
         vendedor_id: input.vendedor_id ?? null,
-      }).select('id').single();
+      })
+      .select('id')
+      .single();
+    if (oErr) throw new Error(`Error Oportunidad: ${oErr.message}`);
 
-    if (oppError) return { data: null, error: oppError.message };
-
+    // 3. Generar Folio e Insertar Cotización Directa
     const folio = await generarFolio();
+    const { data: cot, error: cErr } = await supabaseAdmin
+      .from('cotizaciones')
+      .insert({
+        folio,
+        empresa_id,
+        oportunidad_id: opp.id,
+        vendedor_id: input.vendedor_id ?? null,
+        tipo: input.tipo,
+        estado: 'enviada',
+        subtotal: input.subtotal,
+        iva: input.iva,
+        total_mxn: input.total_mxn,
+        notas: input.notas ?? null,
+      })
+      .select('id, folio')
+      .single();
 
-    // Usamos 'as any' para que Vercel no se queje del nombre de la función
-    const { data: cotData, error: cotError } = await (supabaseAdmin.rpc as any)(
-      'crear_cotizacion_v2',
-      {
-        p_folio: folio,
-        p_empresa_id: empresa_id,
-        p_oportunidad_id: opp.id,
-        p_vendedor_id: input.vendedor_id ?? null,
-        p_tipo: input.tipo,
-        p_estado: 'enviada',
-        p_subtotal: input.subtotal,
-        p_iva: input.iva,
-        p_total_mxn: input.total_mxn,
-        p_notas: input.notas ?? null,
-      }
-    );
+    if (cErr) throw new Error(`Error Cotización: ${cErr.message}`);
 
-    if (cotError || !cotData || !cotData[0]) {
-      return { data: null, error: cotError?.message ?? 'Error al insertar' };
-    }
-
-    return { data: { id: cotData[0].id, folio: cotData[0].folio }, error: null };
+    return { data: { id: cot.id, folio: cot.folio }, error: null };
     
   } catch (err: any) {
+    console.error('CRITICAL_ERROR:', err.message);
     return { data: null, error: err.message };
   }
 }
