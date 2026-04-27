@@ -146,62 +146,6 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
     return { data: null, error: err.message ?? 'Error inesperado' };
   }
 }
-  // 2. Crear oportunidad vinculada
-  const { data: opp, error: oppError } = await supabaseAdmin
-    .from('oportunidades')
-    .insert({
-      empresa_id,
-      tipo:         input.tipo.split('-')[0] as 'frenos' | 'refacciones' | 'servicios',
-      titulo:       `Cotización ${input.tipo} — ${input.empresa_nombre}`,
-      estado:       'cotizacion_enviada',
-      probabilidad: 40,
-      monto_estimado: input.total_mxn,
-      vendedor_id:  input.vendedor_id ?? null,
-    })
-    .select('id')
-    .single();
-
-  if (oppError) {
-    console.error('[crearCotizacion] oportunidad:', oppError);
-    return { data: null, error: oppError.message };
-  }
-
-  // 3. Crear cotización
-  const folio = await generarFolio();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-   // Cambiamos la llamada para asegurar que no use cache
-const { data: cotData, error: cotError } = await supabaseAdmin.rpc(
-      'crear_cotizacion_v2',
-      {
-        p_folio: folio,
-        p_empresa_id: empresa_id,
-        p_oportunidad_id: opp.id,
-        p_vendedor_id: input.vendedor_id ?? null,
-        p_tipo: input.tipo,
-        p_estado: 'enviada',
-        p_subtotal: input.subtotal,
-        p_iva: input.iva,
-        p_total_mxn: input.total_mxn,
-        p_notas: input.notas ?? null,
-      }
-    );
-
-    if (cotError || !cotData || !cotData[0]) {
-      console.error('[crearCotizacion] cotización:', cotError);
-      return { data: null, error: cotError?.message ?? 'Error al insertar cotización' };
-    }
-
-    const cot = cotData[0] as { id: string; folio: string };
-
-    console.log('[crearCotizacion] creada:', cot.folio ?? cot.id);
-    return { data: { id: cot.id, folio: cot.folio ?? '' }, error: null };
-  } catch (err: any) {
-    console.error('[crearCotizacion] catch:', err);
-    return { data: null, error: err.message ?? 'Error inesperado' };
-  }
-}
-
 // ── actualizarCotizacion ──────────────────────────────────────────────────────
 export async function actualizarCotizacion(
   id: string,
