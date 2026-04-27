@@ -116,6 +116,60 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // @ts-ignore
+    export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
+  data: { id: string; folio: string } | null;
+  error: string | null;
+}> {
+  try {
+    // 1. Resolver o crear empresa
+    let empresa_id = input.empresa_id ?? null;
+
+    if (!empresa_id) {
+      const { data: existente } = await supabaseAdmin
+        .from('empresas')
+        .select('id')
+        .ilike('nombre_comercial', input.empresa_nombre.trim())
+        .maybeSingle();
+
+      if (existente?.id) {
+        empresa_id = existente.id;
+      } else {
+        const { data: nueva, error: empError } = await supabaseAdmin
+          .from('empresas')
+          .insert({
+            nombre_comercial: input.empresa_nombre.trim(),
+          })
+          .select('id')
+          .single();
+        if (empError) return { data: null, error: empError.message };
+        empresa_id = nueva.id;
+      }
+    }
+
+    // 2. Crear oportunidad vinculada
+    const { data: opp, error: oppError } = await supabaseAdmin
+      .from('oportunidades')
+      .insert({
+        empresa_id,
+        tipo: input.tipo.split('-')[0] as 'frenos' | 'refacciones' | 'servicios',
+        titulo: `Cotización ${input.tipo} - ${input.empresa_nombre}`,
+        estado: 'cotizacion_enviada',
+        probabilidad: 40,
+        monto_estimado: input.total_mxn,
+        vendedor_id: input.vendedor_id ?? null,
+      })
+      .select('id')
+      .single();
+
+    if (oppError) {
+      console.error('[crearCotizacion] oportunidad:', oppError);
+      return { data: null, error: oppError.message };
+    }
+
+    // 3. Crear cotización
+    const folio = await generarFolio();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: cotData, error: cotError } = await supabaseAdmin.rpc(
       'crear_cotizacion_v2',
       {
