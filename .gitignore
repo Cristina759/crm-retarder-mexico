@@ -42,3 +42,16 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+.vercel
+
+# archivos de datos y temporales
+*.xlsx
+*.xls
+*.csv
+*.pdf
+~$*
+desktop.ini
+blobs/
+manifests/
+scratch/
