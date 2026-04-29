@@ -3,128 +3,79 @@
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { OportunidadEstado, OportunidadRow, CrearOportunidadInput } from './types';
 
-// ── obtenerOportunidades ──────────────────────────────────────────────────────
-export async function obtenerOportunidades(): Promise<{
-  data: OportunidadRow[];
-  error: string | null;
-}> {
-  console.log('[obtenerOportunidades] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'OK' : 'VACÍO');
-  console.log('[obtenerOportunidades] SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'OK' : 'VACÍO');
-
+// ── obtenerOportunidades (ULTRA-LIGERA) ──────────────────────────────────────
+export async function obtenerOportunidades(): Promise<{ data: OportunidadRow[]; error: string | null; }> {
   try {
+    // 1. Consulta plana y rápida
     const { data, error } = await supabaseAdmin
       .from('oportunidades')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('id, titulo, estado, probabilidad, monto_estimado, vendedor_id, empresa_id, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
 
-    console.log('[obtenerOportunidades] result:', { count: data?.length, error });
+    if (error) return { data: [], error: error.message };
+    if (!data || data.length === 0) return { data: [], error: null };
 
-    if (error) {
-      console.error('[obtenerOportunidades] Supabase error:', JSON.stringify(error));
-      return { data: [], error: error.message };
-    }
-
-    const rows = (data ?? []) as unknown as Array<Omit<OportunidadRow, 'empresas' | 'vendedor'> & { empresa_id: string }>;
-    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
-
-    const { data: empresas } = empresaIds.length
-      ? await supabaseAdmin
-          .from('empresas')
-          .select('id, nombre_comercial')
-          .in('id', empresaIds)
-      : { data: [] as Array<{ id: string; nombre_comercial: string }> };
-
+    // 2. Carga de nombres de empresas en paralelo (más rápido)
+    const empresaIds = Array.from(new Set(data.map(r => r.empresa_id).filter(Boolean)));
+    const { data: empresas } = await supabaseAdmin
+      .from('empresas')
+      .select('id, nombre_comercial')
+      .in('id', empresaIds);
+    
     const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
-    const enriched: OportunidadRow[] = rows.map(r => ({
+    // 3. Enriquecimiento en memoria
+    const enriched: OportunidadRow[] = data.map(r => ({
       ...r,
+      titulo: r.titulo || 'Sin título',
+      estado: (r.estado as OportunidadEstado) || 'lead',
+      probabilidad: r.probabilidad ?? 0,
+      monto_estimado: r.monto_estimado ?? 0,
+      created_at: r.created_at || new Date().toISOString(),
+      updated_at: r.created_at || new Date().toISOString(),
       empresas: empresaMap.has(r.empresa_id) ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
       vendedor: null,
-    })) as OportunidadRow[];
+    }));
 
     return { data: enriched, error: null };
   } catch (e) {
-    console.error('[obtenerOportunidades] excepción:', e);
-    return { data: [], error: String(e) };
+    console.error('[obtenerOportunidades] Error:', e);
+    return { data: [], error: 'Error de conexión rápida' };
   }
 }
 
 // ── actualizarEstadoOportunidad ───────────────────────────────────────────────
-export async function actualizarEstadoOportunidad(
-  id: string,
-  estado: OportunidadEstado,
-  probabilidad?: number
-): Promise<{ error: string | null }> {
-  const payload = probabilidad !== undefined
-    ? { estado, probabilidad }
-    : { estado };
-
-  const { error } = await supabaseAdmin
-    .from('oportunidades')
-    .update(payload)
-    .eq('id', id);
-
-  if (error) {
-    console.error('[actualizarEstadoOportunidad]', error);
-    return { error: error.message };
-  }
-  return { error: null };
+export async function actualizarEstadoOportunidad(id: string, estado: OportunidadEstado, probabilidad?: number) {
+  const { error } = await supabaseAdmin.from('oportunidades').update({ estado, probabilidad }).eq('id', id);
+  return { error: error?.message ?? null };
 }
 
 // ── eliminarOportunidad ───────────────────────────────────────────────────────
-export async function eliminarOportunidad(id: string): Promise<{ error: string | null }> {
-  const { error } = await supabaseAdmin
-    .from('oportunidades')
-    .delete()
-    .eq('id', id);
+export async function eliminarOportunidad(id: string) {
+  // Desligar registros que apuntan a esta oportunidad antes de borrar
+  await supabaseAdmin.from('cotizaciones').update({ oportunidad_id: null }).eq('oportunidad_id', id);
+  await supabaseAdmin.from('ordenes_servicio').update({ oportunidad_id: null }).eq('oportunidad_id', id);
 
-  if (error) {
-    console.error('[eliminarOportunidad]', error);
-    return { error: error.message };
-  }
-  return { error: null };
+  const { error } = await supabaseAdmin.from('oportunidades').delete().eq('id', id);
+  return { error: error?.message ?? null };
 }
 
 // ── crearOportunidad ──────────────────────────────────────────────────────────
-export async function crearOportunidad(
-  input: CrearOportunidadInput
-): Promise<{ data: { id: string } | null; error: string | null }> {
-  let empresa_id = input.empresa_id ?? null;
-
-  if (!empresa_id && input.empresa_nombre) {
-    const { data: emp, error: empError } = await supabaseAdmin
-      .from('empresas')
-      .insert({ nombre_comercial: input.empresa_nombre })
+export async function crearOportunidad(input: CrearOportunidadInput) {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('oportunidades')
+      .insert({
+        empresa_id: input.empresa_id,
+        titulo: input.titulo,
+        estado: (input.estado || 'lead') as any,
+        probabilidad: input.probabilidad || 50,
+        monto_estimado: input.monto_estimado || 0,
+        vendedor_id: input.vendedor_id
+      })
       .select('id')
       .single();
-
-    if (empError) {
-      console.error('[crearOportunidad] crear empresa:', empError);
-      return { data: null, error: empError.message };
-    }
-    empresa_id = emp.id;
-  }
-
-  if (!empresa_id) {
-    return { data: null, error: 'Se requiere empresa_id o empresa_nombre.' };
-  }
-
-  const { data, error } = await supabaseAdmin
-    .from('oportunidades')
-    .insert({
-      empresa_id,
-      titulo:       input.titulo,
-      estado:       input.estado       ?? 'lead',
-      probabilidad: input.probabilidad ?? 50,
-      monto_estimado: input.monto_estimado ?? 0,
-      vendedor_id:  input.vendedor_id  ?? null,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    console.error('[crearOportunidad]', error);
-    return { data: null, error: error.message };
-  }
-  return { data, error: null };
+    return { data, error: error?.message ?? null };
+  } catch (e) { return { data: null, error: String(e) }; }
 }
