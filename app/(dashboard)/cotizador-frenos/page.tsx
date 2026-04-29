@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
-import { Loader2, RefreshCw, Check, FileText, Printer, Mail } from 'lucide-react';
+import { 
+  Loader2, RefreshCw, Check, FileText, Printer, Mail, 
+  ChevronDown, X, Trash2, Plus, Search, AlertCircle 
+} from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
 import { obtenerClientes } from '@/app/actions/clientes';
 import type { UsuarioRow } from '@/app/actions/types';
-import { ChevronDown } from 'lucide-react';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface Componente {
@@ -322,7 +324,7 @@ export default function CotizadorFrenosPage() {
 
   const [usuarios,     setUsuarios]     = useState<UsuarioRow[]>([]);
 
-  const [folio,         setFolio]        = useState(() => generarFolio());
+  const [folio,         setFolio]        = useState('');
   const [atencionA,     setAtencionA]    = useState('');
   const [observaciones, setObservaciones] = useState(
 `*NO INCLUYE MODIFICACIÓN DE CARDANES
@@ -334,6 +336,9 @@ export default function CotizadorFrenosPage() {
 `*PRECIO SUJETO A CAMBIO SIN PREVIO AVISO
 *COTIZACIÓN VÁLIDA POR 8 DÍAS
 *EQUIPO NUEVO CON GARANTÍA DE UN AÑO`);
+  const [politicas, setPoliticas] = useState(
+    `*COTIZACIÓN VÁLIDA POR 15 DÍAS\n*GARANTÍA DE 30 DÍAS EN MANO DE OBRA`
+  );
 
   const [guardando,    setGuardando]    = useState(false);
   const [guardadoOk,   setGuardadoOk]  = useState(false);
@@ -411,6 +416,8 @@ export default function CotizadorFrenosPage() {
   }, []);
 
   useEffect(() => {
+    setFolio(generarFolio());
+    setFechaHoy(new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' }));
     fetchTC();
     obtenerUsuarios().then(({ data }) => setUsuarios(data));
     QRCode.toDataURL('https://tgrpentarmexico.com/', { width: 140, margin: 1 }).then(setQrDataUrl);
@@ -455,7 +462,7 @@ export default function CotizadorFrenosPage() {
   const totalPDFUSD  = subtotalUSD + trasladoUSD + manoObraUSD + kitLedUSD;
   const ivaUSD       = Math.round(totalPDFUSD * 0.16 * 100) / 100;
   const totalFinalUSD = Math.round(totalPDFUSD * 1.16 * 100) / 100;
-  const fechaHoy     = new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' });
+  const [fechaHoy, setFechaHoy] = useState('');
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
@@ -753,54 +760,42 @@ export default function CotizadorFrenosPage() {
                     setSugerenciasEmpresa([]);
                   }
                 }}
-                placeholder="Nombre de la empresa..."
-                className="w-full border border-gray-300 rounded-xl pl-3 pr-10 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+                placeholder="Busca y selecciona un cliente..."
+                className={`w-full border rounded-xl pl-3 pr-10 h-10 text-sm font-semibold outline-none transition-all ${
+                  !empresaId && empresa.length > 0 
+                    ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400' 
+                    : empresaId 
+                      ? 'border-green-300 bg-green-50/10 text-gray-800 focus:border-green-400'
+                      : 'border-gray-300 text-gray-800 focus:border-red-400'
+                }`}
               />
               <button
                 type="button"
-                onClick={() => setMostrarTodos(!mostrarTodos)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
+                onClick={async () => {
+                  if (sugerenciasEmpresa.length > 0) {
+                    setSugerenciasEmpresa([]);
+                  } else {
+                    setBuscandoEmpresa(true);
+                    const res = await buscarEmpresas('');
+                    setSugerenciasEmpresa(res);
+                    setBuscandoEmpresa(false);
+                    setEmpresaId('');
+                  }
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-1"
               >
-                <ChevronDown size={18} className={`transition-transform ${mostrarTodos ? 'rotate-180' : ''}`} />
+                <ChevronDown size={18} className={`transition-transform ${sugerenciasEmpresa.length > 0 ? 'rotate-180 text-red-600' : ''}`} />
               </button>
               {buscandoEmpresa && <Loader2 size={13} className="absolute right-10 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
-            </div>
-            
-            {/* Submenú: Sugerencias de búsqueda */}
-            {sugerenciasEmpresa.length > 0 && !empresaId && !mostrarTodos && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
-                <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coincidencias</div>
-                {sugerenciasEmpresa.map(emp => (
-                  <button
-                    key={emp.id}
-                    type="button"
-                    onClick={() => {
-                      setEmpresa(emp.nombre_comercial);
-                      setEmpresaId(emp.id);
-                      if (!emailCliente && emp.email) setEmailCliente(emp.email);
-                      setSugerenciasEmpresa([]);
-                    }}
-                    className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors flex items-center justify-between"
-                  >
-                    <div>
-                      <p className="text-sm font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
-                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
-                    </div>
-                    <Check size={14} className="text-red-500 opacity-0 group-hover:opacity-100" />
-                  </button>
-                ))}
-              </div>
-            )}
 
-            {/* Submenú: Todos los clientes */}
-            {mostrarTodos && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
-                  <span>Todos los clientes</span>
-                  {buscandoEmpresa && <Loader2 size={10} className="animate-spin" />}
-                </div>
-                {todosLosClientes.length > 0 ? (
-                  todosLosClientes.map(emp => (
+              {/* Submenú: Sugerencias de búsqueda */}
+              {sugerenciasEmpresa.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                    <span>Seleccionar Cliente</span>
+                    <button onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-red-600"><X size={14} /></button>
+                  </div>
+                  {sugerenciasEmpresa.map(emp => (
                     <button
                       key={emp.id}
                       type="button"
@@ -808,19 +803,50 @@ export default function CotizadorFrenosPage() {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
                         if (!emailCliente && emp.email) setEmailCliente(emp.email);
-                        setMostrarTodos(false);
+                        setSugerenciasEmpresa([]);
                       }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors border-b border-gray-50 last:border-0"
+                      className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors flex items-center justify-between"
                     >
-                      <p className="text-sm font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
-                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id ? <Check size={14} className="text-red-500" /> : <Check size={14} className="text-red-500 opacity-0 group-hover:opacity-100" />}
                     </button>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-xs text-gray-400">Cargando clientes...</div>
-                )}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+
+              {/* Submenú: Todos los clientes */}
+              {mostrarTodos && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                    <span>Todos los clientes</span>
+                    {buscandoEmpresa && <Loader2 size={10} className="animate-spin" />}
+                  </div>
+                  {todosLosClientes.length > 0 ? (
+                    todosLosClientes.map(emp => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        onClick={() => {
+                          setEmpresa(emp.nombre_comercial);
+                          setEmpresaId(emp.id);
+                          if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                          setMostrarTodos(false);
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors border-b border-gray-50 last:border-0"
+                      >
+                        <p className="text-sm font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-xs text-gray-400">Cargando clientes...</div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Email</label>
@@ -849,6 +875,17 @@ export default function CotizadorFrenosPage() {
             value={notasCot} onChange={e => setNotasCot(e.target.value)}
             rows={3}
             className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 outline-none focus:border-red-400 transition-colors resize-none font-mono"
+          />
+        </div>
+
+        {/* Políticas */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Políticas y Garantías</label>
+          <textarea
+            value={politicas}
+            onChange={e => setPoliticas(e.target.value)}
+            rows={3}
+            className="w-full border border-gray-300 rounded-xl px-3 py-2 text-[10px] text-gray-800 outline-none focus:border-red-400 transition-colors resize-none font-mono"
           />
         </div>
 
@@ -883,16 +920,28 @@ export default function CotizadorFrenosPage() {
             <Check size={14} strokeWidth={3} /> Cotización guardada exitosamente.
           </p>
         )}
-        <button
-          onClick={handleGuardar}
-          disabled={guardando || !marcaActual || !empresa.trim()}
-          className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-black text-base rounded-2xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2 shadow-lg"
-        >
-          {guardando
-            ? <><Loader2 size={20} className="animate-spin" /> Guardando...</>
-            : <><FileText size={20} /> Generar Cotización</>
-          }
-        </button>
+        <div className="flex flex-col gap-2">
+          {!empresaId && empresa.trim().length > 0 && (
+            <p className="text-[10px] text-red-600 font-bold text-right animate-pulse">Debes seleccionar un cliente de la lista para continuar</p>
+          )}
+          {!marcaActual && (
+            <p className="text-[10px] text-amber-600 font-bold text-right">Selecciona una marca y modelo para cotizar</p>
+          )}
+          <button
+            onClick={handleGuardar}
+            disabled={guardando || !marcaActual || !empresaId}
+            className={`w-full h-14 font-black text-base rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${
+              guardando || !marcaActual || !empresaId
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+                : 'bg-red-600 hover:bg-red-700 text-white shadow-red-200'
+            }`}
+          >
+            {guardando
+              ? <><Loader2 size={20} className="animate-spin" /> GUARDANDO...</>
+              : <><FileText size={20} /> GENERAR COTIZACIÓN</>
+            }
+          </button>
+        </div>
       </div>
 
       {/* ── Área de impresión (oculta en pantalla) ── */}
@@ -1036,8 +1085,7 @@ export default function CotizadorFrenosPage() {
             {/* Políticas y garantías */}
             <div className="p-policies">
               <div className="p-section-title" style={{ color: '#c0392b', borderColor: '#c0392b' }}>Políticas y Garantías</div>
-              <div className="p-policy-line">*COTIZACIÓN VÁLIDA POR 15 DÍAS</div>
-              <div className="p-policy-line">*GARANTÍA DE 30 DÍAS EN MANO DE OBRA</div>
+              <pre className="p-obs-pre" style={{ color: '#c0392b', fontWeight: 700 }}>{politicas}</pre>
             </div>
 
             <hr className="p-hr" />
@@ -1062,7 +1110,7 @@ export default function CotizadorFrenosPage() {
                 </div>
               </div>
               <div className="p-footer-info">
-                <div className="p-footer-name">Juan Carlos Espinosa</div>
+                <div className="p-footer-name">Ing. Cristina Velasco</div>
                 <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
                 <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
@@ -1086,16 +1134,32 @@ export default function CotizadorFrenosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4; margin: 10mm 12mm; }
+        @page { size: A4 portrait; margin: 10mm 12mm; }
         @media print {
-          header, nav, footer { display: none !important; }
+          html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; }
+          header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
-          #print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+          #print-area {
+            display: block !important;
+            position: fixed;
+            top: 0; left: 0;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          .p-doc {
+            width: 100% !important;
+            min-height: 297mm !important;
+            box-sizing: border-box !important;
+          }
           .p-total-mxn { display: none !important; }
+          .no-print { display: none !important; }
         }
         /* ── Documento ── */
-        .p-doc { font-family: Arial, sans-serif; font-size: 8.5px; color: #111; padding: 4px 8px; box-sizing: border-box; background: #fff; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 8.5px; color: #111; padding: 6px 10px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .p-logos-left { display: flex; align-items: center; gap: 8px; }
