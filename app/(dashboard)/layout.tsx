@@ -31,7 +31,7 @@ const NAV_SECTIONS = [
     label: 'OPERACIONES',
     items: [
       { href: '/oportunidades',   label: 'Pipeline Comercial', icon: TrendingUp     },
-      { href: '/ordenes-servicio', label: 'Ordenes de Servicio', icon: ClipboardCheck },
+      { href: '/ordenes-servicio', label: 'Órdenes de Servicio', icon: ClipboardCheck },
       { href: '/clientes',        label: 'Clientes',           icon: Building2      },
     ],
   },
@@ -61,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const esTecnico = rol === 'tecnico';
 
   const navSections = esTecnico
-    ? [{ label: 'OPERACIONES', items: [{ href: '/ordenes-servicio', label: 'Ordenes de Servicio', icon: ClipboardCheck }] }]
+    ? [{ label: 'OPERACIONES', items: [{ href: '/ordenes-servicio', label: 'Órdenes de Servicio', icon: ClipboardCheck }] }]
     : NAV_SECTIONS.filter(s => s.label !== 'ADMIN' || rol === 'admin' || rol === 'administrativo');
 
   const showHerramientas = !esTecnico && (rol === 'admin' || rol === 'administrativo');
