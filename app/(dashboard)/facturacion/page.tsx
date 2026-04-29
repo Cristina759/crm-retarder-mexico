@@ -13,12 +13,13 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const ESTADO_COLOR: Record<string, string> = {
-  pendiente_facturar: 'bg-gray-100 text-gray-600',
-  facturada:          'bg-blue-100 text-blue-700',
-  enviada_cliente:    'bg-indigo-100 text-indigo-700',
-  pagada:             'bg-green-100 text-green-700',
-  vencida:            'bg-red-100 text-red-700',
+const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
+  pendiente:          { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
+  pendiente_facturar: { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
+  facturada:          { color: 'bg-blue-100 text-blue-700',    label: 'Facturada'        },
+  enviada_cliente:    { color: 'bg-indigo-100 text-indigo-700',label: 'Enviada a cliente'},
+  pagada:             { color: 'bg-green-100 text-green-700',  label: 'Pagada'           },
+  vencida:            { color: 'bg-red-100 text-red-700',      label: 'Vencida'          },
 };
 
 export default function FacturacionPage() {
@@ -107,9 +108,10 @@ export default function FacturacionPage() {
                 <td className="px-4 py-3 text-right text-sm font-bold text-gray-900">{fmtMXN(r.monto_factura)}</td>
                 <td className="px-4 py-3 text-xs text-gray-500">{fmtFecha(r.fecha_vencimiento)}</td>
                 <td className="px-4 py-3">
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_COLOR[r.estado_facturacion ?? ''] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {(r.estado_facturacion ?? '—').replace(/_/g, ' ')}
-                  </span>
+                  {(() => {
+                    const est = ESTADO_COLOR[r.estado_facturacion ?? ''] ?? { color: 'bg-gray-100 text-gray-600', label: r.estado_facturacion ?? '—' };
+                    return <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${est.color}`}>{est.label}</span>;
+                  })()}
                 </td>
               </tr>
             ))}
