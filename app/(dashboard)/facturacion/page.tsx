@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, AlertCircle, FileText } from 'lucide-react';
-import { obtenerFacturas, type FacturaRow } from '@/app/actions/facturacion';
+import { obtenerFacturas, obtenerResumenFacturacion, type FacturaRow } from '@/app/actions/facturacion';
 
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '—';
@@ -23,12 +23,23 @@ const ESTADO_COLOR: Record<string, string> = {
 
 export default function FacturacionPage() {
   const [rows,    setRows]    = useState<FacturaRow[]>([]);
+  const [resumen, setResumen] = useState({ totalFacturado: 0, totalCobrado: 0, totalNotasCredito: 0 });
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
   useEffect(() => {
-    obtenerFacturas()
-      .then(({ data, error }) => { if (error) setError(error); else setRows(data); })
+    Promise.all([obtenerFacturas(), obtenerResumenFacturacion()])
+      .then(([f, r]) => { 
+        if (f.error) setError(f.error); 
+        else {
+          setRows(f.data); 
+          setResumen({
+            totalFacturado: r.totalFacturado,
+            totalCobrado: r.totalCobrado,
+            totalNotasCredito: r.totalNotasCredito
+          });
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -45,8 +56,8 @@ export default function FacturacionPage() {
     </div>
   );
 
-  const totalFacturado = rows.reduce((s, r) => s + (r.monto_factura ?? 0), 0);
-  const totalCobrado   = rows.filter(r => r.estado_facturacion === 'pagada').reduce((s, r) => s + (r.monto_factura ?? 0), 0);
+  const totalFacturado = resumen.totalFacturado - resumen.totalNotasCredito;
+  const totalCobrado   = resumen.totalCobrado;
 
   return (
     <div className="space-y-5 pb-10">
@@ -55,7 +66,7 @@ export default function FacturacionPage() {
           <FileText size={18} className="text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-black text-[#0f2d55]">Facturacion</h1>
+          <h1 className="text-lg font-black text-[#0f2d55]">Facturación</h1>
           <p className="text-[11px] text-gray-400">{rows.length} factura{rows.length !== 1 ? 's' : ''}</p>
         </div>
       </div>

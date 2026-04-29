@@ -31,7 +31,7 @@ export async function obtenerCotizaciones(): Promise<{
       oportunidad_id: string | null;
     }>;
 
-    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter(Boolean)));
+    const empresaIds = Array.from(new Set(rows.map(r => r.empresa_id).filter((id): id is string => Boolean(id))));
     const oppIds     = Array.from(new Set(rows.map(r => r.oportunidad_id).filter((x): x is string => !!x)));
 
     const [empresasRes, oppsRes] = await Promise.all([
@@ -116,7 +116,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       .insert({
         folio,
         empresa_id,
-        // oportunidad_id: opp.id, // REMOVIDO TEMPORALMENTE: La tabla en Supabase no tiene esta columna
+        oportunidad_id: opp.id,
         vendedor_id: input.vendedor_id ?? null,
         tipo: input.tipo,
         estado: 'enviada',
@@ -175,16 +175,22 @@ export interface EmpresaBusquedaResult {
 }
 
 export async function buscarEmpresas(query: string): Promise<EmpresaBusquedaResult[]> {
-  if (!query || query.trim().length < 2) return [];
   try {
-    const { data } = await supabaseAdmin
+    let q = supabaseAdmin
       .from('empresas')
       .select('id, nombre_comercial, rfc, email, telefono')
-      .ilike('nombre_comercial', `%${query.trim()}%`)
-      .order('nombre_comercial')
-      .limit(8);
+      .order('nombre_comercial');
+
+    if (query.trim()) {
+      q = q.ilike('nombre_comercial', `%${query.trim()}%`).limit(15);
+    } else {
+      q = q.limit(100);
+    }
+
+    const { data } = await q;
     return (data ?? []) as EmpresaBusquedaResult[];
-  } catch {
+  } catch (e) {
+    console.error('[buscarEmpresas] error:', e);
     return [];
   }
 }
