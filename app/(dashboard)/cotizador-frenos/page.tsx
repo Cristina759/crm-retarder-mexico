@@ -1155,7 +1155,7 @@ export default function CotizadorFrenosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 12mm 14mm; }
+        @page { size: A4 portrait; margin: 8mm 10mm; }
         @media print {
           html, body { margin: 0 !important; padding: 0 !important; }
           header, nav, footer, aside { display: none !important; }
@@ -1167,14 +1167,15 @@ export default function CotizadorFrenosPage() {
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
-            min-height: 270mm !important;
+            min-height: 260mm !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
+            overflow: hidden !important;
           }
           .p-doc {
             width: 100% !important;
-            min-height: 270mm !important;
+            max-height: 280mm !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
@@ -1184,12 +1185,12 @@ export default function CotizadorFrenosPage() {
           .no-print { display: none !important; }
         }
         /* ── Documento ── */
-        .p-doc { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 8px 14px; box-sizing: border-box; background: #fff; width: 100%; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 3.8cm; height: 3.8cm; object-fit: contain; display: block; }
+        .p-logo-img { width: 3.2cm; height: 3.2cm; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }
@@ -1201,18 +1202,18 @@ export default function CotizadorFrenosPage() {
         .p-hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
         /* ── Cliente ── */
         .p-client-block { margin: 7px 0 10px 0; }
-        .p-client-name { font-size: 18px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.3px; }
-        .p-client-row { font-size: 12px; color: #444; margin-bottom: 3px; line-height: 1.5; }
+        .p-client-name { font-size: 16px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.3px; }
+        .p-client-row { font-size: 11px; color: #444; margin-bottom: 2px; line-height: 1.4; }
         .p-client-lbl { font-weight: 700; color: #222; }
         /* ── Dos columnas ── */
         .p-two-col { display: flex; gap: 20px; margin: 8px 0; }
         .p-col-works { flex: 1.3; }
         .p-col-pricing { flex: 1; }
         .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 2px solid #0d2244; padding-bottom: 4px; margin-bottom: 8px; }
-        .p-work-item { display: flex; gap: 6px; font-size: 12px; margin-bottom: 6px; line-height: 1.4; }
+        .p-work-item { display: flex; gap: 6px; font-size: 11px; margin-bottom: 4px; line-height: 1.3; }
         .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
         /* ── Precios ── */
-        .p-price-item { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; gap: 8px; }
+        .p-price-item { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; gap: 8px; }
         .p-price-desc { flex: 1; }
         .p-price-val { font-weight: 600; white-space: nowrap; }
         .p-totals { border-top: 2px solid #ddd; padding-top: 8px; margin-top: 8px; }
