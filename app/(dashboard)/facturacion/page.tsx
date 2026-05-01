@@ -159,24 +159,25 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
         <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${est.color}`}>{est.label}</span>
       </td>
       <td className="px-4 py-2">
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setEditing(true)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#0f2d55]/10 hover:bg-[#0f2d55]/20 text-[#0f2d55] transition-colors"
-            title="Editar"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0f2d55]/10 hover:bg-[#0f2d55]/20 text-[#0f2d55] transition-colors"
+            title="Editar factura"
           >
-            <Pencil size={12} />
+            <Pencil size={14} />
           </button>
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors disabled:opacity-50"
-            title="Eliminar factura"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-colors disabled:opacity-50"
+            title="Borrar factura y regresar OS"
           >
-            {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
           </button>
         </div>
       </td>
+
     </tr>
   );
 }
