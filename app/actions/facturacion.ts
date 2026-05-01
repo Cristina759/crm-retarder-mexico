@@ -59,8 +59,15 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
 
       // Abonos y Saldo
       const abonos = Array.isArray(r.abonos) ? r.abonos : [];
-      const total_pagado = abonos.reduce((s, a) => s + (Number(a?.monto) || 0), 0);
+      let total_pagado = abonos.reduce((s, a) => s + (Number(a?.monto) || 0), 0);
+      
+      // Si está pagada pero no tiene abonos (factura vieja), asumimos cobro total
+      if (r.estado_facturacion === 'pagada' && total_pagado === 0) {
+        total_pagado = Number(finalMonto) || 0;
+      }
+      
       const saldo_pendiente = Math.max(0, Number(finalMonto) - total_pagado);
+
 
 
       // Fallback de Concepto
