@@ -230,25 +230,34 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function FacturacionPage() {
   const [rows,    setRows]    = useState<FacturaRow[]>([]);
-  const [resumen, setResumen] = useState({ totalFacturado: 0, totalCobrado: 0, totalNotasCredito: 0 });
+  const [resumen, setResumen] = useState({ totalFacturado: 0, totalCobrado: 0, totalNotasCredito: 0, pendientes: 0, vencidas: 0 });
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([obtenerFacturas(), obtenerResumenFacturacion()])
-      .then(([f, r]) => {
-        if (f.error) setError(f.error);
+      .then(([{ data: fData, error: fErr }, rData]) => {
+        if (fErr) setError(fErr);
         else {
-          setRows(f.data);
+          setRows(fData);
+          // Calculamos totales desde la tabla para máxima precisión
+          const totalF = fData.reduce((s, r) => s + (Number(r.monto_factura) || 0), 0);
+          const totalC = fData.reduce((s, r) => s + (Number(r.total_pagado) || 0), 0);
+          const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
+          const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
+
           setResumen({
-            totalFacturado: r.totalFacturado,
-            totalCobrado: r.totalCobrado,
-            totalNotasCredito: r.totalNotasCredito,
+            totalFacturado: totalF,
+            totalCobrado: totalC,
+            pendientes: pends,
+            vencidas: vencs,
+            totalNotasCredito: rData.totalNotasCredito || 0
           });
         }
       })
       .finally(() => setLoading(false));
   }, []);
+
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
