@@ -125,11 +125,37 @@ function TabGeneral() {
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Órdenes Activas"     value={data.osActivas}                  icon={ClipboardCheck} color="navy"   />
-        <KPICard label="Total Neto Facturado" value={fmtMXNFull(data.totalNetoFacturado)} icon={Receipt}    color="yellow" sub="Bruto menos notas de crédito" />
-        <KPICard label="Total Cobrado"       value={fmtMXNFull(data.totalCobrado)}       icon={DollarSign} color="green"  />
-        <KPICard label="Empresas Activas"    value={data.empresas}                   icon={Building2}      color="purple" />
+        <KPICard label="Total Neto Facturado" value={fmtMXNFull(data.totalNetoFacturado)} icon={Receipt}    color="navy"   sub="Bruto − nota de crédito Maple" />
+        <KPICard label="Neto Cobrado"         value={fmtMXNFull(data.totalNetoPagado)}    icon={DollarSign} color="green"  sub="Pagadas − nota de crédito" />
+        <KPICard label="Pendiente de Cobro"   value={fmtMXNFull(data.totalPendiente)}     icon={Receipt}    color="orange" sub={`${data.pendientesPorCliente.length} clientes`} />
+        <KPICard label="Empresas Activas"     value={data.empresas}                       icon={Building2}  color="purple" />
       </div>
+
+      {/* Desglose clientes con saldo pendiente */}
+      {data.pendientesPorCliente.length > 0 && (
+        <div className="bg-white rounded-2xl border border-orange-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-black text-orange-700">Clientes con Saldo Pendiente de Cobro</p>
+            <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2.5 py-1 rounded-xl">
+              {fmtMXNFull(data.totalPendiente)} total
+            </span>
+          </div>
+          <div className="space-y-3">
+            {data.pendientesPorCliente.map((c: any) => (
+              <div key={c.cliente} className="flex items-start justify-between gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800 truncate">{c.cliente}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{c.folios.sort().join(' · ')}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-black text-orange-600">{fmtMXNFull(c.total)}</p>
+                  <p className="text-[10px] text-gray-400">{c.folios.length} factura{c.folios.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Pipeline OS donut */}
