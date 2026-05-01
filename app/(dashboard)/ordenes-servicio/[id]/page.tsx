@@ -20,8 +20,9 @@ import {
   guardarOrdenCompra,
   eliminarOrdenServicio
 } from '@/app/actions/ordenes';
+import { obtenerCotizacionPorId } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
-import type { OSRow, UsuarioRow } from '@/app/actions/types';
+import type { OSRow, UsuarioRow, CotizacionRow } from '@/app/actions/types';
 
 const OS_ESTADOS = [
   'solicitud_recibida',
@@ -399,6 +400,7 @@ export default function OSDetallePage() {
   const [desc,        setDesc]        = useState('');
   const [numOS,       setNumOS]       = useState('');
   const [numOC,       setNumOC]       = useState('');
+  const [cotizacion,  setCotizacion]  = useState<CotizacionRow | null>(null);
   const notasTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const descTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fotoOSRef   = useRef<HTMLInputElement>(null);
@@ -417,6 +419,12 @@ export default function OSDetallePage() {
         const exclude = ['Ing. Cristina Velasco', 'Ing. Juan Carlos Espinosa', 'Teresa Gutiérrez'];
         setUsuarios(uData.filter(u => !exclude.includes(u.nombre)));
         setCargando(false);
+        // Cargar cotización vinculada si existe
+        if (data?.cotizacion_id) {
+          obtenerCotizacionPorId(data.cotizacion_id).then(({ data: cot }) => {
+            if (cot) setCotizacion(cot);
+          });
+        }
       });
   }, [id]);
 
@@ -804,6 +812,40 @@ export default function OSDetallePage() {
             fotos={os.fotos_despues ?? []}
             canEdit={canEdit}
           />
+
+          {/* Cotización vinculada */}
+          {cotizacion && (
+            <div className="bg-white rounded-2xl border border-indigo-100 p-5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 mb-3 flex items-center gap-1.5">
+                <ShoppingCart size={13} /> Cotización vinculada
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase">Folio</p>
+                  <p className="text-sm font-black text-indigo-800 mt-0.5">{cotizacion.folio ?? '—'}</p>
+                </div>
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase">Total MXN</p>
+                  <p className="text-sm font-black text-indigo-800 mt-0.5">
+                    {cotizacion.total_mxn != null
+                      ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cotizacion.total_mxn)
+                      : '—'}
+                  </p>
+                </div>
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase">Tipo</p>
+                  <p className="text-sm font-black text-indigo-800 mt-0.5">{cotizacion.tipo ?? '—'}</p>
+                </div>
+                <div className="bg-indigo-50 rounded-xl p-3">
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase">Estado</p>
+                  <p className="text-sm font-black text-indigo-800 mt-0.5 capitalize">{cotizacion.estado ?? '—'}</p>
+                </div>
+              </div>
+              {cotizacion.notas && (
+                <p className="text-xs text-gray-500 mt-3 bg-gray-50 rounded-xl px-3 py-2">{cotizacion.notas}</p>
+              )}
+            </div>
+          )}
 
           {/* Firmas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

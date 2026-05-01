@@ -47,6 +47,7 @@ export interface CrearCotizacionInput {
   total_mxn: number;
   notas?: string;
   vendedor_id?: string | null;
+  folio?: string;
 }
 
 // ── Oportunidades ─────────────────────────────────────────────────────────────

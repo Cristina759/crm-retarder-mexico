@@ -166,7 +166,7 @@ function fmt(n: number, dec = 2) {
   return n.toLocaleString('es-MX', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 function fmtMXN(n: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 function totalUSD(comp: Componente[]) {
   return comp.filter(c => c.activo).reduce((s, c) => s + c.precio, 0);
@@ -469,6 +469,7 @@ export default function CotizadorFrenosPage() {
 
     try {
       const { data, error } = await crearCotizacion({
+        folio:          folio.trim() !== '' ? folio.trim() : undefined,
         empresa_id:     empresaId || undefined,
         empresa_nombre: empresa.trim(),
         vendedor_id:    null,
@@ -1079,7 +1080,7 @@ export default function CotizadorFrenosPage() {
             </div>
 
             {/* Importe en letras */}
-            <div className="p-letras no-print">SON: {numeroALetras(totalPDFUSD)}</div>
+            <div className="p-letras">SON: {numeroALetras(totalFinalUSD)}</div>
 
             <hr className="p-hr" />
 
@@ -1188,7 +1189,7 @@ export default function CotizadorFrenosPage() {
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 120px; height: 120px; object-fit: contain; display: block; }
+        .p-logo-img { width: 3.8cm; height: 3.8cm; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }

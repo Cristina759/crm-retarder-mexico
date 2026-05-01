@@ -44,7 +44,27 @@
       "Bash(py -3 -c ' *)",
       "Bash(npx eslint *)",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('exports',{}\\), indent=2\\)\\)\")",
-      "mcp__73536ee2-d375-495c-a8a0-b34356e421ec__get_advisors"
+      "mcp__73536ee2-d375-495c-a8a0-b34356e421ec__get_advisors",
+      "Bash(cat types/*.ts)",
+      "mcp__claude_ai_Supabase__get_project",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(npx kill-port *)",
+      "Bash(tail -20 C:\\\\\\\\Users\\\\\\\\cfdig\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--proyectos-crm-retarder-v2\\\\\\\\ee6a8dd5-0832-40d0-a126-3d9957027d54\\\\\\\\tasks\\\\\\\\b39zjqo9e.output)",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__get_logs",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 diff --stat HEAD)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 stash list)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 remote -v)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/\\\\\\(dashboard\\\\\\)/cotizaciones/page.tsx)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/actions/cotizaciones.ts)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 log --oneline -10)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/actions/ordenes.ts)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/\\\\\\(dashboard\\\\\\)/cotizador-frenos/page.tsx)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/\\\\\\(dashboard\\\\\\)/ordenes-servicio/page.tsx)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/actions/usuarios.ts)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 diff HEAD app/actions/cotizaciones.ts)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/\\\\\\(dashboard\\\\\\)/cotizador-servicios/page.tsx)",
+      "Bash(git -C c:/proyectos/crm-retarder-v2 show HEAD:app/\\\\\\(dashboard\\\\\\)/cotizador-refacciones/page.tsx)"
     ]
   }
 }

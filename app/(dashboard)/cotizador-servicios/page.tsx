@@ -288,7 +288,7 @@ function fmt(n: number, dec = 2) {
 }
 
 function fmtMXN(n: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
 function numeroALetras(nInput: number): string {
@@ -319,7 +319,7 @@ function numeroALetras(nInput: number): string {
   else if (miles > 1) letras = `${menor1000(miles)} MIL`;
   if (resto > 0) letras += (letras ? ' ' : '') + menor1000(resto);
   if (!letras) letras = 'CERO';
-  return `${letras} DÓLARES ${String(cents).padStart(2, '0')}/100 USD`;
+  return `${letras} PESOS ${String(cents).padStart(2, '0')}/100 MXN`;
 }
 
 // ── Componente: tarjeta de líneas (mano de obra / refacciones) ────────────────
@@ -620,6 +620,7 @@ export default function CotizadorServiciosPage() {
 
     try {
       const { data, error } = await crearCotizacion({
+        folio:          folio.trim() !== '' ? folio.trim() : undefined,
         empresa_id:     empresaId || undefined,
         empresa_nombre: empresa.trim() || cliente.trim(),
         vendedor_id:    null,
@@ -661,167 +662,16 @@ export default function CotizadorServiciosPage() {
   return (
     <div className="space-y-6 pb-16">
 
-      {/* ── Header: título + TC + cliente ── */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start">
-        {/* Título + cliente */}
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-black text-[#0f2d55] leading-tight">Cotizador de Servicios</h1>
-            <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-2.5 py-1.5 shadow-sm">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Folio:</span>
-              <input
-                type="text"
-                value={folio}
-                onChange={e => setFolio(e.target.value)}
-                className="text-xs font-semibold text-gray-700 outline-none bg-transparent w-36"
-              />
-            </div>
-          </div>
-
-          {/* Atención a Quien */}
-          <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
-              Atención a Quien *
-            </label>
-            <input
-              type="text"
-              value={cliente}
-              onChange={e => setCliente(e.target.value)}
-              placeholder="Nombre de la persona a quien va dirigida..."
-              className="w-full text-sm font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-400"
-            />
-          </div>
-
-          {/* Empresa + Email con botón enviar */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm relative">
-              <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-0.5 flex items-center gap-1">
-                Empresa
-                {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={empresa}
-                  onChange={async e => {
-                    const q = e.target.value;
-                    setEmpresa(q);
-                    setEmpresaId('');
-                    setMostrarTodos(false);
-                    if (q.length >= 2) {
-                      setBuscandoEmpresa(true);
-                      const res = await buscarEmpresas(q);
-                      setSugerenciasEmpresa(res);
-                      setBuscandoEmpresa(false);
-                    } else {
-                      setSugerenciasEmpresa([]);
-                    }
-                  }}
-                  onFocus={() => {
-                    if (todosLosClientes.length === 0) cargarTodosLosClientes();
-                    setMostrarTodos(true);
-                  }}
-                  onBlur={() => setTimeout(() => { setMostrarTodos(false); setSugerenciasEmpresa([]); }, 200)}
-                  placeholder="Razón social..."
-                  className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300 pr-8"
-                />
-                <button
-                  type="button"
-                  onMouseDown={e => e.preventDefault()}
-                  onClick={() => {
-                    if (mostrarTodos || sugerenciasEmpresa.length > 0) {
-                      setMostrarTodos(false);
-                      setSugerenciasEmpresa([]);
-                    } else {
-                      if (todosLosClientes.length === 0) cargarTodosLosClientes();
-                      setMostrarTodos(true);
-                    }
-                  }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                >
-                  <ChevronDown size={14} className={`transition-transform ${(mostrarTodos || sugerenciasEmpresa.length > 0) ? 'rotate-180 text-blue-500' : ''}`} />
-                </button>
-              </div>
-              {buscandoEmpresa && <Loader2 size={11} className="absolute right-8 top-3 animate-spin text-gray-400" />}
-              {sugerenciasEmpresa.length > 0 && (
-                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resultados de búsqueda</span>
-                    <button onMouseDown={e => e.preventDefault()} onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
-                  </div>
-                  {sugerenciasEmpresa.map(emp => (
-                    <button
-                      key={emp.id}
-                      type="button"
-                      onMouseDown={e => e.preventDefault()}
-                      onClick={() => {
-                        setEmpresa(emp.nombre_comercial);
-                        setEmpresaId(emp.id);
-                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
-                        setSugerenciasEmpresa([]);
-                        setMostrarTodos(false);
-                      }}
-                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors flex items-center justify-between group"
-                    >
-                      <div>
-                        <p className="text-xs font-bold text-gray-800 group-hover:text-blue-700">{emp.nombre_comercial}</p>
-                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
-                      </div>
-                      {empresaId === emp.id && <Check size={12} className="text-blue-500" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {mostrarTodos && sugerenciasEmpresa.length === 0 && todosLosClientes.length > 0 && (
-                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Todos los clientes</span>
-                    <button onMouseDown={e => e.preventDefault()} onClick={() => setMostrarTodos(false)} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
-                  </div>
-                  {todosLosClientes.map(emp => (
-                    <button
-                      key={emp.id}
-                      type="button"
-                      onMouseDown={e => e.preventDefault()}
-                      onClick={() => {
-                        setEmpresa(emp.nombre_comercial);
-                        setEmpresaId(emp.id);
-                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
-                        setMostrarTodos(false);
-                      }}
-                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors flex items-center justify-between group"
-                    >
-                      <div>
-                        <p className="text-xs font-bold text-gray-800 group-hover:text-blue-700">{emp.nombre_comercial}</p>
-                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
-                      </div>
-                      {empresaId === emp.id && <Check size={12} className="text-blue-500" />}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm flex items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">Email</label>
-                <input type="email" value={emailCliente} onChange={e => setEmailCliente(e.target.value)} placeholder="correo@empresa.com" className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300" />
-              </div>
-              {emailCliente && (
-                <a
-                  href={`mailto:${emailCliente}?subject=Cotización de Servicios ${folio} — Retarder México&body=Estimado/a ${cliente},%0D%0A%0D%0AAdjuntamos la cotización de servicios con folio ${folio}.%0D%0A%0D%0AServicio: ${tipoServicio ?? 'Por confirmar'}%0D%0ATotal MXN: $${totalMXN.toLocaleString('es-MX', { minimumFractionDigits: 2 })}%0D%0A%0D%0AQuedamos a sus órdenes.%0D%0A%0D%0AIng. Cristina Velasco%0D%0AÁrea de Ventas — Retarder México%0D%0Aventas@retardermexico.com%0D%0ATel: +52 55 7372 1633`}
-                  className="p-1.5 rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white transition-colors flex-shrink-0"
-                  title="Enviar cotización por email"
-                >
-                  <Mail size={13} />
-                </a>
-              )}
-            </div>
-          </div>
+      {/* Título de la página */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-[#0f2d55] tracking-tight">Cotizador de Servicios</h1>
+          <p className="text-gray-500 text-sm font-medium">Genera cotizaciones para servicios y mantenimientos</p>
         </div>
 
         {/* TC DOF */}
-        <div className="sm:w-56 bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm flex items-center gap-2">
-          <div className="flex-1">
+        <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm flex items-center gap-4">
+          <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipo de cambio DOF</p>
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-sm text-gray-400">$</span>
@@ -842,10 +692,204 @@ export default function CotizadorServiciosPage() {
           <button
             onClick={fetchTC}
             disabled={cargandoTC}
-            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors"
+            className="p-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors"
+            title="Actualizar tipo de cambio"
           >
-            {cargandoTC ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            {cargandoTC ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
           </button>
+        </div>
+      </div>
+
+      {/* ── Sección datos cotización ── */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-gray-700">Datos de la cotización</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Folio */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Folio</label>
+            <div className="flex gap-2">
+              <input
+                type="text" value={folio} onChange={e => setFolio(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors"
+              />
+              <button
+                onClick={() => setFolio(generarFolio())}
+                className="px-3 h-10 rounded-xl border border-gray-300 text-xs text-gray-500 hover:bg-gray-100 transition-colors"
+                title="Regenerar folio"
+              >
+                <RefreshCw size={13} />
+              </button>
+            </div>
+          </div>
+          {/* Atención a */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Atención a</label>
+            <input
+              type="text" value={cliente} onChange={e => setCliente(e.target.value)}
+              placeholder="Nombre del contacto..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+        </div>
+
+        {/* Sucursal + Descripción */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
+            <input
+              type="text" value={sucursal} onChange={e => setSucursal(e.target.value)}
+              placeholder="Ej. CDMX, Monterrey..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Descripción de la Cotización</label>
+            <input
+              type="text" value={descripcion} onChange={e => setDescripcion(e.target.value)}
+              placeholder="Ej. Servicio preventivo..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+        </div>
+
+        {/* Datos adicionales del cliente */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="relative">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
+              Empresa / Razón social
+              {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={empresa}
+                onFocus={() => {
+                  if (todosLosClientes.length === 0) cargarTodosLosClientes();
+                }}
+                onChange={async e => {
+                  const q = e.target.value;
+                  setEmpresa(q);
+                  setEmpresaId('');
+                  setMostrarTodos(false);
+                  if (q.length >= 2) {
+                    setBuscandoEmpresa(true);
+                    const res = await buscarEmpresas(q);
+                    setSugerenciasEmpresa(res);
+                    setBuscandoEmpresa(false);
+                  } else {
+                    setSugerenciasEmpresa([]);
+                  }
+                }}
+                placeholder="Busca y selecciona un cliente..."
+                className={`w-full border rounded-xl pl-3 pr-10 h-10 text-sm font-semibold outline-none transition-all ${
+                  !empresaId && empresa.length > 0 
+                    ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400' 
+                    : empresaId 
+                      ? 'border-green-300 bg-green-50/10 text-gray-800 focus:border-green-400'
+                      : 'border-gray-300 text-gray-800 focus:border-red-400'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (sugerenciasEmpresa.length > 0) {
+                    setSugerenciasEmpresa([]);
+                  } else {
+                    setBuscandoEmpresa(true);
+                    const res = await buscarEmpresas('');
+                    setSugerenciasEmpresa(res);
+                    setBuscandoEmpresa(false);
+                    setEmpresaId('');
+                  }
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-1"
+              >
+                <ChevronDown size={18} className={`transition-transform ${sugerenciasEmpresa.length > 0 ? 'rotate-180 text-red-600' : ''}`} />
+              </button>
+              {buscandoEmpresa && <Loader2 size={13} className="absolute right-10 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+
+              {/* Submenú: Sugerencias de búsqueda */}
+              {sugerenciasEmpresa.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                    <span>Seleccionar Cliente</span>
+                    <button onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-red-600"><X size={14} /></button>
+                  </div>
+                  {sugerenciasEmpresa.map(emp => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onClick={() => {
+                        setEmpresa(emp.nombre_comercial);
+                        setEmpresaId(emp.id);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setSugerenciasEmpresa([]);
+                        setMostrarTodos(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-red-50 transition-colors flex items-center justify-between group"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id && <Check size={12} className="text-red-500" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Lista completa de clientes */}
+              {mostrarTodos && sugerenciasEmpresa.length === 0 && todosLosClientes.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                    <span>Todos los clientes</span>
+                    <button onMouseDown={e => e.preventDefault()} onClick={() => setMostrarTodos(false)} className="text-gray-400 hover:text-red-600"><X size={14} /></button>
+                  </div>
+                  {todosLosClientes.map(emp => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => {
+                        setEmpresa(emp.nombre_comercial);
+                        setEmpresaId(emp.id);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setMostrarTodos(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-red-50 transition-colors flex items-center justify-between group"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id && <Check size={12} className="text-red-500" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Email</label>
+              <input 
+                type="email" 
+                value={emailCliente} 
+                onChange={e => setEmailCliente(e.target.value)} 
+                placeholder="correo@empresa.com" 
+                className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300" 
+              />
+            </div>
+            {emailCliente && (
+              <a
+                href={`mailto:${emailCliente}?subject=Cotización de Servicios ${folio} — Retarder México&body=Estimado/a ${cliente},%0D%0A%0D%0AAdjuntamos la cotización de servicios con folio ${folio}.%0D%0A%0D%0AQuedamos a sus órdenes.%0D%0A%0D%0AIng. Cristina Velasco%0D%0AÁrea de Ventas — Retarder México%0D%0Aventas@retardermexico.com%0D%0ATel: +52 55 7372 1633`}
+                className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white transition-colors"
+                title="Enviar cotización por email"
+              >
+                <Mail size={16} />
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1282,7 +1326,7 @@ export default function CotizadorServiciosPage() {
             </div>
 
             {/* Importe en letras */}
-            <div className="p-letras">SON: {numeroALetras(subtotalMXN)} PESOS</div>
+            <div className="p-letras">SON: {numeroALetras(totalMXN)}</div>
 
             <hr className="p-hr" />
 

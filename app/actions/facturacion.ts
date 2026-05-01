@@ -94,6 +94,21 @@ export async function marcarFacturaPagada(id: string) {
   const { error } = await supabaseAdmin.from('ordenes_servicio').update({ estado_facturacion: 'pagada' }).eq('id', id);
   return { error: error?.message ?? null };
 }
+export async function eliminarFactura(id: string) {
+  // Revierte el estado de la OS a 'encuesta_enviada' (antes de facturado)
+  // y limpia todos los campos de factura
+  const { error } = await supabaseAdmin.from('ordenes_servicio').update({
+    estado: 'encuesta_enviada',
+    estado_facturacion: 'pendiente',
+    numero_factura: null,
+    monto_factura: null,
+    concepto_factura: null,
+    fecha_vencimiento: null,
+    archivada: false,
+  }).eq('id', id);
+  return { error: error?.message ?? null };
+}
+
 export interface NotaCreditoRow {
   id: string;
   numero_nc: string | null;

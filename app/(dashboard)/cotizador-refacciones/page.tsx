@@ -17,13 +17,15 @@ interface LineaRefaccion {
   precioMXN: number;
 }
 
-const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MECÁNICO'];
+const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MECÁNICO', 'SOPORTERÍA', 'CARDANES'];
 
 const catColor: Record<string, string> = {
   'ELÉCTRICO':   'bg-yellow-100 text-yellow-800',
   'NEUMÁTICO':   'bg-blue-100 text-blue-800',
   'MECÁNICO':    'bg-gray-100 text-gray-700',
   'TORNILLERÍA': 'bg-orange-100 text-orange-800',
+  'SOPORTERÍA':  'bg-green-100 text-green-800',
+  'CARDANES':    'bg-purple-100 text-purple-800',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -45,7 +47,7 @@ function fmt(n: number, dec = 2) {
 }
 
 function fmtMXN(n: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
 function numeroALetras(nInput: number): string {
@@ -319,6 +321,7 @@ export default function CotizadorRefaccionesPage() {
 
     try {
       const { data, error } = await crearCotizacion({
+        folio:          folio.trim() !== '' ? folio.trim() : undefined,
         empresa_id:     empresaId || undefined,
         empresa_nombre: empresa.trim() || cliente.trim(),
         vendedor_id: null,
@@ -351,39 +354,72 @@ export default function CotizadorRefaccionesPage() {
   return (
     <div className="space-y-6 pb-16">
 
-      {/* ── Header: título + cliente ── */}
-      <div className="space-y-2">
+      {/* Título de la página */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-black text-[#0f2d55] leading-tight">Cotizador de Refacciones</h1>
-          <div className="flex items-center gap-1 mt-0.5">
-            <span className="text-xs text-gray-400">Folio:</span>
+          <h1 className="text-3xl font-black text-[#0f2d55] tracking-tight">Cotizador de Refacciones</h1>
+          <p className="text-gray-500 text-sm font-medium">Genera cotizaciones rápidas para refacciones</p>
+        </div>
+      </div>
+
+      {/* ── Sección datos cotización ── */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-gray-700">Datos de la cotización</p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Folio */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Folio</label>
+            <div className="flex gap-2">
+              <input
+                type="text" value={folio} onChange={e => setFolio(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors"
+              />
+              <button
+                onClick={() => setFolio(generarFolio())}
+                className="px-3 h-10 rounded-xl border border-gray-300 text-xs text-gray-500 hover:bg-gray-100 transition-colors"
+                title="Regenerar folio"
+              >
+                <RefreshCw size={13} />
+              </button>
+            </div>
+          </div>
+          {/* Atención a */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Atención a</label>
             <input
-              type="text"
-              value={folio}
-              onChange={e => setFolio(e.target.value)}
-              className="text-xs font-semibold text-gray-600 outline-none border-b border-transparent hover:border-gray-300 focus:border-red-400 bg-transparent transition-colors px-0.5"
+              type="text" value={cliente} onChange={e => setCliente(e.target.value)}
+              placeholder="Nombre del contacto..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
             />
-            <button onClick={() => setFolio(generarFolio())} className="text-gray-400 hover:text-gray-600 transition-colors" title="Regenerar folio">
-              <RefreshCw size={10} />
-            </button>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
-            Atención a *
-          </label>
-          <input
-            type="text"
-            value={cliente}
-            onChange={e => setCliente(e.target.value)}
-            placeholder="Nombre de la persona a quien va dirigida..."
-            className="w-full text-sm font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-400"
-          />
+
+        {/* Sucursal + Descripción */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
+            <input
+              type="text" value={sucursal} onChange={e => setSucursal(e.target.value)}
+              placeholder="Ej. CDMX, Monterrey..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Descripción de la Cotización</label>
+            <input
+              type="text" value={descripcion} onChange={e => setDescripcion(e.target.value)}
+              placeholder="Ej. Freno P10 para unidad..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm relative">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 mb-0.5 flex items-center gap-1">
-              Empresa
+
+        {/* Datos adicionales del cliente */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="relative">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
+              Empresa / Razón social
               {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
             </label>
             <div className="relative">
@@ -392,7 +428,6 @@ export default function CotizadorRefaccionesPage() {
                 value={empresa}
                 onFocus={() => {
                   if (todosLosClientes.length === 0) cargarTodosLosClientes();
-                  setMostrarTodos(true);
                 }}
                 onChange={async e => {
                   const q = e.target.value;
@@ -409,63 +444,41 @@ export default function CotizadorRefaccionesPage() {
                   }
                 }}
                 placeholder="Busca y selecciona un cliente..."
-                className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300 pr-8"
+                className={`w-full border rounded-xl pl-3 pr-10 h-10 text-sm font-semibold outline-none transition-all ${
+                  !empresaId && empresa.length > 0 
+                    ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400' 
+                    : empresaId 
+                      ? 'border-green-300 bg-green-50/10 text-gray-800 focus:border-green-400'
+                      : 'border-gray-300 text-gray-800 focus:border-red-400'
+                }`}
               />
               <button
                 type="button"
-                onClick={() => {
-                  if (mostrarTodos || sugerenciasEmpresa.length > 0) {
-                    setMostrarTodos(false);
+                onClick={async () => {
+                  if (sugerenciasEmpresa.length > 0) {
                     setSugerenciasEmpresa([]);
                   } else {
-                    if (todosLosClientes.length === 0) cargarTodosLosClientes();
-                    setMostrarTodos(true);
+                    setBuscandoEmpresa(true);
+                    const res = await buscarEmpresas('');
+                    setSugerenciasEmpresa(res);
+                    setBuscandoEmpresa(false);
+                    setEmpresaId('');
                   }
                 }}
-                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors p-1"
               >
-                <ChevronDown size={14} className={`transition-transform ${mostrarTodos || sugerenciasEmpresa.length > 0 ? 'rotate-180 text-blue-500' : ''}`} />
+                <ChevronDown size={18} className={`transition-transform ${sugerenciasEmpresa.length > 0 ? 'rotate-180 text-red-600' : ''}`} />
               </button>
-            </div>
-            {buscandoEmpresa && <Loader2 size={11} className="absolute right-8 top-3 animate-spin text-gray-400" />}
+              {buscandoEmpresa && <Loader2 size={13} className="absolute right-10 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
 
-            {/* Sugerencias por búsqueda */}
-            {sugerenciasEmpresa.length > 0 && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resultados</span>
-                  <button onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
-                </div>
-                {sugerenciasEmpresa.map(emp => (
-                  <button
-                    key={emp.id}
-                    type="button"
-                    onClick={() => {
-                      setEmpresa(emp.nombre_comercial);
-                      setEmpresaId(emp.id);
-                      if (!emailCliente && emp.email) setEmailCliente(emp.email);
-                      setSugerenciasEmpresa([]);
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
-                  >
-                    <p className="text-xs font-semibold text-gray-800">{emp.nombre_comercial}</p>
-                    {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Lista completa de clientes */}
-            {mostrarTodos && sugerenciasEmpresa.length === 0 && (
-              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Todos los clientes</span>
-                  <button onClick={() => setMostrarTodos(false)} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
-                </div>
-                {todosLosClientes.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-gray-400">Cargando clientes...</div>
-                ) : (
-                  todosLosClientes.map(emp => (
+              {/* Submenú: Sugerencias de búsqueda */}
+              {sugerenciasEmpresa.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                    <span>Seleccionar Cliente</span>
+                    <button onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-red-600"><X size={14} /></button>
+                  </div>
+                  {sugerenciasEmpresa.map(emp => (
                     <button
                       key={emp.id}
                       type="button"
@@ -473,21 +486,60 @@ export default function CotizadorRefaccionesPage() {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
                         if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setSugerenciasEmpresa([]);
                         setMostrarTodos(false);
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0"
+                      className="w-full text-left px-3 py-2.5 hover:bg-red-50 transition-colors flex items-center justify-between group"
                     >
-                      <p className="text-xs font-semibold text-gray-800">{emp.nombre_comercial}</p>
-                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id && <Check size={12} className="text-red-500" />}
                     </button>
-                  ))
-                )}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+              {/* Lista completa de clientes */}
+              {mostrarTodos && sugerenciasEmpresa.length === 0 && todosLosClientes.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between items-center">
+                    <span>Todos los clientes</span>
+                    <button onMouseDown={e => e.preventDefault()} onClick={() => setMostrarTodos(false)} className="text-gray-400 hover:text-red-600"><X size={14} /></button>
+                  </div>
+                  {todosLosClientes.map(emp => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => {
+                        setEmpresa(emp.nombre_comercial);
+                        setEmpresaId(emp.id);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setMostrarTodos(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-red-50 transition-colors flex items-center justify-between group"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-red-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id && <Check size={12} className="text-red-500" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-200 px-3 py-2 shadow-sm">
-            <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block mb-0.5">Email</label>
-            <input type="email" value={emailCliente} onChange={e => setEmailCliente(e.target.value)} placeholder="correo@empresa.com" className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300" />
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Email</label>
+            <input 
+              type="email" 
+              value={emailCliente} 
+              onChange={e => setEmailCliente(e.target.value)} 
+              placeholder="correo@empresa.com" 
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300" 
+            />
           </div>
         </div>
       </div>
@@ -503,19 +555,13 @@ export default function CotizadorRefaccionesPage() {
             >
               <BookOpen size={12} /> Catálogo
             </button>
-            <button
-              onClick={addLinea}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0f2d55] text-white text-xs font-bold rounded-xl hover:bg-[#1a4a7a] transition-colors"
-            >
-              <Plus size={12} /> Agregar
-            </button>
           </div>
         </div>
 
         <div className="space-y-2">
           {/* Encabezados */}
           <div className="grid gap-2 text-[9px] font-bold uppercase tracking-wider text-gray-400 px-1"
-            style={{ gridTemplateColumns: '1fr 120px 60px 100px 32px' }}>
+            style={{ gridTemplateColumns: '1fr 110px 60px 160px 38px' }}>
             <span>Descripción</span>
             <span>No. Parte</span>
             <span className="text-center">Cant.</span>
@@ -527,7 +573,7 @@ export default function CotizadorRefaccionesPage() {
             <div
               key={l.id}
               className="grid gap-2 items-center"
-              style={{ gridTemplateColumns: '1fr 120px 60px 100px 32px' }}
+              style={{ gridTemplateColumns: '1fr 110px 60px 160px 38px' }}
             >
               <input
                 type="text"
@@ -555,7 +601,7 @@ export default function CotizadorRefaccionesPage() {
                 <input
                   type="number"
                   min="0"
-                  step="1"
+                  step="0.01"
                   value={l.precioMXN}
                   onChange={e => changeLinea(l.id, 'precioMXN', e.target.value)}
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent text-right"
@@ -580,7 +626,7 @@ export default function CotizadorRefaccionesPage() {
           <div className="flex items-center gap-1 border border-gray-300 rounded-xl px-3 h-9 w-32 focus-within:border-red-400 transition-colors">
             <span className="text-xs text-gray-600 font-semibold">$</span>
             <input
-              type="number" min="0" step="1"
+              type="number" min="0" step="0.01"
               value={traslado}
               onChange={e => setTraslado(e.target.value)}
               placeholder="0"
@@ -595,28 +641,6 @@ export default function CotizadorRefaccionesPage() {
 
         {/* Observaciones */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">Sucursal</label>
-              <input
-                type="text"
-                value={sucursal}
-                onChange={e => setSucursal(e.target.value)}
-                placeholder="Ej. CDMX, Monterrey..."
-                className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">Descripción de la Cotización</label>
-              <input
-                type="text"
-                value={descripcion}
-                onChange={e => setDescripcion(e.target.value)}
-                placeholder="Ej. Refacciones para unidad..."
-                className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-              />
-            </div>
-          </div>
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-2">
             Observaciones técnicas / logísticas
           </label>
@@ -802,7 +826,7 @@ export default function CotizadorRefaccionesPage() {
             </div>
 
             {/* Importe en letras */}
-            <div className="p-letras">SON: {numeroALetras(subtotal)}</div>
+            <div className="p-letras">SON: {numeroALetras(totalMXN)}</div>
 
             <hr className="p-hr" />
 

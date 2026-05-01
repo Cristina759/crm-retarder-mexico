@@ -109,7 +109,7 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
     if (oppError) return { data: null, error: `Error Oportunidad: ${oppError.message}` };
 
     // 3. Crear cotización
-    const folio = await generarFolio();
+    const folio = input.folio && input.folio.trim() !== '' ? input.folio.trim() : await generarFolio();
 
     const { data: cotData, error: cotError } = await supabaseAdmin
       .from('cotizaciones')
@@ -227,3 +227,23 @@ export async function eliminarCotizacion(id: string): Promise<{ error: string | 
 
   return { error: null };
 }
+
+// ── obtenerCotizacionPorId ────────────────────────────────────────────────────
+export async function obtenerCotizacionPorId(id: string): Promise<{
+  data: CotizacionRow | null;
+  error: string | null;
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('cotizaciones')
+      .select('*, empresas:empresas(nombre_comercial)')
+      .eq('id', id)
+      .single();
+
+    if (error) return { data: null, error: error.message };
+    return { data: data as unknown as CotizacionRow, error: null };
+  } catch (e) {
+    return { data: null, error: String(e) };
+  }
+}
+

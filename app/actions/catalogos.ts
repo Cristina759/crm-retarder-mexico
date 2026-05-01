@@ -13,7 +13,7 @@ export type ManoDeObraRow = {
 export type RefaccionRow = {
   id: string;
   nombre: string;
-  categoria: 'ELÉCTRICO' | 'NEUMÁTICO' | 'TORNILLERÍA' | 'MECÁNICO';
+  categoria: 'ELÉCTRICO' | 'NEUMÁTICO' | 'TORNILLERÍA' | 'MECÁNICO' | 'SOPORTERÍA' | 'CARDANES';
   precio_venta: number;
   numero_parte: string | null;
   activo: boolean;
@@ -82,7 +82,7 @@ export async function obtenerRefacciones(): Promise<{ data: RefaccionRow[]; erro
     .select('id, nombre, categoria, precio_venta, numero_parte, activo')
     .eq('activo', true)
     .order('categoria')
-    .order('nombre');
+    .order('created_at', { ascending: true });
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as RefaccionRow[], error: null };
@@ -94,7 +94,7 @@ export async function obtenerRefaccionesCompleto(): Promise<{ data: RefaccionRow
     .from('refacciones')
     .select('id, nombre, categoria, precio_venta, numero_parte, activo')
     .order('categoria')
-    .order('nombre');
+    .order('created_at', { ascending: true });
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as RefaccionRow[], error: null };
