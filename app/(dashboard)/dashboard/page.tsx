@@ -9,8 +9,9 @@ import {
 import {
   Loader2, TrendingUp, ClipboardCheck, Building2, DollarSign,
   Receipt, Target, Megaphone, BarChart3, Users, CheckCircle2,
-  XCircle, Percent, ArrowUpRight,
+  XCircle, Percent, ArrowUpRight, Printer
 } from 'lucide-react';
+
 import {
   obtenerResumenGeneral, obtenerOSporEstado,
   obtenerResumenVentas, obtenerResumenMarketing,
@@ -412,28 +413,38 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-400 capitalize mt-0.5">{today}</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex bg-gray-100 rounded-2xl p-1 gap-0.5">
-          {TABS.map(t => {
-            const Icon    = t.icon;
-            const active  = tab === t.key;
-            return (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  active
-                    ? 'bg-[#0f2d55] text-white shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Icon size={13} />
-                {t.label}
-              </button>
-            );
-          })}
+        {/* Tabs & Reports */}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => window.open(tab === 'ventas' ? '/reportes/ventas' : '/reportes/general', '_blank')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#0f2d55] text-[#0f2d55] hover:bg-blue-50 rounded-xl text-xs font-bold shadow-sm transition-all"
+          >
+            <Printer size={13} /> Generar Reporte
+          </button>
+
+          <div className="flex bg-gray-100 rounded-2xl p-1 gap-0.5">
+            {TABS.map(t => {
+              const Icon    = t.icon;
+              const active  = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    active
+                      ? 'bg-[#0f2d55] text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <Icon size={13} />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
+
 
       {/* Content */}
       {tab === 'general'   && <TabGeneral   />}

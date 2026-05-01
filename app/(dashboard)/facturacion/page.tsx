@@ -3,7 +3,8 @@
 
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer } from 'lucide-react';
+
 import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, type FacturaRow } from '@/app/actions/facturacion';
 
 
@@ -276,12 +277,18 @@ export default function FacturacionPage() {
         <div className="w-9 h-9 rounded-xl bg-[#0f2d55] flex items-center justify-center">
           <FileText size={18} className="text-white" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-black text-[#0f2d55]">Facturación (Sistema Actualizado)</h1>
           <p className="text-[11px] text-gray-400">{rows.length} factura{rows.length !== 1 ? 's' : ''} · Haz clic en una fila para editar</p>
         </div>
-
+        <button 
+          onClick={() => window.open('/reportes/facturacion', '_blank')}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl text-sm font-bold shadow-sm transition-all"
+        >
+          <Printer size={15} /> Generar Reporte
+        </button>
       </div>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-blue-200 p-5">
