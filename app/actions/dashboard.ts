@@ -13,26 +13,37 @@ export async function obtenerResumenGeneral() {
       { data: notas },
     ] = await Promise.all([
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
-      // Traemos todas las que tengan algún monto de factura o concepto, o estén en estado facturado/pagado
+      // Traemos todas las que tengan algún dato financiero
       supabaseAdmin.from('ordenes_servicio')
-        .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial)')
-        .or('estado.in.(facturado,pagado),monto_factura.gt.0'),
+        .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id')
+        .or('estado.in.(facturado,pagado),monto_factura.gt.0,numero_factura.neq.null'),
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
+    // Cargar totales de cotizaciones vinculadas para el fallback del dashboard
+    const cotIds = Array.from(new Set((facturas ?? []).map(r => r.cotizacion_id).filter(Boolean)));
+    const { data: cots } = cotIds.length 
+      ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
+      : { data: [] };
+    const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
+
     const osActivas = (osAll ?? []).filter((r: { archivada?: boolean | null }) => r.archivada !== true).length;
 
-    // Lógica idéntica a la pantalla de Facturación
     let totalFacturado = 0;
     let totalCobrado = 0;
     const clienteMap: Record<string, { cliente: string; total: number; folios: string[] }> = {};
 
     (facturas ?? []).forEach(r => {
-      const monto = r.monto_factura ?? 0;
+      let monto = r.monto_factura;
+      // Fallback a cotización si no hay monto manual
+      if ((!monto || monto === 0) && r.cotizacion_id) {
+        monto = cotMap.get(r.cotizacion_id) || 0;
+      }
+      monto = monto || 0;
+
       totalFacturado += monto;
-      
       if (r.estado_facturacion === 'pagada') {
         totalCobrado += monto;
       }
@@ -55,13 +66,14 @@ export async function obtenerResumenGeneral() {
       totalFacturado,
       totalCobrado,
       totalNetoFacturado:  totalFacturado - totalNotasCredito,
-      totalNetoPagado:     totalCobrado   - totalNotasCredito,
-      totalPendiente:      totalFacturado - totalCobrado,
+      totalNetoPagado:     totalCobrado, // El cobrado es dinero que ya entró, no restamos NC aquí usualmente
+      totalPendiente:      (totalFacturado - totalNotasCredito) - totalCobrado,
       piplineValor,
       empresas:            empresas ?? 0,
       pendientesPorCliente,
       error: null,
     };
+
   } catch (e) { 
     console.error('Error Dashboard:', e);
     return { osActivas: 0, totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalNetoPagado: 0, totalPendiente: 0, piplineValor: 0, empresas: 0, pendientesPorCliente: [], error: String(e) }; 
