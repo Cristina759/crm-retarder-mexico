@@ -102,8 +102,9 @@ export async function obtenerResumenFacturacion(): Promise<{
     const [{ data: facts }, { data: ncs }] = await Promise.all([
       supabaseAdmin
         .from('ordenes_servicio')
-        .select('monto_factura, estado_facturacion, cotizacion_id, numero_factura')
+        .select('monto_factura, estado_facturacion, cotizacion_id, numero_factura, abonos')
         .or('monto_factura.gt.0,numero_factura.neq.null,estado.in.(facturado,pagado)'),
+
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
