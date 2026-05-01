@@ -75,8 +75,12 @@ export async function obtenerResumenFacturacion(): Promise<{
   vencidas: number; totalNotasCredito: number; error: string | null;
 }> {
   try {
+    // Consultamos TODAS las órdenes que tengan algún dato financiero, sin importar el estado del pipeline
     const [{ data: facts }, { data: ncs }] = await Promise.all([
-      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion, cotizacion_id').in('estado', ['facturado', 'pagado']),
+      supabaseAdmin
+        .from('ordenes_servicio')
+        .select('monto_factura, estado_facturacion, cotizacion_id, numero_factura')
+        .or('monto_factura.gt.0,numero_factura.neq.null,estado.in.(facturado,pagado)'),
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
@@ -94,13 +98,17 @@ export async function obtenerResumenFacturacion(): Promise<{
 
     (facts ?? []).forEach(r => {
       let monto = r.monto_factura;
+      // Fallback a cotización si no hay monto manual
       if ((!monto || monto === 0) && r.cotizacion_id) {
         monto = cotMap.get(r.cotizacion_id) || 0;
       }
       monto = monto || 0;
 
       totalFacturado += monto;
-      if (r.estado_facturacion === 'pagada') totalCobrado += monto;
+      if (r.estado_facturacion === 'pagada') {
+        totalCobrado += monto;
+      }
+      
       if (['pendiente', 'facturada', 'enviada_cliente'].includes(r.estado_facturacion ?? '')) pendientes++;
       if (r.estado_facturacion === 'vencida') vencidas++;
     });
@@ -108,6 +116,7 @@ export async function obtenerResumenFacturacion(): Promise<{
     const totalNotasCredito = (ncs ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
 
     return { totalFacturado, totalCobrado, pendientes, vencidas, totalNotasCredito, error: null };
+
 
   } catch (e) {
     return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: String(e) };
