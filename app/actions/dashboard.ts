@@ -54,22 +54,21 @@ export async function obtenerOSporEstado() {
 // ── Ventas ────────────────────────────────────────────────────────────────────
 export async function obtenerResumenVentas() {
   try {
-    const [{ data: cotizaciones }, { data: oportunidades }] = await Promise.all([
-      supabaseAdmin.from('cotizaciones').select('total_mxn, estado, created_at'),
+    const [{ data: facturas }, { data: oportunidades }] = await Promise.all([
+      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion, created_at').in('estado', ['facturado', 'pagado']),
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado, created_at, probabilidad'),
     ]);
 
-    const total          = (cotizaciones ?? []).reduce((s, c) => s + (c.total_mxn ?? 0), 0);
-    const aceptadas      = (cotizaciones ?? []).filter(c => c.estado === 'aceptada');
-    const enviadas       = (cotizaciones ?? []).filter(c => ['enviada', 'aceptada'].includes(c.estado ?? ''));
-    const tasaCierre     = enviadas.length > 0 ? Math.round((aceptadas.length / enviadas.length) * 100) : 0;
-    const ticketPromedio = aceptadas.length > 0 ? aceptadas.reduce((s, c) => s + (c.total_mxn ?? 0), 0) / aceptadas.length : 0;
+    // Total facturado real desde ordenes_servicio
+    const total          = (facturas ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
+    const cobradas       = (facturas ?? []).filter(r => r.estado_facturacion === 'pagada');
+    const tasaCierre     = (facturas ?? []).length > 0 ? Math.round((cobradas.length / (facturas ?? []).length) * 100) : 0;
+    const ticketPromedio = cobradas.length > 0 ? cobradas.reduce((s, r) => s + (r.monto_factura ?? 0), 0) / cobradas.length : 0;
 
-    // Ganadas vs perdidas
+    // Ganadas vs perdidas (oportunidades)
     const ganadas  = (oportunidades ?? []).filter(o => o.estado === 'ganado' || o.estado === 'ganada');
     const perdidas = (oportunidades ?? []).filter(o => o.estado === 'perdido' || o.estado === 'perdida');
 
-    // Por estado de oportunidad
     const porEstado = [
       { estado: 'Lead',          count: (oportunidades ?? []).filter(o => o.estado === 'lead').length },
       { estado: 'Calificación',  count: (oportunidades ?? []).filter(o => o.estado === 'calificacion').length },
@@ -79,17 +78,17 @@ export async function obtenerResumenVentas() {
       { estado: 'Ganada',        count: ganadas.length },
     ];
 
-    // Ventas por mes (últimos 6 meses)
+    // Ventas por mes (últimos 6 meses) desde ordenes_servicio
     const now   = new Date();
     const meses = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
       return { mes: d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }), year: d.getFullYear(), month: d.getMonth(), monto: 0, cotizaciones: 0 };
     });
-    (aceptadas ?? []).forEach(c => {
-      if (!c.created_at) return;
-      const d = new Date(c.created_at);
+    (facturas ?? []).forEach(r => {
+      if (!r.created_at) return;
+      const d = new Date(r.created_at);
       const m = meses.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
-      if (m) { m.monto += c.total_mxn ?? 0; m.cotizaciones++; }
+      if (m) { m.monto += r.monto_factura ?? 0; m.cotizaciones++; }
     });
 
     return { total, tasaCierre, ticketPromedio, porEstado, meses, ganadas: ganadas.length, perdidas: perdidas.length, error: null };
