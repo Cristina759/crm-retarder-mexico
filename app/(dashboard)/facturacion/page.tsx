@@ -78,11 +78,28 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       <tr className="border-b border-yellow-100 bg-yellow-50/40">
         <td className="px-4 py-2 text-xs font-mono text-gray-700">{row.numero}</td>
         <td className="px-4 py-2">
+          <div className="flex items-center gap-1 justify-center">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white shadow-sm transition-colors"
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} strokeWidth={3} />}
+            </button>
+            <button
+              onClick={handleCancel}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors"
+            >
+              <X size={14} strokeWidth={3} />
+            </button>
+          </div>
+        </td>
+        <td className="px-4 py-2">
           <input
             autoFocus
             value={numFact}
             onChange={e => setNumFact(e.target.value)}
-            placeholder="Ej. B670"
+            placeholder="Factura #"
             className="w-full border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500"
           />
         </td>
@@ -123,29 +140,32 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
             ))}
           </select>
         </td>
-        <td className="px-4 py-2">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 transition-colors"
-            >
-              {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} strokeWidth={3} />}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 transition-colors"
-            >
-              <X size={12} strokeWidth={3} />
-            </button>
-          </div>
-        </td>
+      </tr>
     );
   }
 
   return (
     <tr className="border-b border-gray-100 hover:bg-gray-50 group">
       <td className="px-4 py-3 text-xs font-mono text-gray-700 cursor-pointer" onClick={() => setEditing(true)}>{row.numero}</td>
+      <td className="px-4 py-2 bg-red-50/20">
+        <div className="flex items-center gap-1 justify-center">
+          <button
+            onClick={() => setEditing(true)}
+            className="p-1.5 rounded-lg bg-[#0f2d55]/10 hover:bg-[#0f2d55]/20 text-[#0f2d55] transition-colors"
+            title="Editar factura"
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-[9px] font-bold transition-colors shadow-sm"
+          >
+            {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+            BORRAR
+          </button>
+        </div>
+      </td>
       <td className="px-4 py-3 text-xs font-mono text-gray-700 cursor-pointer" onClick={() => setEditing(true)}>
         {row.numero_factura
           ? <span className="font-bold text-[#0f2d55]">{row.numero_factura}</span>
@@ -160,26 +180,6 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       <td className="px-4 py-3 cursor-pointer" onClick={() => setEditing(true)}>
         <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${est.color}`}>{est.label}</span>
       </td>
-      <td className="px-4 py-2">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setEditing(true)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0f2d55]/10 hover:bg-[#0f2d55]/20 text-[#0f2d55] transition-colors"
-            title="Editar factura"
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-colors disabled:opacity-50"
-            title="Borrar factura y regresar OS"
-          >
-            {deleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-          </button>
-        </div>
-      </td>
-
     </tr>
   );
 }
@@ -259,13 +259,13 @@ export default function FacturacionPage() {
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">OS</th>
+              <th className="px-4 py-3 w-32 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-red-50/50">Acciones</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Factura #</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Cliente</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Concepto</th>
               <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Monto</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Vencimiento</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Estado</th>
-              <th className="px-4 py-3 w-28 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">Acciones</th>
             </tr>
           </thead>
           <tbody>
