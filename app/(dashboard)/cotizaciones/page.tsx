@@ -473,8 +473,10 @@ export default function CotizacionesPage() {
     setCreandoOSId(cot.id);
     const { error } = await crearOrdenServicio({
       empresa_id:    cot.empresa_id,
+      cotizacion_id: cot.id,
       oportunidad_id: cot.oportunidad_id ?? undefined,
     });
+
     setCreandoOSId(null);
     if (error) { alert('Error al crear OS: ' + error); return; }
     alert('Orden de Servicio creada exitosamente.');

@@ -38,6 +38,7 @@ export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string |
 export async function crearOrdenServicio(input: {
   empresa_id: string;
   oportunidad_id?: string;
+  cotizacion_id?: string;
 }): Promise<{ error: string | null }> {
   const { data: empresa } = await supabaseAdmin.from('empresas').select('nombre_comercial').eq('id', input.empresa_id).single();
   const abrev = empresa?.nombre_comercial?.slice(0,3).toUpperCase() || 'OS';
@@ -48,10 +49,13 @@ export async function crearOrdenServicio(input: {
     .insert({ 
       numero, 
       empresa_id: input.empresa_id, 
+      oportunidad_id: input.oportunidad_id ?? null,
+      cotizacion_id: input.cotizacion_id ?? null,
       estado: 'solicitud_recibida', 
       fase: 1,
       estado_facturacion: 'pendiente'
     });
+
 
   return { error: error?.message ?? null };
 }
