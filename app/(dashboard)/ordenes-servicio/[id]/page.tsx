@@ -780,45 +780,23 @@ export default function OSDetallePage() {
             <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
               <Receipt size={13} /> Datos de Facturación
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Número de Factura</label>
-                <input
-                  value={numFact}
-                  onChange={e => setNumFact(e.target.value)}
-                  onBlur={() => guardarDatosOS(os.id, { numero_factura: numFact })}
-                  placeholder="Ej. B-1234"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Monto de Factura (MXN)</label>
-                <input
-                  type="number"
-                  value={montoFact}
-                  onChange={e => setMontoFact(e.target.value)}
-                  onBlur={() => guardarDatosOS(os.id, { monto_factura: montoFact ? parseFloat(montoFact) : null })}
-                  placeholder="0.00"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Fecha Vencimiento</label>
-                <input
-                  type="date"
-                  value={vencFact}
-                  onChange={e => setVencFact(e.target.value)}
-                  onBlur={() => guardarDatosOS(os.id, { fecha_vencimiento: vencFact || null })}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
+            <div className="max-w-xs">
+              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Número de Factura</label>
+              <input
+                value={numFact}
+                onChange={e => setNumFact(e.target.value)}
+                onBlur={() => guardarDatosOS(os.id, { numero_factura: numFact })}
+                placeholder="Ej. B-1234"
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
+              />
             </div>
             {numFact && (
               <p className="text-[10px] text-blue-500 bg-blue-50 rounded-lg px-3 py-2 flex items-center gap-2 font-medium">
-                <Check size={12} /> Esta información ya está conectada al módulo de Facturación.
+                <Check size={12} /> Factura registrada en el sistema.
               </p>
             )}
           </div>
+
 
 
           {/* Descripción del trabajo */}
