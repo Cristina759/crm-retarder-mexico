@@ -42,6 +42,10 @@ function fmtMXN(n: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
 }
 
+function fmtMXNFull(n: number) {
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 }).format(n);
+}
+
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 function KPICard({
   label, value, sub, icon: Icon, color = 'navy', trend,
@@ -122,8 +126,8 @@ function TabGeneral() {
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label="Órdenes Activas"     value={data.osActivas}                  icon={ClipboardCheck} color="navy"   />
-        <KPICard label="Total Neto Facturado" value={fmtMXN(data.totalNetoFacturado)} icon={Receipt}        color="yellow" sub="Bruto menos notas de crédito" />
-        <KPICard label="Total Cobrado"       value={fmtMXN(data.totalCobrado)}        icon={DollarSign}     color="green"  />
+        <KPICard label="Total Neto Facturado" value={fmtMXNFull(data.totalNetoFacturado)} icon={Receipt}    color="yellow" sub="Bruto menos notas de crédito" />
+        <KPICard label="Total Cobrado"       value={fmtMXNFull(data.totalCobrado)}       icon={DollarSign} color="green"  />
         <KPICard label="Empresas Activas"    value={data.empresas}                   icon={Building2}      color="purple" />
       </div>
 
