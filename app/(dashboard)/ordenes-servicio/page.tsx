@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { 
   DndContext, 
   DragOverlay, 
@@ -179,6 +180,9 @@ function Columna({ col, ordenes, onClick }: {
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function OrdenesServicioPage() {
   const router = useRouter();
+  const { user } = useUser();
+  const rol = (user?.publicMetadata?.role as string) ?? '';
+  const esAdmin = rol === 'admin';
   const [ordenes,    setOrdenes]    = useState<OSRow[]>([]);
   const [archivadas, setArchivadas] = useState<OSRow[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -244,8 +248,8 @@ export default function OrdenesServicioPage() {
 
     if (!os || !nuevoEstado || os.estado === nuevoEstado) return;
 
-    // ── CANDADO DE SEGURIDAD ──
-    if (os.estado === 'tecnico_asignado' && nuevoEstado !== 'tecnico_asignado') {
+    // ── CANDADO DE SEGURIDAD (Bypass para Admin) ──
+    if (!esAdmin && os.estado === 'tecnico_asignado' && nuevoEstado !== 'tecnico_asignado') {
       const faltaTecnico = !os.tecnico_id;
       const faltaFoto    = !os.foto_os;
       const faltaManual  = !os.numero_os_manual;
@@ -261,6 +265,7 @@ export default function OrdenesServicioPage() {
         return;
       }
     }
+
 
     // Actualización optimista
     setOrdenes(prev => prev.map(o => o.id === os.id ? { ...o, estado: nuevoEstado } : o));

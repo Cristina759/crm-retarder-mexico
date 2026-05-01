@@ -388,7 +388,8 @@ export default function OSDetallePage() {
   const router   = useRouter();
   const { user } = useUser();
   const rol      = (user?.publicMetadata?.role as string) ?? '';
-  const canEdit  = rol === 'admin' || rol === 'tecnico';
+  const esAdmin  = rol === 'admin';
+  const canEdit  = esAdmin || rol === 'tecnico';
 
   const [os,          setOs]          = useState<OSRow | null>(null);
   const [cargando,    setCargando]    = useState(true);
@@ -785,10 +786,18 @@ export default function OSDetallePage() {
               <input
                 value={numFact}
                 onChange={e => setNumFact(e.target.value)}
-                onBlur={() => guardarDatosOS(os.id, { numero_factura: numFact })}
+                onBlur={() => {
+                  const datos: any = { numero_factura: numFact };
+                  // Si hay cotización vinculada, ligamos el monto automáticamente
+                  if (numFact && cotizacion?.total_mxn) {
+                    datos.monto_factura = cotizacion.total_mxn;
+                  }
+                  guardarDatosOS(os.id, datos);
+                }}
                 placeholder="Ej. B-1234"
                 className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
               />
+
             </div>
             {numFact && (
               <p className="text-[10px] text-blue-500 bg-blue-50 rounded-lg px-3 py-2 flex items-center gap-2 font-medium">
