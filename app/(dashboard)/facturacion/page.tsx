@@ -277,9 +277,10 @@ export default function FacturacionPage() {
           <FileText size={18} className="text-white" />
         </div>
         <div>
-          <h1 className="text-lg font-black text-[#0f2d55]">Facturación</h1>
+          <h1 className="text-lg font-black text-[#0f2d55]">Facturación (Sistema Actualizado)</h1>
           <p className="text-[11px] text-gray-400">{rows.length} factura{rows.length !== 1 ? 's' : ''} · Haz clic en una fila para editar</p>
         </div>
+
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
