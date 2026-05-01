@@ -121,10 +121,10 @@ function TabGeneral() {
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Órdenes Activas"    value={data.osActivas}          icon={ClipboardCheck} color="navy"   />
-        <KPICard label="Total Facturado"     value={fmtMXN(data.totalFacturado)}  icon={Receipt}        color="yellow" />
-        <KPICard label="Total Cobrado Neto"  value={fmtMXN(data.totalNetoCobrado)} icon={DollarSign}     color="green"  />
-        <KPICard label="Empresas Activas"    value={data.empresas}           icon={Building2}      color="purple" />
+        <KPICard label="Órdenes Activas"     value={data.osActivas}                  icon={ClipboardCheck} color="navy"   />
+        <KPICard label="Total Neto Facturado" value={fmtMXN(data.totalNetoFacturado)} icon={Receipt}        color="yellow" sub="Bruto menos notas de crédito" />
+        <KPICard label="Total Cobrado"       value={fmtMXN(data.totalCobrado)}        icon={DollarSign}     color="green"  />
+        <KPICard label="Empresas Activas"    value={data.empresas}                   icon={Building2}      color="purple" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -150,9 +150,9 @@ function TabGeneral() {
         <div className="bg-white rounded-2xl border border-gray-200 p-5 flex flex-col gap-4">
           <p className="text-sm font-black text-[#0f2d55]">Resumen Financiero</p>
           {[
-            { label: 'Total Facturado',   val: data.totalFacturado,     color: 'bg-blue-500' },
-            { label: 'Total Cobrado',     val: data.totalCobrado,       color: 'bg-emerald-500' },
-            { label: 'Pipeline Comercial',val: data.piplineValor,       color: 'bg-yellow-400' },
+            { label: 'Total Neto Facturado', val: data.totalNetoFacturado, color: 'bg-blue-500' },
+            { label: 'Total Cobrado',        val: data.totalCobrado,       color: 'bg-emerald-500' },
+            { label: 'Pendiente de cobro',   val: data.totalFacturado - data.totalCobrado, color: 'bg-yellow-400' },
           ].map(item => (
             <div key={item.label}>
               <div className="flex justify-between text-xs mb-1">

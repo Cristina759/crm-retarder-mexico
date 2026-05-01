@@ -29,9 +29,10 @@ export async function obtenerResumenGeneral() {
       osActivas,
       totalFacturado,
       totalCobrado,
-      totalNetoCobrado: totalCobrado - totalNotasCredito,
+      totalNetoFacturado: totalFacturado - totalNotasCredito,   // bruto - notas = total PDF
+      totalNetoCobrado:   totalCobrado   - totalNotasCredito,   // solo pagadas - notas
       piplineValor,
-      empresas:        empresas ?? 0,
+      empresas:           empresas ?? 0,
       error: null,
     };
   } catch (e) { return { osActivas: 0, totalFacturado: 0, totalCobrado: 0, totalNetoCobrado: 0, piplineValor: 0, empresas: 0, error: String(e) }; }
