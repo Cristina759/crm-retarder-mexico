@@ -407,7 +407,10 @@ function ModalDetalleCotizacion({
               </tfoot>
             </table>
 
-            {/* Notas */}
+            {/* Importe con letras (si existiera o se calculara) */}
+            <div style={{ marginTop: 8, fontSize: 10 }}>
+              <span style={{ fontWeight: 900 }}>IMPORTE CON LETRA:</span> — (Favor de verificar en el formato impreso)
+            </div>
             {cot.notas && (
               <div>
                 <hr />

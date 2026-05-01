@@ -62,7 +62,7 @@ function fmtFecha(iso: string) {
 }
 
 // ── Tarjeta Draggable ──────────────────────────────────────────────────────────
-function OSCard({ os, onClick, overlay = false }: { os: OSRow; onClick: () => void; overlay?: boolean }) {
+function OSCard({ os, onClick, esAdmin, overlay = false }: { os: OSRow; onClick: () => void; esAdmin: boolean; overlay?: boolean }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: os.id });
   
   const idx    = COLUMNAS.findIndex(c => c.id === os.estado);
@@ -80,8 +80,8 @@ function OSCard({ os, onClick, overlay = false }: { os: OSRow; onClick: () => vo
         ${overlay ? 'shadow-2xl rotate-2 scale-105 border-blue-400 z-50 ring-4 ring-blue-50' : 'cursor-grab active:cursor-grabbing border-gray-100'}
       `}
     >
-      {/* Indicador de Candado / Alerta */}
-      {!listo && os.estado === 'tecnico_asignado' && (
+      {/* Indicador de Candado / Alerta (Solo para no-admin) */}
+      {!esAdmin && !listo && os.estado === 'tecnico_asignado' && (
         <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg animate-bounce duration-1000 z-10 border-2 border-white">
           <Lock size={10} strokeWidth={3} />
         </div>
@@ -139,11 +139,7 @@ function OSCard({ os, onClick, overlay = false }: { os: OSRow; onClick: () => vo
 }
 
 // ── Columna Droppable ──────────────────────────────────────────────────────────
-function Columna({ col, ordenes, onClick }: {
-  col: typeof COLUMNAS[number];
-  ordenes: OSRow[];
-  onClick: (id: string) => void;
-}) {
+function Columna({ col, ordenes, onClick, esAdmin }: { col: any; ordenes: OSRow[]; onClick: (id: string) => void; esAdmin: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
 
   return (
@@ -164,7 +160,7 @@ function Columna({ col, ordenes, onClick }: {
         }`}
       >
         {ordenes.map(os => (
-          <OSCard key={os.id} os={os} onClick={() => onClick(os.id)} />
+          <OSCard key={os.id} os={os} esAdmin={esAdmin} onClick={() => onClick(os.id)} />
         ))}
         {ordenes.length === 0 && (
           <div className="h-24 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 grayscale opacity-40">
@@ -387,6 +383,7 @@ export default function OrdenesServicioPage() {
                         <Columna
                           key={col.id}
                           col={col}
+                          esAdmin={esAdmin}
                           ordenes={ordenes.filter(o => o.estado === col.id)}
                           onClick={ir}
                         />
@@ -400,7 +397,7 @@ export default function OrdenesServicioPage() {
 
           <DragOverlay>
             {activeOS && (
-              <OSCard os={activeOS} onClick={() => {}} overlay />
+              <OSCard os={activeOS} esAdmin={esAdmin} overlay onClick={() => {}} />
             )}
           </DragOverlay>
         </DndContext>

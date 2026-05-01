@@ -1326,7 +1326,8 @@ export default function CotizadorServiciosPage() {
             </div>
 
             {/* Importe en letras */}
-            <div className="p-letras">SON: {numeroALetras(totalMXN)}</div>
+            <div className="p-letras"><strong>SON: {numeroALetras(totalMXN)}</strong></div>
+
 
             <hr className="p-hr" />
 

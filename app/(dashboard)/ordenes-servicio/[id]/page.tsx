@@ -602,7 +602,7 @@ export default function OSDetallePage() {
                 className={`flex items-center gap-2 font-bold text-sm px-4 py-2.5 rounded-2xl transition-all shadow-lg ${
                   avanzando 
                     ? 'bg-gray-100 text-gray-400' 
-                    : (os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os))
+                    : (!esAdmin && os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os))
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-70'
                       : 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900 shadow-yellow-100'
                 }`}
@@ -610,7 +610,7 @@ export default function OSDetallePage() {
                 {avanzando ? <Loader2 size={15} className="animate-spin" /> : <ChevronRight size={15} />}
                 {proxLabel ? `→ ${proxLabel}` : 'Avanzar'}
               </button>
-              {os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os) && (
+              {!esAdmin && os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os) && (
                 <span className="text-[10px] text-red-500 font-bold animate-pulse">Completa los campos obligatorios (*)</span>
               )}
             </div>
@@ -621,16 +621,16 @@ export default function OSDetallePage() {
           )}
         </div>
 
-        {/* Error de candado */}
-        {errAvanzar && (
+        {/* Error de candado (Solo no-admin) */}
+        {!esAdmin && errAvanzar && (
           <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
             <Lock size={14} className="text-amber-500 flex-shrink-0" />
             <p className="text-sm text-amber-800 font-medium">{errAvanzar}</p>
           </div>
         )}
 
-        {/* Candados (solo en primer estado) */}
-        {os.estado === 'tecnico_asignado' && (
+        {/* Candados (solo en primer estado y solo para no-admin) */}
+        {!esAdmin && os.estado === 'tecnico_asignado' && (
           <div className="flex flex-wrap gap-2 pt-1">
             {[
               { ok: !!os.tecnico_id,          label: 'Técnico asignado'  },

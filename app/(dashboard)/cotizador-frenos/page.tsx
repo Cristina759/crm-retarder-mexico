@@ -1080,7 +1080,8 @@ export default function CotizadorFrenosPage() {
             </div>
 
             {/* Importe en letras */}
-            <div className="p-letras">SON: {numeroALetras(totalFinalUSD)}</div>
+            <div className="p-letras"><strong>SON: {numeroALetras(totalFinalUSD)}</strong></div>
+
 
             <hr className="p-hr" />
 
