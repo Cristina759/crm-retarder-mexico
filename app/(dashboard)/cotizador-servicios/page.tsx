@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import QRCode from 'qrcode';
-import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Shield, Wrench, Printer, Mail, X, Search, BookOpen } from 'lucide-react';
+import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Shield, Wrench, Printer, Mail, X, Search, BookOpen, ChevronDown } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
+import { obtenerClientes } from '@/app/actions/clientes';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
 import { obtenerManoDeObra, obtenerRefacciones } from '@/app/actions/catalogos';
 import type { UsuarioRow } from '@/app/actions/types';
@@ -22,10 +23,6 @@ const CHECKLIST_PREVENTIVO = [
       'Hules y tornillera en general',
       'Revisión cardanes y crucetas',
     ],
-  },
-  {
-    categoria: 'ENGRASE',
-    items: ['Engrase según marca (tubo incluido)'],
   },
   {
     categoria: 'SISTEMA ELÉCTRICO',
@@ -428,10 +425,12 @@ export default function CotizadorServiciosPage() {
   const [empresaId, setEmpresaId] = useState('');
   const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
   const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
+  const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
   const [rfc, setRfc] = useState('');
   const [direccion, setDireccion] = useState('');
   const [emailCliente, setEmailCliente] = useState('');
-  const [folio, setFolio] = useState(() => generarFolio());
+  const [folio, setFolio] = useState('');
 
   // Tipos de servicio (pueden coexistir)
   const [tipoPreventivo, setTipoPreventivo] = useState(false);
@@ -446,6 +445,9 @@ export default function CotizadorServiciosPage() {
   const [traslado, setTraslado] = useState('0');
   const [observaciones, setObservaciones] = useState(
     `*ESTE SERVICIO INCLUYE LOS PUNTOS DESCRITOS EN EL CHECKLIST\n*TIEMPO ESTIMADO DE REALIZACIÓN: 4 A 6 HORAS POR UNIDAD\n*EL CLIENTE DEBE PROPORCIONAR EL ESPACIO ADECUADO SI EL SERVICIO ES EN SITIO\n*SE REQUIERE CONFIRMACIÓN DE CITA CON 48 HORAS DE ANTICIPACIÓN`
+  );
+  const [politicas, setPoliticas] = useState(
+    `*COTIZACIÓN VÁLIDA POR 15 DÍAS\n*GARANTÍA DE 30 DÍAS EN MANO DE OBRA`
   );
 
   const [imprimirAlGuardar, setImprimirAlGuardar] = useState(false);
@@ -504,7 +506,24 @@ export default function CotizadorServiciosPage() {
     setCargandoTC(false);
   }, []);
 
+  const cargarTodosLosClientes = async () => {
+    setBuscandoEmpresa(true);
+    const { data, error } = await obtenerClientes();
+    if (!error && data) {
+      setTodosLosClientes(data.map(c => ({
+        id: c.id,
+        nombre_comercial: c.nombre_comercial || c.razon_social || 'Sin nombre',
+        rfc: c.rfc,
+        email: c.email,
+        telefono: c.telefono,
+      })));
+    }
+    setBuscandoEmpresa(false);
+  };
+
   useEffect(() => {
+    setFolio(generarFolio());
+    setFechaHoy(new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }));
     fetchTC();
     obtenerUsuarios().then(({ data }) => setUsuarios(data));
     QRCode.toDataURL('https://tgrpentarmexico.com/', { width: 140, margin: 1 }).then(setQrDataUrl);
@@ -577,7 +596,7 @@ export default function CotizadorServiciosPage() {
     : null;
 
   const formularioVisible = tipoPreventivo || tipoCorrectivo;
-  const fechaHoy = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  const [fechaHoy, setFechaHoy] = useState('');
 
   // ── Guardar ──────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
@@ -678,42 +697,103 @@ export default function CotizadorServiciosPage() {
                 Empresa
                 {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
               </label>
-              <input
-                type="text"
-                value={empresa}
-                onChange={async e => {
-                  const q = e.target.value;
-                  setEmpresa(q);
-                  setEmpresaId('');
-                  if (q.length >= 2) {
-                    setBuscandoEmpresa(true);
-                    const res = await buscarEmpresas(q);
-                    setSugerenciasEmpresa(res);
-                    setBuscandoEmpresa(false);
-                  } else {
-                    setSugerenciasEmpresa([]);
-                  }
-                }}
-                placeholder="Razón social..."
-                className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300"
-              />
-              {buscandoEmpresa && <Loader2 size={11} className="absolute right-3 top-3 animate-spin text-gray-400" />}
-              {sugerenciasEmpresa.length > 0 && !empresaId && (
-                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={empresa}
+                  onChange={async e => {
+                    const q = e.target.value;
+                    setEmpresa(q);
+                    setEmpresaId('');
+                    setMostrarTodos(false);
+                    if (q.length >= 2) {
+                      setBuscandoEmpresa(true);
+                      const res = await buscarEmpresas(q);
+                      setSugerenciasEmpresa(res);
+                      setBuscandoEmpresa(false);
+                    } else {
+                      setSugerenciasEmpresa([]);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (todosLosClientes.length === 0) cargarTodosLosClientes();
+                    setMostrarTodos(true);
+                  }}
+                  onBlur={() => setTimeout(() => { setMostrarTodos(false); setSugerenciasEmpresa([]); }, 200)}
+                  placeholder="Razón social..."
+                  className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300 pr-8"
+                />
+                <button
+                  type="button"
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={() => {
+                    if (mostrarTodos || sugerenciasEmpresa.length > 0) {
+                      setMostrarTodos(false);
+                      setSugerenciasEmpresa([]);
+                    } else {
+                      if (todosLosClientes.length === 0) cargarTodosLosClientes();
+                      setMostrarTodos(true);
+                    }
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <ChevronDown size={14} className={`transition-transform ${(mostrarTodos || sugerenciasEmpresa.length > 0) ? 'rotate-180 text-blue-500' : ''}`} />
+                </button>
+              </div>
+              {buscandoEmpresa && <Loader2 size={11} className="absolute right-8 top-3 animate-spin text-gray-400" />}
+              {sugerenciasEmpresa.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resultados de búsqueda</span>
+                    <button onMouseDown={e => e.preventDefault()} onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
+                  </div>
                   {sugerenciasEmpresa.map(emp => (
                     <button
                       key={emp.id}
                       type="button"
+                      onMouseDown={e => e.preventDefault()}
                       onClick={() => {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
                         if (!emailCliente && emp.email) setEmailCliente(emp.email);
                         setSugerenciasEmpresa([]);
+                        setMostrarTodos(false);
                       }}
-                      className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
+                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors flex items-center justify-between group"
                     >
-                      <p className="text-xs font-semibold text-gray-800">{emp.nombre_comercial}</p>
-                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-blue-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id && <Check size={12} className="text-blue-500" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {mostrarTodos && sugerenciasEmpresa.length === 0 && todosLosClientes.length > 0 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                  <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Todos los clientes</span>
+                    <button onMouseDown={e => e.preventDefault()} onClick={() => setMostrarTodos(false)} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
+                  </div>
+                  {todosLosClientes.map(emp => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => {
+                        setEmpresa(emp.nombre_comercial);
+                        setEmpresaId(emp.id);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setMostrarTodos(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors flex items-center justify-between group"
+                    >
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 group-hover:text-blue-700">{emp.nombre_comercial}</p>
+                        {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                      </div>
+                      {empresaId === emp.id && <Check size={12} className="text-blue-500" />}
                     </button>
                   ))}
                 </div>
@@ -726,7 +806,7 @@ export default function CotizadorServiciosPage() {
               </div>
               {emailCliente && (
                 <a
-                  href={`mailto:${emailCliente}?subject=Cotización de Servicios ${folio} — Retarder México&body=Estimado/a ${cliente},%0D%0A%0D%0AAdjuntamos la cotización de servicios con folio ${folio}.%0D%0A%0D%0AServicio: ${tipoServicio ?? 'Por confirmar'}%0D%0ATotal MXN: $${totalMXN.toLocaleString('es-MX', { minimumFractionDigits: 2 })}%0D%0A%0D%0AQuedamos a sus órdenes.%0D%0A%0D%0AJuan Carlos Espinosa%0D%0AÁrea de Ventas — Retarder México%0D%0Aventas@retardermexico.com%0D%0ATel: +52 55 7372 1633`}
+                  href={`mailto:${emailCliente}?subject=Cotización de Servicios ${folio} — Retarder México&body=Estimado/a ${cliente},%0D%0A%0D%0AAdjuntamos la cotización de servicios con folio ${folio}.%0D%0A%0D%0AServicio: ${tipoServicio ?? 'Por confirmar'}%0D%0ATotal MXN: $${totalMXN.toLocaleString('es-MX', { minimumFractionDigits: 2 })}%0D%0A%0D%0AQuedamos a sus órdenes.%0D%0A%0D%0AIng. Cristina Velasco%0D%0AÁrea de Ventas — Retarder México%0D%0Aventas@retardermexico.com%0D%0ATel: +52 55 7372 1633`}
                   className="p-1.5 rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white transition-colors flex-shrink-0"
                   title="Enviar cotización por email"
                 >
@@ -958,6 +1038,18 @@ export default function CotizadorServiciosPage() {
                     className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 outline-none focus:border-blue-400 transition-colors resize-none font-mono"
                   />
                 </div>
+
+                <div className="mt-4">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
+                    Políticas y Garantías
+                  </label>
+                  <textarea
+                    value={politicas}
+                    onChange={e => setPoliticas(e.target.value)}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-xl px-3 py-2 text-[10px] text-gray-800 outline-none focus:border-blue-400 transition-colors resize-none font-mono"
+                  />
+                </div>
               </div>
 
               {/* Totales */}
@@ -1168,12 +1260,9 @@ export default function CotizadorServiciosPage() {
             <hr className="p-hr" />
 
             {/* Observaciones técnicas */}
-            <div className="p-obs-two-col">
-              <div>
-                <div className="p-section-title">Observaciones técnicas</div>
-                <pre className="p-obs-pre">{observaciones}</pre>
-              </div>
-              <div />
+            <div className="p-obs-full">
+              <div className="p-section-title">Observaciones técnicas</div>
+              <pre className="p-obs-pre">{observaciones}</pre>
             </div>
 
             <hr className="p-hr" />
@@ -1181,8 +1270,7 @@ export default function CotizadorServiciosPage() {
             {/* Políticas y garantías */}
             <div className="p-policies">
               <div className="p-section-title" style={{ color: '#c0392b', borderColor: '#c0392b' }}>Políticas y Garantías</div>
-              <div className="p-policy-line">*COTIZACIÓN VÁLIDA POR 15 DÍAS</div>
-              <div className="p-policy-line">*GARANTÍA DE 30 DÍAS EN MANO DE OBRA</div>
+              <pre className="p-obs-pre" style={{ color: '#c0392b', fontWeight: 700 }}>{politicas}</pre>
             </div>
 
             <hr className="p-hr" />
@@ -1191,7 +1279,7 @@ export default function CotizadorServiciosPage() {
             <div className="p-footer">
               {/* Izquierda: datos Juan Carlos */}
               <div className="p-footer-info" style={{ order: 1 }}>
-                <div className="p-footer-name">Juan Carlos Espinosa</div>
+                <div className="p-footer-name">Ing. Cristina Velasco</div>
                 <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
                 <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
@@ -1292,9 +1380,9 @@ export default function CotizadorServiciosPage() {
         .p-client-lbl { font-weight: 700; color: #222; }
 
         /* ── Dos columnas ── */
-        .p-two-col { display: flex; gap: 18px; margin: 5px 0; }
-        .p-col-works { flex: 1.3; }
-        .p-col-pricing { flex: 1; }
+        .p-two-col { display: flex; gap: 24px; margin: 8px 0; }
+        .p-col-works { flex: 2; }
+        .p-col-pricing { flex: 1; min-width: 180px; }
         .p-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
         .p-checklist-cat { font-size: 10px; font-weight: 700; color: #0d2244; text-transform: uppercase; margin-bottom: 2px; }
         .p-work-item { display: flex; gap: 4px; font-size: 13px; margin-bottom: 2px; line-height: 1.4; }
@@ -1310,10 +1398,9 @@ export default function CotizadorServiciosPage() {
         .p-total-final { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
 
         /* ── Letras y observaciones ── */
-        .p-letras { font-size: 12px; font-style: italic; color: #444; margin: 4px 0; }
-        .p-obs-two-col { display: flex; gap: 18px; margin: 4px 0; }
-        .p-obs-two-col > div { flex: 1; }
-        .p-obs-pre { font-family: Arial, sans-serif; font-size: 13px; white-space: pre-wrap; color: #444; margin: 2px 0; line-height: 1.4; }
+        .p-letras { font-size: 13px; font-style: italic; color: #444; margin: 6px 0; }
+        .p-obs-full { margin: 8px 0; }
+        .p-obs-pre { font-family: Arial, sans-serif; font-size: 14px; white-space: pre-wrap; color: #333; margin: 4px 0; line-height: 1.6; }
 
         /* ── Políticas ── */
         .p-policies { margin: 4px 0; }
