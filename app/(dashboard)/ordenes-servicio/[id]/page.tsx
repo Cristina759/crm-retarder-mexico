@@ -18,11 +18,13 @@ import {
   actualizarDescripcionOS,
   guardarDatosOS,
   guardarOrdenCompra,
+  eliminarOrdenServicio
 } from '@/app/actions/ordenes';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
 import type { OSRow, UsuarioRow } from '@/app/actions/types';
 
 const OS_ESTADOS = [
+  'solicitud_recibida',
   'tecnico_asignado',
   'servicio_programado',
   'documentacion_enviada',
@@ -39,6 +41,7 @@ const OS_ESTADOS = [
 
 // ── Metadata de estados ───────────────────────────────────────────────────────
 const ESTADO_META: Record<string, { label: string; fase: number }> = {
+  solicitud_recibida:      { label: 'Solicitud Recibida',     fase: 1 },
   tecnico_asignado:        { label: 'Asignación de Técnico',  fase: 1 },
   servicio_programado:     { label: 'Servicio Programado',    fase: 1 },
   documentacion_enviada:   { label: 'Documentación Enviada',  fase: 1 },
@@ -411,7 +414,8 @@ export default function OSDetallePage() {
         setDesc(data?.descripcion_trabajo ?? '');
         setNumOS(data?.numero_os_manual ?? '');
         setNumOC(data?.numero_orden_compra ?? '');
-        setUsuarios(uData);
+        const exclude = ['Ing. Cristina Velasco', 'Ing. Juan Carlos Espinosa', 'Teresa Gutiérrez'];
+        setUsuarios(uData.filter(u => !exclude.includes(u.nombre)));
         setCargando(false);
       });
   }, [id]);
@@ -485,6 +489,16 @@ export default function OSDetallePage() {
     } : prev);
   };
 
+  // Eliminar orden
+  const handleEliminar = async () => {
+    if (!os) return;
+    if (!confirm(`¿Estás seguro de que deseas eliminar la orden ${os.numero}? Esta acción no se puede deshacer.`)) return;
+    
+    const { error } = await eliminarOrdenServicio(os.id);
+    if (error) alert('Error al eliminar: ' + error);
+    else router.push('/ordenes-servicio');
+  };
+
   // Notas con debounce
   const handleNotas = useCallback((val: string) => {
     setNotas(val);
@@ -534,12 +548,21 @@ export default function OSDetallePage() {
   return (
     <div className="space-y-5 pb-16">
       {/* Nav */}
-      <button
-        onClick={() => router.push('/ordenes-servicio')}
-        className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-      >
-        <ChevronLeft size={16} /> Órdenes de Servicio
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => router.push('/ordenes-servicio')}
+          className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+        >
+          <ChevronLeft size={18} className="text-gray-600" />
+        </button>
+        <button
+          onClick={handleEliminar}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
+          title="Eliminar Orden"
+        >
+          <Trash2 size={14} /> Eliminar
+        </button>
+      </div>
 
       {/* Header + Avanzar */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
@@ -557,14 +580,25 @@ export default function OSDetallePage() {
             </div>
           </div>
           {!esUltimo && canEdit ? (
-            <button
-              onClick={handleAvanzar}
-              disabled={avanzando}
-              className="flex items-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold text-sm px-4 py-2.5 rounded-2xl transition-colors disabled:opacity-50 flex-shrink-0"
-            >
-              {avanzando ? <Loader2 size={15} className="animate-spin" /> : <ChevronRight size={15} />}
-              {proxLabel ? `→ ${proxLabel}` : 'Avanzar'}
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              <button
+                onClick={handleAvanzar}
+                disabled={avanzando}
+                className={`flex items-center gap-2 font-bold text-sm px-4 py-2.5 rounded-2xl transition-all shadow-lg ${
+                  avanzando 
+                    ? 'bg-gray-100 text-gray-400' 
+                    : (os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os))
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-70'
+                      : 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900 shadow-yellow-100'
+                }`}
+              >
+                {avanzando ? <Loader2 size={15} className="animate-spin" /> : <ChevronRight size={15} />}
+                {proxLabel ? `→ ${proxLabel}` : 'Avanzar'}
+              </button>
+              {os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os) && (
+                <span className="text-[10px] text-red-500 font-bold animate-pulse">Completa los campos obligatorios (*)</span>
+              )}
+            </div>
           ) : (
             <span className="flex items-center gap-1.5 bg-green-100 text-green-700 font-bold text-sm px-4 py-2.5 rounded-2xl flex-shrink-0">
               <Check size={15} /> Completada
@@ -608,16 +642,19 @@ export default function OSDetallePage() {
         {/* Columna derecha: Detalles */}
         <div className="lg:col-span-2 space-y-5">
           {/* ── Técnico (candado 1) ── */}
-          <div className={`bg-white rounded-2xl border p-5 ${!os.tecnico_id ? 'border-amber-300' : 'border-gray-200'}`}>
-            <div className="flex items-center gap-2 mb-3">
-              {os.tecnico_id ? <Unlock size={13} className="text-green-500" /> : <Lock size={13} className="text-amber-500" />}
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Técnico asignado *</p>
+          <div className={`bg-white rounded-2xl border p-5 transition-all ${!os.tecnico_id ? 'border-red-200 bg-red-50/30' : 'border-gray-200 shadow-sm'}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {os.tecnico_id ? <Check size={13} className="text-green-500" /> : <Lock size={13} className="text-red-500" />}
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${!os.tecnico_id ? 'text-red-500' : 'text-gray-400'}`}>Técnico asignado *</p>
+              </div>
+              {!os.tecnico_id && <span className="text-[9px] font-black text-red-600 bg-red-100 px-1.5 py-0.5 rounded uppercase">Obligatorio</span>}
             </div>
             <select
               value={os.tecnico_id ?? ''}
               onChange={e => handleTecnico(e.target.value)}
               disabled={!canEdit}
-              className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-yellow-400 bg-white disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
+              className={`w-full border rounded-xl px-3 h-10 text-sm outline-none transition-all bg-white ${!os.tecnico_id ? 'border-red-300 ring-4 ring-red-50' : 'border-gray-200 focus:border-yellow-400'}`}
             >
               <option value="">— Seleccionar técnico —</option>
               {usuarios.map(u => (
@@ -634,26 +671,32 @@ export default function OSDetallePage() {
             </p>
             {/* Número manual */}
             <div>
-              <label className="text-[10px] font-bold text-gray-500 block mb-1">Número de OS *</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className={`text-[10px] font-bold block ${!numOS ? 'text-red-500' : 'text-gray-500'}`}>Número de OS *</label>
+                {!numOS && <span className="text-[9px] font-black text-red-600 uppercase">Falta dato</span>}
+              </div>
               <input
                 type="text"
                 value={numOS}
                 onChange={e => handleNumOS(e.target.value)}
                 placeholder="Ej. OS-2024-001"
                 readOnly={!canEdit}
-                className={`w-full border rounded-xl px-3 h-10 text-sm outline-none transition-colors ${!canEdit ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : numOS ? 'border-green-300 focus:border-green-400' : 'border-amber-200 focus:border-amber-400'}`}
+                className={`w-full border rounded-xl px-3 h-10 text-sm outline-none transition-all ${!canEdit ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : numOS ? 'border-green-300 focus:border-green-400 bg-green-50/20' : 'border-red-300 ring-4 ring-red-50'}`}
               />
             </div>
             {/* Foto OS */}
             <div>
-              <label className="text-[10px] font-bold text-gray-500 block mb-1">Foto de la OS *</label>
+              <div className="flex justify-between items-center mb-1">
+                <label className={`text-[10px] font-bold block ${!os.foto_os ? 'text-red-500' : 'text-gray-500'}`}>Foto de la OS *</label>
+                {!os.foto_os && <span className="text-[9px] font-black text-red-600 uppercase">Falta foto</span>}
+              </div>
               {os.foto_os ? (
-                <div className="relative">
+                <div className="relative group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={os.foto_os} alt="OS" className="w-full max-h-48 object-contain rounded-xl border border-gray-200 bg-gray-50" />
+                  <img src={os.foto_os} alt="OS" className="w-full max-h-48 object-contain rounded-xl border border-green-200 bg-green-50/10 shadow-sm" />
                   <button
                     onClick={() => { guardarDatosOS(os.id, { foto_os: '' }); setOs(prev => prev ? { ...prev, foto_os: null } : prev); }}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -661,10 +704,10 @@ export default function OSDetallePage() {
               ) : canEdit ? (
                 <button
                   onClick={() => fotoOSRef.current?.click()}
-                  className="w-full h-20 border-2 border-dashed border-amber-200 rounded-xl flex flex-col items-center justify-center gap-1 text-amber-500 hover:bg-amber-50 transition-colors"
+                  className="w-full h-24 border-2 border-dashed border-red-200 bg-red-50/20 rounded-xl flex flex-col items-center justify-center gap-1 text-red-500 hover:bg-red-50 transition-all hover:border-red-300 group"
                 >
-                  <Camera size={20} />
-                  <span className="text-xs font-semibold">Subir foto de la OS</span>
+                  <Camera size={24} className="group-hover:scale-110 transition-transform" />
+                  <span className="text-[10px] font-black uppercase tracking-tight">Tomar Foto de la O.S. Física</span>
                 </button>
               ) : (
                 <p className="text-sm text-gray-400 text-center py-4">Sin foto</p>

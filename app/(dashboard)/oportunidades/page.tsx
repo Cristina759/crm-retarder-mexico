@@ -41,8 +41,9 @@ const ESTADOS: {
   { id: 'perdido',            label: 'Perdido',            color: 'bg-red-500',    bg: 'bg-red-50',     border: 'border-red-200',   text: 'text-red-700',    prob: 0 },
 ];
 
-function formatMXN(n: number) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+function formatMXN(n: number | null | undefined) {
+  const value = n ?? 0;
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(value);
 }
 
 // ── Barra de progreso ─────────────────────────────────────────────────────────
@@ -243,10 +244,26 @@ export default function OportunidadesPage() {
   const cargar = async () => {
     setLoading(true);
     setFetchError(null);
-    const { data, error } = await obtenerOportunidades();
-    if (error) setFetchError(error);
-    setOportunidades(data);
-    setLoading(false);
+    try {
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Tiempo de espera agotado (30s)')), 30000)
+      );
+      
+      const { data, error } = await Promise.race([
+        obtenerOportunidades(),
+        timeoutPromise as Promise<{ data: OportunidadRow[], error: string | null }>
+      ]);
+
+      if (error) {
+        setFetchError(error);
+      } else {
+        setOportunidades(data || []);
+      }
+    } catch (err: any) {
+      setFetchError(err.message || 'Error desconocido al cargar');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { cargar(); }, []);

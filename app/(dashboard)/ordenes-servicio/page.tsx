@@ -2,9 +2,21 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertCircle, ClipboardList, Lock, History } from 'lucide-react';
-import { obtenerOrdenes, obtenerOrdenesArchivadas } from '@/app/actions/ordenes';
-import type { OSRow } from '@/app/actions/types';
+import { 
+  DndContext, 
+  DragOverlay, 
+  PointerSensor, 
+  TouchSensor, 
+  closestCenter, 
+  useSensor, 
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent
+} from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { Loader2, AlertCircle, ClipboardList, Lock, History, GripVertical } from 'lucide-react';
+import { obtenerOrdenes, obtenerOrdenesArchivadas, actualizarEstadoOS } from '@/app/actions/ordenes';
+import type { OSRow, OSEstado } from '@/app/actions/types';
 
 // ── Configuración del pipeline ────────────────────────────────────────────────
 const FASES = [
@@ -22,7 +34,8 @@ const FASES = [
   },
 ];
 
-const COLUMNAS = [
+const COLUMNAS: { id: OSEstado; label: string; fase: number; dot: string }[] = [
+  { id: 'solicitud_recibida',      label: 'Solicitud Recibida',     fase: 1, dot: 'bg-slate-400'  },
   { id: 'tecnico_asignado',        label: 'Asignación de Técnico',  fase: 1, dot: 'bg-blue-400'   },
   { id: 'servicio_programado',     label: 'Servicio Programado',    fase: 1, dot: 'bg-blue-500'   },
   { id: 'documentacion_enviada',   label: 'Documentación Enviada',  fase: 1, dot: 'bg-blue-500'   },
@@ -47,61 +60,115 @@ function fmtFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
 }
 
-// ── Tarjeta ───────────────────────────────────────────────────────────────────
-function OSCard({ os, onClick }: { os: OSRow; onClick: () => void }) {
+// ── Tarjeta Draggable ──────────────────────────────────────────────────────────
+function OSCard({ os, onClick, overlay = false }: { os: OSRow; onClick: () => void; overlay?: boolean }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: os.id });
+  
   const idx    = COLUMNAS.findIndex(c => c.id === os.estado);
   const pct    = Math.round(((idx + 1) / TOTAL) * 100);
   const listo  = candadosCompletos(os);
   const col    = COLUMNAS.find(c => c.id === os.estado);
 
   return (
-    <button
+    <div
+      ref={overlay ? undefined : setNodeRef}
+      {...(overlay ? {} : { ...attributes, ...listeners })}
       onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-gray-200 p-3 shadow-sm hover:shadow-md hover:border-gray-300 transition-all group text-[11px]"
+      className={`w-full text-left bg-white rounded-2xl border p-3.5 shadow-sm transition-all group select-none relative
+        ${isDragging && !overlay ? 'opacity-20 grayscale' : 'hover:shadow-xl hover:border-blue-200 hover:-translate-y-0.5'}
+        ${overlay ? 'shadow-2xl rotate-2 scale-105 border-blue-400 z-50 ring-4 ring-blue-50' : 'cursor-grab active:cursor-grabbing border-gray-100'}
+      `}
     >
-      <div className="flex items-start justify-between gap-1 mb-1.5">
-        <span className="font-mono font-bold text-[#0f2d55] text-[10px]">{os.numero}</span>
-        {!listo && os.estado === 'tecnico_asignado' && (
-          <Lock size={10} className="text-amber-500 flex-shrink-0 mt-0.5" />
+      {/* Indicador de Candado / Alerta */}
+      {!listo && os.estado === 'tecnico_asignado' && (
+        <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg animate-bounce duration-1000 z-10 border-2 border-white">
+          <Lock size={10} strokeWidth={3} />
+        </div>
+      )}
+
+      {/* Header Tarjeta */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-[9px] font-black tracking-tighter text-gray-400 uppercase bg-gray-50 px-1.5 py-0.5 rounded-lg border border-gray-100 font-mono">
+          {os.numero}
+        </span>
+        <span className="text-[9px] font-bold text-gray-300">{fmtFecha(os.created_at)}</span>
+      </div>
+
+      {/* Cliente */}
+      <h3 className="text-xs font-black text-[#0f2d55] leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[2.5em]">
+        {os.empresas?.nombre_comercial ?? 'Sin Cliente'}
+      </h3>
+
+      {/* Info Extra */}
+      <div className="flex flex-col gap-1 mb-3">
+        {os.numero_os_manual ? (
+          <div className="flex items-center gap-1 text-[10px] text-gray-500 font-medium">
+            <ClipboardList size={10} className="text-gray-300" />
+            <span className="truncate">{os.numero_os_manual}</span>
+          </div>
+        ) : (
+          <span className="text-[9px] text-red-400 font-bold uppercase italic">Falta O.S. Física</span>
         )}
       </div>
-      <p className="font-semibold text-gray-800 leading-tight truncate mb-1">
-        {os.empresas?.nombre_comercial ?? '—'}
-      </p>
-      {os.numero_os_manual && (
-        <p className="text-[10px] text-gray-400 truncate mb-1">OS: {os.numero_os_manual}</p>
-      )}
-      <div className="h-1 rounded-full bg-gray-100 overflow-hidden mb-1.5">
-        <div className={`h-full rounded-full ${col?.dot ?? 'bg-gray-400'}`} style={{ width: `${pct}%` }} />
+
+      {/* Footer con Progreso */}
+      <div className="space-y-2 pt-2 border-t border-gray-50">
+        <div className="flex items-center justify-between text-[10px]">
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-[#0f2d55] font-black text-[8px]">
+              {os.tecnico?.nombre?.charAt(0) || '?'}
+            </div>
+            <span className="text-gray-500 font-semibold truncate max-w-[80px]">
+              {os.tecnico?.nombre?.split(' ')[0] || <span className="text-red-300 italic">Sin técnico</span>}
+            </span>
+          </div>
+          <span className={`font-black ${pct === 100 ? 'text-green-500' : 'text-blue-500'}`}>{pct}%</span>
+        </div>
+        
+        {/* Progress Bar Mini */}
+        <div className="h-1 rounded-full bg-gray-50 overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ${pct === 100 ? 'bg-green-500' : col?.dot.replace('bg-', 'bg-') || 'bg-blue-400'}`} 
+            style={{ width: `${pct}%` }} 
+          />
+        </div>
       </div>
-      <div className="flex items-center justify-between text-[10px] text-gray-400">
-        <span className="truncate max-w-[80px]">{os.tecnico?.nombre ?? <span className="italic">Sin técnico</span>}</span>
-        <span>{fmtFecha(os.created_at)}</span>
-      </div>
-    </button>
+    </div>
   );
 }
 
-// ── Columna ───────────────────────────────────────────────────────────────────
+// ── Columna Droppable ──────────────────────────────────────────────────────────
 function Columna({ col, ordenes, onClick }: {
   col: typeof COLUMNAS[number];
   ordenes: OSRow[];
   onClick: (id: string) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: col.id });
+
   return (
-    <div className="flex-shrink-0 w-44 flex flex-col">
-      <div className="flex items-center gap-1.5 mb-2 px-0.5">
-        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${col.dot}`} />
-        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-wide leading-tight">{col.label}</span>
-        <span className="ml-auto text-[10px] font-bold text-gray-400 bg-gray-100 rounded-full px-1.5">{ordenes.length}</span>
+    <div className="flex-shrink-0 w-52 flex flex-col group/col">
+      <div className="flex items-center gap-2 mb-3 px-1">
+        <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${col.dot} shadow-sm`} />
+        <h4 className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-tight truncate">
+          {col.label}
+        </h4>
+        <div className="ml-auto flex items-center justify-center bg-white border border-gray-100 text-[9px] font-black text-gray-400 w-5 h-5 rounded-lg shadow-sm">
+          {ordenes.length}
+        </div>
       </div>
-      <div className="flex-1 space-y-2 min-h-[80px]">
+      <div 
+        ref={setNodeRef}
+        className={`flex-1 space-y-3 min-h-[500px] rounded-2xl p-2.5 transition-all duration-300 border-2 border-transparent ${
+          isOver ? 'bg-blue-50/60 border-blue-200 shadow-inner' : 'bg-gray-50/40 hover:bg-gray-50/80'
+        }`}
+      >
         {ordenes.map(os => (
           <OSCard key={os.id} os={os} onClick={() => onClick(os.id)} />
         ))}
         {ordenes.length === 0 && (
-          <div className="h-12 rounded-xl border-2 border-dashed border-gray-150 flex items-center justify-center">
-            <span className="text-[10px] text-gray-300">Sin órdenes</span>
+          <div className="h-24 rounded-2xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 grayscale opacity-40">
+            <ClipboardList size={20} className="text-gray-300" />
+            <span className="text-[9px] font-black uppercase tracking-tighter text-gray-400">Vacíó</span>
           </div>
         )}
       </div>
@@ -118,16 +185,37 @@ export default function OrdenesServicioPage() {
   const [error,      setError]      = useState<string | null>(null);
   const [vistaHistorial, setVistaHistorial] = useState(false);
   const [faseFilter, setFaseFilter] = useState<number | null>(null);
+  const [activeId,   setActiveId]   = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([obtenerOrdenes(), obtenerOrdenesArchivadas()])
-      .then(([act, arch]) => {
-        if (act.error) setError(act.error);
-        else { setOrdenes(act.data); setArchivadas(arch.data); }
-      })
-      .catch(e => setError(String(e)))
-      .finally(() => setLoading(false));
-  }, []);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
+  const cargar = async () => {
+    try {
+      setError(null);
+      const act = await obtenerOrdenes();
+      if (act.error) setError(act.error);
+      else setOrdenes(act.data);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarHistorial = async () => {
+    if (archivadas.length > 0) return; // Ya cargado
+    try {
+      const arch = await obtenerOrdenesArchivadas();
+      if (!arch.error) setArchivadas(arch.data);
+    } catch (e) {
+      console.error('Error al cargar historial:', e);
+    }
+  };
+
+  useEffect(() => { cargar(); }, []);
 
   const columnasFiltradas = useMemo(() =>
     faseFilter ? COLUMNAS.filter(c => c.fase === faseFilter) : COLUMNAS,
@@ -140,6 +228,57 @@ export default function OrdenesServicioPage() {
   );
 
   const ir = (id: string) => router.push(`/ordenes-servicio/${id}`);
+
+  const activeOS = useMemo(() => ordenes.find(o => o.id === activeId), [activeId, ordenes]);
+
+  // ── Handlers de Drag ──
+  const handleDragStart = (e: DragStartEvent) => setActiveId(e.active.id as string);
+
+  const handleDragEnd = async (e: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = e;
+    if (!over) return;
+
+    const os = ordenes.find(o => o.id === active.id);
+    const nuevoEstado = COLUMNAS.find(c => c.id === over.id)?.id;
+
+    if (!os || !nuevoEstado || os.estado === nuevoEstado) return;
+
+    // ── CANDADO DE SEGURIDAD ──
+    if (os.estado === 'tecnico_asignado' && nuevoEstado !== 'tecnico_asignado') {
+      const faltaTecnico = !os.tecnico_id;
+      const faltaFoto    = !os.foto_os;
+      const faltaManual  = !os.numero_os_manual;
+
+      if (faltaTecnico || faltaFoto || faltaManual) {
+        let msj = '🔒 CANDADO ACTIVO:\nPara avanzar esta orden, primero debes completar los siguientes requisitos:\n';
+        if (faltaTecnico) msj += '\n• Asignar un técnico';
+        if (faltaManual)  msj += '\n• Ingresar el número de O.S. manual';
+        if (faltaFoto)    msj += '\n• Subir la foto de la orden de servicio';
+        
+        msj += '\n\nPor favor, haz clic en la tarjeta para completar estos datos.';
+        alert(msj);
+        return;
+      }
+    }
+
+    // Actualización optimista
+    setOrdenes(prev => prev.map(o => o.id === os.id ? { ...o, estado: nuevoEstado } : o));
+
+    const { error: err } = await actualizarEstadoOS(os.id, nuevoEstado);
+    if (err) {
+      console.error('[DragEnd] Error:', err);
+      // Revertir en caso de error
+      setOrdenes(prev => prev.map(o => o.id === os.id ? { ...o, estado: os.estado } : o));
+      alert('Error al mover la orden: ' + err);
+      return;
+    }
+
+    // Si se movió a "pagado", recargamos para que desaparezca del pipeline activo
+    if (nuevoEstado === 'pagado') {
+      cargar();
+    }
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -171,7 +310,10 @@ export default function OrdenesServicioPage() {
           </div>
         </div>
         <button
-          onClick={() => setVistaHistorial(v => !v)}
+          onClick={() => {
+            if (!vistaHistorial) cargarHistorial();
+            setVistaHistorial(v => !v);
+          }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
             vistaHistorial
               ? 'bg-gray-800 text-white border-gray-800'
@@ -212,41 +354,51 @@ export default function OrdenesServicioPage() {
 
       {/* ── Pipeline Kanban ── */}
       {!vistaHistorial ? (
-        <div className="overflow-x-auto flex-1 -mx-4 px-4">
-          <div className="flex gap-0 min-w-max">
-            {FASES.filter(f => !faseFilter || f.id === faseFilter).map((fase, fi) => {
-              const cols = columnasFiltradas.filter(c => c.fase === fase.id);
-              if (cols.length === 0) return null;
-              return (
-                <div key={fase.id} className={`flex flex-col mr-4 last:mr-0`}>
-                  {/* Header de fase */}
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-t-xl mb-3 ${fase.headerBg} border ${fase.border}`}>
-                    <span className={`w-2 h-2 rounded-full ${fase.color}`} />
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${fase.text}`}>{fase.label}</span>
-                    <span className={`ml-1 text-[10px] font-bold px-1.5 rounded-full text-white ${fase.color}`}>
-                      {ordenes.filter(o => COLUMNAS.find(c => c.id === o.estado)?.fase === fase.id).length}
-                    </span>
+        <DndContext 
+          sensors={sensors} 
+          collisionDetection={closestCenter} 
+          onDragStart={handleDragStart} 
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setActiveId(null)}
+        >
+          <div className="overflow-x-auto flex-1 -mx-4 px-4">
+            <div className="flex gap-0 min-w-max">
+              {FASES.filter(f => !faseFilter || f.id === faseFilter).map((fase, fi) => {
+                const cols = columnasFiltradas.filter(c => c.fase === fase.id);
+                if (cols.length === 0) return null;
+                return (
+                  <div key={fase.id} className={`flex flex-col mr-4 last:mr-0`}>
+                    {/* Header de fase */}
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-t-xl mb-3 ${fase.headerBg} border ${fase.border}`}>
+                      <span className={`w-2 h-2 rounded-full ${fase.color}`} />
+                      <span className={`text-[10px] font-black uppercase tracking-wider ${fase.text}`}>{fase.label}</span>
+                      <span className={`ml-1 text-[10px] font-bold px-1.5 rounded-full text-white ${fase.color}`}>
+                        {ordenes.filter(o => COLUMNAS.find(c => c.id === o.estado)?.fase === fase.id).length}
+                      </span>
+                    </div>
+                    {/* Columnas de esta fase */}
+                    <div className="flex gap-3">
+                      {cols.map(col => (
+                        <Columna
+                          key={col.id}
+                          col={col}
+                          ordenes={ordenes.filter(o => o.estado === col.id)}
+                          onClick={ir}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  {/* Columnas de esta fase */}
-                  <div className="flex gap-3">
-                    {cols.map(col => (
-                      <Columna
-                        key={col.id}
-                        col={col}
-                        ordenes={ordenes.filter(o => o.estado === col.id)}
-                        onClick={ir}
-                      />
-                    ))}
-                  </div>
-                  {/* Separador vertical entre fases */}
-                  {fi < FASES.filter(f => !faseFilter || f.id === faseFilter).length - 1 && (
-                    <div className="absolute" />
-                  )}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+
+          <DragOverlay>
+            {activeOS && (
+              <OSCard os={activeOS} onClick={() => {}} overlay />
+            )}
+          </DragOverlay>
+        </DndContext>
       ) : (
         /* ── Historial ── */
         <div className="flex-1 overflow-y-auto">

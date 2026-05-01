@@ -22,6 +22,7 @@ export type ClienteRow = {
   estado: string | null;
   cp: string | null;
   persona_encargada: string | null;
+  notas: string | null;
   activo: boolean | null;
   created_at: string;
   total_os?: number;
@@ -56,6 +57,7 @@ const SELECT_CLIENTE = `
 
 export async function obtenerClientes(): Promise<{ data: ClienteRow[]; error: string | null }> {
   try {
+    // 1. Obtenemos las empresas con una selección de campos segura
     const { data, error } = await supabaseAdmin
       .from('empresas')
       .select('*')
@@ -63,20 +65,27 @@ export async function obtenerClientes(): Promise<{ data: ClienteRow[]; error: st
 
     if (error) return { data: [], error: error.message };
 
-    const rows = (data ?? []) as unknown as (ClienteRow & { id: string })[];
-    const ids = rows.map(e => e.id);
+    const rows = data as ClienteRow[];
+    const ids = rows.map(r => r.id);
 
+    // 2. Contamos las órdenes por separado para evitar errores de relación compleja
     const { data: osCounts } = await supabaseAdmin
       .from('ordenes_servicio')
       .select('empresa_id')
       .in('empresa_id', ids);
 
     const countMap: Record<string, number> = {};
-    (osCounts ?? []).forEach(r => { countMap[r.empresa_id] = (countMap[r.empresa_id] ?? 0) + 1; });
+    (osCounts ?? []).forEach(r => {
+      countMap[r.empresa_id] = (countMap[r.empresa_id] ?? 0) + 1;
+    });
 
-    return { data: rows.map(e => ({ ...e, total_os: countMap[e.id] ?? 0 })), error: null };
+    return { 
+      data: rows.map(r => ({ ...r, total_os: countMap[r.id] ?? 0 })), 
+      error: null 
+    };
   } catch (e) {
-    return { data: [], error: String(e) };
+    console.error('[obtenerClientes] Error fatal:', e);
+    return { data: [], error: 'Error de conexión con el servidor' };
   }
 }
 
@@ -105,8 +114,15 @@ export async function obtenerClienteDetalle(id: string): Promise<{ data: Cliente
 export async function crearCliente(datos: {
   nombre_comercial: string;
   rfc?: string;
+  sucursal?: string;
+  persona_encargada?: string;
+  direccion_fiscal?: string;
   telefono?: string;
+  telefono2?: string;
+  telefono3?: string;
   email?: string;
+  email2?: string;
+  notas?: string;
 }): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
     const { data, error } = await supabaseAdmin
@@ -123,7 +139,7 @@ export async function crearCliente(datos: {
 
 export async function actualizarCliente(
   id: string,
-  datos: { nombre_comercial?: string; razon_social?: string; rfc?: string; sucursal?: string; telefono?: string; telefono2?: string; telefono3?: string; email?: string; email2?: string; contacto1_nombre?: string; contacto1_cargo?: string; contacto2_nombre?: string; contacto2_cargo?: string; direccion_fiscal?: string; ciudad?: string; estado?: string; cp?: string; persona_encargada?: string; activo?: boolean }
+  datos: { nombre_comercial?: string; razon_social?: string; rfc?: string; sucursal?: string; telefono?: string; telefono2?: string; telefono3?: string; email?: string; email2?: string; contacto1_nombre?: string; contacto1_cargo?: string; contacto2_nombre?: string; contacto2_cargo?: string; direccion_fiscal?: string; ciudad?: string; estado?: string; cp?: string; persona_encargada?: string; notas?: string; activo?: boolean }
 ): Promise<{ error: string | null }> {
   try {
     const { error } = await supabaseAdmin.from('empresas').update(datos).eq('id', id);
@@ -132,3 +148,24 @@ export async function actualizarCliente(
     return { error: String(e) };
   }
 }
+
+export async function eliminarCliente(id: string): Promise<{ error: string | null }> {
+  try {
+    // 1. Borrar dependencias en orden para evitar errores de llave foránea
+    // Primero cosas que dependen de cotizaciones u oportunidades
+    await supabaseAdmin.from('ordenes_servicio').delete().eq('empresa_id', id);
+    await supabaseAdmin.from('cotizaciones').delete().eq('empresa_id', id);
+    await supabaseAdmin.from('oportunidades').delete().eq('empresa_id', id);
+    
+    // Si hay usuarios asociados a esta empresa (como contactos), los desvinculamos
+    await supabaseAdmin.from('usuarios').update({ empresa_id: null }).eq('empresa_id', id);
+
+    // Finalmente borramos la empresa
+    const { error } = await supabaseAdmin.from('empresas').delete().eq('id', id);
+    
+    return { error: error?.message ?? null };
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
+
