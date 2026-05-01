@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import QRCode from 'qrcode';
-import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Printer, Search, BookOpen, X } from 'lucide-react';
+import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Printer, Search, BookOpen, X, ChevronDown } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 import { obtenerRefacciones } from '@/app/actions/catalogos';
+import { obtenerClientes } from '@/app/actions/clientes';
 import type { RefaccionRow } from '@/app/actions/catalogos';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
@@ -208,8 +209,10 @@ export default function CotizadorRefaccionesPage() {
   const [empresaId, setEmpresaId] = useState('');
   const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
   const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
+  const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
+  const [mostrarTodos, setMostrarTodos] = useState(false);
   const [emailCliente, setEmailCliente] = useState('');
-  const [folio, setFolio] = useState(() => generarFolio());
+  const [folio, setFolio] = useState('');
 
   const [lineas, setLineas] = useState<LineaRefaccion[]>([
     { id: uid(), descripcion: '', numeroParte: '', cantidad: 1, precioMXN: 0 },
@@ -218,6 +221,9 @@ export default function CotizadorRefaccionesPage() {
   const [traslado, setTraslado] = useState('0');
   const [observaciones, setObservaciones] = useState(
     `*PRECIOS EN PESOS MEXICANOS (MXN)\n*TIEMPO DE ENTREGA SUJETO A DISPONIBILIDAD DE INVENTARIO\n*SE REQUIERE PAGO ANTICIPADO DEL 50% PARA CONFIRMAR PEDIDO`
+  );
+  const [politicas, setPoliticas] = useState(
+    `*COTIZACIÓN VÁLIDA POR 15 DÍAS\n*GARANTÍA DE 30 DÍAS EN REFACCIONES`
   );
 
   const [catalogo, setCatalogo] = useState<RefaccionRow[]>([]);
@@ -231,6 +237,8 @@ export default function CotizadorRefaccionesPage() {
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null);
 
   useEffect(() => {
+    setFolio(generarFolio());
+    setFechaHoy(new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }));
     QRCode.toDataURL('https://tgrpentarmexico.com/', { width: 80, margin: 1 })
       .then(url => setQrDataUrl(url))
       .catch(() => {});
@@ -241,6 +249,22 @@ export default function CotizadorRefaccionesPage() {
       setCargandoCatalogo(false);
     });
   }, []);
+
+  // ── Cargar todos los clientes ────────────────────────────────────────────────
+  const cargarTodosLosClientes = async () => {
+    setBuscandoEmpresa(true);
+    const { data, error } = await obtenerClientes();
+    if (!error && data) {
+      setTodosLosClientes(data.map(c => ({
+        id: c.id,
+        nombre_comercial: c.nombre_comercial || c.razon_social || 'Sin nombre',
+        rfc: c.rfc,
+        email: c.email,
+        telefono: c.telefono,
+      })));
+    }
+    setBuscandoEmpresa(false);
+  };
 
   // ── Helpers de líneas ───────────────────────────────────────────────────────
   const addLinea = () => {
@@ -280,7 +304,7 @@ export default function CotizadorRefaccionesPage() {
   const subtotal = subtotalRef + trasladoN;
   const iva = Math.round(subtotal * 0.16 * 100) / 100;
   const totalMXN = Math.round(subtotal * 1.16 * 100) / 100;
-  const fechaHoy = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  const [fechaHoy, setFechaHoy] = useState('');
 
   // ── Guardar ──────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
@@ -360,28 +384,56 @@ export default function CotizadorRefaccionesPage() {
               Empresa
               {empresaId && <span className="text-[10px] font-bold text-green-600">✓</span>}
             </label>
-            <input
-              type="text"
-              value={empresa}
-              onChange={async e => {
-                const q = e.target.value;
-                setEmpresa(q);
-                setEmpresaId('');
-                if (q.length >= 2) {
-                  setBuscandoEmpresa(true);
-                  const res = await buscarEmpresas(q);
-                  setSugerenciasEmpresa(res);
-                  setBuscandoEmpresa(false);
-                } else {
-                  setSugerenciasEmpresa([]);
-                }
-              }}
-              placeholder="Razón social..."
-              className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300"
-            />
-            {buscandoEmpresa && <Loader2 size={11} className="absolute right-3 top-3 animate-spin text-gray-400" />}
-            {sugerenciasEmpresa.length > 0 && !empresaId && (
-              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+            <div className="relative">
+              <input
+                type="text"
+                value={empresa}
+                onFocus={() => {
+                  if (todosLosClientes.length === 0) cargarTodosLosClientes();
+                  setMostrarTodos(true);
+                }}
+                onChange={async e => {
+                  const q = e.target.value;
+                  setEmpresa(q);
+                  setEmpresaId('');
+                  setMostrarTodos(false);
+                  if (q.length >= 2) {
+                    setBuscandoEmpresa(true);
+                    const res = await buscarEmpresas(q);
+                    setSugerenciasEmpresa(res);
+                    setBuscandoEmpresa(false);
+                  } else {
+                    setSugerenciasEmpresa([]);
+                  }
+                }}
+                placeholder="Busca y selecciona un cliente..."
+                className="w-full text-xs font-semibold text-gray-800 outline-none bg-transparent placeholder:text-gray-300 pr-8"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (mostrarTodos || sugerenciasEmpresa.length > 0) {
+                    setMostrarTodos(false);
+                    setSugerenciasEmpresa([]);
+                  } else {
+                    if (todosLosClientes.length === 0) cargarTodosLosClientes();
+                    setMostrarTodos(true);
+                  }
+                }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              >
+                <ChevronDown size={14} className={`transition-transform ${mostrarTodos || sugerenciasEmpresa.length > 0 ? 'rotate-180 text-blue-500' : ''}`} />
+              </button>
+            </div>
+            {buscandoEmpresa && <Loader2 size={11} className="absolute right-8 top-3 animate-spin text-gray-400" />}
+
+            {/* Sugerencias por búsqueda */}
+            {sugerenciasEmpresa.length > 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Resultados</span>
+                  <button onClick={() => setSugerenciasEmpresa([])} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
+                </div>
                 {sugerenciasEmpresa.map(emp => (
                   <button
                     key={emp.id}
@@ -398,6 +450,36 @@ export default function CotizadorRefaccionesPage() {
                     {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Lista completa de clientes */}
+            {mostrarTodos && sugerenciasEmpresa.length === 0 && (
+              <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                <div className="p-2 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Todos los clientes</span>
+                  <button onClick={() => setMostrarTodos(false)} className="text-gray-400 hover:text-gray-600"><X size={12} /></button>
+                </div>
+                {todosLosClientes.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-gray-400">Cargando clientes...</div>
+                ) : (
+                  todosLosClientes.map(emp => (
+                    <button
+                      key={emp.id}
+                      type="button"
+                      onClick={() => {
+                        setEmpresa(emp.nombre_comercial);
+                        setEmpresaId(emp.id);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        setMostrarTodos(false);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <p className="text-xs font-semibold text-gray-800">{emp.nombre_comercial}</p>
+                      {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </div>
@@ -520,6 +602,17 @@ export default function CotizadorRefaccionesPage() {
             rows={7}
             className="w-full border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 outline-none focus:border-red-400 transition-colors resize-none font-mono"
           />
+          <div className="mt-4">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">
+              Políticas y Garantías
+            </label>
+            <textarea
+              value={politicas}
+              onChange={e => setPoliticas(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-[10px] text-gray-800 outline-none focus:border-red-400 transition-colors resize-none font-mono"
+            />
+          </div>
         </div>
 
         {/* Totales + botones */}
@@ -695,8 +788,7 @@ export default function CotizadorRefaccionesPage() {
               </div>
               <div>
                 <div className="p-section-title">Políticas y Garantías</div>
-                <div className="p-policy-line">*COTIZACIÓN VÁLIDA POR 15 DÍAS</div>
-                <div className="p-policy-line">*GARANTÍA DE 30 DÍAS EN REFACCIONES</div>
+                <pre className="p-obs-pre" style={{ color: '#c0392b', fontWeight: 700 }}>{politicas}</pre>
               </div>
             </div>
 
@@ -705,9 +797,9 @@ export default function CotizadorRefaccionesPage() {
             {/* Footer */}
             <div className="p-footer">
               <div className="p-footer-info" style={{ order: 1 }}>
-                <div className="p-footer-name">Juan Carlos Espinosa</div>
+                <div className="p-footer-name">Ing. Cristina Velasco</div>
                 <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com</div>
-                <div className="p-footer-detail">Tel: 55 4321 0000 &nbsp;|&nbsp; www.tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: 55 7372 1633 &nbsp;|&nbsp; www.tgrpentarmexico.com</div>
               </div>
               <div style={{ order: 2, textAlign: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

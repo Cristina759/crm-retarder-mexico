@@ -218,16 +218,16 @@ function ModeloCard({
       onClick={onSelect}
       className={`rounded-2xl overflow-hidden cursor-pointer transition-all border-2 ${
         seleccionado
-          ? 'border-[#c0392b] shadow-lg shadow-red-100'
-          : 'border-gray-200 hover:border-[#c0392b]/40 hover:shadow-md'
+          ? 'border-yellow-400 shadow-lg shadow-yellow-100'
+          : 'border-gray-200 hover:border-yellow-300 hover:shadow-md'
       }`}
     >
       {/* Header oscuro */}
       <div className="bg-[#0f2d55] px-4 py-3 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           {seleccionado && (
-            <div className="w-5 h-5 rounded-full bg-[#c0392b] flex items-center justify-center flex-shrink-0">
-              <Check size={11} className="text-white" strokeWidth={3} />
+            <div className="w-5 h-5 rounded-full bg-yellow-400 flex items-center justify-center flex-shrink-0">
+              <Check size={11} className="text-[#0f2d55]" strokeWidth={3} />
             </div>
           )}
           <div>
@@ -1139,18 +1139,20 @@ export default function CotizadorFrenosPage() {
       <style>{`
         @page { size: A4 portrait; margin: 12mm 14mm; }
         @media print {
-          html, body { width: 210mm; height: 297mm; margin: 0; padding: 0; }
+          html, body { margin: 0 !important; padding: 0 !important; }
           header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
             display: block !important;
-            position: fixed;
-            top: 0; left: 0;
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0; padding: 0;
-            box-sizing: border-box;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            min-height: 270mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
           }
           .p-doc {
             width: 100% !important;
