@@ -1,4 +1,6 @@
 'use client';
+// Version: 1.0.1 - Pago Parcial Fix
+
 
 import { useEffect, useState } from 'react';
 import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet } from 'lucide-react';
