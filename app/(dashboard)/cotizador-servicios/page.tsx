@@ -1185,7 +1185,6 @@ export default function CotizadorServiciosPage() {
                 <div className="p-doc-title">Cotización de Servicios</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
                 {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
-                {descripcion && <div className="p-fecha-line">Descripción: <strong>{descripcion}</strong></div>}
               </div>
             </div>
 
@@ -1197,6 +1196,7 @@ export default function CotizadorServiciosPage() {
               {empresa && <div className="p-client-row"><span className="p-client-lbl">Empresa:</span> {empresa}</div>}
               {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
               <div className="p-client-row"><span className="p-client-lbl">Tipo de servicio:</span> {tipoServicio} &nbsp;|&nbsp; Unidades: {unidadesN}</div>
+              {descripcion && <div className="p-client-row"><span className="p-client-lbl">Descripción:</span> {descripcion}</div>}
             </div>
 
             <hr className="p-hr" />

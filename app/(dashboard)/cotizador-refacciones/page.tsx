@@ -739,7 +739,6 @@ export default function CotizadorRefaccionesPage() {
                 <div className="p-doc-title">Cotización de Refacciones</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
                 {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
-                {descripcion && <div className="p-fecha-line">Descripción: <strong>{descripcion}</strong></div>}
               </div>
             </div>
 
@@ -750,6 +749,7 @@ export default function CotizadorRefaccionesPage() {
               <div className="p-client-name">{cliente}</div>
               {empresa && <div className="p-client-row"><span className="p-client-lbl">Empresa:</span> {empresa}</div>}
               {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
+              {descripcion && <div className="p-client-row"><span className="p-client-lbl">Descripción:</span> {descripcion}</div>}
             </div>
 
             <hr className="p-hr" />

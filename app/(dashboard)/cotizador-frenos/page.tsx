@@ -991,7 +991,6 @@ export default function CotizadorFrenosPage() {
                 <div className="p-doc-title">Cotización de Frenos</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
               {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
-              {descripcion && <div className="p-fecha-line">Descripción: <strong>{descripcion}</strong></div>}
               </div>
             </div>
 
@@ -1004,6 +1003,7 @@ export default function CotizadorFrenosPage() {
               {direccion && <div className="p-client-row"><span className="p-client-lbl">Dirección:</span> {direccion}</div>}
               {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
               {atencionA && <div className="p-client-row"><span className="p-client-lbl">Atención a:</span> {atencionA}</div>}
+              {descripcion && <div className="p-client-row"><span className="p-client-lbl">Descripción:</span> {descripcion}</div>}
             </div>
 
             <hr className="p-hr" />
