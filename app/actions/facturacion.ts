@@ -196,6 +196,8 @@ export async function registrarPago(id: string, pago: { monto: number, fecha: st
     return { error: String(e) };
   }
 }
+
+export async function eliminarFactura(id: string) {
   // Revierte el estado de la OS a 'encuesta_enviada' (antes de facturado)
   // y limpia todos los campos de factura
   const { error } = await supabaseAdmin.from('ordenes_servicio').update({

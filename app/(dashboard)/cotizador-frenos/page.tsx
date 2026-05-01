@@ -412,7 +412,7 @@ export default function CotizadorFrenosPage() {
     setCargandoTC(false);
   }, []);
 
-  const [modoResumido, setModoResumido] = useState(false);
+
 
   useEffect(() => {
     setFolio(generarFolio());
