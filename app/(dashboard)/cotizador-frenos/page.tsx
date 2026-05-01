@@ -370,6 +370,8 @@ export default function CotizadorFrenosPage() {
   };
 
   // ── Fetch TC DOF — cascade: DOF → Banxico → paginasweb + caché localStorage ─
+  const [modoResumido, setModoResumido] = useState(false);
+
   const fetchTC = useCallback(async () => {
     setCargandoTC(true);
 
@@ -410,6 +412,8 @@ export default function CotizadorFrenosPage() {
     setCargandoTC(false);
   }, []);
 
+  const [modoResumido, setModoResumido] = useState(false);
+
   useEffect(() => {
     setFolio(generarFolio());
     setFechaHoy(new Date().toLocaleDateString('es-MX', { day:'2-digit', month:'long', year:'numeric' }));
@@ -417,6 +421,7 @@ export default function CotizadorFrenosPage() {
     obtenerUsuarios().then(({ data }) => setUsuarios(data));
     QRCode.toDataURL('https://tgrpentarmexico.com/', { width: 140, margin: 1 }).then(setQrDataUrl);
   }, [fetchTC]);
+
 
   // ── Modelo seleccionado ─────────────────────────────────────────────────────
   const modeloBaseData = MODELOS_BASE.find(m => m.id === modeloSelId) ?? null;
@@ -746,7 +751,29 @@ export default function CotizadorFrenosPage() {
               className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
             />
           </div>
+
+          {/* Modo Resumido Toggle */}
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between mt-2">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${modoResumido ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border border-blue-100'}`}>
+                <FileText size={20} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-blue-900 uppercase tracking-tighter">Modo de Visualización</p>
+                <p className="text-[10px] text-blue-600 font-bold">{modoResumido ? 'Resumido (Una sola línea)' : 'Detallado (Lista de componentes)'}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setModoResumido(!modoResumido)}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${
+                modoResumido ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
+              }`}
+            >
+              {modoResumido ? 'Ver Detalle' : 'Resumir Todo'}
+            </button>
+          </div>
         </div>
+
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1017,18 +1044,23 @@ export default function CotizadorFrenosPage() {
                 <div className="p-section-title">Incluye los siguientes trabajos</div>
                 <div className="p-work-item">
                   <span className="p-work-bullet">▸</span>
-                  <span>Freno Retarder {modeloBaseData.nombre} — {marcaActual.label} ({marcaActual.nm} Nm)</span>
+                  <span><strong>{modoResumido ? `Kit de Freno Retarder ${modeloBaseData.nombre} — Instalación Completa` : `Freno Retarder ${modeloBaseData.nombre} — ${marcaActual.label} (${marcaActual.nm} Nm)`}</strong></span>
                 </div>
-                <div className="p-work-item">
-                  <span className="p-work-bullet">·</span>
-                  <span>{modeloBaseData.tonelaje}</span>
-                </div>
-                {marcaActual.componentes.filter(c => c.activo).map(c => (
-                  <div key={c.id} className="p-work-item">
-                    <span className="p-work-bullet">·</span>
-                    <span>{c.nombre}</span>
-                  </div>
-                ))}
+                {!modoResumido && (
+                  <>
+                    <div className="p-work-item">
+                      <span className="p-work-bullet">·</span>
+                      <span>{modeloBaseData.tonelaje}</span>
+                    </div>
+                    {marcaActual.componentes.filter(c => c.activo).map(c => (
+                      <div key={c.id} className="p-work-item">
+                        <span className="p-work-bullet">·</span>
+                        <span>{c.nombre}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
+
                 {trasladoN > 0 && <div className="p-work-item"><span className="p-work-bullet">·</span><span>Traslado</span></div>}
                 {manoObraN > 0 && <div className="p-work-item"><span className="p-work-bullet">·</span><span>Mano de obra (instalación)</span></div>}
                 {kitLedN > 0 && <div className="p-work-item"><span className="p-work-bullet">·</span><span>Kit LED</span></div>}
@@ -1040,12 +1072,20 @@ export default function CotizadorFrenosPage() {
               {/* Columna derecha: desglose económico */}
               <div className="p-col-pricing">
                 <div className="p-section-title">Desglose económico</div>
-                {marcaActual.componentes.filter(c => c.activo).map(c => (
-                  <div key={c.id} className="p-price-item">
-                    <span className="p-price-desc">{c.nombre}</span>
-                    <span className="p-price-val">${fmt(c.precio * unidadesN)} USD</span>
+                {modoResumido ? (
+                  <div className="p-price-item">
+                    <span className="p-price-desc">Kit Retarder Completo (Instalación e Insumos)</span>
+                    <span className="p-price-val">${fmt(subtotalUSD)} USD</span>
                   </div>
-                ))}
+                ) : (
+                  marcaActual.componentes.filter(c => c.activo).map(c => (
+                    <div key={c.id} className="p-price-item">
+                      <span className="p-price-desc">{c.nombre}</span>
+                      <span className="p-price-val">${fmt(c.precio * unidadesN)} USD</span>
+                    </div>
+                  ))
+                )}
+
                 {trasladoN > 0 && (
                   <div className="p-price-item">
                     <span className="p-price-desc">Traslado</span>

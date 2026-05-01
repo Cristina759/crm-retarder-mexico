@@ -290,16 +290,34 @@ export default function CotizadorRefaccionesPage() {
 
   const agregarDesdeCatalogo = useCallback((item: RefaccionRow) => {
     setLineas(prev => {
-      const vacia = prev.find(l => !l.descripcion);
-      if (vacia) {
-        return prev.map(l => l.id === vacia.id
-          ? { ...l, descripcion: item.nombre, numeroParte: item.numero_parte ?? '', precioMXN: item.precio_venta }
+      // 1. Buscar si ya existe la misma refacción en la lista
+      const existente = prev.find(l => 
+        l.descripcion.toLowerCase() === item.nombre.toLowerCase() && 
+        l.numeroParte === (item.numero_parte ?? '')
+      );
+
+      if (existente) {
+        // Sumar a la cantidad del existente
+        return prev.map(l => l.id === existente.id 
+          ? { ...l, cantidad: l.cantidad + 1 } 
           : l
         );
       }
+
+      // 2. Si no existe, buscar una línea vacía para llenarla
+      const vacia = prev.find(l => !l.descripcion && l.precioMXN === 0);
+      if (vacia) {
+        return prev.map(l => l.id === vacia.id
+          ? { ...l, descripcion: item.nombre, numeroParte: item.numero_parte ?? '', precioMXN: item.precio_venta, cantidad: 1 }
+          : l
+        );
+      }
+
+      // 3. Si no hay vacías ni repetidas, añadir nueva línea
       return [...prev, { id: uid(), descripcion: item.nombre, numeroParte: item.numero_parte ?? '', cantidad: 1, precioMXN: item.precio_venta }];
     });
   }, []);
+
 
   // ── Cálculos ─────────────────────────────────────────────────────────────────
   const trasladoN = parseFloat(traslado) || 0;
