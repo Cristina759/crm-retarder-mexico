@@ -152,7 +152,9 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
           : <span className="text-gray-300 italic text-[11px]">Sin capturar</span>}
       </td>
       <td className="px-4 py-3 text-xs text-gray-800 font-medium cursor-pointer" onClick={() => setEditing(true)}>{row.empresa_nombre ?? '—'}</td>
-      <td className="px-4 py-3 text-xs text-gray-500 max-w-[200px] truncate cursor-pointer" onClick={() => setEditing(true)}>{row.concepto_factura ?? '—'}</td>
+      <td className="px-4 py-3 text-xs text-gray-500 max-w-[150px] truncate cursor-pointer" onClick={() => setEditing(true)} title={row.concepto_factura ?? ''}>
+        {row.concepto_factura ?? '—'}
+      </td>
       <td className="px-4 py-3 text-right text-sm font-bold text-gray-900 cursor-pointer" onClick={() => setEditing(true)}>{fmtMXN(row.monto_factura)}</td>
       <td className="px-4 py-3 text-xs text-gray-500 cursor-pointer" onClick={() => setEditing(true)}>{fmtFecha(row.fecha_vencimiento)}</td>
       <td className="px-4 py-3 cursor-pointer" onClick={() => setEditing(true)}>
@@ -263,7 +265,7 @@ export default function FacturacionPage() {
               <th className="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Monto</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Vencimiento</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Estado</th>
-              <th className="px-4 py-3 w-10" />
+              <th className="px-4 py-3 w-28 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">Acciones</th>
             </tr>
           </thead>
           <tbody>
