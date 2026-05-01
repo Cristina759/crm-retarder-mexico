@@ -268,3 +268,20 @@ export async function eliminarNotaCredito(id: string): Promise<{ error: string |
   const { error } = await supabaseAdmin.from('notas_credito').delete().eq('id', id);
   return { error: error?.message ?? null };
 }
+
+export async function buscarFacturasParaNC(query: string) {
+  const { data } = await supabaseAdmin
+    .from('ordenes_servicio')
+    .select('id, numero_factura, numero, empresas(id, nombre_comercial)')
+    .or(`numero_factura.ilike.%${query}%,numero.ilike.%${query}%`)
+    .not('numero_factura', 'is', null)
+    .limit(10);
+  
+  return (data ?? []).map((r: any) => ({
+    id: r.id,
+    numero_factura: r.numero_factura,
+    numero_os: r.numero,
+    empresa_id: r.empresas?.id,
+    empresa_nombre: r.empresas?.nombre_comercial
+  }));
+}

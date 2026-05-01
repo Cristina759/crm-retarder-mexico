@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, AlertCircle, FileMinus, Plus, Trash2, X, Check, Search, ChevronDown } from 'lucide-react';
-import { obtenerNotasCredito, crearNotaCredito, eliminarNotaCredito, type NotaCreditoRow } from '@/app/actions/facturacion';
+import { obtenerNotasCredito, crearNotaCredito, eliminarNotaCredito, buscarFacturasParaNC, type NotaCreditoRow } from '@/app/actions/facturacion';
+
 import { buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 
 
@@ -25,11 +26,16 @@ export default function NotasCreditoPage() {
   const [descripcion, setDescripcion] = useState('');
   const [guardando,   setGuardando]   = useState(false);
 
-  // Cliente Search
+  // Invoice/Factura Search
+  const [facturaSel, setFacturaSel] = useState<any>(null);
+  const [queryFactura, setQueryFactura] = useState('');
+  const [sugerenciasFactura, setSugerenciasFactura] = useState<any[]>([]);
+  const [buscandoFactura, setBuscandoFactura] = useState(false);
+
+  // Cliente (inferred or manual)
   const [empresaId, setEmpresaId] = useState('');
   const [empresaNombre, setEmpresaNombre] = useState('');
-  const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
-  const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
+
 
 
   const cargar = () => {
@@ -49,7 +55,10 @@ export default function NotasCreditoPage() {
     setDescripcion(''); 
     setEmpresaId('');
     setEmpresaNombre('');
+    setFacturaSel(null);
+    setQueryFactura('');
   };
+
 
 
   const handleCrear = async () => {
@@ -99,54 +108,65 @@ export default function NotasCreditoPage() {
               </button>
             </div>
             <div className="space-y-3">
-              {/* Buscador de Cliente */}
+              {/* Buscador de Factura */}
               <div className="relative">
-                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Cliente / Empresa *</label>
+                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Factura Relacionada *</label>
                 <div className="relative mt-1">
                   <input
                     type="text"
-                    value={empresaNombre}
+                    value={queryFactura}
                     onChange={async e => {
                       const q = e.target.value;
-                      setEmpresaNombre(q);
-                      setEmpresaId('');
+                      setQueryFactura(q);
                       if (q.length >= 2) {
-                        setBuscandoEmpresa(true);
-                        const res = await buscarEmpresas(q);
-                        setSugerenciasEmpresa(res);
-                        setBuscandoEmpresa(false);
+                        setBuscandoFactura(true);
+                        const res = await buscarFacturasParaNC(q);
+                        setSugerenciasFactura(res);
+                        setBuscandoFactura(false);
                       } else {
-                        setSugerenciasEmpresa([]);
+                        setSugerenciasFactura([]);
                       }
                     }}
-                    placeholder="Escribe el nombre del cliente..."
+                    placeholder="Busca por número de factura (ej. B-670)..."
                     className={`w-full border rounded-xl pl-3 pr-10 h-10 text-sm font-semibold outline-none transition-all ${
-                      empresaId ? 'border-green-300 bg-green-50/10' : 'border-gray-200 focus:border-red-400'
+                      facturaSel ? 'border-green-300 bg-green-50/10' : 'border-gray-200 focus:border-red-400'
                     }`}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {buscandoEmpresa ? <Loader2 size={13} className="animate-spin text-gray-400" /> : <Search size={14} className="text-gray-400" />}
+                    {buscandoFactura ? <Loader2 size={13} className="animate-spin text-gray-400" /> : <Search size={14} className="text-gray-400" />}
                   </div>
 
-                  {sugerenciasEmpresa.length > 0 && (
+                  {sugerenciasFactura.length > 0 && (
                     <div className="absolute z-[60] top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
-                      {sugerenciasEmpresa.map(emp => (
+                      {sugerenciasFactura.map(f => (
                         <button
-                          key={emp.id}
+                          key={f.id}
                           type="button"
                           onClick={() => {
-                            setEmpresaNombre(emp.nombre_comercial);
-                            setEmpresaId(emp.id);
-                            setSugerenciasEmpresa([]);
+                            setFacturaSel(f);
+                            setQueryFactura(`Factura: ${f.numero_factura}`);
+                            setEmpresaId(f.empresa_id);
+                            setEmpresaNombre(f.empresa_nombre);
+                            setDescripcion(prev => prev ? prev : `Nota de crédito aplicada a Factura ${f.numero_factura}`);
+                            setSugerenciasFactura([]);
                           }}
                           className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors border-b border-gray-50 last:border-0"
                         >
-                          <p className="text-sm font-bold text-gray-800">{emp.nombre_comercial}</p>
-                          {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                          <p className="text-sm font-bold text-gray-800">Factura: {f.numero_factura}</p>
+                          <p className="text-[10px] text-gray-400 uppercase font-bold">{f.empresa_nombre}</p>
+                          <p className="text-[9px] text-gray-300">OS: {f.numero_os}</p>
                         </button>
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Cliente (Autorelleno) */}
+              <div>
+                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Cliente</label>
+                <div className="mt-1 h-10 px-3 bg-gray-50 border border-gray-100 rounded-xl flex items-center">
+                  <span className="text-sm font-bold text-gray-600">{empresaNombre || '— Selecciona una factura primero —'}</span>
                 </div>
               </div>
 
@@ -162,10 +182,11 @@ export default function NotasCreditoPage() {
               </div>
 
               <div>
-                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Descripción</label>
-                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Concepto de la nota..." rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-red-400 resize-none mt-1" />
+                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Descripción / Motivo</label>
+                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="¿Por qué se aplica esta nota?" rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-red-400 resize-none mt-1" />
               </div>
             </div>
+
 
             <div className="flex gap-2 pt-1">
               <button onClick={() => { setModal(false); resetForm(); }} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">Cancelar</button>
