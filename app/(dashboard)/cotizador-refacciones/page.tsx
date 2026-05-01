@@ -213,6 +213,7 @@ export default function CotizadorRefaccionesPage() {
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [emailCliente, setEmailCliente] = useState('');
   const [sucursal, setSucursal] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [folio, setFolio] = useState('');
 
   const [lineas, setLineas] = useState<LineaRefaccion[]>([
@@ -594,15 +595,27 @@ export default function CotizadorRefaccionesPage() {
 
         {/* Observaciones */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
-          <div className="mb-3">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">Sucursal</label>
-            <input
-              type="text"
-              value={sucursal}
-              onChange={e => setSucursal(e.target.value)}
-              placeholder="Ej. CDMX, Monterrey, Guadalajara..."
-              className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-            />
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">Sucursal</label>
+              <input
+                type="text"
+                value={sucursal}
+                onChange={e => setSucursal(e.target.value)}
+                placeholder="Ej. CDMX, Monterrey..."
+                className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">Descripción de la Cotización</label>
+              <input
+                type="text"
+                value={descripcion}
+                onChange={e => setDescripcion(e.target.value)}
+                placeholder="Ej. Refacciones para unidad..."
+                className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+              />
+            </div>
           </div>
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-2">
             Observaciones técnicas / logísticas
@@ -726,6 +739,7 @@ export default function CotizadorRefaccionesPage() {
                 <div className="p-doc-title">Cotización de Refacciones</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
                 {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
+                {descripcion && <div className="p-fecha-line">Descripción: <strong>{descripcion}</strong></div>}
               </div>
             </div>
 

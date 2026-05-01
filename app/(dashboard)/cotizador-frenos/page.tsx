@@ -347,6 +347,7 @@ export default function CotizadorFrenosPage() {
   const [direccion,    setDireccion]    = useState('');
   const [emailCliente, setEmailCliente] = useState('');
   const [sucursal,     setSucursal]     = useState('');
+  const [descripcion,  setDescripcion]  = useState('');
 
   const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
   const [mostrarTodos, setMostrarTodos] = useState(false);
@@ -726,14 +727,24 @@ export default function CotizadorFrenosPage() {
           </div>
         </div>
 
-        {/* Sucursal */}
-        <div>
-          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
-          <input
-            type="text" value={sucursal} onChange={e => setSucursal(e.target.value)}
-            placeholder="Ej. CDMX, Monterrey, Guadalajara..."
-            className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-          />
+        {/* Sucursal + Descripción */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
+            <input
+              type="text" value={sucursal} onChange={e => setSucursal(e.target.value)}
+              placeholder="Ej. CDMX, Monterrey..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Descripción de la Cotización</label>
+            <input
+              type="text" value={descripcion} onChange={e => setDescripcion(e.target.value)}
+              placeholder="Ej. Freno P10 para unidad..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
         </div>
 
         {/* Datos adicionales del cliente */}
@@ -980,6 +991,7 @@ export default function CotizadorFrenosPage() {
                 <div className="p-doc-title">Cotización de Frenos</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
               {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
+              {descripcion && <div className="p-fecha-line">Descripción: <strong>{descripcion}</strong></div>}
               </div>
             </div>
 
