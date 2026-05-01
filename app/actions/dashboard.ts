@@ -11,33 +11,43 @@ export async function obtenerResumenGeneral() {
       { data: oportunidades },
       { count: empresas },
       { data: notas },
-      { data: pendientesRaw },
     ] = await Promise.all([
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
-      supabaseAdmin.from('ordenes_servicio').select('*').in('estado', ['facturado', 'pagado']),
+      // Traemos todas las que tengan algún monto de factura o concepto, o estén en estado facturado/pagado
+      supabaseAdmin.from('ordenes_servicio')
+        .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial)')
+        .or('estado.in.(facturado,pagado),monto_factura.gt.0'),
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('notas_credito').select('monto'),
-      supabaseAdmin.from('ordenes_servicio')
-        .select('monto_factura, numero_factura, empresa_id, empresas(nombre_comercial)')
-        .eq('estado_facturacion', 'facturada'),
     ]);
 
     const osActivas = (osAll ?? []).filter((r: { archivada?: boolean | null }) => r.archivada !== true).length;
 
-    const totalFacturado    = (facturas ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
-    const totalCobrado      = (facturas ?? []).filter(r => r.estado_facturacion === 'pagada').reduce((s, r) => s + (r.monto_factura ?? 0), 0);
+    // Lógica idéntica a la pantalla de Facturación
+    let totalFacturado = 0;
+    let totalCobrado = 0;
+    const clienteMap: Record<string, { cliente: string; total: number; folios: string[] }> = {};
+
+    (facturas ?? []).forEach(r => {
+      const monto = r.monto_factura ?? 0;
+      totalFacturado += monto;
+      
+      if (r.estado_facturacion === 'pagada') {
+        totalCobrado += monto;
+      }
+
+      // Pendientes por cliente (lo que no está pagado)
+      if (r.estado_facturacion !== 'pagada' && monto > 0) {
+        const nombre = (r.empresas as any)?.nombre_comercial ?? 'Desconocido';
+        if (!clienteMap[nombre]) clienteMap[nombre] = { cliente: nombre, total: 0, folios: [] };
+        clienteMap[nombre].total += monto;
+        if (r.numero_factura) clienteMap[nombre].folios.push(r.numero_factura);
+      }
+    });
+
     const totalNotasCredito = (notas ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
     const piplineValor      = (oportunidades ?? []).reduce((s, r) => s + (r.monto_estimado ?? 0), 0);
-
-    // Agrupar pendientes por cliente
-    const clienteMap: Record<string, { cliente: string; total: number; folios: string[] }> = {};
-    for (const r of (pendientesRaw ?? [])) {
-      const nombre = (r.empresas as any)?.nombre_comercial ?? 'Desconocido';
-      if (!clienteMap[nombre]) clienteMap[nombre] = { cliente: nombre, total: 0, folios: [] };
-      clienteMap[nombre].total  += r.monto_factura ?? 0;
-      if (r.numero_factura) clienteMap[nombre].folios.push(r.numero_factura);
-    }
     const pendientesPorCliente = Object.values(clienteMap).sort((a, b) => b.total - a.total);
 
     return {
@@ -52,8 +62,12 @@ export async function obtenerResumenGeneral() {
       pendientesPorCliente,
       error: null,
     };
-  } catch (e) { return { osActivas: 0, totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalNetoPagado: 0, totalPendiente: 0, piplineValor: 0, empresas: 0, pendientesPorCliente: [], error: String(e) }; }
+  } catch (e) { 
+    console.error('Error Dashboard:', e);
+    return { osActivas: 0, totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalNetoPagado: 0, totalPendiente: 0, piplineValor: 0, empresas: 0, pendientesPorCliente: [], error: String(e) }; 
+  }
 }
+
 
 // ── OS por estado (pipeline donut) ────────────────────────────────────────────
 export async function obtenerOSporEstado() {
