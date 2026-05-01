@@ -400,6 +400,9 @@ export default function OSDetallePage() {
   const [desc,        setDesc]        = useState('');
   const [numOS,       setNumOS]       = useState('');
   const [numOC,       setNumOC]       = useState('');
+  const [numFact,     setNumFact]     = useState('');
+  const [montoFact,   setMontoFact]   = useState('');
+  const [vencFact,    setVencFact]    = useState('');
   const [cotizacion,  setCotizacion]  = useState<CotizacionRow | null>(null);
   const notasTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const descTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -416,6 +419,9 @@ export default function OSDetallePage() {
         setDesc(data?.descripcion_trabajo ?? '');
         setNumOS(data?.numero_os_manual ?? '');
         setNumOC(data?.numero_orden_compra ?? '');
+        setNumFact(data?.numero_factura ?? '');
+        setMontoFact(data?.monto_factura ? String(data.monto_factura) : '');
+        setVencFact(data?.fecha_vencimiento?.slice(0, 10) ?? '');
         const exclude = ['Ing. Cristina Velasco', 'Ing. Juan Carlos Espinosa', 'Teresa Gutiérrez'];
         setUsuarios(uData.filter(u => !exclude.includes(u.nombre)));
         setCargando(false);
@@ -768,6 +774,52 @@ export default function OSDetallePage() {
               {canEdit && <input ref={fotoOCRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoOC} />}
             </div>
           </div>
+
+          {/* ── Datos de Facturación (Manual) ── */}
+          <div className="bg-white rounded-2xl border border-blue-100 p-5 space-y-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+              <Receipt size={13} /> Datos de Facturación
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Número de Factura</label>
+                <input
+                  value={numFact}
+                  onChange={e => setNumFact(e.target.value)}
+                  onBlur={() => guardarDatosOS(os.id, { numero_factura: numFact })}
+                  placeholder="Ej. B-1234"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Monto de Factura (MXN)</label>
+                <input
+                  type="number"
+                  value={montoFact}
+                  onChange={e => setMontoFact(e.target.value)}
+                  onBlur={() => guardarDatosOS(os.id, { monto_factura: montoFact ? parseFloat(montoFact) : null })}
+                  placeholder="0.00"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Fecha Vencimiento</label>
+                <input
+                  type="date"
+                  value={vencFact}
+                  onChange={e => setVencFact(e.target.value)}
+                  onBlur={() => guardarDatosOS(os.id, { fecha_vencimiento: vencFact || null })}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+            {numFact && (
+              <p className="text-[10px] text-blue-500 bg-blue-50 rounded-lg px-3 py-2 flex items-center gap-2 font-medium">
+                <Check size={12} /> Esta información ya está conectada al módulo de Facturación.
+              </p>
+            )}
+          </div>
+
 
           {/* Descripción del trabajo */}
           <div className="bg-white rounded-2xl border border-gray-200 p-5">
