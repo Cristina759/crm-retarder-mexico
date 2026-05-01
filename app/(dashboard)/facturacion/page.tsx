@@ -206,15 +206,16 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
         <div className="flex flex-col items-end">
           <span className="text-sm font-black text-gray-900">{fmtMXN(row.monto_factura)}</span>
           <div className="flex flex-col items-end mt-1">
-            {row.total_pagado > 0 && (
+            {(row.total_pagado ?? 0) > 0 && (
               <span className="text-[10px] font-bold text-green-600">Cobrado: {fmtMXN(row.total_pagado)}</span>
             )}
             {row.estado_facturacion !== 'pagada' && (
               <span className="text-[10px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
-                Falta: {fmtMXN(row.saldo_pendiente)}
+                Falta: {fmtMXN(row.saldo_pendiente ?? row.monto_factura)}
               </span>
             )}
           </div>
+
 
         </div>
       </td>
@@ -292,7 +293,8 @@ export default function FacturacionPage() {
           <FileText size={18} className="text-white" />
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-black text-[#0f2d55]">Facturación (Sistema Actualizado)</h1>
+          <h1 className="text-lg font-black text-[#0f2d55]">Facturación (Control de Saldos v2.1)</h1>
+
           <p className="text-[11px] text-gray-400">{rows.length} factura{rows.length !== 1 ? 's' : ''} · Haz clic en una fila para editar</p>
         </div>
         <button 
