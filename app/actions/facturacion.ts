@@ -37,21 +37,27 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     const { data: empresas } = await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds);
     const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
-    // Cargar totales de cotizaciones vinculadas para los que no tienen monto
+    // Cargar totales y folios de cotizaciones vinculadas para los que no tienen monto o concepto
     const cotIds = Array.from(new Set((rows ?? []).map(r => r.cotizacion_id).filter(Boolean)));
     const { data: cots } = cotIds.length 
-      ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
+      ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn, folio, tipo').in('id', cotIds)
       : { data: [] };
-    const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
+    const cotMap = new Map((cots ?? []).map(c => [c.id, c]));
 
     const enriched: FacturaRow[] = (rows ?? []).map(r => {
-      // Prioridad: 1. Monto manual, 2. Monto de cotización, 3. Cero
+      const cot = r.cotizacion_id ? cotMap.get(r.cotizacion_id) : null;
+      
+      // Fallback de Monto
       let finalMonto = r.monto_factura;
-      if ((finalMonto === null || finalMonto === 0) && r.cotizacion_id) {
-        const totalCot = cotMap.get(r.cotizacion_id);
-        if (totalCot !== undefined && totalCot !== null) {
-          finalMonto = totalCot;
-        }
+      if ((finalMonto === null || finalMonto === 0) && cot) {
+        finalMonto = cot.total_mxn ?? null;
+      }
+
+      // Fallback de Concepto
+      let finalConcepto = r.concepto_factura;
+      if (!finalConcepto && cot) {
+        const tipoStr = cot.tipo ? (cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1)) : '';
+        finalConcepto = `Cotización ${cot.folio}${tipoStr ? ' - ' + tipoStr : ''}`;
       }
 
       return {
@@ -59,13 +65,14 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
         numero: r.numero_os_manual || r.numero,
         numero_factura: r.numero_factura,
         monto_factura: finalMonto,
-        concepto_factura: r.concepto_factura,
+        concepto_factura: finalConcepto,
         fecha_vencimiento: r.fecha_vencimiento,
         estado_facturacion: (r.estado_facturacion as EstadoFacturacion) || null,
         created_at: r.created_at,
         empresa_nombre: empresaMap.get(r.empresa_id) || 'Empresa Desconocida',
       };
     });
+
 
     return { data: enriched, error: null };
 
