@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
   Loader2, AlertCircle, ChevronLeft, ChevronRight,
-  Camera, Trash2, Check, X, Pen, Lock, Unlock, ShoppingCart, Receipt
+  Camera, Trash2, Check, X, Pen, Lock, Unlock, ShoppingCart, Receipt, Eye
 } from 'lucide-react';
+
 import SignaturePad from 'signature_pad';
 import {
   obtenerOrdenPorId,
@@ -211,17 +212,31 @@ function SeccionFotos({
           {fotos.map((src, i) => (
             <div key={i} className="relative group aspect-square">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`foto-${i}`} className="w-full h-full object-cover rounded-xl" />
+              <img 
+                src={src} 
+                alt={`foto-${i}`} 
+                className="w-full h-full object-cover rounded-xl cursor-pointer hover:brightness-75 transition-all" 
+                onClick={() => {
+                  const win = window.open();
+                  if (win) win.document.write(`<img src="${src}" style="max-width:100%; height:auto;" />`);
+                }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                <div className="bg-white/90 p-2 rounded-full shadow-lg text-[#0f2d55]">
+                  <Eye size={16} />
+                </div>
+              </div>
               {canEdit && (
                 <button
-                  onClick={() => eliminarFoto(i)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => { e.stopPropagation(); eliminarFoto(i); }}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
                 >
                   <X size={11} strokeWidth={3} />
                 </button>
               )}
             </div>
           ))}
+
         </div>
       )}
     </div>
@@ -708,14 +723,28 @@ export default function OSDetallePage() {
               {os.foto_os ? (
                 <div className="relative group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={os.foto_os} alt="OS" className="w-full max-h-48 object-contain rounded-xl border border-green-200 bg-green-50/10 shadow-sm" />
+                  <img 
+                    src={os.foto_os} 
+                    alt="OS" 
+                    className="w-full max-h-48 object-contain rounded-xl border border-green-200 bg-green-50/10 shadow-sm cursor-pointer hover:brightness-95 transition-all" 
+                    onClick={() => {
+                      const win = window.open();
+                      if (win && os.foto_os) win.document.write(`<img src="${os.foto_os}" style="max-width:100%; height:auto;" />`);
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                    <div className="bg-white/90 p-2 rounded-full shadow-lg text-green-600">
+                      <Eye size={20} />
+                    </div>
+                  </div>
                   <button
                     onClick={() => { guardarDatosOS(os.id, { foto_os: '' }); setOs(prev => prev ? { ...prev, foto_os: null } : prev); }}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     <Trash2 size={12} />
                   </button>
                 </div>
+
               ) : canEdit ? (
                 <button
                   onClick={() => fotoOSRef.current?.click()}
@@ -751,16 +780,30 @@ export default function OSDetallePage() {
             <div>
               <label className="text-[10px] font-bold text-gray-500 block mb-1">Foto de la OC</label>
               {os.foto_orden_compra ? (
-                <div className="relative">
+                <div className="relative group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={os.foto_orden_compra} alt="OC" className="w-full max-h-48 object-contain rounded-xl border border-gray-200 bg-gray-50" />
+                  <img 
+                    src={os.foto_orden_compra} 
+                    alt="OC" 
+                    className="w-full max-h-48 object-contain rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:brightness-95 transition-all" 
+                    onClick={() => {
+                      const win = window.open();
+                      if (win && os.foto_orden_compra) win.document.write(`<img src="${os.foto_orden_compra}" style="max-width:100%; height:auto;" />`);
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                    <div className="bg-white/90 p-2 rounded-full shadow-lg text-blue-600">
+                      <Eye size={20} />
+                    </div>
+                  </div>
                   <button
                     onClick={() => { guardarOrdenCompra(os.id, { foto_orden_compra: '' }); setOs(prev => prev ? { ...prev, foto_orden_compra: null } : prev); }}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     <Trash2 size={12} />
                   </button>
                 </div>
+
               ) : canEdit ? (
                 <button
                   onClick={() => fotoOCRef.current?.click()}
