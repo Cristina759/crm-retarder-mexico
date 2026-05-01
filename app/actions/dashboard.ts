@@ -15,8 +15,9 @@ export async function obtenerResumenGeneral() {
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
       // Traemos todas las que tengan algún dato financiero
       supabaseAdmin.from('ordenes_servicio')
-        .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id')
+        .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id, abonos')
         .or('estado.in.(facturado,pagado),monto_factura.gt.0,numero_factura.neq.null'),
+
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
       supabaseAdmin.from('notas_credito').select('monto'),
@@ -44,18 +45,28 @@ export async function obtenerResumenGeneral() {
       monto = monto || 0;
 
       totalFacturado += monto;
-      if (r.estado_facturacion === 'pagada') {
+
+      // EL COBRADO es la suma de todos los abonos individuales
+      const abonos = (r.abonos as any[]) || [];
+      const totalAbonado = abonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      
+      if (r.estado_facturacion === 'pagada' && totalAbonado === 0) {
         totalCobrado += monto;
+      } else {
+        totalCobrado += totalAbonado;
       }
 
       // Pendientes por cliente (lo que no está pagado)
       if (r.estado_facturacion !== 'pagada' && monto > 0) {
         const nombre = (r.empresas as any)?.nombre_comercial ?? 'Desconocido';
         if (!clienteMap[nombre]) clienteMap[nombre] = { cliente: nombre, total: 0, folios: [] };
-        clienteMap[nombre].total += monto;
+        
+        const saldo = Math.max(0, monto - totalAbonado);
+        clienteMap[nombre].total += saldo;
         if (r.numero_factura) clienteMap[nombre].folios.push(r.numero_factura);
       }
     });
+
 
     const totalNotasCredito = (notas ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
     const piplineValor      = (oportunidades ?? []).reduce((s, r) => s + (r.monto_estimado ?? 0), 0);

@@ -6,6 +6,7 @@ export type EstadoFacturacion =
   | 'pendiente'      // Según SQL
   | 'facturada'
   | 'enviada_cliente'
+  | 'pago_parcial'
   | 'pagada'
   | 'vencida';
 
@@ -19,6 +20,8 @@ export interface FacturaRow {
   estado_facturacion: EstadoFacturacion | null;
   created_at: string | null;
   empresa_nombre: string | null;
+  total_pagado?: number;
+  saldo_pendiente?: number;
 }
 
 // ── obtenerFacturas ───────────────────────────────────────────────────────────
@@ -52,6 +55,12 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       if ((finalMonto === null || finalMonto === 0) && cot) {
         finalMonto = cot.total_mxn ?? null;
       }
+      finalMonto = finalMonto || 0;
+
+      // Abonos y Saldo
+      const abonos = (r.abonos as any[]) || [];
+      const total_pagado = abonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      const saldo_pendiente = Math.max(0, finalMonto - total_pagado);
 
       // Fallback de Concepto
       let finalConcepto = r.concepto_factura;
@@ -70,6 +79,9 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
         estado_facturacion: (r.estado_facturacion as EstadoFacturacion) || null,
         created_at: r.created_at,
         empresa_nombre: empresaMap.get(r.empresa_id) || 'Empresa Desconocida',
+        total_pagado,
+        saldo_pendiente,
+        abonos
       };
     });
 
@@ -109,20 +121,28 @@ export async function obtenerResumenFacturacion(): Promise<{
 
     (facts ?? []).forEach(r => {
       let monto = r.monto_factura;
-      // Fallback a cotización si no hay monto manual
       if ((!monto || monto === 0) && r.cotizacion_id) {
         monto = cotMap.get(r.cotizacion_id) || 0;
       }
       monto = monto || 0;
 
       totalFacturado += monto;
-      if (r.estado_facturacion === 'pagada') {
+
+      // EL COBRADO es la suma de todos los abonos individuales
+      const abonos = (r.abonos as any[]) || [];
+      const totalAbonado = abonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      
+      // Si está marcada como pagada pero no tiene abonos, asumimos cobro total
+      if (r.estado_facturacion === 'pagada' && totalAbonado === 0) {
         totalCobrado += monto;
+      } else {
+        totalCobrado += totalAbonado;
       }
       
-      if (['pendiente', 'facturada', 'enviada_cliente'].includes(r.estado_facturacion ?? '')) pendientes++;
+      if (['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')) pendientes++;
       if (r.estado_facturacion === 'vencida') vencidas++;
     });
+
 
     const totalNotasCredito = (ncs ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
 
@@ -142,7 +162,39 @@ export async function marcarFacturaPagada(id: string) {
   const { error } = await supabaseAdmin.from('ordenes_servicio').update({ estado_facturacion: 'pagada' }).eq('id', id);
   return { error: error?.message ?? null };
 }
-export async function eliminarFactura(id: string) {
+export async function registrarPago(id: string, pago: { monto: number, fecha: string, referencia: string }) {
+  try {
+    const { data: os } = await supabaseAdmin.from('ordenes_servicio').select('abonos, monto_factura, cotizacion_id').eq('id', id).single();
+    if (!os) return { error: 'No se encontró la orden' };
+
+    const abonos = (os.abonos as any[]) || [];
+    const nuevosAbonos = [...abonos, { ...pago, id: Date.now().toString() }];
+    
+    // Calcular si ya se pagó todo
+    const totalPagado = nuevosAbonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+    
+    // Obtener monto total (manual o cotización)
+    let montoTotal = os.monto_factura || 0;
+    if (montoTotal === 0 && os.cotizacion_id) {
+      const { data: cot } = await supabaseAdmin.from('cotizaciones').select('total_mxn').eq('id', os.cotizacion_id).single();
+      montoTotal = cot?.total_mxn || 0;
+    }
+
+    let nuevoEstado: EstadoFacturacion = 'pago_parcial';
+    if (totalPagado >= montoTotal && montoTotal > 0) {
+      nuevoEstado = 'pagada';
+    }
+
+    const { error } = await supabaseAdmin.from('ordenes_servicio').update({
+      abonos: nuevosAbonos,
+      estado_facturacion: nuevoEstado
+    }).eq('id', id);
+
+    return { error: error?.message ?? null };
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
   // Revierte el estado de la OS a 'encuesta_enviada' (antes de facturado)
   // y limpia todos los campos de factura
   const { error } = await supabaseAdmin.from('ordenes_servicio').update({

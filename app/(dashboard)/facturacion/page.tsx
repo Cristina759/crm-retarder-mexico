@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2 } from 'lucide-react';
-import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, type FacturaRow } from '@/app/actions/facturacion';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet } from 'lucide-react';
+import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, type FacturaRow } from '@/app/actions/facturacion';
+
 
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '—';
@@ -13,15 +14,17 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pagada', 'vencida'];
+const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida'];
 const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
   pendiente:          { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   pendiente_facturar: { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   facturada:          { color: 'bg-blue-100 text-blue-700',    label: 'Facturada'        },
   enviada_cliente:    { color: 'bg-indigo-100 text-indigo-700',label: 'Enviada a cliente'},
+  pago_parcial:       { color: 'bg-amber-100 text-amber-700',  label: 'Pago Parcial'     },
   pagada:             { color: 'bg-green-100 text-green-700',  label: 'Pagada'           },
   vencida:            { color: 'bg-red-100 text-red-700',      label: 'Vencida'          },
 };
+
 
 // ── Fila editable ─────────────────────────────────────────────────────────────
 function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated: (updated: FacturaRow) => void; onDeleted: (id: string) => void }) {
@@ -145,43 +148,77 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
   }
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50 group">
-      <td className="px-4 py-3 text-xs font-mono text-gray-700 cursor-pointer" onClick={() => setEditing(true)}>{row.numero}</td>
-      <td className="px-4 py-2 bg-red-50/20">
-        <div className="flex items-center gap-1 justify-center">
+    <tr className={`border-b hover:bg-gray-50/50 transition-colors ${row.estado_facturacion === 'pago_parcial' ? 'bg-amber-50/20' : ''}`}>
+      <td className="px-4 py-3">
+        <div className="flex flex-col">
+          <span className="text-xs font-mono font-bold text-gray-400">{row.numero}</span>
+          <span className="text-[10px] text-gray-300">{fmtFecha(row.created_at)}</span>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1.5 justify-center">
           <button
             onClick={() => setEditing(true)}
-            className="p-1.5 rounded-lg bg-[#0f2d55]/10 hover:bg-[#0f2d55]/20 text-[#0f2d55] transition-colors"
-            title="Editar factura"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all"
+            title="Editar Factura"
           >
-            <Pencil size={14} />
+            <Pencil size={13} />
+          </button>
+          <button
+            onClick={() => {
+              const montoStr = prompt('Monto del abono (MXN):');
+              if (!montoStr) return;
+              const ref = prompt('Referencia (opcional):', 'Transferencia');
+              registrarPago(row.id, {
+                monto: parseFloat(montoStr),
+                fecha: new Date().toISOString(),
+                referencia: ref || 'Abono'
+              }).then(() => {
+                alert('Abono registrado con éxito.');
+                window.location.reload(); // Recarga simple para ver cambios
+              });
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-400 hover:text-amber-600 transition-all"
+            title="Registrar Abono"
+          >
+            <Wallet size={13} />
           </button>
           <button
             onClick={handleDelete}
-            disabled={deleting}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-[9px] font-bold transition-colors shadow-sm"
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"
+            title="Eliminar"
           >
-            {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-            BORRAR
+            <Trash2 size={13} />
           </button>
         </div>
       </td>
-      <td className="px-4 py-3 text-xs font-mono text-gray-700 cursor-pointer" onClick={() => setEditing(true)}>
-        {row.numero_factura
-          ? <span className="font-bold text-[#0f2d55]">{row.numero_factura}</span>
-          : <span className="text-gray-300 italic text-[11px]">Sin capturar</span>}
+      <td className="px-4 py-3 font-mono text-xs font-bold text-[#0f2d55]">
+        {row.numero_factura || <span className="text-gray-300 italic font-normal">Sin capturar</span>}
       </td>
-      <td className="px-4 py-3 text-xs text-gray-800 font-medium cursor-pointer" onClick={() => setEditing(true)}>{row.empresa_nombre ?? '—'}</td>
-      <td className="px-4 py-3 text-xs text-gray-500 max-w-[150px] truncate cursor-pointer" onClick={() => setEditing(true)} title={row.concepto_factura ?? ''}>
+      <td className="px-4 py-3 text-xs text-gray-800 font-medium">{row.empresa_nombre ?? '—'}</td>
+      <td className="px-4 py-3 text-xs text-gray-500 max-w-[150px] truncate" title={row.concepto_factura ?? ''}>
         {row.concepto_factura ?? '—'}
       </td>
-      <td className="px-4 py-3 text-right text-sm font-bold text-gray-900 cursor-pointer" onClick={() => setEditing(true)}>{fmtMXN(row.monto_factura)}</td>
-      <td className="px-4 py-3 text-xs text-gray-500 cursor-pointer" onClick={() => setEditing(true)}>{fmtFecha(row.fecha_vencimiento)}</td>
-      <td className="px-4 py-3 cursor-pointer" onClick={() => setEditing(true)}>
-        <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${est.color}`}>{est.label}</span>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-end">
+          <span className="text-sm font-black text-gray-900">{fmtMXN(row.monto_factura)}</span>
+          {row.total_pagado && row.total_pagado > 0 && row.estado_facturacion !== 'pagada' && (
+            <div className="flex flex-col items-end mt-1">
+              <span className="text-[10px] font-bold text-green-600">Cobrado: {fmtMXN(row.total_pagado)}</span>
+              <span className="text-[10px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded">Falta: {fmtMXN(row.saldo_pendiente)}</span>
+            </div>
+          )}
+        </div>
+      </td>
+      <td className="px-4 py-3 text-center text-xs text-gray-500">{fmtFecha(row.fecha_vencimiento)}</td>
+      <td className="px-4 py-3 text-right">
+        <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${est.color} shadow-sm border border-white/20`}>
+          {est.label}
+        </span>
       </td>
     </tr>
   );
+
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
