@@ -99,23 +99,26 @@ export async function obtenerResumenFacturacion(): Promise<{
   vencidas: number; totalNotasCredito: number; error: string | null;
 }> {
   try {
-    // Consultamos TODAS las órdenes que tengan algún dato financiero, sin importar el estado del pipeline
-    const [{ data: facts }, { data: ncs }] = await Promise.all([
+    // Usamos el mismo filtro que obtenerFacturas para asegurar consistencia total
+    const [{ data: facts, error: errFacts }, { data: ncs, error: errNcs }] = await Promise.all([
       supabaseAdmin
         .from('ordenes_servicio')
-        .select('monto_factura, estado_facturacion, cotizacion_id, numero_factura, abonos')
+        .select('monto_factura, estado_facturacion, cotizacion_id, abonos')
         .or('monto_factura.gt.0,numero_factura.neq.null,estado_facturacion.in.(facturada,pagada,pago_parcial,vencida)'),
-
 
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
-    // Cargar totales de cotizaciones vinculadas para el resumen
+    if (errFacts || errNcs) {
+      return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
+    }
+
+    // Cargar totales de cotizaciones vinculadas (fallback)
     const cotIds = Array.from(new Set((facts ?? []).map(r => r.cotizacion_id).filter(Boolean)));
     const { data: cots } = cotIds.length 
       ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
       : { data: [] };
-    const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
+    const cotMap = new Map((cots ?? []).map(c => [c.id, Number(c.total_mxn) || 0]));
 
     let totalFacturado = 0;
     let totalCobrado = 0;
@@ -123,33 +126,32 @@ export async function obtenerResumenFacturacion(): Promise<{
     let vencidas = 0;
 
     (facts ?? []).forEach(r => {
-      let monto = r.monto_factura;
-      if ((!monto || monto === 0) && r.cotizacion_id) {
+      let monto = Number(r.monto_factura) || 0;
+      if (monto === 0 && r.cotizacion_id) {
         monto = cotMap.get(r.cotizacion_id) || 0;
       }
-      monto = monto || 0;
 
       totalFacturado += monto;
 
       // EL COBRADO es la suma de todos los abonos individuales
-      const abonos = (r.abonos as any[]) || [];
-      const totalAbonado = abonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
+      const abonos = Array.isArray(r.abonos) ? r.abonos : [];
+      const totalAbonado = abonos.reduce((s, a) => s + (Number(a?.monto) || 0), 0);
       
-      // Si está marcada como pagada pero no tiene abonos, asumimos cobro total
       if (r.estado_facturacion === 'pagada' && totalAbonado === 0) {
         totalCobrado += monto;
       } else {
         totalCobrado += totalAbonado;
       }
       
-      if (['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')) pendientes++;
-      if (r.estado_facturacion === 'vencida') vencidas++;
+      const st = r.estado_facturacion ?? '';
+      if (['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(st)) pendientes++;
+      if (st === 'vencida') vencidas++;
     });
 
-
-    const totalNotasCredito = (ncs ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
+    const totalNotasCredito = (ncs ?? []).reduce((s, r) => s + (Number(r.monto) || 0), 0);
 
     return { totalFacturado, totalCobrado, pendientes, vencidas, totalNotasCredito, error: null };
+
 
 
   } catch (e) {
