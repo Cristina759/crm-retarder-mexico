@@ -16,7 +16,8 @@ export async function obtenerResumenGeneral() {
       // Traemos todas las que tengan algún dato financiero
       supabaseAdmin.from('ordenes_servicio')
         .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id, abonos')
-        .or('estado.in.(facturado,pagado),monto_factura.gt.0,numero_factura.neq.null'),
+        .or('estado_facturacion.in.(facturada,pagada,pago_parcial,vencida),monto_factura.gt.0,numero_factura.neq.null'),
+
 
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
