@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import {
   Settings, Users, BookOpen, Wrench, Plus, Pencil, Trash2,
   X, Check, Loader2, AlertCircle, ChevronDown, Package,
-  Building2, Mail, Shield, RefreshCw,
+  Building2, Mail, Shield, RefreshCw, FileText, Upload,
+  Download, ChevronRight, FolderOpen,
 } from 'lucide-react';
 import {
   obtenerManoDeObraCompleto, crearManoDeObra, actualizarManoDeObra, eliminarManoDeObra,
@@ -14,6 +15,10 @@ import {
 import {
   obtenerUsuarios, crearUsuario, actualizarUsuario, eliminarUsuario,
 } from '@/app/actions/usuarios';
+import {
+  obtenerDocumentosUsuario, subirDocumentoUsuario, eliminarDocumentoUsuario, getDocumentoUrl,
+  type DocumentoRow,
+} from '@/app/actions/documentos';
 import type { UsuarioRow } from '@/app/actions/types';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -304,6 +309,159 @@ function TabCatalogos() {
   );
 }
 
+// ── Panel de documentos de un usuario ────────────────────────────────────────
+function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: () => void }) {
+  const [docs, setDocs]       = useState<DocumentoRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError]     = useState<string | null>(null);
+  const fileRef               = useRef<HTMLInputElement>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await obtenerDocumentosUsuario(usuario.id);
+    setDocs(data);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, [usuario.id]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const fd = new FormData();
+    fd.append('file', file);
+    const { error: err } = await subirDocumentoUsuario(usuario.id, fd);
+    if (err) { setError(err); }
+    else { await load(); }
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Eliminar este documento?')) return;
+    await eliminarDocumentoUsuario(id);
+    setDocs(prev => prev.filter(d => d.id !== id));
+  };
+
+  const handleDownload = async (doc: DocumentoRow) => {
+    const { url, error: err } = await getDocumentoUrl(doc.storage_path);
+    if (err || !url) { alert('No se pudo generar el enlace.'); return; }
+    window.open(url, '_blank');
+  };
+
+  const fmtSize = (bytes: number | null) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  };
+
+  const iconColor: Record<string, string> = {
+    PDF: 'text-red-500', PNG: 'text-green-500', JPG: 'text-green-500',
+    JPEG: 'text-green-500', DOC: 'text-blue-500', DOCX: 'text-blue-500',
+    XLS: 'text-emerald-600', XLSX: 'text-emerald-600',
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style={{ maxHeight: '85vh' }}>
+
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100">
+          <div className="w-9 h-9 rounded-full bg-[#0f2d55]/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-black text-[#0f2d55]">{usuario.nombre.charAt(0).toUpperCase()}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-[#0f2d55] truncate">{usuario.nombre}</p>
+            <p className="text-[11px] text-gray-400">Documentos del usuario</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Subir archivo */}
+        <div className="px-5 py-3 border-b border-gray-100">
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+            onChange={handleUpload}
+            className="hidden"
+            id="file-upload"
+          />
+          <label
+            htmlFor="file-upload"
+            className={`flex items-center justify-center gap-2 w-full h-10 rounded-xl border-2 border-dashed cursor-pointer transition-colors text-sm font-semibold ${
+              uploading
+                ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                : 'border-[#0f2d55]/30 text-[#0f2d55] hover:border-[#0f2d55] hover:bg-[#0f2d55]/5'
+            }`}
+          >
+            {uploading
+              ? <><Loader2 size={15} className="animate-spin" /> Subiendo...</>
+              : <><Upload size={15} /> Subir documento</>
+            }
+          </label>
+          {error && <p className="text-[11px] text-red-600 mt-1.5 flex items-center gap-1"><AlertCircle size={11} />{error}</p>}
+          <p className="text-[10px] text-gray-400 mt-1">PDF, Word, Excel, imagen · máx. 20 MB</p>
+        </div>
+
+        {/* Lista */}
+        <div className="flex-1 overflow-y-auto px-5 py-3">
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 size={20} className="animate-spin text-[#0f2d55]" /></div>
+          ) : docs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
+              <FolderOpen size={32} strokeWidth={1.5} />
+              <p className="text-sm">Sin documentos aún</p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {docs.map(doc => (
+                <div key={doc.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-colors group">
+                  <FileText size={18} className={`flex-shrink-0 ${iconColor[doc.tipo ?? ''] ?? 'text-gray-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">{doc.nombre}</p>
+                    <p className="text-[10px] text-gray-400">
+                      {doc.tipo} · {fmtSize(doc.tamanio)} · {new Date(doc.created_at).toLocaleDateString('es-MX')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleDownload(doc)}
+                      className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-400 transition-colors"
+                      title="Descargar / Ver"
+                    >
+                      <Download size={13} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="px-5 py-3 border-t border-gray-100 flex justify-between items-center">
+          <span className="text-[11px] text-gray-400">{docs.length} documento{docs.length !== 1 ? 's' : ''}</span>
+          <button onClick={onClose} className="h-9 px-4 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Tab: Usuarios ─────────────────────────────────────────────────────────────
 function TabUsuarios() {
   const [usuarios, setUsuarios]   = useState<UsuarioRow[]>([]);
@@ -314,6 +472,7 @@ function TabUsuarios() {
   const [fNombre,  setFNombre]    = useState('');
   const [fEmail,   setFEmail]     = useState('');
   const [fRol,     setFRol]       = useState('tecnico');
+  const [usuarioDocumentos, setUsuarioDocumentos] = useState<UsuarioRow | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -354,7 +513,7 @@ function TabUsuarios() {
 
   return (
     <div className="space-y-5">
-      {/* Modal */}
+      {/* Modal editar/crear usuario */}
       {modal && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
@@ -420,6 +579,14 @@ function TabUsuarios() {
         </div>
       )}
 
+      {/* Panel de documentos */}
+      {usuarioDocumentos && (
+        <PanelDocumentos
+          usuario={usuarioDocumentos}
+          onClose={() => setUsuarioDocumentos(null)}
+        />
+      )}
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{usuarios.length} usuario{usuarios.length !== 1 ? 's' : ''} registrado{usuarios.length !== 1 ? 's' : ''}</p>
         <button
@@ -445,9 +612,7 @@ function TabUsuarios() {
               {byRol[rol].map((u, i) => (
                 <div key={u.id} className={`${i !== 0 ? 'border-t border-gray-100' : ''} flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors`}>
                   <div className="w-9 h-9 rounded-full bg-[#0f2d55]/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm font-black text-[#0f2d55]">
-                      {u.nombre.charAt(0).toUpperCase()}
-                    </span>
+                    <span className="text-sm font-black text-[#0f2d55]">{u.nombre.charAt(0).toUpperCase()}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{u.nombre}</p>
@@ -456,6 +621,13 @@ function TabUsuarios() {
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setUsuarioDocumentos(u)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors text-[11px] font-semibold"
+                      title="Documentos"
+                    >
+                      <FolderOpen size={13} /> Docs
+                    </button>
                     <button onClick={() => openEdit(u)} className="p-1.5 rounded-lg hover:bg-blue-50 transition-colors">
                       <Pencil size={13} className="text-blue-400" />
                     </button>
