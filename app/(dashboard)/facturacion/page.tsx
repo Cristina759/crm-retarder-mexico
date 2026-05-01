@@ -205,12 +205,15 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       <td className="px-4 py-3">
         <div className="flex flex-col items-end">
           <span className="text-sm font-black text-gray-900">{fmtMXN(row.monto_factura)}</span>
-          {row.total_pagado && row.total_pagado > 0 && row.estado_facturacion !== 'pagada' && (
+          {row.total_pagado && row.total_pagado > 0 ? (
             <div className="flex flex-col items-end mt-1">
               <span className="text-[10px] font-bold text-green-600">Cobrado: {fmtMXN(row.total_pagado)}</span>
-              <span className="text-[10px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded">Falta: {fmtMXN(row.saldo_pendiente)}</span>
+              {row.estado_facturacion !== 'pagada' && (
+                <span className="text-[10px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded">Falta: {fmtMXN(row.saldo_pendiente)}</span>
+              )}
             </div>
-          )}
+          ) : null}
+
         </div>
       </td>
       <td className="px-4 py-3 text-center text-xs text-gray-500">{fmtFecha(row.fecha_vencimiento)}</td>

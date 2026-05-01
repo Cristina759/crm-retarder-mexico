@@ -58,9 +58,10 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       finalMonto = finalMonto || 0;
 
       // Abonos y Saldo
-      const abonos = (r.abonos as any[]) || [];
-      const total_pagado = abonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
-      const saldo_pendiente = Math.max(0, finalMonto - total_pagado);
+      const abonos = Array.isArray(r.abonos) ? r.abonos : [];
+      const total_pagado = abonos.reduce((s, a) => s + (Number(a?.monto) || 0), 0);
+      const saldo_pendiente = Math.max(0, Number(finalMonto) - total_pagado);
+
 
       // Fallback de Concepto
       let finalConcepto = r.concepto_factura;
