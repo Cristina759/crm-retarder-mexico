@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileMinus, Plus, Trash2, X, Check } from 'lucide-react';
+import { Loader2, AlertCircle, FileMinus, Plus, Trash2, X, Check, Search, ChevronDown } from 'lucide-react';
 import { obtenerNotasCredito, crearNotaCredito, eliminarNotaCredito, type NotaCreditoRow } from '@/app/actions/facturacion';
+import { buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
+
 
 function fmtMXN(n: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
@@ -23,6 +25,13 @@ export default function NotasCreditoPage() {
   const [descripcion, setDescripcion] = useState('');
   const [guardando,   setGuardando]   = useState(false);
 
+  // Cliente Search
+  const [empresaId, setEmpresaId] = useState('');
+  const [empresaNombre, setEmpresaNombre] = useState('');
+  const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
+  const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
+
+
   const cargar = () => {
     setLoading(true);
     obtenerNotasCredito()
@@ -34,7 +43,14 @@ export default function NotasCreditoPage() {
 
   const totalNC = notas.reduce((s, n) => s + n.monto, 0);
 
-  const resetForm = () => { setNumeroNC(''); setMonto(''); setDescripcion(''); };
+  const resetForm = () => { 
+    setNumeroNC(''); 
+    setMonto(''); 
+    setDescripcion(''); 
+    setEmpresaId('');
+    setEmpresaNombre('');
+  };
+
 
   const handleCrear = async () => {
     if (!monto || parseFloat(monto) <= 0) return;
@@ -43,7 +59,9 @@ export default function NotasCreditoPage() {
       numero_nc:   numeroNC || undefined,
       monto:       parseFloat(monto),
       descripcion: descripcion || undefined,
+      empresa_id:  empresaId || undefined,
     });
+
     setModal(false);
     resetForm();
     setGuardando(false);
@@ -81,10 +99,74 @@ export default function NotasCreditoPage() {
               </button>
             </div>
             <div className="space-y-3">
-              <input value={numeroNC}    onChange={e => setNumeroNC(e.target.value)}    placeholder="Número NC (ej. NC-001)" className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-yellow-400" />
-              <input type="number" value={monto} onChange={e => setMonto(e.target.value)} placeholder="Monto *" className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-yellow-400" />
-              <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Descripción..." rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-yellow-400 resize-none" />
+              {/* Buscador de Cliente */}
+              <div className="relative">
+                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Cliente / Empresa *</label>
+                <div className="relative mt-1">
+                  <input
+                    type="text"
+                    value={empresaNombre}
+                    onChange={async e => {
+                      const q = e.target.value;
+                      setEmpresaNombre(q);
+                      setEmpresaId('');
+                      if (q.length >= 2) {
+                        setBuscandoEmpresa(true);
+                        const res = await buscarEmpresas(q);
+                        setSugerenciasEmpresa(res);
+                        setBuscandoEmpresa(false);
+                      } else {
+                        setSugerenciasEmpresa([]);
+                      }
+                    }}
+                    placeholder="Escribe el nombre del cliente..."
+                    className={`w-full border rounded-xl pl-3 pr-10 h-10 text-sm font-semibold outline-none transition-all ${
+                      empresaId ? 'border-green-300 bg-green-50/10' : 'border-gray-200 focus:border-red-400'
+                    }`}
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    {buscandoEmpresa ? <Loader2 size={13} className="animate-spin text-gray-400" /> : <Search size={14} className="text-gray-400" />}
+                  </div>
+
+                  {sugerenciasEmpresa.length > 0 && (
+                    <div className="absolute z-[60] top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                      {sugerenciasEmpresa.map(emp => (
+                        <button
+                          key={emp.id}
+                          type="button"
+                          onClick={() => {
+                            setEmpresaNombre(emp.nombre_comercial);
+                            setEmpresaId(emp.id);
+                            setSugerenciasEmpresa([]);
+                          }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors border-b border-gray-50 last:border-0"
+                        >
+                          <p className="text-sm font-bold text-gray-800">{emp.nombre_comercial}</p>
+                          {emp.rfc && <p className="text-[10px] text-gray-400">{emp.rfc}</p>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Número NC</label>
+                  <input value={numeroNC} onChange={e => setNumeroNC(e.target.value)} placeholder="NC-000" className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-red-400 mt-1" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Monto *</label>
+                  <input type="number" value={monto} onChange={e => setMonto(e.target.value)} placeholder="0.00" className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-red-400 mt-1" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Descripción</label>
+                <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)} placeholder="Concepto de la nota..." rows={2} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-red-400 resize-none mt-1" />
+              </div>
             </div>
+
             <div className="flex gap-2 pt-1">
               <button onClick={() => { setModal(false); resetForm(); }} className="flex-1 h-10 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50">Cancelar</button>
               <button onClick={handleCrear} disabled={guardando || !monto} className="flex-1 h-10 bg-[#0f2d55] hover:bg-[#1a3d6e] text-white rounded-xl text-sm font-bold disabled:opacity-50 flex items-center justify-center gap-2">
