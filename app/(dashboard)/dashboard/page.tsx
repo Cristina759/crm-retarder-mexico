@@ -187,7 +187,7 @@ function TabGeneral() {
             <div key={item.label}>
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-gray-500 font-medium">{item.label}</span>
-                <span className="font-bold text-gray-800">{fmtMXN(item.val)}</span>
+                <span className="font-bold text-gray-800">{fmtMXNFull(item.val)}</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
@@ -199,7 +199,7 @@ function TabGeneral() {
           ))}
           <div className="mt-auto pt-3 border-t border-gray-100 flex justify-between text-xs">
             <span className="text-gray-400">Notas de crédito aplicadas</span>
-            <span className="font-bold text-red-500">- {fmtMXN(data.totalCobrado - data.totalNetoCobrado)}</span>
+            <span className="font-bold text-red-500">- {fmtMXNFull(data.totalCobrado - data.totalNetoCobrado)}</span>
           </div>
         </div>
       </div>
