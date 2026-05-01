@@ -93,17 +93,10 @@ const MODELOS_BASE: ModeloFreno[] = [
     ],
   },
   {
-    id: 'P11-1', nombre: 'P11-1', tonelaje: 'Vehículos 25 a 32 Ton',
+    id: 'P10', nombre: 'P10', tonelaje: 'Vehículos 24 a 44 Ton',
     marcas: [
-      { id: 'pentar',   label: 'PENTAR',   nm: 350, componentes: mkComp(7928.96, 1018.53, 779.03, 533.48) },
-      { id: 'frenelsa', label: 'FRENELSA', nm: 350, componentes: mkComp(7136.00,  967.00, 779.03, 533.48) },
-    ],
-  },
-  {
-    id: 'P11', nombre: 'P11', tonelaje: 'Vehículos 32 a 50 Ton',
-    marcas: [
-      { id: 'pentar',   label: 'PENTAR',   nm: 400, componentes: mkComp(6342.73, 844.76,  779.03, 533.48) },
-      { id: 'frenelsa', label: 'FRENELSA', nm: 400, componentes: mkComp(5708.00,  802.00, 779.03, 533.48) },
+      { id: 'pentar',   label: 'PENTAR',   nm: 2605, componentes: mkComp(8842.73, 844.76, 779.03, 533.48) },
+      { id: 'frenelsa', label: 'FRENELSA', nm: 3300, componentes: mkComp(8005.49, 802.00, 779.03, 533.48) },
     ],
   },
 ];
