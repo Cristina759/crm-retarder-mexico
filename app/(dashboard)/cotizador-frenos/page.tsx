@@ -346,6 +346,7 @@ export default function CotizadorFrenosPage() {
   const [rfc,          setRfc]          = useState('');
   const [direccion,    setDireccion]    = useState('');
   const [emailCliente, setEmailCliente] = useState('');
+  const [sucursal,     setSucursal]     = useState('');
 
   const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
   const [mostrarTodos, setMostrarTodos] = useState(false);
@@ -725,6 +726,16 @@ export default function CotizadorFrenosPage() {
           </div>
         </div>
 
+        {/* Sucursal */}
+        <div>
+          <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
+          <input
+            type="text" value={sucursal} onChange={e => setSucursal(e.target.value)}
+            placeholder="Ej. CDMX, Monterrey, Guadalajara..."
+            className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+          />
+        </div>
+
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="relative">
@@ -952,7 +963,7 @@ export default function CotizadorFrenosPage() {
                     src="/logo-retarder.png"
                     alt="Retarder"
                     className="p-logo-img"
-                    style={{ height: '90px', width: 'auto' }}
+                    style={{ height: '130px', width: 'auto' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -968,6 +979,7 @@ export default function CotizadorFrenosPage() {
                 <div className="p-company">RETARDER MÉXICO</div>
                 <div className="p-doc-title">Cotización de Frenos</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
+              {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
               </div>
             </div>
 
@@ -1164,7 +1176,7 @@ export default function CotizadorFrenosPage() {
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .p-logos-left { display: flex; align-items: center; gap: 16px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 90px; height: 90px; object-fit: contain; display: block; }
+        .p-logo-img { width: auto; height: 130px; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 15px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 70px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }

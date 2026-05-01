@@ -212,6 +212,7 @@ export default function CotizadorRefaccionesPage() {
   const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
   const [mostrarTodos, setMostrarTodos] = useState(false);
   const [emailCliente, setEmailCliente] = useState('');
+  const [sucursal, setSucursal] = useState('');
   const [folio, setFolio] = useState('');
 
   const [lineas, setLineas] = useState<LineaRefaccion[]>([
@@ -593,6 +594,16 @@ export default function CotizadorRefaccionesPage() {
 
         {/* Observaciones */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4">
+          <div className="mb-3">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-1">Sucursal</label>
+            <input
+              type="text"
+              value={sucursal}
+              onChange={e => setSucursal(e.target.value)}
+              placeholder="Ej. CDMX, Monterrey, Guadalajara..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
           <label className="text-[10px] font-bold uppercase tracking-wider text-gray-700 block mb-2">
             Observaciones técnicas / logísticas
           </label>
@@ -714,6 +725,7 @@ export default function CotizadorRefaccionesPage() {
                 <div className="p-company">RETARDER MÉXICO</div>
                 <div className="p-doc-title">Cotización de Refacciones</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
+                {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
               </div>
             </div>
 
@@ -829,7 +841,7 @@ export default function CotizadorRefaccionesPage() {
         }
         .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; }
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .p-logo { height: 72px; object-fit: contain; }
+        .p-logo { height: 130px; object-fit: contain; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 20px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }

@@ -430,6 +430,7 @@ export default function CotizadorServiciosPage() {
   const [rfc, setRfc] = useState('');
   const [direccion, setDireccion] = useState('');
   const [emailCliente, setEmailCliente] = useState('');
+  const [sucursal, setSucursal] = useState('');
   const [folio, setFolio] = useState('');
 
   // Tipos de servicio (pueden coexistir)
@@ -1027,6 +1028,17 @@ export default function CotizadorServiciosPage() {
                   </div>
                 </div>
 
+                <div className="mb-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
+                  <input
+                    type="text"
+                    value={sucursal}
+                    onChange={e => setSucursal(e.target.value)}
+                    placeholder="Ej. CDMX, Monterrey, Guadalajara..."
+                    className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
+                  />
+                </div>
+
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
                     Notas adicionales / Observaciones
@@ -1159,6 +1171,7 @@ export default function CotizadorServiciosPage() {
                 <div className="p-company">RETARDER MÉXICO</div>
                 <div className="p-doc-title">Cotización de Servicios</div>
                 <div className="p-fecha-line">Folio: {folio} &nbsp;|&nbsp; {fechaHoy}</div>
+                {sucursal && <div className="p-fecha-line">Sucursal: <strong>{sucursal}</strong></div>}
               </div>
             </div>
 
@@ -1363,7 +1376,7 @@ export default function CotizadorServiciosPage() {
 
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .p-logo { width: 64px; height: 64px; object-fit: contain; }
+        .p-logo { height: 130px; width: auto; object-fit: contain; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 22px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 2px; }
