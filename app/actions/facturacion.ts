@@ -45,10 +45,13 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
 
     const enriched: FacturaRow[] = (rows ?? []).map(r => {
-      // Si el monto es 0 o null, intentamos usar el de la cotización
+      // Prioridad: 1. Monto manual, 2. Monto de cotización, 3. Cero
       let finalMonto = r.monto_factura;
-      if ((!finalMonto || finalMonto === 0) && r.cotizacion_id) {
-        finalMonto = cotMap.get(r.cotizacion_id) || null;
+      if ((finalMonto === null || finalMonto === 0) && r.cotizacion_id) {
+        const totalCot = cotMap.get(r.cotizacion_id);
+        if (totalCot !== undefined && totalCot !== null) {
+          finalMonto = totalCot;
+        }
       }
 
       return {
@@ -65,6 +68,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     });
 
     return { data: enriched, error: null };
+
 
   } catch (e) { return { data: [], error: String(e) }; }
 }
