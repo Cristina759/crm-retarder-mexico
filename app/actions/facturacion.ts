@@ -26,7 +26,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   try {
     const { data: rows, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select('id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id')
+      .select('id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id, cotizacion_id')
       .in('estado', ['facturado', 'pagado'])
       .order('created_at', { ascending: false })
       .limit(100);
@@ -37,19 +37,35 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     const { data: empresas } = await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds);
     const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
-    const enriched: FacturaRow[] = (rows ?? []).map(r => ({
-      id: r.id,
-      numero: r.numero_os_manual || r.numero,
-      numero_factura: r.numero_factura,
-      monto_factura: r.monto_factura,
-      concepto_factura: r.concepto_factura,
-      fecha_vencimiento: r.fecha_vencimiento,
-      estado_facturacion: (r.estado_facturacion as EstadoFacturacion) || null,
-      created_at: r.created_at,
-      empresa_nombre: empresaMap.get(r.empresa_id) || 'Empresa Desconocida',
-    }));
+    // Cargar totales de cotizaciones vinculadas para los que no tienen monto
+    const cotIds = Array.from(new Set((rows ?? []).map(r => r.cotizacion_id).filter(Boolean)));
+    const { data: cots } = cotIds.length 
+      ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
+      : { data: [] };
+    const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
+
+    const enriched: FacturaRow[] = (rows ?? []).map(r => {
+      // Si el monto es 0 o null, intentamos usar el de la cotización
+      let finalMonto = r.monto_factura;
+      if ((!finalMonto || finalMonto === 0) && r.cotizacion_id) {
+        finalMonto = cotMap.get(r.cotizacion_id) || null;
+      }
+
+      return {
+        id: r.id,
+        numero: r.numero_os_manual || r.numero,
+        numero_factura: r.numero_factura,
+        monto_factura: finalMonto,
+        concepto_factura: r.concepto_factura,
+        fecha_vencimiento: r.fecha_vencimiento,
+        estado_facturacion: (r.estado_facturacion as EstadoFacturacion) || null,
+        created_at: r.created_at,
+        empresa_nombre: empresaMap.get(r.empresa_id) || 'Empresa Desconocida',
+      };
+    });
 
     return { data: enriched, error: null };
+
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
@@ -60,9 +76,16 @@ export async function obtenerResumenFacturacion(): Promise<{
 }> {
   try {
     const [{ data: facts }, { data: ncs }] = await Promise.all([
-      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion').in('estado', ['facturado', 'pagado']),
+      supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion, cotizacion_id').in('estado', ['facturado', 'pagado']),
       supabaseAdmin.from('notas_credito').select('monto'),
     ]);
+
+    // Cargar totales de cotizaciones vinculadas para el resumen
+    const cotIds = Array.from(new Set((facts ?? []).map(r => r.cotizacion_id).filter(Boolean)));
+    const { data: cots } = cotIds.length 
+      ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
+      : { data: [] };
+    const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
 
     let totalFacturado = 0;
     let totalCobrado = 0;
@@ -70,10 +93,14 @@ export async function obtenerResumenFacturacion(): Promise<{
     let vencidas = 0;
 
     (facts ?? []).forEach(r => {
-      const monto = r.monto_factura ?? 0;
+      let monto = r.monto_factura;
+      if ((!monto || monto === 0) && r.cotizacion_id) {
+        monto = cotMap.get(r.cotizacion_id) || 0;
+      }
+      monto = monto || 0;
+
       totalFacturado += monto;
       if (r.estado_facturacion === 'pagada') totalCobrado += monto;
-      // 'pendiente' en lugar de 'pendiente_facturar'
       if (['pendiente', 'facturada', 'enviada_cliente'].includes(r.estado_facturacion ?? '')) pendientes++;
       if (r.estado_facturacion === 'vencida') vencidas++;
     });
@@ -81,6 +108,7 @@ export async function obtenerResumenFacturacion(): Promise<{
     const totalNotasCredito = (ncs ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
 
     return { totalFacturado, totalCobrado, pendientes, vencidas, totalNotasCredito, error: null };
+
   } catch (e) {
     return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: String(e) };
   }
