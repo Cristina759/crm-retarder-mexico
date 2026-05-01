@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
   Loader2, AlertCircle, ChevronLeft, ChevronRight,
-  Camera, Trash2, Check, X, Pen, Lock, Unlock, ShoppingCart,
+  Camera, Trash2, Check, X, Pen, Lock, Unlock, ShoppingCart, Receipt
 } from 'lucide-react';
 import SignaturePad from 'signature_pad';
 import {
