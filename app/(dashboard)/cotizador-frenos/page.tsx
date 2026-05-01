@@ -1185,10 +1185,10 @@ export default function CotizadorFrenosPage() {
         /* ── Documento ── */
         .p-doc { font-family: Arial, sans-serif; font-size: 13px; color: #111; padding: 8px 14px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .p-header { display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 10px; min-height: 90px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: auto; height: 100px; object-fit: contain; display: block; }
+        .p-logo-img { width: auto; height: 100%; max-height: 130px; min-height: 80px; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }

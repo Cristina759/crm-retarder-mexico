@@ -854,8 +854,8 @@ export default function CotizadorRefaccionesPage() {
           #print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
         }
         .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; }
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .p-logo { height: 100px; object-fit: contain; }
+        .p-header { display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 10px; min-height: 80px; }
+        .p-logo { height: 100%; max-height: 130px; min-height: 70px; width: auto; object-fit: contain; align-self: center; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 20px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }
