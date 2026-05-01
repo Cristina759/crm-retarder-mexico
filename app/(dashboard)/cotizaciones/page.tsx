@@ -36,6 +36,7 @@ function formatFecha(iso: string) {
 
 // ── Modal nueva cotización ────────────────────────────────────────────────────
 interface FormState {
+  folio: string;
   empresa_id: string;
   empresa_nombre: string;
   vendedor_id: string;
@@ -45,6 +46,7 @@ interface FormState {
 }
 
 const FORM_INICIAL: FormState = {
+  folio: '',
   empresa_id: '',
   empresa_nombre: '',
   vendedor_id: '',
@@ -52,6 +54,7 @@ const FORM_INICIAL: FormState = {
   subtotal: '',
   notas: '',
 };
+
 
 function ModalNuevaCotizacion({
   usuarios,
@@ -81,6 +84,7 @@ function ModalNuevaCotizacion({
     setError(null);
 
     const { error: err } = await crearCotizacion({
+      folio:           form.folio.trim() || undefined,
       empresa_id:     form.empresa_id   || undefined,
       empresa_nombre: form.empresa_nombre.trim(),
       vendedor_id:    form.vendedor_id || null,
@@ -111,6 +115,19 @@ function ModalNuevaCotizacion({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Folio Manual */}
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">
+              Folio de Cotización (Opcional)
+            </label>
+            <input
+              type="text"
+              value={form.folio}
+              onChange={e => setForm(f => ({ ...f, folio: e.target.value }))}
+              placeholder="Ej. COT-925 o número del cliente"
+              className="w-full border border-gray-200 rounded-2xl px-4 h-11 text-sm outline-none focus:border-red-400 transition-colors"
+            />
+          </div>
           {/* Empresa */}
           <div className="relative">
             <label className="text-xs font-semibold uppercase tracking-wider text-gray-400 block mb-1">
