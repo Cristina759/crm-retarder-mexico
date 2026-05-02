@@ -275,7 +275,8 @@ export default function FacturacionPage() {
     </div>
   );
 
-  const totalFacturado = resumen.totalFacturado - resumen.totalNotasCredito;
+  const totalFacturado = resumen.totalFacturado - Math.abs(resumen.totalNotasCredito);
+
   const totalCobrado   = resumen.totalCobrado;
 
   const handleUpdated = (updated: FacturaRow) => {

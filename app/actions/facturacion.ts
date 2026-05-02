@@ -263,15 +263,18 @@ export async function crearNotaCredito(datos: {
   monto: number;
   descripcion?: string;
   empresa_id?: string;
+  orden_id?: string;
 }): Promise<{ error: string | null }> {
   const { error } = await supabaseAdmin.from('notas_credito').insert({
     numero_nc:   datos.numero_nc   ?? null,
     monto:       datos.monto,
     descripcion: datos.descripcion ?? null,
     empresa_id:  datos.empresa_id  ?? null,
+    orden_id:    datos.orden_id    ?? null,
   });
   return { error: error?.message ?? null };
 }
+
 
 export async function eliminarNotaCredito(id: string): Promise<{ error: string | null }> {
   const { error } = await supabaseAdmin.from('notas_credito').delete().eq('id', id);
