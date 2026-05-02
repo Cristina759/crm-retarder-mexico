@@ -50,14 +50,15 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     // Cargar Notas de Crédito vinculadas a estas facturas
     const { data: ncs } = await supabaseAdmin
       .from('notas_credito')
-      .select('orden_id, monto')
-      .in('orden_id', (rows ?? []).map(r => r.id));
+      .select('os_id, monto')
+      .in('os_id', (rows ?? []).map(r => r.id));
     const ncMap = new Map<string, number>();
     (ncs ?? []).forEach(nc => {
-      if (nc.orden_id) {
-        ncMap.set(nc.orden_id, (ncMap.get(nc.orden_id) || 0) + (Number(nc.monto) || 0));
+      if (nc.os_id) {
+        ncMap.set(nc.os_id, (ncMap.get(nc.os_id) || 0) + (Number(nc.monto) || 0));
       }
     });
+
 
     const enriched: FacturaRow[] = (rows ?? []).map(r => {
       const cot = cotMap.get(r.cotizacion_id || '');
@@ -272,17 +273,18 @@ export async function crearNotaCredito(datos: {
   monto: number;
   descripcion?: string;
   empresa_id?: string;
-  orden_id?: string;
+  os_id?: string;
 }): Promise<{ error: string | null }> {
   const { error } = await supabaseAdmin.from('notas_credito').insert({
     numero_nc:   datos.numero_nc   ?? null,
     monto:       datos.monto,
     descripcion: datos.descripcion ?? null,
     empresa_id:  datos.empresa_id  ?? null,
-    orden_id:    datos.orden_id    ?? null,
+    os_id:       datos.os_id       ?? null,
   });
   return { error: error?.message ?? null };
 }
+
 
 
 export async function eliminarNotaCredito(id: string): Promise<{ error: string | null }> {

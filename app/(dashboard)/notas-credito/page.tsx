@@ -69,7 +69,8 @@ export default function NotasCreditoPage() {
       monto:       parseFloat(monto),
       descripcion: descripcion || undefined,
       empresa_id:  empresaId || undefined,
-      orden_id:    facturaSel?.id || undefined,
+      os_id:       facturaSel?.id || undefined,
+
     });
 
 
