@@ -3,9 +3,9 @@
 
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus } from 'lucide-react';
+import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, crearNotaCredito, type FacturaRow } from '@/app/actions/facturacion';
 
-import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, type FacturaRow } from '@/app/actions/facturacion';
 
 
 function fmtMXN(n: number | null | undefined) {
@@ -178,7 +178,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
                 referencia: ref || 'Abono'
               }).then(() => {
                 alert('Abono registrado con éxito.');
-                window.location.reload(); // Recarga simple para ver cambios
+                window.location.reload();
               });
             }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-amber-100 text-gray-400 hover:text-amber-600 transition-all"
@@ -186,6 +186,35 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
           >
             <Wallet size={13} />
           </button>
+
+          <button
+            onClick={async () => {
+              const montoStr = prompt('Monto de la Nota de Crédito (MXN):');
+              if (!montoStr) return;
+              const motivo = prompt('Motivo de la Nota de Crédito:', 'Descuento / Devolución');
+              const ncNum = prompt('Número de Nota de Crédito (opcional):');
+              
+              const res = await crearNotaCredito({
+                numero_nc: ncNum || undefined,
+                monto: parseFloat(montoStr),
+                descripcion: motivo || 'Nota de crédito directa',
+                empresa_id: row.empresa_id || undefined,
+                os_id: row.id
+              });
+
+              if (res.error) alert('Error: ' + res.error);
+              else {
+                alert('Nota de Crédito creada y vinculada con éxito.');
+                window.location.reload();
+              }
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"
+            title="Crear Nota de Crédito"
+          >
+            <FileMinus size={13} />
+          </button>
+
+
           <button
             onClick={handleDelete}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"
