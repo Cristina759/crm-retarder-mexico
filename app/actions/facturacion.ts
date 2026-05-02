@@ -47,15 +47,26 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       : { data: [] };
     const cotMap = new Map((cots ?? []).map(c => [c.id, c]));
 
-    const enriched: FacturaRow[] = (rows ?? []).map(r => {
-      const cot = r.cotizacion_id ? cotMap.get(r.cotizacion_id) : null;
-      
-      // Fallback de Monto
-      let finalMonto = r.monto_factura;
-      if ((finalMonto === null || finalMonto === 0) && cot) {
-        finalMonto = cot.total_mxn ?? null;
+    // Cargar Notas de Crédito vinculadas a estas facturas
+    const { data: ncs } = await supabaseAdmin
+      .from('notas_credito')
+      .select('orden_id, monto')
+      .in('orden_id', (rows ?? []).map(r => r.id));
+    const ncMap = new Map<string, number>();
+    (ncs ?? []).forEach(nc => {
+      if (nc.orden_id) {
+        ncMap.set(nc.orden_id, (ncMap.get(nc.orden_id) || 0) + (Number(nc.monto) || 0));
       }
-      finalMonto = finalMonto || 0;
+    });
+
+    const enriched: FacturaRow[] = (rows ?? []).map(r => {
+      const cot = cotMap.get(r.cotizacion_id || '');
+      let finalMonto = Number(r.monto_factura) || 0;
+      if (finalMonto === 0 && cot) finalMonto = Number(cot.total_mxn) || 0;
+
+      // RESTAR NOTAS DE CRÉDITO ESPECÍFICAS
+      const montoNC = ncMap.get(r.id) || 0;
+      finalMonto = Math.max(0, finalMonto - Math.abs(montoNC));
 
       // Abonos y Saldo
       const abonos = Array.isArray(r.abonos) ? r.abonos : [];
@@ -63,12 +74,10 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       
       // Si está pagada pero no tiene abonos (factura vieja), asumimos cobro total
       if (r.estado_facturacion === 'pagada' && total_pagado === 0) {
-        total_pagado = Number(finalMonto) || 0;
+        total_pagado = finalMonto;
       }
       
-      const saldo_pendiente = Math.max(0, Number(finalMonto) - total_pagado);
-
-
+      const saldo_pendiente = Math.max(0, finalMonto - total_pagado);
 
       // Fallback de Concepto
       let finalConcepto = r.concepto_factura;
