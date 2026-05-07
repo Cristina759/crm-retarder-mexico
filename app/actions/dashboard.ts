@@ -86,7 +86,6 @@ export async function obtenerResumenGeneral() {
     const piplineValor      = (oportunidades ?? []).reduce((s, r) => s + (r.monto_estimado ?? 0), 0);
     const pendientesPorCliente = Object.values(clienteMap).sort((a, b) => b.total - a.total);
 
-    const totalNotasCredito = (notas ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
 
     return {
       osActivas,
