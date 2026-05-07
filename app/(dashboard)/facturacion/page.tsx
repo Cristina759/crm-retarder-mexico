@@ -60,7 +60,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado as any,
       empresa_id:        empresaId || null,
-      empresa_nombre:    clientes.find(c => c.id === empresaId)?.nombre_comercial || clientes.find(c => c.id === empresaId)?.razon_social || row.empresa_nombre,
+      empresa_nombre:    (clientes.find(c => c.id === empresaId) as any)?.nombre_comercial || row.empresa_nombre,
     });
     setSaving(false);
     setEditing(false);
@@ -123,7 +123,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
           >
             <option value="">— Seleccionar —</option>
             {clientes.map(c => (
-              <option key={c.id} value={c.id}>{c.nombre_comercial || c.razon_social}</option>
+              <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
             ))}
           </select>
         </td>
