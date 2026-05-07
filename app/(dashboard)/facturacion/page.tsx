@@ -300,7 +300,7 @@ export default function FacturacionPage() {
           else setClientes(cData || []);
 
           // Calculamos totales desde la tabla para máxima precisión
-          const totalF = fData.reduce((s, r) => s + (Number(r.monto_factura) || 0), 0);
+          const totalF = fData.reduce((s, r) => s + (Number((r as any).monto_neto ?? r.monto_factura) || 0), 0);
           const totalC = fData.reduce((s, r) => s + (Number(r.total_pagado) || 0), 0);
           const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
           const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
