@@ -26,7 +26,6 @@ import { obtenerUsuarios } from '@/app/actions/usuarios';
 import type { OSRow, UsuarioRow, CotizacionRow } from '@/app/actions/types';
 
 const OS_ESTADOS = [
-  'solicitud_recibida',
   'tecnico_asignado',
   'servicio_programado',
   'documentacion_enviada',
@@ -43,7 +42,6 @@ const OS_ESTADOS = [
 
 // ── Metadata de estados ───────────────────────────────────────────────────────
 const ESTADO_META: Record<string, { label: string; fase: number }> = {
-  solicitud_recibida:      { label: 'Solicitud Recibida',     fase: 1 },
   tecnico_asignado:        { label: 'Asignación de Técnico',  fase: 1 },
   servicio_programado:     { label: 'Servicio Programado',    fase: 1 },
   documentacion_enviada:   { label: 'Documentación Enviada',  fase: 1 },

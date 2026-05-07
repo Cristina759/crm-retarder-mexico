@@ -113,7 +113,6 @@ export interface OSRow {
 }
 
 export type OSEstado =
-  | 'solicitud_recibida'
   | 'tecnico_asignado'
   | 'servicio_programado'
   | 'documentacion_enviada'
@@ -128,7 +127,6 @@ export type OSEstado =
   | 'pagado';
 
 export const OS_ESTADOS: OSEstado[] = [
-  'solicitud_recibida',
   'tecnico_asignado',
   'servicio_programado',
   'documentacion_enviada',
@@ -144,7 +142,6 @@ export const OS_ESTADOS: OSEstado[] = [
 ];
 
 export const OS_FASE: Record<OSEstado, number> = {
-  solicitud_recibida:      1,
   tecnico_asignado:        1,
   servicio_programado:     1,
   documentacion_enviada:   1,

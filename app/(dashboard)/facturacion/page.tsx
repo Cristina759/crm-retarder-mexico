@@ -31,13 +31,14 @@ const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
 
 
 // ── Fila editable ─────────────────────────────────────────────────────────────
-function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated: (updated: FacturaRow) => void; onDeleted: (id: string) => void }) {
+function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow; clientes: { id: string; nombre_comercial: string | null }[]; onUpdated: (updated: FacturaRow) => void; onDeleted: (id: string) => void }) {
   const [editing, setEditing]       = useState(false);
   const [numFact, setNumFact]       = useState(row.numero_factura ?? '');
   const [monto,   setMonto]         = useState(String(row.monto_factura ?? ''));
   const [concepto, setConcepto]     = useState(row.concepto_factura ?? '');
   const [vencimiento, setVenc]      = useState(row.fecha_vencimiento?.slice(0, 10) ?? '');
   const [estado, setEstado]         = useState(row.estado_facturacion ?? 'pendiente');
+  const [empresaId, setEmpresaId]   = useState(row.empresa_id ?? '');
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
 
@@ -49,6 +50,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       concepto_factura:  concepto || null,
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado,
+      empresa_id:         empresaId || null,
     });
     onUpdated({
       ...row,
@@ -57,6 +59,8 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       concepto_factura:  concepto || null,
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado as any,
+      empresa_id:        empresaId || null,
+      empresa_nombre:    clientes.find(c => c.id === empresaId)?.nombre_comercial || clientes.find(c => c.id === empresaId)?.razon_social || row.empresa_nombre,
     });
     setSaving(false);
     setEditing(false);
@@ -75,6 +79,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
     setConcepto(row.concepto_factura ?? '');
     setVenc(row.fecha_vencimiento?.slice(0, 10) ?? '');
     setEstado(row.estado_facturacion ?? 'pendiente');
+    setEmpresaId(row.empresa_id ?? '');
     setEditing(false);
   };
 
@@ -110,7 +115,18 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
             className="w-full border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500"
           />
         </td>
-        <td className="px-4 py-2 text-xs text-gray-800 font-medium">{row.empresa_nombre ?? '—'}</td>
+        <td className="px-4 py-2">
+          <select
+            value={empresaId}
+            onChange={e => setEmpresaId(e.target.value)}
+            className="w-full border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500 bg-white"
+          >
+            <option value="">— Seleccionar —</option>
+            {clientes.map(c => (
+              <option key={c.id} value={c.id}>{c.nombre_comercial || c.razon_social}</option>
+            ))}
+          </select>
+        </td>
         <td className="px-4 py-2">
           <input
             value={concepto}
@@ -139,7 +155,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
         <td className="px-4 py-2">
           <select
             value={estado}
-            onChange={e => setEstado(e.target.value)}
+            onChange={e => setEstado(e.target.value as any)}
             className="border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500 bg-white"
           >
             {ESTADOS.map(e => (
@@ -152,7 +168,10 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
   }
 
   return (
-    <tr className={`border-b hover:bg-gray-50/50 transition-colors ${row.estado_facturacion === 'pago_parcial' ? 'bg-amber-50/20' : ''}`}>
+    <tr 
+      onClick={() => setEditing(true)}
+      className={`border-b hover:bg-gray-50/50 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-amber-50/20' : ''}`}
+    >
       <td className="px-4 py-3">
         <div className="flex flex-col">
           <span className="text-xs font-mono font-bold text-gray-400">{row.numero}</span>
@@ -162,19 +181,22 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       <td className="px-4 py-3">
         <div className="flex items-center gap-1.5 justify-center">
           <button
-            onClick={() => setEditing(true)}
+            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all"
             title="Editar Factura"
           >
             <Pencil size={13} />
           </button>
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               const montoStr = prompt('Monto del abono (MXN):');
               if (!montoStr) return;
+              const cleanMonto = parseFloat(montoStr.replace(/[^0-9.-]+/g, ""));
+              if (isNaN(cleanMonto)) { alert('Monto inválido'); return; }
               const ref = prompt('Referencia (opcional):', 'Transferencia');
               registrarPago(row.id, {
-                monto: parseFloat(montoStr),
+                monto: cleanMonto,
                 fecha: new Date().toISOString(),
                 referencia: ref || 'Abono'
               }).then(() => {
@@ -189,15 +211,18 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
           </button>
 
           <button
-            onClick={async () => {
+            onClick={async (e) => {
+              e.stopPropagation();
               const montoStr = prompt('Monto de la Nota de Crédito (MXN):');
               if (!montoStr) return;
+              const cleanMonto = parseFloat(montoStr.replace(/[^0-9.-]+/g, ""));
+              if (isNaN(cleanMonto)) { alert('Monto inválido'); return; }
               const motivo = prompt('Motivo de la Nota de Crédito:', 'Descuento / Devolución');
               const ncNum = prompt('Número de Nota de Crédito (opcional):');
               
               const res = await crearNotaCredito({
                 numero_nc: ncNum || undefined,
-                monto: parseFloat(montoStr),
+                monto: cleanMonto,
                 descripcion: motivo || 'Nota de crédito directa',
                 empresa_id: row.empresa_id || undefined,
                 os_id: row.id
@@ -217,7 +242,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
 
 
           <button
-            onClick={handleDelete}
+            onClick={(e) => { e.stopPropagation(); handleDelete(); }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"
             title="Eliminar"
           >
@@ -237,9 +262,10 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
           <span className="text-sm font-black text-gray-900">{fmtMXN(row.monto_factura)}</span>
           <div className="flex flex-col items-end mt-1">
             {(row.total_pagado ?? 0) > 0 && (
-              <span className="text-[10px] font-bold text-green-600">Cobrado: {fmtMXN(row.total_pagado)}</span>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+                Cobrado: {fmtMXN(row.total_pagado)}
+              </span>
             )}
-
           </div>
 
 
@@ -259,7 +285,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function FacturacionPage() {
   const [rows,    setRows]    = useState<FacturaRow[]>([]);
-  const [clientes, setClientes] = useState<{ id: string; nombre_comercial: string }[]>([]);
+  const [clientes, setClientes] = useState<{ id: string; nombre_comercial: string | null }[]>([]);
   const [resumen, setResumen] = useState({ totalFacturado: 0, totalCobrado: 0, totalNotasCredito: 0, pendientes: 0, vencidas: 0 });
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
@@ -305,8 +331,7 @@ export default function FacturacionPage() {
     </div>
   );
 
-  const totalFacturado = resumen.totalFacturado - Math.abs(resumen.totalNotasCredito);
-
+  const totalFacturado = resumen.totalFacturado;
   const totalCobrado   = resumen.totalCobrado;
 
   const handleUpdated = (updated: FacturaRow) => {
@@ -366,7 +391,7 @@ export default function FacturacionPage() {
             {rows.length === 0 ? (
               <tr><td colSpan={8} className="text-center py-16 text-gray-400 text-sm">Sin facturas registradas</td></tr>
             ) : rows.map(r => (
-              <FilaFactura key={r.id} row={r} onUpdated={handleUpdated} onDeleted={handleDeleted} />
+              <FilaFactura key={r.id} row={r} clientes={clientes} onUpdated={handleUpdated} onDeleted={handleDeleted} />
             ))}
           </tbody>
         </table>

@@ -5,7 +5,7 @@ import {
   Settings, Users, BookOpen, Wrench, Plus, Pencil, Trash2,
   X, Check, Loader2, AlertCircle, ChevronDown, Package,
   Building2, Mail, Shield, RefreshCw, FileText, Upload,
-  Download, ChevronRight, FolderOpen,
+  Download, ChevronRight, FolderOpen, Eye,
 } from 'lucide-react';
 import {
   obtenerManoDeObraCompleto, crearManoDeObra, actualizarManoDeObra, eliminarManoDeObra,
@@ -315,6 +315,7 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; tipo: string; nombre: string } | null>(null);
   const fileRef               = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -349,6 +350,20 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
     const { url, error: err } = await getDocumentoUrl(doc.storage_path);
     if (err || !url) { alert('No se pudo generar el enlace.'); return; }
     window.open(url, '_blank');
+  };
+
+  const handlePreview = async (doc: DocumentoRow) => {
+    const { url, error: err } = await getDocumentoUrl(doc.storage_path);
+    if (err || !url) { alert('No se pudo generar el enlace.'); return; }
+
+    const tipo = doc.tipo?.toUpperCase() || '';
+    const isPreviewable = ['PDF', 'JPG', 'JPEG', 'PNG', 'WEBP'].includes(tipo);
+
+    if (isPreviewable) {
+      setPreview({ url, tipo, nombre: doc.nombre });
+    } else {
+      window.open(url, '_blank');
+    }
   };
 
   const fmtSize = (bytes: number | null) => {
@@ -431,9 +446,16 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      onClick={() => handlePreview(doc)}
+                      className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors"
+                      title="Visualizar"
+                    >
+                      <Eye size={13} />
+                    </button>
+                    <button
                       onClick={() => handleDownload(doc)}
-                      className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-400 transition-colors"
-                      title="Descargar / Ver"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                      title="Descargar"
                     >
                       <Download size={13} />
                     </button>
@@ -457,6 +479,41 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
             Cerrar
           </button>
         </div>
+
+        {/* Modal de Preview */}
+        {preview && (
+          <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col p-4 md:p-10">
+            <div className="flex items-center justify-between mb-4 text-white">
+              <div className="min-w-0">
+                <p className="text-sm font-bold truncate">{preview.nombre}</p>
+                <p className="text-[11px] text-gray-400 uppercase">{preview.tipo}</p>
+              </div>
+              <button
+                onClick={() => setPreview(null)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 bg-white rounded-xl overflow-hidden relative">
+              {preview.tipo === 'PDF' ? (
+                <iframe
+                  src={preview.url}
+                  className="w-full h-full border-none"
+                  title="PDF Preview"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <img
+                    src={preview.url}
+                    alt={preview.nombre}
+                    className="max-w-full max-h-full object-contain shadow-2xl"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
