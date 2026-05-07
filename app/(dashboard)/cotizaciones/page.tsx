@@ -476,7 +476,7 @@ export default function CotizacionesPage() {
   const handleCrearOS = async (cot: CotizacionRow) => {
     setCreandoOSId(cot.id);
     const { error } = await crearOrdenServicio({
-      numero:        cot.folio,
+      numero:        cot.folio || `OS-${cot.id.substring(0,8)}`,
       empresa_id:    cot.empresa_id,
       cotizacion_id: cot.id,
       oportunidad_id: cot.oportunidad_id ?? undefined,
