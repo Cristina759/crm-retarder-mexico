@@ -279,7 +279,8 @@ function ModalDetalleCotizacion({
   onClose: () => void;
 }) {
   const printRef = useRef<HTMLDivElement>(null);
-  const estadoConf = ESTADO_CONFIG[cot.estado] ?? { label: cot.estado, color: 'bg-gray-100 text-gray-600' };
+  const estadoStr = cot.estado || '';
+  const estadoConf = ESTADO_CONFIG[estadoStr] ?? { label: cot.estado || 'Desconocido', color: 'bg-gray-100 text-gray-600' };
 
   const handlePrint = () => {
     const contenido = printRef.current?.innerHTML;
@@ -319,9 +320,9 @@ function ModalDetalleCotizacion({
     setTimeout(() => { win.print(); win.close(); }, 400);
   };
 
-  const fechaCreacion = new Date(cot.created_at).toLocaleDateString('es-MX', {
-    day: '2-digit', month: 'long', year: 'numeric',
-  });
+  const fechaCreacion = cot.created_at 
+    ? new Date(cot.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })
+    : '—';
 
   return (
     <div
@@ -392,17 +393,17 @@ function ModalDetalleCotizacion({
               <tbody>
                 <tr>
                   <td>Subtotal</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.subtotal)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.subtotal || 0)}</td>
                 </tr>
                 <tr>
                   <td>IVA 16%</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.iva)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.iva || 0)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="total-row">
                   <td><strong>TOTAL MXN</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{formatMXN(cot.total_mxn)}</strong></td>
+                  <td style={{ textAlign: 'right' }}><strong>{formatMXN(cot.total_mxn || 0)}</strong></td>
                 </tr>
               </tfoot>
             </table>
@@ -534,7 +535,8 @@ export default function CotizacionesPage() {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {cotizaciones.map(cot => {
-              const estadoConf = ESTADO_CONFIG[cot.estado] ?? { label: cot.estado, color: 'bg-gray-100 text-gray-600' };
+              const estadoStr = cot.estado || '';
+              const estadoConf = ESTADO_CONFIG[estadoStr] ?? { label: cot.estado || 'Desconocido', color: 'bg-gray-100 text-gray-600' };
               const oppGanada  = cot.oportunidad?.estado === 'ganado';
 
               return (
@@ -551,14 +553,14 @@ export default function CotizacionesPage() {
                     {cot.empresas?.nombre_comercial ?? '—'}
                   </td>
                   <td className="px-4 py-3 text-gray-500 capitalize">{cot.tipo}</td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">{formatMXN(cot.total_mxn)}</td>
+                  <td className="px-4 py-3 text-right font-bold text-gray-900">{formatMXN(cot.total_mxn || 0)}</td>
                   <td className="px-4 py-3">
                     <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${estadoConf.color}`}>
                       {estadoConf.label}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{cot.vendedor?.nombre ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">{formatFecha(cot.created_at)}</td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">{cot.created_at ? formatFecha(cot.created_at) : '—'}</td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1 justify-end">
                       {oppGanada && (

@@ -36,26 +36,22 @@ export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string |
 
 // ── crearOrdenServicio ────────────────────────────────────────────────────────
 export async function crearOrdenServicio(input: {
+  numero: string;
   empresa_id: string;
   oportunidad_id?: string;
   cotizacion_id?: string;
 }): Promise<{ error: string | null }> {
-  const { data: empresa } = await supabaseAdmin.from('empresas').select('nombre_comercial').eq('id', input.empresa_id).single();
-  const abrev = empresa?.nombre_comercial?.slice(0,3).toUpperCase() || 'OS';
-  const numero = `OS-${abrev}-${Date.now().toString().slice(-4)}`;
-
   const { error } = await supabaseAdmin
     .from('ordenes_servicio')
     .insert({ 
-      numero, 
+      numero: input.numero, 
       empresa_id: input.empresa_id, 
       oportunidad_id: input.oportunidad_id ?? null,
       cotizacion_id: input.cotizacion_id ?? null,
-      estado: 'solicitud_recibida', 
+      estado: 'tecnico_asignado', 
       fase: 1,
       estado_facturacion: 'pendiente'
     });
-
 
   return { error: error?.message ?? null };
 }

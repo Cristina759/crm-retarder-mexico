@@ -175,6 +175,44 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos_usuario: {
+        Row: {
+          id: string
+          usuario_id: string
+          nombre: string
+          storage_path: string
+          tipo: string | null
+          tamanio: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          usuario_id: string
+          nombre: string
+          storage_path: string
+          tipo?: string | null
+          tamanio?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          usuario_id?: string
+          nombre?: string
+          storage_path?: string
+          tipo?: string | null
+          tamanio?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_usuario_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contactos: {
         Row: {
           activo: boolean | null

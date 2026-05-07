@@ -36,7 +36,6 @@ const FASES = [
 ];
 
 const COLUMNAS: { id: OSEstado; label: string; fase: number; dot: string }[] = [
-  { id: 'solicitud_recibida',      label: 'Solicitud Recibida',     fase: 1, dot: 'bg-slate-400'  },
   { id: 'tecnico_asignado',        label: 'Asignación de Técnico',  fase: 1, dot: 'bg-blue-400'   },
   { id: 'servicio_programado',     label: 'Servicio Programado',    fase: 1, dot: 'bg-blue-500'   },
   { id: 'documentacion_enviada',   label: 'Documentación Enviada',  fase: 1, dot: 'bg-blue-500'   },

@@ -124,8 +124,8 @@ function TabGeneral() {
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard label="Total Neto Facturado" value={fmtMXNFull(data.totalNetoFacturado)} icon={Receipt}    color="navy"   sub="Bruto − nota de crédito Maple" />
-        <KPICard label="Neto Cobrado"         value={fmtMXNFull(data.totalNetoPagado)}    icon={DollarSign} color="green"  sub="Pagadas − nota de crédito" />
+        <KPICard label="Total Neto Facturado" value={fmtMXNFull(data.totalNetoFacturado)} icon={Receipt}    color="navy"   sub="Bruto − notas de crédito" />
+        <KPICard label="Neto Cobrado"         value={fmtMXNFull(data.totalNetoPagado)}    icon={DollarSign} color="green"  sub="Pagado neto (sin deuda)" />
         <KPICard label="Pendiente de Cobro"   value={fmtMXNFull(data.totalPendiente)}     icon={Receipt}    color="orange" sub={`${data.pendientesPorCliente.length} clientes`} />
         <KPICard label="Empresas Activas"     value={data.empresas}                       icon={Building2}  color="purple" />
       </div>
@@ -180,8 +180,8 @@ function TabGeneral() {
           <p className="text-sm font-black text-[#0f2d55]">Resumen Financiero</p>
           {[
             { label: 'Total Neto Facturado', val: data.totalNetoFacturado, color: 'bg-blue-500' },
-            { label: 'Total Cobrado',        val: data.totalCobrado,       color: 'bg-emerald-500' },
-            { label: 'Pendiente de cobro',   val: data.totalFacturado - data.totalCobrado, color: 'bg-yellow-400' },
+            { label: 'Total Neto Cobrado',   val: data.totalNetoPagado,    color: 'bg-emerald-500' },
+            { label: 'Pendiente de cobro',   val: data.totalPendiente,     color: 'bg-yellow-400' },
           ].map(item => (
             <div key={item.label}>
               <div className="flex justify-between text-xs mb-1">
@@ -191,14 +191,14 @@ function TabGeneral() {
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${item.color}`}
-                  style={{ width: data.totalFacturado > 0 ? `${Math.min((item.val / (data.totalFacturado || 1)) * 100, 100)}%` : '0%' }}
+                  style={{ width: data.totalFacturado > 0 ? `${Math.min((item.val / (data.totalNetoFacturado || 1)) * 100, 100)}%` : '0%' }}
                 />
               </div>
             </div>
           ))}
           <div className="mt-auto pt-3 border-t border-gray-100 flex justify-between text-xs">
             <span className="text-gray-400">Notas de crédito aplicadas</span>
-            <span className="font-bold text-red-500">- {fmtMXNFull(data.totalCobrado - data.totalNetoCobrado)}</span>
+            <span className="font-bold text-red-500">- {fmtMXNFull(data.totalNotasCredito)}</span>
           </div>
         </div>
       </div>

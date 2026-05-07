@@ -21,11 +21,11 @@ export async function obtenerResumenGeneral() {
 
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
       supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
-      supabaseAdmin.from('notas_credito').select('monto'),
+      supabaseAdmin.from('notas_credito').select('monto, os_id'),
     ]);
 
     // Cargar totales de cotizaciones vinculadas para el fallback del dashboard
-    const cotIds = Array.from(new Set((facturas ?? []).map(r => r.cotizacion_id).filter(Boolean)));
+    const cotIds = Array.from(new Set(((facturas as any[]) ?? []).map(r => r.cotizacion_id).filter(Boolean)));
     const { data: cots } = cotIds.length 
       ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
       : { data: [] };
@@ -33,36 +33,47 @@ export async function obtenerResumenGeneral() {
 
     const osActivas = (osAll ?? []).filter((r: { archivada?: boolean | null }) => r.archivada !== true).length;
 
-    let totalFacturado = 0;
-    let totalCobrado = 0;
+    let totalFacturadoBruto = 0;
+    let totalFacturadoNeto = 0;
+    let totalCobradoNeto = 0;
     const clienteMap: Record<string, { cliente: string; total: number; folios: string[] }> = {};
 
-    (facturas ?? []).forEach(r => {
-      let monto = r.monto_factura;
-      // Fallback a cotización si no hay monto manual
-      if ((!monto || monto === 0) && r.cotizacion_id) {
-        monto = cotMap.get(r.cotizacion_id) || 0;
-      }
-      monto = monto || 0;
+    // Agrupar NCs por OS para descuentos precisos
+    const ncMap = new Map<string, number>();
+    (notas ?? []).forEach(nc => {
+      if ((nc as any).os_id) ncMap.set((nc as any).os_id, (ncMap.get((nc as any).os_id) || 0) + (Number(nc.monto) || 0));
+    });
 
-      totalFacturado += monto;
+    ((facturas as any[]) ?? []).forEach(r => {
+      let bruto = r.monto_factura;
+      // Fallback a cotización si no hay monto manual
+      if ((!bruto || bruto === 0) && r.cotizacion_id) {
+        bruto = cotMap.get(r.cotizacion_id) || 0;
+      }
+      bruto = bruto || 0;
+
+      const ncMonto = ncMap.get(r.id) || 0;
+      const montoNeto = bruto - ncMonto;
+
+      totalFacturadoBruto += bruto;
+      totalFacturadoNeto  += montoNeto;
 
        // EL COBRADO es la suma de todos los abonos individuales
        const abonos = (r.abonos as { monto?: number }[]) || [];
        const totalAbonado = abonos.reduce((s, a) => s + (Number(a.monto) || 0), 0);
        
        if (r.estado_facturacion === 'pagada' && totalAbonado === 0) {
-         totalCobrado += monto;
+         totalCobradoNeto += montoNeto;
        } else {
-         totalCobrado += totalAbonado;
+         totalCobradoNeto += totalAbonado;
        }
  
        // Pendientes por cliente (lo que no está pagado)
-       if (r.estado_facturacion !== 'pagada' && monto > 0) {
+       if (r.estado_facturacion !== 'pagada' && montoNeto > 0) {
          const nombre = (r.empresas as { nombre_comercial?: string })?.nombre_comercial ?? 'Desconocido';
          if (!clienteMap[nombre]) clienteMap[nombre] = { cliente: nombre, total: 0, folios: [] };
          
-         const saldo = Math.max(0, monto - totalAbonado);
+         const saldo = Math.max(0, montoNeto - totalAbonado);
          clienteMap[nombre].total += saldo;
          if (r.numero_factura) clienteMap[nombre].folios.push(r.numero_factura);
        }
@@ -75,13 +86,15 @@ export async function obtenerResumenGeneral() {
     const piplineValor      = (oportunidades ?? []).reduce((s, r) => s + (r.monto_estimado ?? 0), 0);
     const pendientesPorCliente = Object.values(clienteMap).sort((a, b) => b.total - a.total);
 
+    const totalNotasCredito = (notas ?? []).reduce((s, r) => s + (r.monto ?? 0), 0);
+
     return {
       osActivas,
-      totalFacturado,
-      totalCobrado,
-      totalNetoFacturado:  totalFacturado - totalNotasCredito,
-      totalNetoPagado:     totalCobrado, // El cobrado es dinero que ya entró, no restamos NC aquí usualmente
-      totalPendiente:      (totalFacturado - totalNotasCredito) - totalCobrado,
+      totalFacturado:      totalFacturadoBruto,
+      totalNotasCredito,
+      totalNetoFacturado:  totalFacturadoNeto,
+      totalNetoPagado:     totalCobradoNeto,
+      totalPendiente:      totalFacturadoNeto - totalCobradoNeto,
       piplineValor,
       empresas:            empresas ?? 0,
       pendientesPorCliente,
@@ -112,15 +125,19 @@ export async function obtenerOSporEstado() {
 // ── Ventas ────────────────────────────────────────────────────────────────────
 export async function obtenerResumenVentas() {
   try {
-    const [{ data: facturas }, { data: oportunidades }] = await Promise.all([
+    const [{ data: facturas }, { data: oportunidades }, { data: notas }] = await Promise.all([
       supabaseAdmin.from('ordenes_servicio').select('monto_factura, estado_facturacion, created_at').in('estado', ['facturado', 'pagado', 'facturada', 'pagada']),
       supabaseAdmin.from('oportunidades').select('monto_estimado, estado, created_at, probabilidad'),
+      supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
-    // Total facturado real desde ordenes_servicio
-    const total          = (facturas ?? []).reduce((s, r) => s + (r.monto_factura ?? 0), 0);
-    const cobradas       = (facturas ?? []).filter(r => r.estado_facturacion === 'pagada');
-    const tasaCierre     = (facturas ?? []).length > 0 ? Math.round((cobradas.length / (facturas ?? []).length) * 100) : 0;
+    const totalNCs = (notas ?? []).reduce((s, r) => s + (Number(r.monto) || 0), 0);
+
+    // Total facturado real neto desde ordenes_servicio
+    const totalBruto      = ((facturas as any[]) ?? []).reduce((s, r) => s + (Number(r.monto_factura) || 0), 0);
+    const total           = totalBruto - totalNCs;
+    const cobradas       = ((facturas as any[]) ?? []).filter(r => r.estado_facturacion === 'pagada');
+    const tasaCierre     = ((facturas as any[]) ?? []).length > 0 ? Math.round((cobradas.length / ((facturas as any[]) ?? []).length) * 100) : 0;
     const ticketPromedio = cobradas.length > 0 ? cobradas.reduce((s, r) => s + (r.monto_factura ?? 0), 0) / cobradas.length : 0;
 
     // Ganadas vs perdidas (oportunidades)
@@ -142,7 +159,7 @@ export async function obtenerResumenVentas() {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
       return { mes: d.toLocaleDateString('es-MX', { month: 'short', year: '2-digit' }), year: d.getFullYear(), month: d.getMonth(), monto: 0, cotizaciones: 0 };
     });
-    (facturas ?? []).forEach(r => {
+    ((facturas as any[]) ?? []).forEach(r => {
       if (!r.created_at) return;
       const d = new Date(r.created_at);
       const m = meses.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
