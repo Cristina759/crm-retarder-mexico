@@ -15,7 +15,7 @@ export async function obtenerResumenGeneral() {
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
       // Traemos todas las que tengan algún dato financiero
       supabaseAdmin.from('ordenes_servicio')
-        .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id, abonos')
+        .select('id, monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id, abonos')
         .or('estado_facturacion.in.(facturada,pagada,pago_parcial,vencida),monto_factura.gt.0,numero_factura.neq.null'),
 
 
