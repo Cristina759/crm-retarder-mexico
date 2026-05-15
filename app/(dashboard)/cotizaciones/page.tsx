@@ -59,6 +59,14 @@ function _numALetras(nInput: number): string {
   return `${letras} PESOS ${String(cents).padStart(2,'0')}/100 MXN`;
 }
 
+// ── Checklist preventivo (igual que cotizador-servicios) ──────────────────────
+const CHECKLIST_PREV = [
+  { categoria: 'SISTEMA MECÁNICO', items: ['Torque a tornillera', 'Limpieza de panel de conexiones', 'Placas laterales', 'Hules y tornillera en general', 'Revisión cardanes y crucetas'] },
+  { categoria: 'SISTEMA ELÉCTRICO', items: ['Palanca control', 'Foco piloto', 'Interruptor', 'Relay de corte', 'Arneses de control y terminales', 'Sensor de velocidad', 'Sistema neumático'] },
+  { categoria: 'SISTEMA DE BATERÍAS', items: ['Caja de contactores', 'Maza y positivo', 'Block de conexiones'] },
+];
+const PRECIO_PREVENTIVO_MXN = 4250;
+
 // ── Helper: imprimir cotización igual que los cotizadores ─────────────────────
 async function imprimirCotizacion(cot: CotizacionRow) {
   const fecha = cot.created_at
@@ -72,36 +80,68 @@ async function imprimirCotizacion(cot: CotizacionRow) {
   };
   const docTitulo = tipoLabel[cot.tipo ?? ''] ?? 'Cotización';
 
-  // Parsear ítems y observaciones del campo notas
+  // Parsear datos del campo notas
   let moItems: any[] = [], refItems: any[] = [], observaciones = '', politicas = '';
+  let unidades = 1;
+  let esPreventivo = false;
+  let trasladoLinea = '';
   if (cot.notas) {
-    const itemsMatch = cot.notas.match(/ITEMS: (.+)/);
-    const obsMatch   = cot.notas.match(/OBSERVACIONES:\n([\s\S]*?)(?=\nPOLITICAS:|$)/);
-    const polMatch   = cot.notas.match(/POLITICAS:\n([\s\S]*?)$/);
-    if (obsMatch) observaciones = obsMatch[1].trim();
-    if (polMatch) politicas = polMatch[1].trim();
+    const itemsMatch  = cot.notas.match(/ITEMS: (.+)/);
+    const obsMatch    = cot.notas.match(/OBSERVACIONES:\n([\s\S]*?)(?=\nPOLITICAS:|$)/);
+    const polMatch    = cot.notas.match(/POLITICAS:\n([\s\S]*?)$/);
+    const tipoMatch   = cot.notas.match(/Tipo:\s*(.+)/);
+    const unidsMatch  = cot.notas.match(/Unidades:\s*(\d+)/);
+    const traslMatch  = cot.notas.match(/Traslado × \d+: \$[\d,.]+\s*MXN/);
+    if (obsMatch)    observaciones = obsMatch[1].trim();
+    if (polMatch)    politicas     = polMatch[1].trim();
+    if (tipoMatch)   esPreventivo  = tipoMatch[1].trim().toLowerCase() === 'preventivo';
+    if (unidsMatch)  unidades      = parseInt(unidsMatch[1]) || 1;
+    if (traslMatch)  trasladoLinea = traslMatch[0];
     if (itemsMatch) {
       try {
         const parsed = JSON.parse(itemsMatch[1]);
-        moItems  = parsed.mano_obra    || [];
-        refItems = parsed.refacciones  || [];
+        moItems  = parsed.mano_obra   || [];
+        refItems = parsed.refacciones || [];
       } catch { /* ignore */ }
     }
   }
 
+  // Limpiar prefijo "Mano de obra — " si quedó guardado en la descripción
+  function cleanDesc(d: string) { return (d || '').replace(/^mano\s+de\s+obra\s*[—\-–]\s*/i, '').trim() || '—'; }
+
+  // Agrupar ítems con misma descripción y precio (para cotizaciones viejas sin campo cantidad)
+  function groupItems(arr: any[]) {
+    const map = new Map<string, { descripcion: string; precio: number; cantidad: number }>();
+    arr.forEach(l => {
+      const key = `${l.descripcion}||${l.precio}`;
+      const ex  = map.get(key);
+      if (ex) ex.cantidad += (l.cantidad || 1);
+      else    map.set(key, { descripcion: l.descripcion, precio: l.precio, cantidad: l.cantidad || 1 });
+    });
+    return Array.from(map.values());
+  }
+
   // Columna izquierda: trabajos
   let worksHTML = '';
-  if (moItems.length > 0) {
-    worksHTML += '<div class="p-checklist-cat">Mano de Obra</div>';
-    moItems.forEach((l: any) => {
-      worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${l.descripcion || '—'}</span></div>`;
+  if (esPreventivo) {
+    worksHTML += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>Servicio Preventivo (${unidades} u.)</span></div>`;
+    CHECKLIST_PREV.forEach(cat => {
+      worksHTML += `<div class="p-checklist-cat">${cat.categoria}</div>`;
+      cat.items.forEach(item => {
+        worksHTML += `<div class="p-work-item" style="padding-left:8px"><span class="p-work-bullet">•</span><span>${item}</span></div>`;
+      });
     });
   }
-  if (refItems.length > 0) {
-    worksHTML += '<div class="p-checklist-cat">Refacciones</div>';
-    refItems.forEach((l: any) => {
-      worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${l.descripcion || '—'}</span></div>`;
-    });
+  groupItems(moItems).forEach(l => {
+    const d = cleanDesc(l.descripcion);
+    worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${d}${l.cantidad > 1 ? ` × ${l.cantidad}` : ''}</span></div>`;
+  });
+  groupItems(refItems).forEach(l => {
+    const d = cleanDesc(l.descripcion);
+    worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${d}${l.cantidad > 1 ? ` × ${l.cantidad}` : ''}</span></div>`;
+  });
+  if (trasladoLinea) {
+    worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Gastos de traslado</span></div>`;
   }
   if (!worksHTML) {
     worksHTML = `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${docTitulo}</span></div>`;
@@ -109,11 +149,26 @@ async function imprimirCotizacion(cot: CotizacionRow) {
 
   // Columna derecha: precios
   let pricesHTML = '';
-  if (moItems.length > 0 || refItems.length > 0) {
-    [...moItems, ...refItems].forEach((l: any) => {
-      const imp = (l.precio || 0) * (l.cantidad || 1);
-      pricesHTML += `<div class="p-price-item"><span class="p-price-desc">${l.descripcion || '—'}</span><span class="p-price-val">${formatMXN(imp)}</span></div>`;
-    });
+  if (esPreventivo) {
+    pricesHTML += `<div class="p-price-item"><span class="p-price-desc">Preventivo × ${unidades}</span><span class="p-price-val">${formatMXN(PRECIO_PREVENTIVO_MXN * unidades)} MXN</span></div>`;
+  }
+  groupItems(moItems).forEach(l => {
+    const imp = (l.precio || 0) * l.cantidad;
+    pricesHTML += `<div class="p-price-item"><span class="p-price-desc">${cleanDesc(l.descripcion)}${l.cantidad > 1 ? ` × ${l.cantidad}` : ''}</span><span class="p-price-val">${formatMXN(imp)}</span></div>`;
+  });
+  groupItems(refItems).forEach(l => {
+    const imp = (l.precio || 0) * l.cantidad;
+    pricesHTML += `<div class="p-price-item"><span class="p-price-desc">${cleanDesc(l.descripcion)}${l.cantidad > 1 ? ` × ${l.cantidad}` : ''}</span><span class="p-price-val">${formatMXN(imp)}</span></div>`;
+  });
+  if (trasladoLinea) {
+    // Extraer monto de traslado de la línea guardada en notas
+    const montoMatch = trasladoLinea.match(/\$([\d,]+(?:\.\d+)?)\s*MXN/);
+    const montoTraslado = montoMatch ? parseFloat(montoMatch[1].replace(/,/g, '')) : 0;
+    const nMatch = trasladoLinea.match(/× (\d+)/);
+    const nUnids = nMatch ? nMatch[1] : unidades;
+    if (montoTraslado > 0) {
+      pricesHTML += `<div class="p-price-item"><span class="p-price-desc">Traslado × ${nUnids}</span><span class="p-price-val">${formatMXN(montoTraslado)}</span></div>`;
+    }
   }
 
   const subtotal   = cot.subtotal   || 0;
