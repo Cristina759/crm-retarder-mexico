@@ -46,7 +46,8 @@ const CHECKLIST_PREVENTIVO = [
 interface LineaServicio {
   id: string;
   descripcion: string;
-  precio: number; // MXN
+  precio: number; // MXN por unidad
+  cantidad: number;
 }
 
 type ModalTab = 'mo' | 'ref';
@@ -336,7 +337,7 @@ function CardLineas({
   lineas: LineaServicio[];
   onAdd: () => void;
   onRemove: (id: string) => void;
-  onChange: (id: string, field: 'descripcion' | 'precio', value: string) => void;
+  onChange: (id: string, field: 'descripcion' | 'precio' | 'cantidad', value: string) => void;
   onAbrirCatalogo?: () => void;
   accentColor?: 'blue' | 'orange';
 }) {
@@ -379,6 +380,19 @@ function CardLineas({
                 placeholder="Descripción..."
                 className="flex-1 border border-gray-200 rounded-xl px-3 h-9 text-xs text-gray-800 outline-none focus:border-blue-400 transition-colors"
               />
+              {/* Cantidad */}
+              <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2 h-9 w-16 focus-within:border-blue-400 transition-colors">
+                <span className="text-[9px] text-gray-400">×</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={l.cantidad || 1}
+                  onChange={e => onChange(l.id, 'cantidad', e.target.value)}
+                  className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent w-full"
+                />
+              </div>
+              {/* Precio unitario */}
               <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2.5 h-9 w-28 focus-within:border-blue-400 transition-colors">
                 <span className="text-[10px] text-gray-400 font-semibold">$</span>
                 <input
@@ -390,8 +404,11 @@ function CardLineas({
                   placeholder="0.00"
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent"
                 />
-                <span className="text-[9px] text-gray-400">MXN</span>
               </div>
+              {/* Total línea */}
+              <span className="text-[11px] font-bold text-gray-600 w-20 text-right whitespace-nowrap">
+                {fmtMXN((l.precio || 0) * (l.cantidad || 1))}
+              </span>
               <button
                 onClick={() => onRemove(l.id)}
                 className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
@@ -406,7 +423,7 @@ function CardLineas({
       {lineas.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-100 flex justify-end">
           <span className="text-xs font-bold text-gray-700">
-            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0), 0))} MXN
+            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0) * (l.cantidad || 1), 0))} MXN
           </span>
         </div>
       )}
@@ -549,16 +566,16 @@ export default function CotizadorServiciosPage() {
   };
 
   const agregarDesdeCatalogoMO = (item: ManoDeObraRow) => {
-    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio }]);
+    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio, cantidad: 1 }]);
   };
 
   const agregarDesdeCatalogoRef = (item: RefaccionRow) => {
-    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta }]);
+    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta, cantidad: 1 }]);
   };
 
   // ── Helpers de líneas ───────────────────────────────────────────────────────
   const addLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>) => {
-    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0 }]);
+    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0, cantidad: 1 }]);
   };
 
   const removeLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>, id: string) => {
@@ -568,11 +585,11 @@ export default function CotizadorServiciosPage() {
   const changeLinea = (
     setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>,
     id: string,
-    field: 'descripcion' | 'precio',
+    field: 'descripcion' | 'precio' | 'cantidad',
     value: string
   ) => {
     setter(prev => prev.map(l =>
-      l.id === id ? { ...l, [field]: field === 'precio' ? parseFloat(value) || 0 : value } : l
+      l.id === id ? { ...l, [field]: field === 'descripcion' ? value : parseFloat(value) || 0 } : l
     ));
   };
 
@@ -582,8 +599,8 @@ export default function CotizadorServiciosPage() {
 
   // Todo en MXN — sin conversión de divisas
   const subtotalPreventivoMXN = tipoPreventivo ? PRECIO_PREVENTIVO_MXN * unidadesN : 0;
-  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0), 0);
-  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0), 0);
+  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0) * (l.cantidad || 1), 0);
+  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0) * (l.cantidad || 1), 0);
   const subtotalTraslado       = trasladoN * unidadesN;
   const subtotalMXN           = subtotalPreventivoMXN + subtotalManoObra + subtotalRefacciones + subtotalTraslado;
   const iva                   = Math.round(subtotalMXN * 0.16 * 100) / 100;
@@ -1273,13 +1290,13 @@ export default function CotizadorServiciosPage() {
                 {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
-                    <span>Mano de obra — {l.descripcion || '—'}</span>
+                    <span>{l.descripcion || '—'}{(l.cantidad || 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
                   </div>
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
-                    <span>Refacción — {l.descripcion || '—'}</span>
+                    <span>{l.descripcion || '—'}{(l.cantidad || 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
@@ -1301,14 +1318,14 @@ export default function CotizadorServiciosPage() {
                 )}
                 {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
-                    <span className="p-price-desc">{l.descripcion || 'Mano de obra'}</span>
-                    <span className="p-price-val">{fmtMXN(l.precio)}</span>
+                    <span className="p-price-desc">{l.descripcion || 'Mano de obra'}{(l.cantidad || 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
+                    <span className="p-price-val">{fmtMXN((l.precio || 0) * (l.cantidad || 1))}</span>
                   </div>
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
-                    <span className="p-price-desc">{l.descripcion || 'Refacción'}</span>
-                    <span className="p-price-val">{fmtMXN(l.precio)}</span>
+                    <span className="p-price-desc">{l.descripcion || 'Refacción'}{(l.cantidad || 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
+                    <span className="p-price-val">{fmtMXN((l.precio || 0) * (l.cantidad || 1))}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
