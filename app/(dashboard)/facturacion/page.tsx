@@ -3,7 +3,7 @@
 
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus, Ban } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, crearNotaCredito, type FacturaRow } from '@/app/actions/facturacion';
 
 
@@ -17,7 +17,7 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida'];
+const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida', 'cancelado'];
 const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
   pendiente:          { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   pendiente_facturar: { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
@@ -26,6 +26,7 @@ const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
   pago_parcial:       { color: 'bg-amber-100 text-amber-700',  label: 'Pago Parcial'     },
   pagada:             { color: 'bg-green-100 text-green-700',  label: 'Pagada'           },
   vencida:            { color: 'bg-red-100 text-red-700',      label: 'Vencida'          },
+  cancelado:          { color: 'bg-rose-100 text-rose-700',    label: 'Cancelado'        },
 };
 
 
@@ -39,6 +40,7 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
   const [estado, setEstado]         = useState(row.estado_facturacion ?? 'pendiente');
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
+  const [canceling, setCanceling]   = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -66,6 +68,14 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
     setDeleting(true);
     await eliminarFactura(row.id);
     onDeleted(row.id);
+  };
+
+  const handleCancelFactura = async () => {
+    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada.`)) return;
+    setCanceling(true);
+    await actualizarFactura(row.id, { estado_facturacion: 'cancelado' });
+    onUpdated({ ...row, estado_facturacion: 'cancelado' as any });
+    setCanceling(false);
   };
 
   const handleCancel = () => {
@@ -214,6 +224,17 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
             <FileMinus size={13} />
           </button>
 
+
+          {row.estado_facturacion !== 'cancelado' && (
+            <button
+              onClick={handleCancelFactura}
+              disabled={canceling}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-rose-100 text-gray-400 hover:text-rose-600 transition-all"
+              title="Cancelar Factura"
+            >
+              {canceling ? <Loader2 size={13} className="animate-spin" /> : <Ban size={13} />}
+            </button>
+          )}
 
           <button
             onClick={handleDelete}
