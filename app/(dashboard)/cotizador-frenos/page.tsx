@@ -1197,32 +1197,30 @@ export default function CotizadorFrenosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 8mm 10mm; }
+        @page { size: A4 portrait; margin: 6mm 8mm; }
         @media print {
-          html, body { margin: 0 !important; padding: 0 !important; }
+          html, body { margin: 0 !important; padding: 0 !important; width: 210mm !important; }
           header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
             display: block !important;
-            position: absolute !important;
+            position: fixed !important;
             top: 0 !important;
             left: 0 !important;
-            right: 0 !important;
-            min-height: 260mm !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
           }
           .p-doc {
             width: 100% !important;
-            max-height: 280mm !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
+            font-size: 11px !important;
           }
-          .p-spacer { flex: 1; }
+          .p-spacer { flex: 1; min-height: 6mm; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }
@@ -1232,7 +1230,7 @@ export default function CotizadorFrenosPage() {
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 3.2cm; height: 3.2cm; object-fit: contain; display: block; }
+        .p-logo-img { width: 4.5cm; height: 4.5cm; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }
