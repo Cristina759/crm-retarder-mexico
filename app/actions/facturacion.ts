@@ -99,6 +99,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
         fecha_vencimiento: r.fecha_vencimiento,
         estado_facturacion: (r.estado_facturacion as EstadoFacturacion) || null,
         created_at: r.created_at,
+        empresa_id: r.empresa_id,
         empresa_nombre: empresaMap.get(r.empresa_id) || 'Empresa Desconocida',
         total_pagado,
         saldo_pendiente,
