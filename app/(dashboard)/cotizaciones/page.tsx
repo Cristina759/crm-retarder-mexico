@@ -561,20 +561,6 @@ export default function CotizacionesPage() {
                   <td className="px-4 py-3 text-gray-400 text-xs">{formatFecha(cot.created_at)}</td>
                   <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                     <div className="flex items-center gap-1 justify-end">
-                      {oppGanada && (
-                        <button
-                          onClick={() => handleCrearOS(cot)}
-                          disabled={creandoOSId === cot.id}
-                          title="Crear Orden de Servicio"
-                          className="px-2.5 py-1.5 rounded-xl bg-green-600 text-white text-[11px] font-bold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-1"
-                        >
-                          {creandoOSId === cot.id
-                            ? <Loader2 size={11} className="animate-spin" />
-                            : null
-                          }
-                          Crear OS
-                        </button>
-                      )}
                       <button
                         onClick={() => handleEliminar(cot.id)}
                         disabled={deletingId === cot.id}
