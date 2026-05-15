@@ -3,7 +3,7 @@
 
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus, Ban } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, crearNotaCredito, type FacturaRow } from '@/app/actions/facturacion';
 import { obtenerClientes } from '@/app/actions/clientes';
 
@@ -51,6 +51,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   const [empresaId, setEmpresaId]   = useState(row.empresa_id ?? '');
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
+  const [canceling, setCanceling]   = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -81,6 +82,14 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
     setDeleting(true);
     await eliminarFactura(row.id);
     onDeleted(row.id);
+  };
+
+  const handleCancelFactura = async () => {
+    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada.`)) return;
+    setCanceling(true);
+    await actualizarFactura(row.id, { estado_facturacion: 'cancelado' });
+    onUpdated({ ...row, estado_facturacion: 'cancelado' as any });
+    setCanceling(false);
   };
 
   const handleCancel = () => {
@@ -252,6 +261,17 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
             <FileMinus size={13} />
           </button>
 
+
+          {row.estado_facturacion !== 'cancelado' && (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleCancelFactura(); }}
+              disabled={canceling}
+              className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-rose-100 text-gray-400 hover:text-rose-600 transition-all"
+              title="Cancelar Factura"
+            >
+              {canceling ? <Loader2 size={13} className="animate-spin" /> : <Ban size={13} />}
+            </button>
+          )}
 
           <button
             onClick={(e) => { e.stopPropagation(); handleDelete(); }}
