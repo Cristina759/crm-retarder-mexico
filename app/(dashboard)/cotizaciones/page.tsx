@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Loader2, X, FileText, Building2, User, Printer, ChevronRight } from 'lucide-react';
 import {
   obtenerCotizaciones,
@@ -32,6 +32,190 @@ function formatMXN(n: number) {
 
 function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── Helper: imprimir cotización como PDF formateado ───────────────────────────
+function imprimirCotizacion(cot: CotizacionRow) {
+  const fechaCreacion = cot.created_at
+    ? new Date(cot.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })
+    : '—';
+  const estadoStr = cot.estado || '';
+  const estadoConf = ESTADO_CONFIG[estadoStr] ?? { label: cot.estado || 'Desconocido', color: '' };
+
+  let itemsHTML = '';
+  let observacionesText = '';
+  if (cot.notas) {
+    const itemsMatch = cot.notas.match(/ITEMS: (.+)/);
+    const obsMatch = cot.notas.match(/OBSERVACIONES:\n([\s\S]*?)$/);
+    if (obsMatch) observacionesText = obsMatch[1];
+
+    if (itemsMatch) {
+      try {
+        const items = JSON.parse(itemsMatch[1]);
+        const mo = items.mano_obra || [];
+        const ref = items.refacciones || [];
+
+        if (mo.length > 0 || ref.length > 0) {
+          itemsHTML += '<table><thead><tr><th>Concepto</th><th style="text-align:center">Cant.</th><th style="text-align:right">P. Unitario</th><th style="text-align:right">Importe</th></tr></thead><tbody>';
+
+          if (mo.length > 0) {
+            itemsHTML += '<tr><td colspan="4" style="background:#e8f5e9;font-weight:900;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#2e7d32;padding:6px 8px">Mano de Obra</td></tr>';
+            mo.forEach((l: any) => {
+              const imp = (l.precio || 0) * (l.cantidad || 1);
+              itemsHTML += `<tr><td>${l.descripcion}</td><td style="text-align:center">${l.cantidad || 1}</td><td style="text-align:right">$${(l.precio || 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</td><td style="text-align:right">$${imp.toLocaleString('es-MX', {minimumFractionDigits:2})}</td></tr>`;
+            });
+          }
+
+          if (ref.length > 0) {
+            itemsHTML += '<tr><td colspan="4" style="background:#fff3e0;font-weight:900;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#e65100;padding:6px 8px">Refacciones</td></tr>';
+            ref.forEach((l: any) => {
+              const imp = (l.precio || 0) * (l.cantidad || 1);
+              itemsHTML += `<tr><td>${l.descripcion}</td><td style="text-align:center">${l.cantidad || 1}</td><td style="text-align:right">$${(l.precio || 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</td><td style="text-align:right">$${imp.toLocaleString('es-MX', {minimumFractionDigits:2})}</td></tr>`;
+            });
+          }
+
+          itemsHTML += '</tbody></table>';
+        }
+      } catch { /* parse error, ignore */ }
+    }
+  }
+
+  const notasLimpias = cot.notas
+    ? cot.notas
+        .replace(/ITEMS: .+/g, '')
+        .replace(/OBSERVACIONES:[\s\S]*$/g, '')
+        .split('\n')
+        .filter((l: string) => l.trim() && !l.startsWith('Folio:'))
+        .join('<br/>')
+    : '';
+
+  const win = window.open('', '_blank', 'width=800,height=900');
+  if (!win) return;
+
+  win.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Cotización ${cot.folio}</title>
+        <meta charset="utf-8" />
+        <style>
+          @page { size: A4; margin: 12mm 14mm; }
+          * { box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #111; margin: 0; padding: 20px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 3px solid #0f2d55; }
+          .brand { font-size: 16px; font-weight: 900; color: #0f2d55; letter-spacing: 2px; }
+          .brand-sub { font-size: 8px; color: #888; margin-top: 2px; }
+          .title { font-size: 22px; font-weight: 900; color: #0f2d55; letter-spacing: 1px; text-align: right; }
+          .folio { font-size: 12px; font-weight: 700; margin-top: 2px; color: #333; }
+          .fecha { font-size: 9px; color: #888; margin-top: 2px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+          .info-box { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; border-left: 3px solid #0f2d55; }
+          .info-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 3px; }
+          .info-value { font-size: 11px; font-weight: 600; color: #222; }
+          .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 3px 10px; border-radius: 9999px; background: #dbeafe; color: #1d4ed8; }
+          table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+          th { background: #0f2d55; color: white; padding: 6px 10px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
+          td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 10px; }
+          tr:nth-child(even) td { background: #fafafa; }
+          .total-section { background: #fef9e7; border: 2px solid #0f2d55; border-radius: 8px; padding: 12px; margin: 14px 0; }
+          .total-grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; }
+          .total-label { font-size: 10px; color: #555; }
+          .total-value { font-size: 10px; font-weight: 700; text-align: right; color: #222; }
+          .total-final { font-size: 14px; font-weight: 900; color: #0f2d55; }
+          .notas-section { margin-top: 14px; padding: 10px; background: #f5f5f5; border-radius: 6px; }
+          .notas-title { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #0f2d55; margin-bottom: 6px; }
+          .notas-content { font-size: 9px; color: #444; line-height: 1.7; white-space: pre-wrap; }
+          .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; font-size: 8px; color: #aaa; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="brand">RETARDER MÉXICO</div>
+            <div class="brand-sub">Servicios Especializados en Retardadores</div>
+          </div>
+          <div style="text-align:right">
+            <div class="title">COTIZACIÓN</div>
+            <div class="folio">Folio: ${cot.folio ?? '—'}</div>
+            <div class="fecha">Fecha: ${fechaCreacion}</div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="info-label">Cliente / Empresa</div>
+            <div class="info-value">${cot.empresas?.nombre_comercial ?? '—'}</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">Tipo de cotización</div>
+            <div class="info-value" style="text-transform:capitalize">${cot.tipo ?? '—'}</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">Vendedor</div>
+            <div class="info-value">${cot.vendedor?.nombre ?? 'Sin asignar'}</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">Estado</div>
+            <div class="info-value"><span class="badge">${estadoConf.label}</span></div>
+          </div>
+        </div>
+
+        ${itemsHTML}
+
+        ${!itemsHTML ? `
+        <table>
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th style="text-align:right">Importe MXN</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Subtotal</td>
+              <td style="text-align:right">${formatMXN(cot.subtotal || 0)}</td>
+            </tr>
+            <tr>
+              <td>IVA 16%</td>
+              <td style="text-align:right">${formatMXN(cot.iva || 0)}</td>
+            </tr>
+          </tbody>
+        </table>` : ''}
+
+        <div class="total-section">
+          <div class="total-grid">
+            <span class="total-label">Subtotal</span>
+            <span class="total-value">${formatMXN(cot.subtotal || 0)}</span>
+            <span class="total-label">IVA 16%</span>
+            <span class="total-value">${formatMXN(cot.iva || 0)}</span>
+            <span class="total-label total-final">TOTAL MXN</span>
+            <span class="total-value total-final">${formatMXN(cot.total_mxn || 0)}</span>
+          </div>
+        </div>
+
+        ${notasLimpias ? `
+        <div class="notas-section">
+          <div class="notas-title">Información adicional</div>
+          <div class="notas-content">${notasLimpias}</div>
+        </div>` : ''}
+
+        ${observacionesText ? `
+        <div class="notas-section">
+          <div class="notas-title">Observaciones</div>
+          <div class="notas-content">${observacionesText}</div>
+        </div>` : ''}
+
+        <div class="footer">
+          Retarder México · ventasyservicio@tgrpentarmexico.com<br/>
+          Tel: +52 55 7372 1633<br/>
+          Documento generado el ${new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
+        </div>
+      </body>
+    </html>
+  `);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); win.close(); }, 400);
 }
 
 // ── Modal nueva cotización ────────────────────────────────────────────────────
@@ -278,46 +462,7 @@ function ModalDetalleCotizacion({
   cot: CotizacionRow;
   onClose: () => void;
 }) {
-  const printRef = useRef<HTMLDivElement>(null);
   const estadoConf = ESTADO_CONFIG[cot.estado] ?? { label: cot.estado, color: 'bg-gray-100 text-gray-600' };
-
-  const handlePrint = () => {
-    const contenido = printRef.current?.innerHTML;
-    if (!contenido) return;
-    const win = window.open('', '_blank', 'width=800,height=900');
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Cotización ${cot.folio}</title>
-          <meta charset="utf-8" />
-          <style>
-            @page { size: A4; margin: 12mm 14mm; }
-            body { font-family: Arial, sans-serif; font-size: 10px; color: #111; margin: 0; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2d55; letter-spacing: 1px; }
-            .folio { font-size: 11px; font-weight: 700; margin-top: 2px; }
-            .fecha { font-size: 9px; color: #555; }
-            hr { border: none; border-top: 1px solid #ccc; margin: 6px 0; }
-            .section { margin: 6px 0; }
-            .label { font-weight: 700; display: inline-block; min-width: 100px; color: #333; }
-            .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: #dbeafe; color: #1d4ed8; }
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-            th { background: #0f2d55; color: white; padding: 4px 8px; font-size: 9px; text-transform: uppercase; text-align: left; }
-            td { padding: 4px 8px; border-bottom: 1px solid #eee; }
-            tr:nth-child(even) td { background: #f7f7f7; }
-            .total-row td { background: #fef9e7 !important; font-weight: 900; font-size: 12px; border-top: 2px solid #0f2d55; }
-            .notas { font-size: 8.5px; white-space: pre-wrap; color: #444; line-height: 1.6; margin-top: 6px; }
-          </style>
-        </head>
-        <body>${contenido}</body>
-      </html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 400);
-  };
 
   const fechaCreacion = new Date(cot.created_at).toLocaleDateString('es-MX', {
     day: '2-digit', month: 'long', year: 'numeric',
@@ -340,7 +485,7 @@ function ModalDetalleCotizacion({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePrint}
+              onClick={() => imprimirCotizacion(cot)}
               className="flex items-center gap-1.5 px-3 h-9 bg-[#0f2d55] text-white rounded-xl text-xs font-bold hover:bg-[#1a4a7a] transition-colors"
             >
               <Printer size={13} /> Imprimir PDF
@@ -354,73 +499,49 @@ function ModalDetalleCotizacion({
         {/* Contenido scrolleable */}
         <div className="overflow-y-auto px-6 py-4 space-y-4 flex-1">
 
-          {/* Contenido imprimible */}
-          <div ref={printRef}>
-            {/* Header de impresión */}
-            <div className="header">
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#0f2d55' }}>RETARDER MÉXICO</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="title">COTIZACIÓN</div>
-                <div className="folio">Folio: {cot.folio}</div>
-                <div className="fecha">Fecha: {fechaCreacion}</div>
-              </div>
+          {/* Datos generales */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Cliente</span>
+              <span className="text-sm font-bold text-gray-800">{cot.empresas?.nombre_comercial ?? '—'}</span>
             </div>
-            <hr />
-
-            {/* Datos generales */}
-            <div className="section">
-              <p><span className="label">Empresa:</span> {cot.empresas?.nombre_comercial ?? '—'}</p>
-              <p><span className="label">Vendedor:</span> {cot.vendedor?.nombre ?? 'Sin asignar'}</p>
-              <p><span className="label">Tipo:</span> {cot.tipo}</p>
-              <p>
-                <span className="label">Estado:</span>
-                <span className="badge">{estadoConf.label}</span>
-              </p>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Tipo</span>
+              <span className="text-sm text-gray-700 capitalize">{cot.tipo}</span>
             </div>
-            <hr />
-
-            {/* Tabla de montos */}
-            <table>
-              <thead>
-                <tr>
-                  <th>Concepto</th>
-                  <th style={{ textAlign: 'right' }}>Importe MXN</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Subtotal</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.subtotal)}</td>
-                </tr>
-                <tr>
-                  <td>IVA 16%</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.iva)}</td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <tr className="total-row">
-                  <td><strong>TOTAL MXN</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{formatMXN(cot.total_mxn)}</strong></td>
-                </tr>
-              </tfoot>
-            </table>
-
-            {/* Importe con letras (si existiera o se calculara) */}
-            <div style={{ marginTop: 8, fontSize: 10 }}>
-              <span style={{ fontWeight: 900 }}>IMPORTE CON LETRA:</span> — (Favor de verificar en el formato impreso)
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Vendedor</span>
+              <span className="text-sm text-gray-700">{cot.vendedor?.nombre ?? 'Sin asignar'}</span>
             </div>
-            {cot.notas && (
-              <div>
-                <hr />
-                <div style={{ fontWeight: 700, fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, color: '#0f2d55', marginBottom: 4 }}>
-                  Notas
-                </div>
-                <p className="notas">{cot.notas}</p>
-              </div>
-            )}
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Estado</span>
+              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${estadoConf.color}`}>{estadoConf.label}</span>
+            </div>
           </div>
+
+          {/* Totales */}
+          <div className="bg-gray-50 rounded-2xl p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Subtotal</span>
+              <span className="font-bold text-gray-900">{formatMXN(cot.subtotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">IVA 16%</span>
+              <span className="font-bold text-gray-900">{formatMXN(cot.iva || 0)}</span>
+            </div>
+            <div className="border-t border-gray-200 pt-2 flex justify-between">
+              <span className="text-sm font-black text-[#0f2d55]">Total MXN</span>
+              <span className="text-lg font-black text-[#0f2d55]">{formatMXN(cot.total_mxn || 0)}</span>
+            </div>
+          </div>
+
+          {/* Notas */}
+          {cot.notas && (
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">Notas</p>
+              <p className="text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">{cot.notas}</p>
+            </div>
+          )}
 
           {/* Info extra solo en pantalla */}
           <div className="text-xs text-gray-400 border-t border-gray-100 pt-3">

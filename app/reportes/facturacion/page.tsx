@@ -22,7 +22,7 @@ export default function ReporteFacturacionPage() {
   useEffect(() => {
     Promise.all([obtenerFacturas(), obtenerResumenFacturacion()])
       .then(([f, r]) => {
-        setRows(f.data);
+        setRows(f.data.filter(row => row.estado_facturacion !== 'cancelado'));
         setResumen(r);
       })
       .finally(() => setLoading(false));
