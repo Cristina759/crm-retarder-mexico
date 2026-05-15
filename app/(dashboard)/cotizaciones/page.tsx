@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Loader2, X, FileText, Building2, User, Printer, ChevronRight } from 'lucide-react';
+import QRCode from 'qrcode';
 import {
   obtenerCotizaciones,
   crearCotizacion,
@@ -34,188 +35,227 @@ function formatFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-// ── Helper: imprimir cotización como PDF formateado ───────────────────────────
-function imprimirCotizacion(cot: CotizacionRow) {
-  const fechaCreacion = cot.created_at
+// ── Helpers de impresión ──────────────────────────────────────────────────────
+function _numALetras(nInput: number): string {
+  const n = Math.round(nInput * 100) / 100;
+  const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE',
+    'DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const decenas = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS',
+    'SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  function m1000(x: number): string {
+    if (x === 0) return '';
+    if (x === 100) return 'CIEN';
+    if (x < 20) return unidades[x];
+    if (x < 100) { const d=Math.floor(x/10),u=x%10; return u===0?decenas[d]:`${decenas[d]} Y ${unidades[u]}`; }
+    const c=Math.floor(x/100),r=x%100; return r===0?centenas[c]:`${centenas[c]} ${m1000(r)}`;
+  }
+  const entero=Math.floor(n), cents=Math.round((n-entero)*100);
+  const miles=Math.floor(entero/1000), resto=entero%1000;
+  let letras='';
+  if (miles===1) letras='MIL'; else if (miles>1) letras=`${m1000(miles)} MIL`;
+  if (resto>0) letras+=(letras?' ':'')+m1000(resto);
+  if (!letras) letras='CERO';
+  return `${letras} PESOS ${String(cents).padStart(2,'0')}/100 MXN`;
+}
+
+// ── Helper: imprimir cotización igual que los cotizadores ─────────────────────
+async function imprimirCotizacion(cot: CotizacionRow) {
+  const fecha = cot.created_at
     ? new Date(cot.created_at).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })
     : '—';
-  const estadoStr = cot.estado || '';
-  const estadoConf = ESTADO_CONFIG[estadoStr] ?? { label: cot.estado || 'Desconocido', color: '' };
 
-  let itemsHTML = '';
-  let observacionesText = '';
+  const tipoLabel: Record<string, string> = {
+    frenos: 'Cotización de Frenos',
+    servicios: 'Cotización de Servicios',
+    refacciones: 'Cotización de Refacciones',
+  };
+  const docTitulo = tipoLabel[cot.tipo ?? ''] ?? 'Cotización';
+
+  // Parsear ítems y observaciones del campo notas
+  let moItems: any[] = [], refItems: any[] = [], observaciones = '', politicas = '';
   if (cot.notas) {
     const itemsMatch = cot.notas.match(/ITEMS: (.+)/);
-    const obsMatch = cot.notas.match(/OBSERVACIONES:\n([\s\S]*?)$/);
-    if (obsMatch) observacionesText = obsMatch[1];
-
+    const obsMatch   = cot.notas.match(/OBSERVACIONES:\n([\s\S]*?)(?=\nPOLITICAS:|$)/);
+    const polMatch   = cot.notas.match(/POLITICAS:\n([\s\S]*?)$/);
+    if (obsMatch) observaciones = obsMatch[1].trim();
+    if (polMatch) politicas = polMatch[1].trim();
     if (itemsMatch) {
       try {
-        const items = JSON.parse(itemsMatch[1]);
-        const mo = items.mano_obra || [];
-        const ref = items.refacciones || [];
-
-        if (mo.length > 0 || ref.length > 0) {
-          itemsHTML += '<table><thead><tr><th>Concepto</th><th style="text-align:center">Cant.</th><th style="text-align:right">P. Unitario</th><th style="text-align:right">Importe</th></tr></thead><tbody>';
-
-          if (mo.length > 0) {
-            itemsHTML += '<tr><td colspan="4" style="background:#e8f5e9;font-weight:900;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#2e7d32;padding:6px 8px">Mano de Obra</td></tr>';
-            mo.forEach((l: any) => {
-              const imp = (l.precio || 0) * (l.cantidad || 1);
-              itemsHTML += `<tr><td>${l.descripcion}</td><td style="text-align:center">${l.cantidad || 1}</td><td style="text-align:right">$${(l.precio || 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</td><td style="text-align:right">$${imp.toLocaleString('es-MX', {minimumFractionDigits:2})}</td></tr>`;
-            });
-          }
-
-          if (ref.length > 0) {
-            itemsHTML += '<tr><td colspan="4" style="background:#fff3e0;font-weight:900;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#e65100;padding:6px 8px">Refacciones</td></tr>';
-            ref.forEach((l: any) => {
-              const imp = (l.precio || 0) * (l.cantidad || 1);
-              itemsHTML += `<tr><td>${l.descripcion}</td><td style="text-align:center">${l.cantidad || 1}</td><td style="text-align:right">$${(l.precio || 0).toLocaleString('es-MX', {minimumFractionDigits:2})}</td><td style="text-align:right">$${imp.toLocaleString('es-MX', {minimumFractionDigits:2})}</td></tr>`;
-            });
-          }
-
-          itemsHTML += '</tbody></table>';
-        }
-      } catch { /* parse error, ignore */ }
+        const parsed = JSON.parse(itemsMatch[1]);
+        moItems  = parsed.mano_obra    || [];
+        refItems = parsed.refacciones  || [];
+      } catch { /* ignore */ }
     }
   }
 
-  const notasLimpias = cot.notas
-    ? cot.notas
-        .replace(/ITEMS: .+/g, '')
-        .replace(/OBSERVACIONES:[\s\S]*$/g, '')
-        .split('\n')
-        .filter((l: string) => l.trim() && !l.startsWith('Folio:'))
-        .join('<br/>')
-    : '';
+  // Columna izquierda: trabajos
+  let worksHTML = '';
+  if (moItems.length > 0) {
+    worksHTML += '<div class="p-checklist-cat">Mano de Obra</div>';
+    moItems.forEach((l: any) => {
+      worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${l.descripcion || '—'}</span></div>`;
+    });
+  }
+  if (refItems.length > 0) {
+    worksHTML += '<div class="p-checklist-cat">Refacciones</div>';
+    refItems.forEach((l: any) => {
+      worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${l.descripcion || '—'}</span></div>`;
+    });
+  }
+  if (!worksHTML) {
+    worksHTML = `<div class="p-work-item"><span class="p-work-bullet">·</span><span>${docTitulo}</span></div>`;
+  }
 
-  const win = window.open('', '_blank', 'width=800,height=900');
+  // Columna derecha: precios
+  let pricesHTML = '';
+  if (moItems.length > 0 || refItems.length > 0) {
+    [...moItems, ...refItems].forEach((l: any) => {
+      const imp = (l.precio || 0) * (l.cantidad || 1);
+      pricesHTML += `<div class="p-price-item"><span class="p-price-desc">${l.descripcion || '—'}</span><span class="p-price-val">${formatMXN(imp)}</span></div>`;
+    });
+  }
+
+  const subtotal   = cot.subtotal   || 0;
+  const iva        = cot.iva        || 0;
+  const totalMXN   = cot.total_mxn  || 0;
+  const empresa    = cot.empresas?.nombre_comercial ?? '—';
+  const vendedor   = cot.vendedor?.nombre ?? 'Sin asignar';
+
+  // QR
+  let qrDataUrl = '';
+  try { qrDataUrl = await QRCode.toDataURL('https://tgrpentarmexico.com/', { width: 100, margin: 1 }); } catch { }
+
+  const win = window.open('', '_blank', 'width=820,height=1000');
   if (!win) return;
 
-  win.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Cotización ${cot.folio}</title>
-        <meta charset="utf-8" />
-        <style>
-          @page { size: A4; margin: 12mm 14mm; }
-          * { box-sizing: border-box; }
-          body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #111; margin: 0; padding: 20px; }
-          .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 3px solid #0f2d55; }
-          .brand { font-size: 16px; font-weight: 900; color: #0f2d55; letter-spacing: 2px; }
-          .brand-sub { font-size: 8px; color: #888; margin-top: 2px; }
-          .title { font-size: 22px; font-weight: 900; color: #0f2d55; letter-spacing: 1px; text-align: right; }
-          .folio { font-size: 12px; font-weight: 700; margin-top: 2px; color: #333; }
-          .fecha { font-size: 9px; color: #888; margin-top: 2px; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
-          .info-box { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; border-left: 3px solid #0f2d55; }
-          .info-label { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 3px; }
-          .info-value { font-size: 11px; font-weight: 600; color: #222; }
-          .badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 3px 10px; border-radius: 9999px; background: #dbeafe; color: #1d4ed8; }
-          table { width: 100%; border-collapse: collapse; margin: 14px 0; }
-          th { background: #0f2d55; color: white; padding: 6px 10px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; }
-          td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 10px; }
-          tr:nth-child(even) td { background: #fafafa; }
-          .total-section { background: #fef9e7; border: 2px solid #0f2d55; border-radius: 8px; padding: 12px; margin: 14px 0; }
-          .total-grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 20px; }
-          .total-label { font-size: 10px; color: #555; }
-          .total-value { font-size: 10px; font-weight: 700; text-align: right; color: #222; }
-          .total-final { font-size: 14px; font-weight: 900; color: #0f2d55; }
-          .notas-section { margin-top: 14px; padding: 10px; background: #f5f5f5; border-radius: 6px; }
-          .notas-title { font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #0f2d55; margin-bottom: 6px; }
-          .notas-content { font-size: 9px; color: #444; line-height: 1.7; white-space: pre-wrap; }
-          .footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; font-size: 8px; color: #aaa; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div>
-            <div class="brand">RETARDER MÉXICO</div>
-            <div class="brand-sub">Servicios Especializados en Retardadores</div>
-          </div>
-          <div style="text-align:right">
-            <div class="title">COTIZACIÓN</div>
-            <div class="folio">Folio: ${cot.folio ?? '—'}</div>
-            <div class="fecha">Fecha: ${fechaCreacion}</div>
-          </div>
+  win.document.write(`<!DOCTYPE html><html><head>
+    <title>${cot.folio}</title><meta charset="utf-8"/>
+    <style>
+      @page { size: A4 portrait; margin: 12mm 14mm; }
+      @media print {
+        html,body { margin:0!important;padding:0!important; }
+        body * { visibility:hidden!important; }
+        #pdoc,#pdoc * { visibility:visible!important; }
+        #pdoc { position:fixed!important;top:0!important;left:0!important;width:100%!important;margin:0!important; }
+      }
+      * { box-sizing:border-box; }
+      body { font-family:Arial,sans-serif; font-size:14px; color:#111; margin:0; padding:8px; background:#fff; }
+      #pdoc { background:#fff; }
+      .p-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+      .p-logo { height:120px; width:120px; object-fit:contain; }
+      .p-header-right { text-align:right; }
+      .p-company { font-size:22px; font-weight:900; color:#0d2244; letter-spacing:0.5px; }
+      .p-doc-title { font-size:14px; font-weight:700; color:#0d2244; margin-top:2px; }
+      .p-fecha-line { font-size:12px; color:#555; margin-top:2px; }
+      .p-redline { border:none; border-top:2.5px solid #c0392b; margin:5px 0; }
+      .p-hr { border:none; border-top:1px solid #ddd; margin:5px 0; }
+      .p-client-block { margin:4px 0; }
+      .p-client-name { font-size:17px; font-weight:900; color:#c0392b; text-transform:uppercase; margin-bottom:3px; }
+      .p-client-row { font-size:13px; color:#444; margin-bottom:2px; line-height:1.4; }
+      .p-client-lbl { font-weight:700; color:#222; }
+      .p-two-col { display:flex; gap:24px; margin:8px 0; }
+      .p-col-works { flex:2; }
+      .p-col-pricing { flex:1; min-width:180px; }
+      .p-section-title { font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.8px; color:#0d2244; border-bottom:1.5px solid #0d2244; padding-bottom:2px; margin-bottom:5px; }
+      .p-checklist-cat { font-size:10px; font-weight:700; color:#0d2244; text-transform:uppercase; margin-bottom:2px; margin-top:4px; }
+      .p-work-item { display:flex; gap:4px; font-size:13px; margin-bottom:2px; line-height:1.4; }
+      .p-work-bullet { color:#c0392b; font-weight:900; flex-shrink:0; }
+      .p-price-item { display:flex; justify-content:space-between; font-size:13px; margin-bottom:3px; gap:8px; }
+      .p-price-desc { flex:1; }
+      .p-price-val { font-weight:600; white-space:nowrap; }
+      .p-totals { border-top:1.5px solid #ddd; padding-top:5px; margin-top:5px; }
+      .p-total-line { display:flex; justify-content:space-between; font-size:14px; margin-bottom:3px; }
+      .p-total-line.iva { color:#555; }
+      .p-total-final { display:flex; justify-content:space-between; font-size:16px; font-weight:900; color:#0d2244; border-top:2px solid #0d2244; padding-top:4px; margin-top:3px; }
+      .p-letras { font-size:13px; font-style:italic; color:#444; margin:6px 0; }
+      .p-obs-full { margin:8px 0; }
+      .p-obs-pre { font-family:Arial,sans-serif; font-size:14px; white-space:pre-wrap; color:#333; margin:4px 0; line-height:1.6; }
+      .p-policies { margin:4px 0; }
+      .p-footer { border-top:1px solid #ddd; padding-top:6px; margin-top:10px; display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:8px; }
+      .p-footer-info { flex:1; font-size:12px; }
+      .p-footer-name { font-weight:900; color:#0d2244; font-size:13px; }
+      .p-footer-detail { color:#555; margin-top:1px; }
+      .p-footer-web { font-size:11px; color:#c0392b; font-weight:700; margin-top:2px; }
+      .p-footer-logo { flex:1; display:flex; justify-content:center; align-items:center; }
+      .p-footer-qr { flex:1; display:flex; flex-direction:column; align-items:flex-end; }
+    </style>
+  </head><body><div id="pdoc">
+
+    <div class="p-header">
+      <img src="/logo-retarder.png" alt="Retarder México" class="p-logo"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+      <div style="display:none;font-size:13px;font-weight:900;color:#0d2244">RETARDER<br/>MÉXICO</div>
+      <div class="p-header-right">
+        <div class="p-company">RETARDER MÉXICO</div>
+        <div class="p-doc-title">${docTitulo}</div>
+        <div class="p-fecha-line">Folio: ${cot.folio ?? '—'} &nbsp;|&nbsp; ${fecha}</div>
+      </div>
+    </div>
+
+    <hr class="p-redline"/>
+
+    <div class="p-client-block">
+      <div class="p-client-name">${empresa}</div>
+      <div class="p-client-row"><span class="p-client-lbl">Vendedor:</span> ${vendedor}</div>
+      <div class="p-client-row"><span class="p-client-lbl">Tipo:</span> ${docTitulo}</div>
+    </div>
+
+    <hr class="p-hr"/>
+
+    <div class="p-two-col">
+      <div class="p-col-works">
+        <div class="p-section-title">Incluye los siguientes trabajos</div>
+        ${worksHTML}
+      </div>
+      <div class="p-col-pricing">
+        <div class="p-section-title">Desglose económico</div>
+        ${pricesHTML}
+        <div class="p-totals">
+          <div class="p-total-line"><span>Subtotal</span><span>${formatMXN(subtotal)}</span></div>
+          <div class="p-total-line iva"><span>IVA 16%</span><span>${formatMXN(iva)}</span></div>
+          <div class="p-total-final"><span>TOTAL MXN</span><span>${formatMXN(totalMXN)}</span></div>
         </div>
+      </div>
+    </div>
 
-        <div class="info-grid">
-          <div class="info-box">
-            <div class="info-label">Cliente / Empresa</div>
-            <div class="info-value">${cot.empresas?.nombre_comercial ?? '—'}</div>
-          </div>
-          <div class="info-box">
-            <div class="info-label">Tipo de cotización</div>
-            <div class="info-value" style="text-transform:capitalize">${cot.tipo ?? '—'}</div>
-          </div>
-          <div class="info-box">
-            <div class="info-label">Vendedor</div>
-            <div class="info-value">${cot.vendedor?.nombre ?? 'Sin asignar'}</div>
-          </div>
-          <div class="info-box">
-            <div class="info-label">Estado</div>
-            <div class="info-value"><span class="badge">${estadoConf.label}</span></div>
-          </div>
-        </div>
+    <div class="p-letras"><strong>SON: ${_numALetras(totalMXN)}</strong></div>
 
-        ${itemsHTML}
+    ${observaciones ? `<hr class="p-hr"/>
+    <div class="p-obs-full">
+      <div class="p-section-title">Observaciones técnicas</div>
+      <pre class="p-obs-pre">${observaciones}</pre>
+    </div>` : ''}
 
-        ${!itemsHTML ? `
-        <table>
-          <thead>
-            <tr>
-              <th>Concepto</th>
-              <th style="text-align:right">Importe MXN</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Subtotal</td>
-              <td style="text-align:right">${formatMXN(cot.subtotal || 0)}</td>
-            </tr>
-            <tr>
-              <td>IVA 16%</td>
-              <td style="text-align:right">${formatMXN(cot.iva || 0)}</td>
-            </tr>
-          </tbody>
-        </table>` : ''}
+    ${politicas ? `<hr class="p-hr"/>
+    <div class="p-policies">
+      <div class="p-section-title" style="color:#c0392b;border-color:#c0392b">Políticas y Garantías</div>
+      <pre class="p-obs-pre" style="color:#c0392b;font-weight:700">${politicas}</pre>
+    </div>` : ''}
 
-        <div class="total-section">
-          <div class="total-grid">
-            <span class="total-label">Subtotal</span>
-            <span class="total-value">${formatMXN(cot.subtotal || 0)}</span>
-            <span class="total-label">IVA 16%</span>
-            <span class="total-value">${formatMXN(cot.iva || 0)}</span>
-            <span class="total-label total-final">TOTAL MXN</span>
-            <span class="total-value total-final">${formatMXN(cot.total_mxn || 0)}</span>
-          </div>
-        </div>
+    <hr class="p-hr"/>
 
-        ${notasLimpias ? `
-        <div class="notas-section">
-          <div class="notas-title">Información adicional</div>
-          <div class="notas-content">${notasLimpias}</div>
-        </div>` : ''}
+    <div class="p-footer">
+      <div class="p-footer-info">
+        <div class="p-footer-name">Ing. Cristina Velasco</div>
+        <div class="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+        <div class="p-footer-detail">Tel: +52 55 7372 1633</div>
+        <div class="p-footer-web">www.tgrpentarmexico.com</div>
+      </div>
+      <div class="p-footer-logo">
+        <img src="/logo-pentar.png" alt="Pentar Kloft" style="height:50px;width:auto;display:block"
+          onerror="this.style.display='none'"/>
+      </div>
+      <div class="p-footer-qr">
+        ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR" style="width:60px;height:60px;display:block"/>
+        <div style="font-size:6px;color:#888;text-align:center;margin-top:2px">Escanea para más info</div>` : ''}
+      </div>
+    </div>
 
-        ${observacionesText ? `
-        <div class="notas-section">
-          <div class="notas-title">Observaciones</div>
-          <div class="notas-content">${observacionesText}</div>
-        </div>` : ''}
-
-        <div class="footer">
-          Retarder México · ventasyservicio@tgrpentarmexico.com<br/>
-          Tel: +52 55 7372 1633<br/>
-          Documento generado el ${new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
-        </div>
-      </body>
-    </html>
-  `);
+  </div></body></html>`);
   win.document.close();
   win.focus();
-  setTimeout(() => { win.print(); win.close(); }, 400);
+  setTimeout(() => { win.print(); win.close(); }, 500);
 }
 
 // ── Modal nueva cotización ────────────────────────────────────────────────────
@@ -485,7 +525,7 @@ function ModalDetalleCotizacion({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => imprimirCotizacion(cot)}
+              onClick={() => { imprimirCotizacion(cot); }}
               className="flex items-center gap-1.5 px-3 h-9 bg-[#0f2d55] text-white rounded-xl text-xs font-bold hover:bg-[#1a4a7a] transition-colors"
             >
               <Printer size={13} /> Imprimir PDF
