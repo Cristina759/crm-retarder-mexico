@@ -631,8 +631,8 @@ export default function CotizadorServiciosPage() {
       correctivo: tipoCorrectivo,
       unidades: unidadesN,
       traslado_usd: trasladoN,
-      mano_obra: lineasManoObra.map(({ descripcion, precio }) => ({ descripcion, precio })),
-      refacciones: lineasRefacciones.map(({ descripcion, precio }) => ({ descripcion, precio })),
+      mano_obra: lineasManoObra.map(({ descripcion, precio, cantidad }) => ({ descripcion, precio, cantidad: cantidad || 1 })),
+      refacciones: lineasRefacciones.map(({ descripcion, precio, cantidad }) => ({ descripcion, precio, cantidad: cantidad || 1 })),
     };
 
     try {
@@ -649,10 +649,14 @@ export default function CotizadorServiciosPage() {
           `Folio: ${folio}`,
           `Tipo: ${tipoServicio}`,
           `Unidades: ${unidadesN}`,
+          emailCliente ? `Email: ${emailCliente}` : '',
+          sucursal ? `Sucursal: ${sucursal}` : '',
+          descripcion ? `Descripcion: ${descripcion}` : '',
           `Subtotal MXN: $${fmt(subtotalMXN)}`,
-          `Traslado × ${unidadesN}: $${fmt(subtotalTraslado)} MXN`,
+          trasladoN > 0 ? `Traslado × ${unidadesN}: $${fmt(subtotalTraslado)} MXN` : '',
           `ITEMS: ${JSON.stringify(items)}`,
-          `OBSERVACIONES:\n${observaciones}`,
+          observaciones ? `OBSERVACIONES:\n${observaciones}` : '',
+          politicas ? `POLITICAS:\n${politicas}` : '',
         ].filter(Boolean).join('\n'),
       });
 
