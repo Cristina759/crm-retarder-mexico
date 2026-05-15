@@ -417,6 +417,7 @@ export default function OSDetallePage() {
   const [numOS,       setNumOS]       = useState('');
   const [numOC,       setNumOC]       = useState('');
   const [numFact,     setNumFact]     = useState('');
+  const [editingFolio, setEditingFolio] = useState(false);
   const [montoFact,   setMontoFact]   = useState('');
   const [vencFact,    setVencFact]    = useState('');
   const [cotizacion,  setCotizacion]  = useState<CotizacionRow | null>(null);
@@ -598,7 +599,33 @@ export default function OSDetallePage() {
       <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 font-mono">{os.numero}</h1>
+            <div className="flex items-center gap-2">
+              {editingFolio ? (
+                <input
+                  autoFocus
+                  value={numOS || os.numero}
+                  onChange={e => handleNumOS(e.target.value)}
+                  onBlur={() => setEditingFolio(false)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditingFolio(false); }}
+                  className="text-2xl font-bold font-mono text-gray-900 border-b-2 border-[#0f2d55] outline-none bg-transparent w-56"
+                />
+              ) : (
+                <h1
+                  className="text-2xl font-bold text-gray-900 font-mono cursor-pointer hover:text-[#0f2d55] transition-colors"
+                  title="Haz clic para editar el folio"
+                  onClick={() => setEditingFolio(true)}
+                >
+                  {numOS || os.numero}
+                </h1>
+              )}
+              <button
+                onClick={() => setEditingFolio(v => !v)}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-[#0f2d55] transition-colors"
+                title="Editar folio"
+              >
+                <Pen size={13} />
+              </button>
+            </div>
             <p className="text-sm text-gray-500 mt-0.5">
               {os.empresas?.nombre_comercial ?? '—'} · Creada {fmtFecha(os.created_at)}
             </p>
