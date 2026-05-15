@@ -1197,9 +1197,9 @@ export default function CotizadorFrenosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 6mm 8mm; }
+        @page { size: A4 portrait; margin: 8mm 10mm; }
         @media print {
-          html, body { margin: 0 !important; padding: 0 !important; width: 210mm !important; }
+          html, body { margin: 0 !important; padding: 0 !important; width: 210mm !important; height: 297mm !important; }
           header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
@@ -1209,25 +1209,27 @@ export default function CotizadorFrenosPage() {
             top: 0 !important;
             left: 0 !important;
             width: 100% !important;
+            height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
           }
           .p-doc {
             width: 100% !important;
+            height: calc(297mm - 16mm) !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
-            font-size: 11px !important;
+            font-size: 12px !important;
           }
-          .p-spacer { flex: 1; min-height: 6mm; }
+          .p-spacer { flex: 1 !important; min-height: 8mm; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }
         /* ── Documento ── */
         .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .p-logo-img { width: 4.5cm; height: 4.5cm; object-fit: contain; display: block; }
@@ -1238,37 +1240,37 @@ export default function CotizadorFrenosPage() {
         .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 3px; }
         .p-fecha-line { font-size: 11px; color: #555; margin-top: 3px; }
         /* ── Separadores ── */
-        .p-redline { border: none; border-top: 3px solid #c0392b; margin: 7px 0; }
-        .p-hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
+        .p-redline { border: none; border-top: 3px solid #c0392b; margin: 8px 0; }
+        .p-hr { border: none; border-top: 1px solid #ddd; margin: 10px 0; }
         /* ── Cliente ── */
-        .p-client-block { margin: 7px 0 10px 0; }
-        .p-client-name { font-size: 16px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.3px; }
-        .p-client-row { font-size: 11px; color: #444; margin-bottom: 2px; line-height: 1.4; }
+        .p-client-block { margin: 8px 0 12px 0; }
+        .p-client-name { font-size: 16px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.3px; }
+        .p-client-row { font-size: 11px; color: #444; margin-bottom: 3px; line-height: 1.5; }
         .p-client-lbl { font-weight: 700; color: #222; }
         /* ── Dos columnas ── */
-        .p-two-col { display: flex; gap: 20px; margin: 8px 0; }
+        .p-two-col { display: flex; gap: 20px; margin: 10px 0; }
         .p-col-works { flex: 1.3; }
         .p-col-pricing { flex: 1; }
-        .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 2px solid #0d2244; padding-bottom: 4px; margin-bottom: 8px; }
-        .p-work-item { display: flex; gap: 6px; font-size: 11px; margin-bottom: 4px; line-height: 1.3; }
+        .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 2px solid #0d2244; padding-bottom: 4px; margin-bottom: 10px; }
+        .p-work-item { display: flex; gap: 6px; font-size: 11px; margin-bottom: 6px; line-height: 1.4; }
         .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
         /* ── Precios ── */
-        .p-price-item { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; gap: 8px; }
+        .p-price-item { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; gap: 8px; }
         .p-price-desc { flex: 1; }
         .p-price-val { font-weight: 600; white-space: nowrap; }
-        .p-totals { border-top: 2px solid #ddd; padding-top: 8px; margin-top: 8px; }
-        .p-total-line { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+        .p-totals { border-top: 2px solid #ddd; padding-top: 10px; margin-top: 10px; }
+        .p-total-line { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 7px; }
         .p-total-line.iva { color: #555; }
         .p-total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: #0d2244; border-top: 2.5px solid #0d2244; padding-top: 7px; margin-top: 5px; }
         .p-total-mxn { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #555; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #ddd; }
         /* ── Letras y observaciones ── */
-        .p-letras { font-size: 11px; font-style: italic; color: #444; margin: 6px 0 8px 0; }
-        .p-obs-two-col { display: flex; gap: 20px; margin: 8px 0; }
+        .p-letras { font-size: 11px; font-style: italic; color: #444; margin: 8px 0 10px 0; }
+        .p-obs-two-col { display: flex; gap: 20px; margin: 10px 0; }
         .p-obs-two-col > div { flex: 1; }
-        .p-obs-pre { font-family: Arial, sans-serif; font-size: 11px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.5; }
+        .p-obs-pre { font-family: Arial, sans-serif; font-size: 11px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.7; }
         /* ── Políticas ── */
-        .p-policies { margin: 6px 0; }
-        .p-policy-line { font-size: 11px; font-weight: 700; color: #c0392b; margin-bottom: 4px; }
+        .p-policies { margin: 8px 0; }
+        .p-policy-line { font-size: 11px; font-weight: 700; color: #c0392b; margin-bottom: 6px; }
         /* ── Footer ── */
         .p-footer { border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
         .p-footer-logo { flex: 1; display: flex; align-items: center; justify-content: center; order: 2; }
