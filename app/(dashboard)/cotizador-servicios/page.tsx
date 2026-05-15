@@ -882,7 +882,7 @@ export default function CotizadorServiciosPage() {
             </div>
             {emailCliente && (
               <a
-                href={`mailto:${emailCliente}?subject=Cotización de Servicios ${folio} — Retarder México&body=Estimado/a ${cliente},%0D%0A%0D%0AAdjuntamos la cotización de servicios con folio ${folio}.%0D%0A%0D%0AQuedamos a sus órdenes.%0D%0A%0D%0AIng. Cristina Velasco%0D%0AÁrea de Ventas — Retarder México%0D%0Aventas@retardermexico.com%0D%0ATel: +52 55 7372 1633`}
+                href={`mailto:${emailCliente}?subject=Cotización de Servicios ${folio} — Retarder México&body=Estimado/a ${cliente},%0D%0A%0D%0AAdjuntamos la cotización de servicios con folio ${folio}.%0D%0A%0D%0AQuedamos a sus órdenes.%0D%0A%0D%0AIng. Cristina Velasco%0D%0AÁrea de Ventas — Retarder México%0D%0Aventasyservicio@tgrpentarmexico.com%0D%0ATel: +52 55 7372 1633`}
                 className="h-10 w-10 flex items-center justify-center rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white transition-colors"
                 title="Enviar cotización por email"
               >
@@ -1352,7 +1352,8 @@ export default function CotizadorServiciosPage() {
               {/* Izquierda: datos Juan Carlos */}
               <div className="p-footer-info" style={{ order: 1 }}>
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: +52 55 7372 1633</div>
                 <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
               {/* Centro: logo Pentar */}

@@ -1173,7 +1173,8 @@ export default function CotizadorFrenosPage() {
               </div>
               <div className="p-footer-info">
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: +52 55 7372 1633</div>
                 <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
               <div className="p-footer-qr">

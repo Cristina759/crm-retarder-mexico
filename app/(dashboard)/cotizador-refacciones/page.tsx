@@ -867,8 +867,8 @@ export default function CotizadorRefaccionesPage() {
             <div className="p-footer">
               <div className="p-footer-info" style={{ order: 1 }}>
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com</div>
-                <div className="p-footer-detail">Tel: 55 7372 1633 &nbsp;|&nbsp; www.tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: +52 55 7372 1633 &nbsp;|&nbsp; www.tgrpentarmexico.com</div>
               </div>
               <div style={{ order: 2, textAlign: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
