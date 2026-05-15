@@ -65,10 +65,6 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       let finalMonto = Number(r.monto_factura) || 0;
       if (finalMonto === 0 && cot) finalMonto = Number(cot.total_mxn) || 0;
 
-      // RESTAR NOTAS DE CRÉDITO ESPECÍFICAS
-      const montoNC = ncMap.get(r.id) || 0;
-      finalMonto = Math.max(0, finalMonto - Math.abs(montoNC));
-
       // Abonos y Saldo
       const abonos = Array.isArray(r.abonos) ? r.abonos : [];
       let total_pagado = abonos.reduce((s, a) => s + (Number(a?.monto) || 0), 0);
