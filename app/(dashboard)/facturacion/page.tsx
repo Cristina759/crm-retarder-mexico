@@ -85,10 +85,10 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   };
 
   const handleCancelFactura = async () => {
-    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada y el monto quedará en $0.`)) return;
+    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada.`)) return;
     setCanceling(true);
-    await actualizarFactura(row.id, { estado_facturacion: 'cancelado', monto_factura: 0 });
-    onUpdated({ ...row, estado_facturacion: 'cancelado' as any, monto_factura: 0, total_pagado: 0, saldo_pendiente: 0 });
+    await actualizarFactura(row.id, { estado_facturacion: 'cancelado' });
+    onUpdated({ ...row, estado_facturacion: 'cancelado' as any });
     setCanceling(false);
   };
 
