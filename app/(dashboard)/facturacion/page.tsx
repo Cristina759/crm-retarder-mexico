@@ -1,5 +1,5 @@
 'use client';
-// Version: 1.0.1 - Pago Parcial Fix
+// Version: 2.0.0 - Aritmética de centavos (integer money)
 
 
 import { useEffect, useState } from 'react';
@@ -9,6 +9,15 @@ import { obtenerClientes } from '@/app/actions/clientes';
 
 
 
+// ── Aritmética segura: centavos (integers) ───────────────────────────────────
+// REGLA: nunca usar float para sumas de dinero. Todo pasa por centavos.
+function toCents(v: number | null | undefined): number {
+  if (v === null || v === undefined) return 0;
+  return Math.round(v * 100);
+}
+function fromCents(c: number): number {
+  return Number((c / 100).toFixed(2));
+}
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '—';
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(n);
@@ -18,15 +27,16 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida'];
+const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida', 'cancelado'];
 const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
   pendiente:          { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   pendiente_facturar: { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   facturada:          { color: 'bg-blue-100 text-blue-700',    label: 'Facturada'        },
   enviada_cliente:    { color: 'bg-indigo-100 text-indigo-700',label: 'Enviada a cliente'},
-  pago_parcial:       { color: 'bg-amber-100 text-amber-700',  label: 'Pago Parcial'     },
+  pago_parcial:       { color: 'bg-purple-100 text-purple-700',  label: 'Pago Parcial'     },
   pagada:             { color: 'bg-green-100 text-green-700',  label: 'Pagada'           },
   vencida:            { color: 'bg-red-100 text-red-700',      label: 'Vencida'          },
+  cancelado:          { color: 'bg-rose-100 text-rose-700',    label: 'Cancelado'        },
 };
 
 
@@ -138,11 +148,13 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
         <td className="px-4 py-2">
           <input
             type="number"
+            step="0.01"
             value={monto}
             onChange={e => setMonto(e.target.value)}
             placeholder="0.00"
             className="w-28 border border-yellow-300 rounded-lg px-2 py-1 text-xs text-right outline-none focus:border-yellow-500"
           />
+
         </td>
         <td className="px-4 py-2">
           <input
@@ -170,7 +182,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   return (
     <tr 
       onClick={() => setEditing(true)}
-      className={`border-b hover:bg-gray-50/50 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-amber-50/20' : ''}`}
+      className={`border-b hover:bg-gray-50/50 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-purple-50/20' : ''}`}
     >
       <td className="px-4 py-3">
         <div className="flex flex-col">
@@ -266,6 +278,11 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
                 Cobrado: {fmtMXN(row.total_pagado)}
               </span>
             )}
+            {row.estado_facturacion === 'pago_parcial' && (
+              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100 mt-1">
+                Saldo: {fmtMXN(row.saldo_pendiente)}
+              </span>
+            )}
           </div>
 
 
@@ -299,15 +316,21 @@ export default function FacturacionPage() {
           if (cErr) console.error(cErr);
           else setClientes(cData || []);
 
-          // Calculamos totales desde la tabla para máxima precisión
-          const totalF = fData.reduce((s, r) => s + (Number((r as any).monto_neto ?? r.monto_factura) || 0), 0);
-          const totalC = fData.reduce((s, r) => s + (Number(r.total_pagado) || 0), 0);
+          // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS
+          const totalFCents = fData.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
+          const totalCCents = fData.reduce((s, r) => s + toCents(r.total_pagado), 0);
           const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
           const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
 
+          // Validación de identidad contable
+          const pendienteCents = totalFCents - totalCCents;
+          if (totalCCents + pendienteCents !== totalFCents) {
+            console.error(`ERROR CONTABLE: Cobrado(${totalCCents}) + Pendiente(${pendienteCents}) = ${totalCCents + pendienteCents} !== Facturado(${totalFCents})`);
+          }
+
           setResumen({
-            totalFacturado: totalF,
-            totalCobrado: totalC,
+            totalFacturado: fromCents(totalFCents),
+            totalCobrado: fromCents(totalCCents),
             pendientes: pends,
             vencidas: vencs,
             totalNotasCredito: rData.totalNotasCredito || 0
@@ -333,6 +356,8 @@ export default function FacturacionPage() {
 
   const totalFacturado = resumen.totalFacturado;
   const totalCobrado   = resumen.totalCobrado;
+  // Pendiente calculado en centavos para exactitud
+  const totalPendiente = fromCents(toCents(totalFacturado) - toCents(totalCobrado));
 
   const handleUpdated = (updated: FacturaRow) => {
     setRows(prev => prev.map(r => r.id === updated.id ? updated : r));
@@ -362,7 +387,7 @@ export default function FacturacionPage() {
       </div>
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-blue-200 p-5">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Facturado</p>
           <p className="text-2xl font-black text-blue-700">{fmtMXN(totalFacturado)}</p>
@@ -371,6 +396,10 @@ export default function FacturacionPage() {
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Cobrado</p>
           <p className="text-2xl font-black text-green-700">{fmtMXN(totalCobrado)}</p>
         </div>
+        <div className="bg-white rounded-2xl border border-orange-200 p-5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Pendiente de Cobro</p>
+          <p className="text-2xl font-black text-orange-600">{fmtMXN(totalPendiente)}</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto">
@@ -378,7 +407,7 @@ export default function FacturacionPage() {
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">OS</th>
-              <th className="px-4 py-3 w-32 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-red-50/50">Acciones</th>
+              <th className="px-4 py-3 w-32 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">Acciones</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Factura #</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Cliente</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Concepto</th>

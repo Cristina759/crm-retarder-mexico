@@ -363,7 +363,8 @@ export default function CotizadorFrenosPage() {
         nombre_comercial: c.nombre_comercial || c.razon_social || 'Sin nombre',
         rfc: c.rfc,
         email: c.email,
-        telefono: c.telefono
+        telefono: c.telefono,
+        direccion_fiscal: c.direccion_fiscal
       })));
     }
     setBuscandoEmpresa(false);
@@ -465,12 +466,16 @@ export default function CotizadorFrenosPage() {
   const [fechaHoy, setFechaHoy] = useState('');
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
-  const handleGuardar = async () => {
-    if (!marcaActual)    { setErrorGuardar('Selecciona un modelo de freno.'); return; }
-
+  const handleGuardar = () => {
+    // Yield to main thread first to avoid INP issues
     setGuardando(true);
     setErrorGuardar(null);
     setGuardadoOk(false);
+    requestAnimationFrame(() => setTimeout(() => _doGuardar(), 0));
+  };
+
+  const _doGuardar = async () => {
+    if (!marcaActual)    { setErrorGuardar('Selecciona un modelo de freno.'); setGuardando(false); return; }
 
     try {
       const { data, error } = await crearCotizacion({
@@ -534,11 +539,10 @@ export default function CotizadorFrenosPage() {
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-sm text-gray-400">$</span>
               <input
-                type="number"
-                value={tc}
-                onChange={e => setTc(parseFloat(e.target.value) || 0)}
-                className="w-20 text-sm font-bold text-gray-900 outline-none bg-transparent"
-                step="0.01"
+                type="text"
+                value={tc > 0 ? tc.toFixed(4) : ''}
+                onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setTc(v); else if (e.target.value === '') setTc(0); }}
+                className="w-24 text-sm font-bold text-gray-900 outline-none bg-transparent"
               />
               <span className="text-xs text-gray-400">MXN/USD</span>
             </div>
@@ -751,32 +755,31 @@ export default function CotizadorFrenosPage() {
               className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
             />
           </div>
-
-          {/* Modo Resumido Toggle */}
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between mt-2">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${modoResumido ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border border-blue-100'}`}>
-                <FileText size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-black text-blue-900 uppercase tracking-tighter">Modo de Visualización</p>
-                <p className="text-[10px] text-blue-600 font-bold">{modoResumido ? 'Resumido (Una sola línea)' : 'Detallado (Lista de componentes)'}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setModoResumido(!modoResumido)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${
-                modoResumido ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-              }`}
-            >
-              {modoResumido ? 'Ver Detalle' : 'Resumir Todo'}
-            </button>
-          </div>
         </div>
+  
+
+
 
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">RFC</label>
+            <input
+              type="text" value={rfc} onChange={e => setRfc(e.target.value)}
+              placeholder="RFC del cliente..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Dirección Fiscal</label>
+            <input
+              type="text" value={direccion} onChange={e => setDireccion(e.target.value)}
+              placeholder="Calle, número, colonia..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+
           <div className="relative">
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
               Empresa / Razón social
@@ -845,7 +848,9 @@ export default function CotizadorFrenosPage() {
                       onClick={() => {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
-                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        if (emp.rfc) setRfc(emp.rfc);
+                        if (emp.email) setEmailCliente(emp.email);
+                        if (emp.direccion_fiscal) setDireccion(emp.direccion_fiscal);
                         setSugerenciasEmpresa([]);
                       }}
                       className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors flex items-center justify-between"
@@ -875,7 +880,9 @@ export default function CotizadorFrenosPage() {
                         onClick={() => {
                           setEmpresa(emp.nombre_comercial);
                           setEmpresaId(emp.id);
-                          if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                          if (emp.rfc) setRfc(emp.rfc);
+                          if (emp.email) setEmailCliente(emp.email);
+                          if (emp.direccion_fiscal) setDireccion(emp.direccion_fiscal);
                           setMostrarTodos(false);
                         }}
                         className="w-full text-left px-4 py-2.5 hover:bg-red-50 group transition-colors border-b border-gray-50 last:border-0"
@@ -935,14 +942,14 @@ export default function CotizadorFrenosPage() {
         {/* Botones imprimir + enviar correo */}
         <div className="flex gap-2">
           <button
-            onClick={() => window.print()}
+            onClick={() => requestAnimationFrame(() => setTimeout(() => window.print(), 0))}
             disabled={!marcaActual}
             className="flex-1 h-12 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
             <Printer size={16} /> Imprimir / PDF
           </button>
           <button
-            onClick={() => alert('Próximamente: envío de cotización por correo electrónico')}
+            onClick={() => requestAnimationFrame(() => setTimeout(() => alert('Próximamente: envío de cotización por correo electrónico'), 0))}
             disabled={!marcaActual}
             title={emailCliente ? `Enviar a ${emailCliente}` : 'Agrega un email de cliente'}
             className="flex-1 h-12 bg-white border-2 border-[#c0392b] text-[#c0392b] hover:bg-red-50 font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
@@ -1160,7 +1167,7 @@ export default function CotizadorFrenosPage() {
                 <img
                   src="/logo-pentar.png"
                   alt="Pentar Kloft"
-                  style={{ height: '50px', width: 'auto', display: 'block' }}
+                  style={{ height: '80px', width: 'auto', display: 'block' }}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                     const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -1198,91 +1205,102 @@ export default function CotizadorFrenosPage() {
       <style>{`
         @page { size: A4 portrait; margin: 8mm 10mm; }
         @media print {
-          html, body { margin: 0 !important; padding: 0 !important; }
+          html, body { margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
           header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
             display: block !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            min-height: 260mm !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-          }
-          .p-doc {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
             width: 100% !important;
-            max-height: 280mm !important;
-            box-sizing: border-box !important;
-            display: flex !important;
-            flex-direction: column !important;
+            margin: 0 !important;
           }
-          .p-spacer { flex: 1; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }
-        /* ── Documento ── */
-        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
+
+        /* ── Documento: flex column para llenar toda la hoja ── */
+        .p-doc {
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+          color: #111;
+          padding: 4px 6px;
+          box-sizing: border-box;
+          background: #fff;
+          display: flex;
+          flex-direction: column;
+          height: 281mm;
+          overflow: hidden;
+        }
+
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-shrink: 0; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 3.2cm; height: 3.2cm; object-fit: contain; display: block; }
-        .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
-        .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
+        .p-logo-img { width: 100px; height: 100px; object-fit: contain; display: block; }
+        .p-logo-fallback { font-size: 12px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
+        .p-logo-divider { width: 1px; height: 50px; background: #ddd; margin: 0 4px; flex-shrink: 0; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 24px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
-        .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 3px; }
-        .p-fecha-line { font-size: 11px; color: #555; margin-top: 3px; }
+        .p-doc-title { font-size: 15px; font-weight: 700; color: #0d2244; margin-top: 2px; }
+        .p-fecha-line { font-size: 11px; color: #555; margin-top: 2px; }
+
         /* ── Separadores ── */
-        .p-redline { border: none; border-top: 3px solid #c0392b; margin: 7px 0; }
-        .p-hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
+        .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 4px 0; flex-shrink: 0; }
+        .p-hr { border: none; border-top: 1px solid #ddd; margin: 4px 0; flex-shrink: 0; }
+
         /* ── Cliente ── */
-        .p-client-block { margin: 7px 0 10px 0; }
-        .p-client-name { font-size: 16px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.3px; }
-        .p-client-row { font-size: 11px; color: #444; margin-bottom: 2px; line-height: 1.4; }
+        .p-client-block { margin: 3px 0; flex-shrink: 0; }
+        .p-client-name { font-size: 17px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 2px; }
+        .p-client-row { font-size: 12px; color: #444; margin-bottom: 1px; line-height: 1.3; }
         .p-client-lbl { font-weight: 700; color: #222; }
+
         /* ── Dos columnas ── */
-        .p-two-col { display: flex; gap: 20px; margin: 8px 0; }
-        .p-col-works { flex: 1.3; }
-        .p-col-pricing { flex: 1; }
-        .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 2px solid #0d2244; padding-bottom: 4px; margin-bottom: 8px; }
-        .p-work-item { display: flex; gap: 6px; font-size: 11px; margin-bottom: 4px; line-height: 1.3; }
+        .p-two-col { display: flex; gap: 20px; margin: 6px 0; flex-shrink: 0; }
+        .p-col-works { flex: 2; }
+        .p-col-pricing { flex: 1; min-width: 200px; }
+        .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
+        .p-work-item { display: flex; gap: 4px; font-size: 12px; margin-bottom: 2px; line-height: 1.4; }
         .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
+
         /* ── Precios ── */
-        .p-price-item { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; gap: 8px; }
+        .p-price-item { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; gap: 8px; }
         .p-price-desc { flex: 1; }
-        .p-price-val { font-weight: 600; white-space: nowrap; }
-        .p-totals { border-top: 2px solid #ddd; padding-top: 8px; margin-top: 8px; }
-        .p-total-line { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+        .p-price-val { font-weight: 700; white-space: nowrap; }
+        .p-totals { border-top: 1.5px solid #ddd; padding-top: 4px; margin-top: 4px; }
+        .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 2px; }
         .p-total-line.iva { color: #555; }
-        .p-total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: #0d2244; border-top: 2.5px solid #0d2244; padding-top: 7px; margin-top: 5px; }
-        .p-total-mxn { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #555; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #ddd; }
-        /* ── Letras y observaciones ── */
-        .p-letras { font-size: 11px; font-style: italic; color: #444; margin: 6px 0 8px 0; }
-        .p-obs-two-col { display: flex; gap: 20px; margin: 8px 0; }
+        .p-total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
+        .p-total-mxn { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #555; margin-top: 4px; padding-top: 4px; border-top: 1px dashed #ddd; }
+
+        /* ── Importe con letra (negritas) ── */
+        .p-letras { font-size: 13px; font-weight: 900; color: #222; margin: 5px 0; flex-shrink: 0; }
+
+        /* ── Observaciones ── */
+        .p-obs-two-col { display: flex; gap: 20px; margin: 4px 0; flex-shrink: 0; }
         .p-obs-two-col > div { flex: 1; }
-        .p-obs-pre { font-family: Arial, sans-serif; font-size: 11px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.5; }
+        .p-obs-pre { font-family: Arial, sans-serif; font-size: 12px; white-space: pre-wrap; color: #333; margin: 3px 0; line-height: 1.4; }
+
         /* ── Políticas ── */
-        .p-policies { margin: 6px 0; }
-        .p-policy-line { font-size: 11px; font-weight: 700; color: #c0392b; margin-bottom: 4px; }
-        /* ── Footer ── */
-        .p-footer { border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+        .p-policies { margin: 3px 0; flex-shrink: 0; }
+        .p-policy-line { font-size: 12px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
+
+        /* ── Spacer: empuja el footer al fondo ── */
+        .p-spacer { flex: 1; min-height: 2mm; }
+
+        /* ── Footer: siempre al fondo ── */
+        .p-footer { border-top: 1px solid #ddd; padding-top: 6px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
         .p-footer-logo { flex: 1; display: flex; align-items: center; justify-content: center; order: 2; }
-        .p-footer-info { flex: 1; font-size: 11px; order: 1; }
-        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 13px; }
-        .p-footer-detail { color: #555; margin-top: 2px; }
-        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 3px; }
+        .p-footer-info { flex: 1; font-size: 12px; order: 1; }
+        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 14px; }
+        .p-footer-detail { color: #555; margin-top: 1px; }
+        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
+
         /* ── QR ── */
-        .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; order: 3; }
-        .p-qr-img { width: 80px; height: 80px; display: block; }
-        .p-qr-label { font-size: 9px; color: #888; text-align: center; }
-        /* ── Spacer ── */
-        .p-spacer { flex: 1; min-height: 4mm; }
+        .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; order: 3; }
+        .p-qr-img { width: 60px; height: 60px; display: block; }
+        .p-qr-label { font-size: 7px; color: #888; text-align: center; }
       `}</style>
     </div>
   );

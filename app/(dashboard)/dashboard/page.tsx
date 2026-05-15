@@ -126,8 +126,11 @@ function TabGeneral() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard label="Total Neto Facturado" value={fmtMXNFull(data.totalNetoFacturado)} icon={Receipt}    color="navy"   sub="Bruto − notas de crédito" />
         <KPICard label="Neto Cobrado"         value={fmtMXNFull(data.totalNetoPagado)}    icon={DollarSign} color="green"  sub="Pagado neto (sin deuda)" />
+
+
         <KPICard label="Pendiente de Cobro"   value={fmtMXNFull(data.totalPendiente)}     icon={Receipt}    color="orange" sub={`${data.pendientesPorCliente.length} clientes`} />
         <KPICard label="Empresas Activas"     value={data.empresas}                       icon={Building2}  color="purple" />
+        <KPICard label="Tipo de Cambio"      value={`$${data.tc?.toFixed(4) ?? '—'}`}    icon={TrendingUp} color="yellow" sub="USD/MXN Oficial (DOF)" />
       </div>
 
       {/* Desglose clientes con saldo pendiente */}

@@ -1,0 +1,21 @@
+{
+  "name": "CRM Retarder México",
+  "short_name": "CRM Retarder",
+  "description": "Sistema de gestión CRM para Retarder México",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f2d55",
+  "theme_color": "#0f2d55",
+  "icons": [
+    {
+      "src": "/logo-retarder.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-retarder.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

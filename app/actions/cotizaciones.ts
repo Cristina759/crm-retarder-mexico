@@ -172,13 +172,14 @@ export interface EmpresaBusquedaResult {
   rfc: string | null;
   email: string | null;
   telefono: string | null;
+  direccion_fiscal: string | null;
 }
 
 export async function buscarEmpresas(query: string): Promise<EmpresaBusquedaResult[]> {
   try {
     let q = supabaseAdmin
       .from('empresas')
-      .select('id, nombre_comercial, rfc, email, telefono')
+      .select('id, nombre_comercial, rfc, email, telefono, direccion_fiscal')
       .order('nombre_comercial');
 
     if (query.trim()) {

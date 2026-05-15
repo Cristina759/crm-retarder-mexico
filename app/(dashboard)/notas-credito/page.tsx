@@ -180,7 +180,8 @@ export default function NotasCreditoPage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase text-gray-400 ml-1">Monto *</label>
-                  <input type="number" value={monto} onChange={e => setMonto(e.target.value)} placeholder="0.00" className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-red-400 mt-1" />
+                  <input type="number" step="0.01" value={monto} onChange={e => setMonto(e.target.value)} placeholder="0.00" className="w-full border border-gray-200 rounded-xl px-3 h-10 text-sm outline-none focus:border-red-400 mt-1" />
+
                 </div>
               </div>
 

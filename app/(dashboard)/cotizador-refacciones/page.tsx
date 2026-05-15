@@ -213,6 +213,8 @@ export default function CotizadorRefaccionesPage() {
   const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
   const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
   const [mostrarTodos, setMostrarTodos] = useState(false);
+  const [rfc, setRfc] = useState('');
+  const [direccion, setDireccion] = useState('');
   const [emailCliente, setEmailCliente] = useState('');
   const [sucursal, setSucursal] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -265,6 +267,7 @@ export default function CotizadorRefaccionesPage() {
         rfc: c.rfc,
         email: c.email,
         telefono: c.telefono,
+        direccion_fiscal: c.direccion_fiscal
       })));
     }
     setBuscandoEmpresa(false);
@@ -435,6 +438,22 @@ export default function CotizadorRefaccionesPage() {
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">RFC</label>
+            <input
+              type="text" value={rfc} onChange={e => setRfc(e.target.value)}
+              placeholder="RFC del cliente..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Dirección Fiscal</label>
+            <input
+              type="text" value={direccion} onChange={e => setDireccion(e.target.value)}
+              placeholder="Calle, número, colonia..."
+              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+            />
+          </div>
           <div className="relative">
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
               Empresa / Razón social
@@ -503,7 +522,9 @@ export default function CotizadorRefaccionesPage() {
                       onClick={() => {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
-                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        if (emp.email) setEmailCliente(emp.email);
+                        if (emp.rfc) setRfc(emp.rfc);
+                        if (emp.direccion_fiscal) setDireccion(emp.direccion_fiscal);
                         setSugerenciasEmpresa([]);
                         setMostrarTodos(false);
                       }}
@@ -533,7 +554,9 @@ export default function CotizadorRefaccionesPage() {
                       onClick={() => {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
-                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
+                        if (emp.email) setEmailCliente(emp.email);
+                        if (emp.rfc) setRfc(emp.rfc);
+                        if (emp.direccion_fiscal) setDireccion(emp.direccion_fiscal);
                         setMostrarTodos(false);
                       }}
                       className="w-full text-left px-3 py-2.5 hover:bg-red-50 transition-colors flex items-center justify-between group"
@@ -863,23 +886,39 @@ export default function CotizadorRefaccionesPage() {
 
             <hr className="p-hr" />
 
+            {/* Spacer: empuja el footer al fondo de la hoja */}
+            <div className="p-spacer" />
+
             {/* Footer */}
             <div className="p-footer">
+              {/* Izquierda: datos Cristina */}
               <div className="p-footer-info" style={{ order: 1 }}>
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com</div>
-                <div className="p-footer-detail">Tel: 55 7372 1633 &nbsp;|&nbsp; www.tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+                <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
-              <div style={{ order: 2, textAlign: 'center' }}>
+              {/* Centro: logo Pentar */}
+              <div className="p-footer-logo" style={{ order: 2 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-pentar.png" alt="Pentar" style={{ height: '50px', objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <img
+                  src="/logo-pentar.png"
+                  alt="Pentar Kloft"
+                  style={{ height: '50px', width: 'auto', display: 'block' }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
+                    if (fb) fb.style.display = 'block';
+                  }}
+                />
+                <div style={{ display: 'none', fontSize: '8px', fontWeight: 900, color: '#0d2244' }}>PENTAR KLOFT</div>
               </div>
-              <div style={{ order: 3, textAlign: 'right' }}>
-                {qrDataUrl
-                  ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={qrDataUrl} alt="QR" style={{ width: 70, height: 70 }} />
-                  : <div style={{ width: 70, height: 70, border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, color: '#999' }}>QR</div>
-                }
-                <div style={{ fontSize: '6.5px', color: '#888', marginTop: 2, textAlign: 'center' }}>Escanea para más info</div>
+              {/* Derecha: QR */}
+              <div className="p-footer-qr" style={{ order: 3 }}>
+                {qrDataUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qrDataUrl} alt="QR" style={{ width: '60px', height: '60px', display: 'block' }} />
+                )}
+                <div style={{ fontSize: '6px', color: '#888', textAlign: 'center', marginTop: '2px' }}>Escanea para más info</div>
               </div>
             </div>
 
@@ -889,48 +928,97 @@ export default function CotizadorRefaccionesPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4; margin: 15mm 18mm; }
+        @page { size: A4 portrait; margin: 8mm 10mm; }
+
         @media print {
+          html, body {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
           header, nav, footer { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
-          #print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+          #print-area {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+          }
         }
-        .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; }
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .p-logo { height: 120px; width: 120px; object-fit: contain; }
+
+        /* ── Documento: flex column para llenar toda la hoja ── */
+        .p-doc {
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+          color: #111;
+          padding: 4px 6px;
+          box-sizing: border-box;
+          background: #fff;
+          display: flex;
+          flex-direction: column;
+          height: 281mm;
+          overflow: hidden;
+        }
+
+        /* ── Header ── */
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-shrink: 0; }
+        .p-logo { height: 110px; width: 110px; object-fit: contain; }
         .p-header-right { text-align: right; }
-        .p-company { font-size: 20px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
-        .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }
-        .p-fecha-line { font-size: 10px; color: #555; margin-top: 3px; }
-        .p-redline { border: none; border-top: 3px solid #c0392b; margin: 8px 0; }
-        .p-hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
-        .p-client-block { margin: 8px 0 10px 0; }
-        .p-client-name { font-size: 15px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.3px; }
-        .p-client-row { font-size: 10px; color: #444; margin-bottom: 2px; line-height: 1.5; }
+        .p-company { font-size: 24px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
+        .p-doc-title { font-size: 15px; font-weight: 700; color: #0d2244; margin-top: 2px; }
+        .p-fecha-line { font-size: 12px; color: #555; margin-top: 2px; }
+
+        /* ── Separadores ── */
+        .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 4px 0; flex-shrink: 0; }
+        .p-hr { border: none; border-top: 1px solid #ddd; margin: 4px 0; flex-shrink: 0; }
+
+        /* ── Cliente ── */
+        .p-client-block { margin: 3px 0; flex-shrink: 0; }
+        .p-client-name { font-size: 17px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 2px; }
+        .p-client-row { font-size: 13px; color: #444; margin-bottom: 1px; line-height: 1.3; }
         .p-client-lbl { font-weight: 700; color: #222; }
-        .p-two-col { display: flex; gap: 20px; margin: 8px 0; }
-        .p-col-works { flex: 1.3; }
-        .p-col-pricing { flex: 1; }
-        .p-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 3px; margin-bottom: 6px; }
-        .p-work-item { display: flex; gap: 5px; font-size: 10.5px; margin-bottom: 4px; line-height: 1.5; }
+
+        /* ── Dos columnas ── */
+        .p-two-col { display: flex; gap: 20px; margin: 6px 0; flex-shrink: 0; }
+        .p-col-works { flex: 2; }
+        .p-col-pricing { flex: 1; min-width: 200px; }
+        .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
+        .p-work-item { display: flex; gap: 4px; font-size: 13px; margin-bottom: 2px; line-height: 1.4; }
         .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
-        .p-price-item { display: flex; justify-content: space-between; font-size: 10.5px; margin-bottom: 4px; gap: 6px; }
+
+        /* ── Precios ── */
+        .p-price-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; gap: 8px; }
         .p-price-desc { flex: 1; }
-        .p-price-val { font-weight: 600; white-space: nowrap; }
-        .p-totals { border-top: 1.5px solid #ddd; padding-top: 6px; margin-top: 6px; }
-        .p-total-line { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+        .p-price-val { font-weight: 700; white-space: nowrap; }
+        .p-totals { border-top: 1.5px solid #ddd; padding-top: 4px; margin-top: 4px; }
+        .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 2px; }
         .p-total-line.iva { color: #555; }
-        .p-total-final { display: flex; justify-content: space-between; font-size: 13px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
-        .p-letras { font-size: 10px; font-style: italic; color: #444; margin: 6px 0 8px 0; }
-        .p-obs-two-col { display: flex; gap: 20px; margin: 8px 0; }
+        .p-total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
+
+        /* ── Importe con letra (negritas) ── */
+        .p-letras { font-size: 13px; font-weight: 900; color: #222; margin: 5px 0; flex-shrink: 0; }
+
+        /* ── Observaciones ── */
+        .p-obs-two-col { display: flex; gap: 20px; margin: 4px 0; flex-shrink: 0; }
         .p-obs-two-col > div { flex: 1; }
-        .p-obs-pre { font-family: Arial, sans-serif; font-size: 10px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.5; }
-        .p-policy-line { font-size: 10px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
-        .p-footer { border-top: 1px solid #ddd; padding-top: 8px; margin-top: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .p-footer-info { font-size: 10px; }
-        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 11px; }
-        .p-footer-detail { color: #555; margin-top: 2px; }
+        .p-obs-pre { font-family: Arial, sans-serif; font-size: 13px; white-space: pre-wrap; color: #333; margin: 3px 0; line-height: 1.5; }
+        .p-policy-line { font-size: 13px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
+
+        /* ── Spacer: empuja el footer al fondo ── */
+        .p-spacer { flex: 1; }
+
+        /* ── Footer: siempre al fondo ── */
+        .p-footer { border-top: 1px solid #ddd; padding-top: 6px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+        .p-footer-info { flex: 1; font-size: 12px; }
+        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 14px; }
+        .p-footer-detail { color: #555; margin-top: 1px; }
+        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
+        .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; order: 2; }
+        .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; order: 3; }
       `}</style>
     </div>
   );
