@@ -15,7 +15,7 @@ const CATEGORIAS: ManoDeObraRow['categoria'][] = ['ELÉCTRICO', 'NEUMÁTICO', 'M
 const CAT_COLORS: Record<string, string> = {
   'ELÉCTRICO': 'bg-yellow-100 text-yellow-800',
   'NEUMÁTICO':  'bg-blue-100 text-blue-800',
-  'MECÁNICO':   'bg-gray-100 text-gray-700',
+  'MECÁNICO':   'bg-orange-100 text-orange-800',
   'OTRO':       'bg-purple-100 text-purple-700',
 };
 
