@@ -55,7 +55,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
 
   const handleSave = async () => {
     setSaving(true);
-    await actualizarFactura(row.id, {
+    const { error } = await actualizarFactura(row.id, {
       numero_factura:    numFact  || null,
       monto_factura:     monto    ? parseFloat(monto) : null,
       concepto_factura:  concepto || null,
@@ -63,6 +63,11 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       estado_facturacion: estado,
       empresa_id:         empresaId || null,
     });
+    if (error) {
+      alert('Error al guardar: ' + error);
+      setSaving(false);
+      return;
+    }
     onUpdated({
       ...row,
       numero_factura:    numFact  || null,
