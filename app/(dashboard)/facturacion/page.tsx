@@ -85,10 +85,10 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   };
 
   const handleCancelFactura = async () => {
-    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada.`)) return;
+    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada y el monto quedará en $0.`)) return;
     setCanceling(true);
-    await actualizarFactura(row.id, { estado_facturacion: 'cancelado' });
-    onUpdated({ ...row, estado_facturacion: 'cancelado' as any });
+    await actualizarFactura(row.id, { estado_facturacion: 'cancelado', monto_factura: 0 });
+    onUpdated({ ...row, estado_facturacion: 'cancelado' as any, monto_factura: 0, total_pagado: 0, saldo_pendiente: 0 });
     setCanceling(false);
   };
 
@@ -336,9 +336,10 @@ export default function FacturacionPage() {
           if (cErr) console.error(cErr);
           else setClientes(cData || []);
 
-          // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS
-          const totalFCents = fData.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
-          const totalCCents = fData.reduce((s, r) => s + toCents(r.total_pagado), 0);
+          // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS (excluir canceladas)
+          const activas = fData.filter(r => r.estado_facturacion !== 'cancelado');
+          const totalFCents = activas.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
+          const totalCCents = activas.reduce((s, r) => s + toCents(r.total_pagado), 0);
           const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
           const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
 
