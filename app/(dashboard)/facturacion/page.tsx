@@ -20,7 +20,11 @@ function fromCents(c: number): number {
 }
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '—';
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(n);
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency', currency: 'MXN',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
 }
 function fmtFecha(iso: string | null) {
   if (!iso) return '—';
