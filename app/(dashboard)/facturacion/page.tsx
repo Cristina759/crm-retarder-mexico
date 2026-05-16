@@ -343,16 +343,16 @@ export default function FacturacionPage() {
 
           // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS (excluir canceladas)
           const activas = fData.filter(r => r.estado_facturacion !== 'cancelado');
-          const totalFCents = activas.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
-          const totalCCents = activas.reduce((s, r) => s + toCents(r.total_pagado), 0);
+          const ncCents = toCents(rData.totalNotasCredito || 0);
+
+          // Restar notas de crédito del facturado y del cobrado
+          const totalFBrutoCents = activas.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
+          const totalCBrutoCents = activas.reduce((s, r) => s + toCents(r.total_pagado), 0);
+          const totalFCents = totalFBrutoCents - ncCents;
+          const totalCCents = totalCBrutoCents - ncCents;
+
           const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
           const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
-
-          // Validación de identidad contable
-          const pendienteCents = totalFCents - totalCCents;
-          if (totalCCents + pendienteCents !== totalFCents) {
-            console.error(`ERROR CONTABLE: Cobrado(${totalCCents}) + Pendiente(${pendienteCents}) = ${totalCCents + pendienteCents} !== Facturado(${totalFCents})`);
-          }
 
           setResumen({
             totalFacturado: fromCents(totalFCents),
@@ -417,13 +417,16 @@ export default function FacturacionPage() {
         <div className="bg-white rounded-2xl border border-blue-200 p-5">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Facturado</p>
           <p className="text-2xl font-black text-blue-700">{fmtMXN(totalFacturado)}</p>
+          {resumen.totalNotasCredito > 0 && (
+            <p className="text-[10px] text-red-500 mt-1">NC descontada: {fmtMXN(resumen.totalNotasCredito)}</p>
+          )}
         </div>
         <div className="bg-white rounded-2xl border border-green-200 p-5">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Cobrado</p>
           <p className="text-2xl font-black text-green-700">{fmtMXN(totalCobrado)}</p>
         </div>
         <div className="bg-white rounded-2xl border border-orange-200 p-5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Pendiente de Cobro</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Por Cobrar</p>
           <p className="text-2xl font-black text-orange-600">{fmtMXN(totalPendiente)}</p>
         </div>
       </div>
