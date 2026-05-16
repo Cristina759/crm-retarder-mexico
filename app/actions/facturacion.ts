@@ -31,8 +31,9 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       .from('ordenes_servicio')
       .select('id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id, cotizacion_id, abonos')
       .in('estado', ['facturado', 'pagado'])
-      .order('created_at', { ascending: false })
-      .limit(100);
+      .order('created_at', { ascending: true })
+      .order('numero_factura', { ascending: true })
+      .limit(200);
 
     if (error) return { data: [], error: error.message };
 
