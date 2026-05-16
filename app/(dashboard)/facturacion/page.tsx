@@ -200,8 +200,8 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
     >
       <td className="px-4 py-3">
         <div className="flex flex-col">
-          <span className="text-xs font-mono font-bold text-gray-400">{row.numero}</span>
-          <span className="text-[10px] text-gray-300">{fmtFecha(row.created_at)}</span>
+          <span className="text-xs font-mono font-bold text-gray-700">{row.numero}</span>
+          <span className="text-[11px] font-semibold text-blue-600">{fmtFecha(row.created_at)}</span>
         </div>
       </td>
       <td className="px-4 py-3">
@@ -313,7 +313,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
 
         </div>
       </td>
-      <td className="px-4 py-3 text-center text-xs text-gray-500">{fmtFecha(row.fecha_vencimiento)}</td>
+      <td className="px-4 py-3 text-center text-xs font-semibold text-gray-700">{fmtFecha(row.fecha_vencimiento)}</td>
       <td className="px-4 py-3 text-right">
         <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${est.color} shadow-sm border border-white/20`}>
           {est.label}
