@@ -86,14 +86,11 @@ async function imprimirCotizacion(cot: CotizacionRow) {
   let esPreventivo = false;
   let trasladoLinea = '';
   if (cot.notas) {
-    const itemsMatch  = cot.notas.match(/ITEMS: (.+)/);
-    const obsMatch    = cot.notas.match(/OBSERVACIONES:\n([\s\S]*?)(?=\nPOLITICAS:|$)/);
-    const polMatch    = cot.notas.match(/POLITICAS:\n([\s\S]*?)$/);
-    const tipoMatch   = cot.notas.match(/Tipo:\s*(.+)/);
-    const unidsMatch  = cot.notas.match(/Unidades:\s*(\d+)/);
-    const traslMatch  = cot.notas.match(/Traslado × \d+: \$[\d,.]+\s*MXN/);
-    if (obsMatch)    observaciones = obsMatch[1].trim();
-    if (polMatch)    politicas     = polMatch[1].trim();
+    const n = cot.notas;
+    const itemsMatch  = n.match(/ITEMS: (.+)/);
+    const tipoMatch   = n.match(/Tipo:\s*(.+)/);
+    const unidsMatch  = n.match(/Unidades:\s*(\d+)/);
+    const traslMatch  = n.match(/Traslado × \d+: \$[\d,.]+\s*MXN/);
     if (tipoMatch)   esPreventivo  = tipoMatch[1].trim().toLowerCase() === 'preventivo';
     if (unidsMatch)  unidades      = parseInt(unidsMatch[1]) || 1;
     if (traslMatch)  trasladoLinea = traslMatch[0];
@@ -103,6 +100,20 @@ async function imprimirCotizacion(cot: CotizacionRow) {
         moItems  = parsed.mano_obra   || [];
         refItems = parsed.refacciones || [];
       } catch { /* ignore */ }
+    }
+    // Extraer OBSERVACIONES y POLITICAS con indexOf (más robusto que regex con $)
+    const OBS_KEY = 'OBSERVACIONES:\n';
+    const POL_KEY = 'POLITICAS:\n';
+    const obsIdx = n.indexOf(OBS_KEY);
+    const polIdx = n.indexOf(POL_KEY);
+    if (obsIdx !== -1) {
+      const start = obsIdx + OBS_KEY.length;
+      const end   = polIdx !== -1 ? polIdx : n.length;
+      // trim the separator newline between sections
+      observaciones = n.slice(start, end).replace(/\n$/, '').trim();
+    }
+    if (polIdx !== -1) {
+      politicas = n.slice(polIdx + POL_KEY.length).trim();
     }
   }
 

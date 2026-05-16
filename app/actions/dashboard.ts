@@ -73,13 +73,16 @@ export async function obtenerResumenGeneral() {
     const piplineValor      = (oportunidades ?? []).reduce((s, r) => s + (r.monto_estimado ?? 0), 0);
     const pendientesPorCliente = Object.values(clienteMap).sort((a, b) => b.total - a.total);
 
+    const netoFacturado = totalFacturado - totalNotasCredito;
+    const netoCobrado   = totalCobrado   - totalNotasCredito;
+
     return {
       osActivas,
       totalFacturado,
       totalCobrado,
-      totalNetoFacturado:  totalFacturado - totalNotasCredito,
-      totalNetoPagado:     totalCobrado, // El cobrado es dinero que ya entró, no restamos NC aquí usualmente
-      totalPendiente:      (totalFacturado - totalNotasCredito) - totalCobrado,
+      totalNetoFacturado:  netoFacturado,
+      totalNetoPagado:     netoCobrado,
+      totalPendiente:      netoFacturado - netoCobrado,
       piplineValor,
       empresas:            empresas ?? 0,
       pendientesPorCliente,

@@ -65,8 +65,28 @@ export async function actualizarEstadoOS(id: string, nuevoEstado: OSEstado): Pro
   try {
     const nuevaFase = OS_FASE[nuevoEstado];
     let update: any = { estado: nuevoEstado, fase: nuevaFase };
-    if (nuevoEstado === 'facturado') update.estado_facturacion = 'facturada';
-    else if (nuevoEstado === 'pagado') { update.estado_facturacion = 'pagada'; update.archivada = true; }
+    if (nuevoEstado === 'facturado') {
+      update.estado_facturacion = 'facturada';
+
+      // Auto-copiar monto_factura de la cotización vinculada si aún no tiene monto
+      const { data: os } = await supabaseAdmin
+        .from('ordenes_servicio')
+        .select('monto_factura, cotizacion_id')
+        .eq('id', id)
+        .single();
+
+      if (os && !os.monto_factura && os.cotizacion_id) {
+        const { data: cot } = await supabaseAdmin
+          .from('cotizaciones')
+          .select('total_mxn')
+          .eq('id', os.cotizacion_id)
+          .single();
+        if (cot?.total_mxn) update.monto_factura = cot.total_mxn;
+      }
+    } else if (nuevoEstado === 'pagado') {
+      update.estado_facturacion = 'pagada';
+      update.archivada = true;
+    }
 
     const { error } = await supabaseAdmin.from('ordenes_servicio').update(update).eq('id', id);
     return { error: error?.message ?? null };
