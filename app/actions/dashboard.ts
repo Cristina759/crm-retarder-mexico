@@ -1,98 +1,81 @@
 'use server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { obtenerResumenFacturacion } from './facturacion';
 
 // ── General ───────────────────────────────────────────────────────────────────
+// totalFacturado / totalCobrado / totalPendiente vienen SIEMPRE de
+// obtenerResumenFacturacion — fuente única de verdad financiera.
 export async function obtenerResumenGeneral() {
   try {
     const [
       { data: osAll },
-      { data: facturas },
       { data: oportunidades },
       { count: empresas },
-      { data: notas },
+      resumenFact,
+      { data: facturasPorCliente },
     ] = await Promise.all([
       supabaseAdmin.from('ordenes_servicio').select('id, archivada'),
-      // Traemos todas las que tengan algún dato financiero
+      supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
+      supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
+      // ← ÚNICA FUENTE DE VERDAD para totales financieros
+      obtenerResumenFacturacion(),
+      // Solo para armar pendientesPorCliente (desglose por empresa)
       supabaseAdmin.from('ordenes_servicio')
         .select('monto_factura, estado_facturacion, numero_factura, empresa_id, empresas(nombre_comercial), cotizacion_id, abonos')
         .or('estado_facturacion.in.(facturada,pagada,pago_parcial,vencida),monto_factura.gt.0,numero_factura.neq.null'),
-
-
-      supabaseAdmin.from('oportunidades').select('monto_estimado, estado').neq('estado', 'perdido'),
-      supabaseAdmin.from('empresas').select('id', { count: 'exact', head: true }),
-      supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
-    // Cargar totales de cotizaciones vinculadas para el fallback del dashboard
-    const cotIds = Array.from(new Set((facturas ?? []).map(r => r.cotizacion_id).filter((x): x is string => !!x)));
-    const { data: cots } = cotIds.length 
+    const osActivas = (osAll ?? []).filter((r: { archivada?: boolean | null }) => r.archivada !== true).length;
+    const piplineValor = Math.round((oportunidades ?? []).reduce((s, r) => s + Math.round((r.monto_estimado ?? 0) * 100), 0)) / 100;
+
+    // Pendientes por cliente — usa la misma lógica de cast que obtenerResumenFacturacion
+    const cotIds = Array.from(new Set((facturasPorCliente ?? []).map(r => r.cotizacion_id).filter((x): x is string => !!x)));
+    const { data: cots } = cotIds.length
       ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
       : { data: [] };
-    const cotMap = new Map((cots ?? []).map(c => [c.id, c.total_mxn]));
+    const cotMap = new Map((cots ?? []).map(c => [c.id, Number(c.total_mxn) || 0]));
 
-    const osActivas = (osAll ?? []).filter((r: { archivada?: boolean | null }) => r.archivada !== true).length;
-
-    let totalFacturadoCents = 0;
-    let totalCobradoCents = 0;
     const clienteMap: Record<string, { cliente: string; total: number; folios: string[] }> = {};
+    (facturasPorCliente ?? [])
+      .filter(r => r.estado_facturacion !== 'cancelada' && r.estado_facturacion !== 'pagada')
+      .forEach(r => {
+        let monto = Number(r.monto_factura) || 0;
+        if (monto === 0 && r.cotizacion_id) monto = cotMap.get(r.cotizacion_id) || 0;
+        const montoCents = Math.round(monto * 100);
+        if (montoCents <= 0) return;
 
-    (facturas ?? []).filter(r => r.estado_facturacion !== 'cancelada').forEach(r => {
-      let monto = r.monto_factura;
-      if ((!monto || monto === 0) && r.cotizacion_id) {
-        monto = cotMap.get(r.cotizacion_id) || 0;
-      }
-      monto = monto || 0;
+        const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
+        const abonadoCents = abonos.reduce((s: number, a: any) => s + Math.round((Number(a?.monto) || 0) * 100), 0);
+        const saldoCents = Math.max(0, montoCents - abonadoCents);
 
-      const montoCents = Math.round(monto * 100);
-      totalFacturadoCents += montoCents;
-
-      const abonos = (r.abonos as any[]) || [];
-      const abonadoCents = abonos.reduce((s, a) => s + Math.round((Number(a.monto) || 0) * 100), 0);
-
-      if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
-        totalCobradoCents += montoCents;
-      } else {
-        totalCobradoCents += abonadoCents;
-      }
-
-      if (r.estado_facturacion !== 'pagada' && montoCents > 0) {
         const nombre = (r.empresas as any)?.nombre_comercial ?? 'Desconocido';
         if (!clienteMap[nombre]) clienteMap[nombre] = { cliente: nombre, total: 0, folios: [] };
-        const saldoCents = Math.max(0, montoCents - abonadoCents);
         clienteMap[nombre].total += saldoCents / 100;
         if (r.numero_factura) clienteMap[nombre].folios.push(r.numero_factura);
-      }
-    });
+      });
 
-
-    // Convertir centavos a pesos — sin más aritmética decimal
-    const totalFacturado     = totalFacturadoCents / 100;
-    const totalCobrado       = totalCobradoCents   / 100;
-
-    const totalNotasCredito  = Math.round((notas ?? []).reduce((s, r) => s + Math.round((r.monto ?? 0) * 100), 0)) / 100;
-    const piplineValor       = Math.round((oportunidades ?? []).reduce((s, r) => s + Math.round((r.monto_estimado ?? 0) * 100), 0)) / 100;
-    const pendientesPorCliente = Object.values(clienteMap).sort((a, b) => b.total - a.total);
-
-    const totalNetoFacturado = (totalFacturadoCents - Math.round(totalNotasCredito * 100)) / 100;
-    const totalPendiente     = (Math.round(totalNetoFacturado * 100) - totalCobradoCents) / 100;
+    // Totales financieros: directamente de la fuente única
+    const { totalFacturado, totalCobrado, totalNotasCredito } = resumenFact;
+    const totalNetoFacturado = (Math.round(totalFacturado * 100) - Math.round(totalNotasCredito * 100)) / 100;
+    const totalPendiente     = (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100;
 
     return {
       osActivas,
       totalFacturado,
       totalCobrado,
       totalNetoFacturado,
-      totalNetoPagado:     totalCobrado,
+      totalNetoPagado:       totalCobrado,
       totalPendiente,
       piplineValor,
-      empresas:            empresas ?? 0,
-      pendientesPorCliente,
+      empresas:              empresas ?? 0,
+      pendientesPorCliente:  Object.values(clienteMap).sort((a, b) => b.total - a.total),
       error: null,
     };
 
-  } catch (e) { 
+  } catch (e) {
     console.error('Error Dashboard:', e);
-    return { osActivas: 0, totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalNetoPagado: 0, totalPendiente: 0, piplineValor: 0, empresas: 0, pendientesPorCliente: [], error: String(e) }; 
+    return { osActivas: 0, totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalNetoPagado: 0, totalPendiente: 0, piplineValor: 0, empresas: 0, pendientesPorCliente: [], error: String(e) };
   }
 }
 
