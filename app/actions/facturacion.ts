@@ -113,8 +113,10 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
 
 // ── resumenFacturacion (CONCORDANTE CON SQL) ──────────────────────────────────
 export async function obtenerResumenFacturacion(): Promise<{
-  totalFacturado: number; totalCobrado: number; pendientes: number;
-  vencidas: number; totalNotasCredito: number; error: string | null;
+  totalFacturado: number; totalCobrado: number;
+  totalNetoFacturado: number; totalPendiente: number;
+  pendientes: number; vencidas: number;
+  totalNotasCredito: number; error: string | null;
 }> {
   try {
     // Usamos el mismo filtro que obtenerFacturas para asegurar consistencia total
@@ -152,8 +154,11 @@ export async function obtenerResumenFacturacion(): Promise<{
       const montoCents = Math.round(monto * 100);
       totalFacturadoCents += montoCents;
 
+      // Suma primero en decimal, redondea UNA sola vez por factura
+      // (igual que obtenerFacturas) — evita acumulación de centavos extra
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      const abonadoCents = abonos.reduce((s: number, a: any) => s + Math.round((Number(a?.monto) || 0) * 100), 0);
+      const totalAbonado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
+      const abonadoCents = Math.round(totalAbonado * 100);
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
         totalCobradoCents += montoCents;
@@ -166,11 +171,22 @@ export async function obtenerResumenFacturacion(): Promise<{
       if (st === 'vencida') vencidas++;
     });
 
-    const totalNotasCredito = Math.round((ncs ?? []).reduce((s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0)) / 100;
+    // Notas de crédito: igual, suma primero y redondea una vez
+    const totalNotasCredito = Math.round(
+      (ncs ?? []).reduce((s, r) => s + (Number(r.monto) || 0), 0) * 100
+    ) / 100;
+
+    const totalFacturado = totalFacturadoCents / 100;
+    const totalCobrado   = totalCobradoCents   / 100;
+    // Pendiente = derivado (NO suma independiente de saldos por factura)
+    const totalNetoFacturado = (Math.round(totalFacturado * 100) - Math.round(totalNotasCredito * 100)) / 100;
+    const totalPendiente     = (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100;
 
     return {
-      totalFacturado:  totalFacturadoCents / 100,
-      totalCobrado:    totalCobradoCents   / 100,
+      totalFacturado,
+      totalCobrado,
+      totalNetoFacturado,
+      totalPendiente,
       pendientes,
       vencidas,
       totalNotasCredito,
@@ -180,7 +196,7 @@ export async function obtenerResumenFacturacion(): Promise<{
 
 
   } catch (e) {
-    return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: String(e) };
+    return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: String(e) };
   }
 }
 

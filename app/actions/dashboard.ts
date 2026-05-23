@@ -46,7 +46,8 @@ export async function obtenerResumenGeneral() {
         if (montoCents <= 0) return;
 
         const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-        const abonadoCents = abonos.reduce((s: number, a: any) => s + Math.round((Number(a?.monto) || 0) * 100), 0);
+        const totalAbonado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
+        const abonadoCents = Math.round(totalAbonado * 100);
         const saldoCents = Math.max(0, montoCents - abonadoCents);
 
         const nombre = (r.empresas as any)?.nombre_comercial ?? 'Desconocido';
@@ -55,10 +56,8 @@ export async function obtenerResumenGeneral() {
         if (r.numero_factura) clienteMap[nombre].folios.push(r.numero_factura);
       });
 
-    // Totales financieros: directamente de la fuente única
-    const { totalFacturado, totalCobrado, totalNotasCredito } = resumenFact;
-    const totalNetoFacturado = (Math.round(totalFacturado * 100) - Math.round(totalNotasCredito * 100)) / 100;
-    const totalPendiente     = (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100;
+    // Totales financieros: directamente de la fuente única — sin recálculo
+    const { totalFacturado, totalCobrado, totalNetoFacturado, totalPendiente } = resumenFact;
 
     return {
       osActivas,
