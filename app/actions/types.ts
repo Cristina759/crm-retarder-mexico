@@ -100,19 +100,21 @@ export interface OSRow {
   numero_orden_compra: string | null;
   foto_orden_compra: string | null;
   archivada: boolean;
+  // Campos de facturación (añadidos en migración 005/006)
+  numero_factura: string | null;
+  monto_factura: number | null;
+  concepto_factura: string | null;
+  fecha_vencimiento: string | null;
+  abonos: any[];
   created_at: string;
   updated_at: string;
   empresas: { nombre_comercial: string } | null;
   tecnico: { nombre: string } | null;
   estado_facturacion: string;
-  monto_factura: number | null;
-  numero_factura: string | null;
-  concepto_factura: string | null;
-  fecha_vencimiento: string | null;
-  abonos: any[];
 }
 
 export type OSEstado =
+  | 'solicitud_recibida'
   | 'tecnico_asignado'
   | 'servicio_programado'
   | 'documentacion_enviada'
@@ -127,6 +129,7 @@ export type OSEstado =
   | 'pagado';
 
 export const OS_ESTADOS: OSEstado[] = [
+  'solicitud_recibida',
   'tecnico_asignado',
   'servicio_programado',
   'documentacion_enviada',
@@ -142,6 +145,7 @@ export const OS_ESTADOS: OSEstado[] = [
 ];
 
 export const OS_FASE: Record<OSEstado, number> = {
+  solicitud_recibida:      1,
   tecnico_asignado:        1,
   servicio_programado:     1,
   documentacion_enviada:   1,

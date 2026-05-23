@@ -47,7 +47,6 @@ interface LineaServicio {
   id: string;
   descripcion: string;
   precio: number; // MXN
-  cantidad: number;
 }
 
 type ModalTab = 'mo' | 'ref';
@@ -108,7 +107,7 @@ function ModalCatalogo({
   const catColor: Record<string, string> = {
     'ELÉCTRICO':   'bg-yellow-100 text-yellow-800',
     'NEUMÁTICO':   'bg-blue-100 text-blue-800',
-    'MECÁNICO':    'bg-orange-100 text-orange-800',
+    'MECÁNICO':    'bg-gray-100 text-gray-700',
     'TORNILLERÍA': 'bg-orange-100 text-orange-800',
   };
 
@@ -205,51 +204,32 @@ function ModalCatalogo({
               No se encontraron resultados
             </div>
           ) : tab === 'mo' ? (
-            /* ── Mano de Obra agrupada por categoría ── */
-            (() => {
-              const moItems = items as ManoDeObraRow[];
-              const catOrder = ['ELÉCTRICO', 'NEUMÁTICO', 'MECÁNICO', 'OTRO'];
-              const grouped = catOrder
-                .map(cat => ({ cat, items: moItems.filter(i => i.categoria === cat) }))
-                .filter(g => g.items.length > 0);
-
-              return grouped.map(g => (
-                <div key={g.cat} className="mb-3">
-                  {/* Header de categoría */}
-                  <div className="sticky top-0 z-10 flex items-center gap-2 py-2 px-1 bg-white/95 backdrop-blur-sm border-b border-gray-100 mb-1.5">
-                    <span className={`px-2 py-0.5 rounded-lg text-[11px] font-black ${catColor[g.cat] ?? 'bg-gray-100 text-gray-600'}`}>
-                      {g.cat}
-                    </span>
-                    <span className="text-[10px] text-gray-400">{g.items.length} items</span>
-                  </div>
-                  {/* Items */}
-                  <div className="space-y-1.5">
-                    {g.items.map(item => (
-                      <div
-                        key={item.id}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-colors group"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 leading-snug">{item.nombre}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-black text-[#0f2d55]">
-                            {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(item.precio)}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => onAgregarMO(item)}
-                          className="w-8 h-8 rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white flex items-center justify-center flex-shrink-0 transition-colors opacity-0 group-hover:opacity-100"
-                          title="Agregar"
-                        >
-                          <Plus size={15} strokeWidth={3} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+            (items as ManoDeObraRow[]).map(item => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-colors group"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 leading-snug">{item.nombre}</p>
+                  <span className={`inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold ${catColor[item.categoria] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {item.categoria}
+                  </span>
                 </div>
-              ));
-            })()
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-black text-[#0f2d55]">
+                    {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(item.precio)}
+                  </p>
+                  <p className="text-[9px] text-gray-400">MXN</p>
+                </div>
+                <button
+                  onClick={() => onAgregarMO(item)}
+                  className="w-8 h-8 rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white flex items-center justify-center flex-shrink-0 transition-colors opacity-0 group-hover:opacity-100"
+                  title="Agregar"
+                >
+                  <Plus size={15} strokeWidth={3} />
+                </button>
+              </div>
+            ))
           ) : (
             (items as RefaccionRow[]).map(item => (
               <div
@@ -356,7 +336,7 @@ function CardLineas({
   lineas: LineaServicio[];
   onAdd: () => void;
   onRemove: (id: string) => void;
-  onChange: (id: string, field: 'descripcion' | 'precio' | 'cantidad', value: string) => void;
+  onChange: (id: string, field: 'descripcion' | 'precio', value: string) => void;
   onAbrirCatalogo?: () => void;
   accentColor?: 'blue' | 'orange';
 }) {
@@ -399,14 +379,6 @@ function CardLineas({
                 placeholder="Descripción..."
                 className="flex-1 border border-gray-200 rounded-xl px-3 h-9 text-xs text-gray-800 outline-none focus:border-blue-400 transition-colors"
               />
-              <input
-                type="number"
-                min="1"
-                value={l.cantidad || 1}
-                onChange={e => onChange(l.id, 'cantidad', e.target.value)}
-                placeholder="Cant"
-                className="w-12 border border-gray-200 rounded-xl px-2 h-9 text-xs text-center font-bold text-gray-800 outline-none focus:border-blue-400 transition-colors"
-              />
               <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2.5 h-9 w-28 focus-within:border-blue-400 transition-colors">
                 <span className="text-[10px] text-gray-400 font-semibold">$</span>
                 <input
@@ -434,7 +406,7 @@ function CardLineas({
       {lineas.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-100 flex justify-end">
           <span className="text-xs font-bold text-gray-700">
-            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0) * (l.cantidad || 1), 0))} MXN
+            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0), 0))} MXN
           </span>
         </div>
       )}
@@ -546,7 +518,6 @@ export default function CotizadorServiciosPage() {
         rfc: c.rfc,
         email: c.email,
         telefono: c.telefono,
-        direccion_fiscal: c.direccion_fiscal,
       })));
     }
     setBuscandoEmpresa(false);
@@ -577,9 +548,17 @@ export default function CotizadorServiciosPage() {
     setModalAbierto(true);
   };
 
+  const agregarDesdeCatalogoMO = (item: ManoDeObraRow) => {
+    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio }]);
+  };
+
+  const agregarDesdeCatalogoRef = (item: RefaccionRow) => {
+    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta }]);
+  };
+
   // ── Helpers de líneas ───────────────────────────────────────────────────────
   const addLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>) => {
-    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0, cantidad: 1 }]);
+    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0 }]);
   };
 
   const removeLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>, id: string) => {
@@ -589,43 +568,12 @@ export default function CotizadorServiciosPage() {
   const changeLinea = (
     setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>,
     id: string,
-    field: 'descripcion' | 'precio' | 'cantidad',
+    field: 'descripcion' | 'precio',
     value: string
   ) => {
-    setter(prev => prev.map(l => {
-      if (l.id !== id) return l;
-      if (field === 'precio') return { ...l, precio: parseFloat(value) || 0 };
-      if (field === 'cantidad') return { ...l, cantidad: parseInt(value) || 1 };
-      return { ...l, [field]: value };
-    }));
-  };
-
-  const agregarDesdeCatalogoMO = (item: ManoDeObraRow) => {
-    setLineasManoObra(prev => {
-      const existente = prev.find(l => l.descripcion.toLowerCase() === item.nombre.toLowerCase());
-      if (existente) {
-        return prev.map(l => l.id === existente.id ? { ...l, cantidad: l.cantidad + 1 } : l);
-      }
-      const vacia = prev.find(l => !l.descripcion && l.precio === 0);
-      if (vacia) {
-        return prev.map(l => l.id === vacia.id ? { ...l, descripcion: item.nombre, precio: item.precio, cantidad: 1 } : l);
-      }
-      return [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio, cantidad: 1 }];
-    });
-  };
-
-  const agregarDesdeCatalogoRef = (item: RefaccionRow) => {
-    setLineasRefacciones(prev => {
-      const existente = prev.find(l => l.descripcion.toLowerCase() === item.nombre.toLowerCase());
-      if (existente) {
-        return prev.map(l => l.id === existente.id ? { ...l, cantidad: l.cantidad + 1 } : l);
-      }
-      const vacia = prev.find(l => !l.descripcion && l.precio === 0);
-      if (vacia) {
-        return prev.map(l => l.id === vacia.id ? { ...l, descripcion: item.nombre, precio: item.precio_venta, cantidad: 1 } : l);
-      }
-      return [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta, cantidad: 1 }];
-    });
+    setter(prev => prev.map(l =>
+      l.id === id ? { ...l, [field]: field === 'precio' ? parseFloat(value) || 0 : value } : l
+    ));
   };
 
   // ── Cálculos ─────────────────────────────────────────────────────────────────
@@ -634,8 +582,8 @@ export default function CotizadorServiciosPage() {
 
   // Todo en MXN — sin conversión de divisas
   const subtotalPreventivoMXN = tipoPreventivo ? PRECIO_PREVENTIVO_MXN * unidadesN : 0;
-  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0) * (l.cantidad || 1), 0);
-  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0) * (l.cantidad || 1), 0);
+  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0), 0);
+  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0), 0);
   const subtotalTraslado       = trasladoN * unidadesN;
   const subtotalMXN           = subtotalPreventivoMXN + subtotalManoObra + subtotalRefacciones + subtotalTraslado;
   const iva                   = Math.round(subtotalMXN * 0.16 * 100) / 100;
@@ -666,8 +614,8 @@ export default function CotizadorServiciosPage() {
       correctivo: tipoCorrectivo,
       unidades: unidadesN,
       traslado_usd: trasladoN,
-      mano_obra: lineasManoObra.map(({ descripcion, precio, cantidad }) => ({ descripcion, precio, cantidad })),
-      refacciones: lineasRefacciones.map(({ descripcion, precio, cantidad }) => ({ descripcion, precio, cantidad })),
+      mano_obra: lineasManoObra.map(({ descripcion, precio }) => ({ descripcion, precio })),
+      refacciones: lineasRefacciones.map(({ descripcion, precio }) => ({ descripcion, precio })),
     };
 
     try {
@@ -728,10 +676,11 @@ export default function CotizadorServiciosPage() {
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-sm text-gray-400">$</span>
               <input
-                type="text"
-                value={tc > 0 ? tc.toFixed(4) : ''}
-                onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setTc(v); else if (e.target.value === '') setTc(0); }}
-                className="w-24 text-sm font-bold text-gray-900 outline-none bg-transparent"
+                type="number"
+                value={tc}
+                onChange={e => setTc(parseFloat(e.target.value) || 0)}
+                className="w-20 text-sm font-bold text-gray-900 outline-none bg-transparent"
+                step="0.01"
               />
               <span className="text-xs text-gray-400">MXN/USD</span>
             </div>
@@ -806,22 +755,6 @@ export default function CotizadorServiciosPage() {
 
         {/* Datos adicionales del cliente */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">RFC</label>
-            <input
-              type="text" value={rfc} onChange={e => setRfc(e.target.value)}
-              placeholder="RFC del cliente..."
-              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Dirección Fiscal</label>
-            <input
-              type="text" value={direccion} onChange={e => setDireccion(e.target.value)}
-              placeholder="Calle, número, colonia..."
-              className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
-            />
-          </div>
           <div className="relative">
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
               Empresa / Razón social
@@ -890,9 +823,7 @@ export default function CotizadorServiciosPage() {
                       onClick={() => {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
-                        if (emp.email) setEmailCliente(emp.email);
-                        if (emp.rfc) setRfc(emp.rfc);
-                        if (emp.direccion_fiscal) setDireccion(emp.direccion_fiscal);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
                         setSugerenciasEmpresa([]);
                         setMostrarTodos(false);
                       }}
@@ -922,9 +853,7 @@ export default function CotizadorServiciosPage() {
                       onClick={() => {
                         setEmpresa(emp.nombre_comercial);
                         setEmpresaId(emp.id);
-                        if (emp.email) setEmailCliente(emp.email);
-                        if (emp.rfc) setRfc(emp.rfc);
-                        if (emp.direccion_fiscal) setDireccion(emp.direccion_fiscal);
+                        if (!emailCliente && emp.email) setEmailCliente(emp.email);
                         setMostrarTodos(false);
                       }}
                       className="w-full text-left px-3 py-2.5 hover:bg-red-50 transition-colors flex items-center justify-between group"
@@ -1344,13 +1273,13 @@ export default function CotizadorServiciosPage() {
                 {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
-                    <span>Mano de obra — {l.descripcion || '—'} {l.cantidad > 1 ? `(${l.cantidad} u.)` : ''}</span>
+                    <span>Mano de obra — {l.descripcion || '—'}</span>
                   </div>
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
-                    <span>Refacción — {l.descripcion || '—'} {l.cantidad > 1 ? `(${l.cantidad} u.)` : ''}</span>
+                    <span>Refacción — {l.descripcion || '—'}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
@@ -1372,14 +1301,14 @@ export default function CotizadorServiciosPage() {
                 )}
                 {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
-                    <span className="p-price-desc">{l.descripcion || 'Mano de obra'} {l.cantidad > 1 ? `× ${l.cantidad}` : ''}</span>
-                    <span className="p-price-val">{fmtMXN(l.precio * l.cantidad)}</span>
+                    <span className="p-price-desc">{l.descripcion || 'Mano de obra'}</span>
+                    <span className="p-price-val">{fmtMXN(l.precio)}</span>
                   </div>
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
-                    <span className="p-price-desc">{l.descripcion || 'Refacción'} {l.cantidad > 1 ? `× ${l.cantidad}` : ''}</span>
-                    <span className="p-price-val">{fmtMXN(l.precio * l.cantidad)}</span>
+                    <span className="p-price-desc">{l.descripcion || 'Refacción'}</span>
+                    <span className="p-price-val">{fmtMXN(l.precio)}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
@@ -1417,9 +1346,6 @@ export default function CotizadorServiciosPage() {
             </div>
 
             <hr className="p-hr" />
-
-            {/* Spacer: empuja el footer al fondo de la hoja */}
-            <div className="p-spacer" />
 
             {/* Footer */}
             <div className="p-footer">
@@ -1474,13 +1400,14 @@ export default function CotizadorServiciosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 8mm 10mm; }
+        @page { size: A4 portrait; margin: 12mm 14mm; }
 
         @media print {
+          /* ── Limitar body a UNA sola página ── */
           html, body {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            overflow: hidden !important;
             margin: 0 !important;
             padding: 0 !important;
           }
@@ -1496,43 +1423,39 @@ export default function CotizadorServiciosPage() {
           }
         }
 
-        /* ── Documento: flex column para llenar toda la hoja ── */
+        /* ── Documento ── */
         .p-doc {
           font-family: Arial, sans-serif;
           font-size: 14px;
           color: #111;
-          padding: 4px 6px;
+          padding: 6px 8px;
           box-sizing: border-box;
           background: #fff;
-          display: flex;
-          flex-direction: column;
-          height: 281mm;
-          overflow: hidden;
         }
 
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-shrink: 0; }
-        .p-logo { height: 110px; width: 110px; object-fit: contain; }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .p-logo { height: 120px; width: 120px; object-fit: contain; }
         .p-header-right { text-align: right; }
-        .p-company { font-size: 24px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
-        .p-doc-title { font-size: 15px; font-weight: 700; color: #0d2244; margin-top: 2px; }
+        .p-company { font-size: 22px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
+        .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 2px; }
         .p-fecha-line { font-size: 12px; color: #555; margin-top: 2px; }
 
         /* ── Separadores ── */
-        .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 4px 0; flex-shrink: 0; }
-        .p-hr { border: none; border-top: 1px solid #ddd; margin: 4px 0; flex-shrink: 0; }
+        .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 5px 0; }
+        .p-hr { border: none; border-top: 1px solid #ddd; margin: 5px 0; }
 
         /* ── Cliente ── */
-        .p-client-block { margin: 3px 0; flex-shrink: 0; }
-        .p-client-name { font-size: 17px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 2px; }
-        .p-client-row { font-size: 13px; color: #444; margin-bottom: 1px; line-height: 1.3; }
+        .p-client-block { margin: 4px 0; }
+        .p-client-name { font-size: 17px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 3px; }
+        .p-client-row { font-size: 13px; color: #444; margin-bottom: 2px; line-height: 1.4; }
         .p-client-lbl { font-weight: 700; color: #222; }
 
         /* ── Dos columnas ── */
-        .p-two-col { display: flex; gap: 20px; margin: 6px 0; flex-shrink: 0; }
+        .p-two-col { display: flex; gap: 24px; margin: 8px 0; }
         .p-col-works { flex: 2; }
-        .p-col-pricing { flex: 1; min-width: 200px; }
-        .p-section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
+        .p-col-pricing { flex: 1; min-width: 180px; }
+        .p-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
         .p-checklist-cat { font-size: 10px; font-weight: 700; color: #0d2244; text-transform: uppercase; margin-bottom: 2px; }
         .p-work-item { display: flex; gap: 4px; font-size: 13px; margin-bottom: 2px; line-height: 1.4; }
         .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
@@ -1540,30 +1463,25 @@ export default function CotizadorServiciosPage() {
         /* ── Precios ── */
         .p-price-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; gap: 8px; }
         .p-price-desc { flex: 1; }
-        .p-price-val { font-weight: 700; white-space: nowrap; }
-        .p-totals { border-top: 1.5px solid #ddd; padding-top: 4px; margin-top: 4px; }
-        .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 2px; }
+        .p-price-val { font-weight: 600; white-space: nowrap; }
+        .p-totals { border-top: 1.5px solid #ddd; padding-top: 5px; margin-top: 5px; }
+        .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 3px; }
         .p-total-line.iva { color: #555; }
-        .p-total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
+        .p-total-final { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
 
-        /* ── Importe con letra (negritas) ── */
-        .p-letras { font-size: 13px; font-weight: 900; color: #222; margin: 5px 0; flex-shrink: 0; }
-
-        /* ── Observaciones ── */
-        .p-obs-full { margin: 4px 0; flex-shrink: 0; }
-        .p-obs-pre { font-family: Arial, sans-serif; font-size: 13px; white-space: pre-wrap; color: #333; margin: 3px 0; line-height: 1.5; }
+        /* ── Letras y observaciones ── */
+        .p-letras { font-size: 13px; font-style: italic; color: #444; margin: 6px 0; }
+        .p-obs-full { margin: 8px 0; }
+        .p-obs-pre { font-family: Arial, sans-serif; font-size: 14px; white-space: pre-wrap; color: #333; margin: 4px 0; line-height: 1.6; }
 
         /* ── Políticas ── */
-        .p-policies { margin: 3px 0; flex-shrink: 0; }
+        .p-policies { margin: 4px 0; }
         .p-policy-line { font-size: 13px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
 
-        /* ── Spacer: empuja el footer al fondo ── */
-        .p-spacer { flex: 1; }
-
-        /* ── Footer: siempre al fondo ── */
-        .p-footer { border-top: 1px solid #ddd; padding-top: 6px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
+        /* ── Footer ── */
+        .p-footer { border-top: 1px solid #ddd; padding-top: 6px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
         .p-footer-info { flex: 1; font-size: 12px; order: 1; }
-        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 14px; }
+        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 13px; }
         .p-footer-detail { color: #555; margin-top: 1px; }
         .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
         .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; order: 2; }

@@ -316,7 +316,6 @@ export default function OportunidadesPage() {
     // Si se movió a ganado → crear OS automáticamente
     if (nuevoEstado === 'ganado') {
       const { error: osError } = await crearOrdenServicio({
-        numero:        `OPP-${opp.id.substring(0,8)}`,
         empresa_id:    opp.empresa_id,
         oportunidad_id: opp.id,
       });

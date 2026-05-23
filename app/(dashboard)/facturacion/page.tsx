@@ -1,23 +1,13 @@
 'use client';
-// Version: 2.0.0 - Aritmética de centavos (integer money)
+// Version: 1.0.1 - Pago Parcial Fix
 
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus, Ban } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, crearNotaCredito, type FacturaRow } from '@/app/actions/facturacion';
-import { obtenerClientes } from '@/app/actions/clientes';
 
 
 
-// ── Aritmética segura: centavos (integers) ───────────────────────────────────
-// REGLA: nunca usar float para sumas de dinero. Todo pasa por centavos.
-function toCents(v: number | null | undefined): number {
-  if (v === null || v === undefined) return 0;
-  return Math.round(v * 100);
-}
-function fromCents(c: number): number {
-  return Number((c / 100).toFixed(2));
-}
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '—';
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(n);
@@ -27,31 +17,28 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida', 'cancelado'];
+const ESTADOS = ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial', 'pagada', 'vencida'];
 const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
   pendiente:          { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   pendiente_facturar: { color: 'bg-gray-100 text-gray-600',    label: 'Pendiente'        },
   facturada:          { color: 'bg-blue-100 text-blue-700',    label: 'Facturada'        },
   enviada_cliente:    { color: 'bg-indigo-100 text-indigo-700',label: 'Enviada a cliente'},
-  pago_parcial:       { color: 'bg-purple-100 text-purple-700',  label: 'Pago Parcial'     },
+  pago_parcial:       { color: 'bg-amber-100 text-amber-700',  label: 'Pago Parcial'     },
   pagada:             { color: 'bg-green-100 text-green-700',  label: 'Pagada'           },
   vencida:            { color: 'bg-red-100 text-red-700',      label: 'Vencida'          },
-  cancelado:          { color: 'bg-rose-100 text-rose-700',    label: 'Cancelado'        },
 };
 
 
 // ── Fila editable ─────────────────────────────────────────────────────────────
-function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow; clientes: { id: string; nombre_comercial: string | null }[]; onUpdated: (updated: FacturaRow) => void; onDeleted: (id: string) => void }) {
+function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated: (updated: FacturaRow) => void; onDeleted: (id: string) => void }) {
   const [editing, setEditing]       = useState(false);
   const [numFact, setNumFact]       = useState(row.numero_factura ?? '');
   const [monto,   setMonto]         = useState(String(row.monto_factura ?? ''));
   const [concepto, setConcepto]     = useState(row.concepto_factura ?? '');
   const [vencimiento, setVenc]      = useState(row.fecha_vencimiento?.slice(0, 10) ?? '');
-  const [estado, setEstado]         = useState(row.estado_facturacion ?? 'pendiente');
-  const [empresaId, setEmpresaId]   = useState(row.empresa_id ?? '');
+  const [estado, setEstado]         = useState<string>(row.estado_facturacion ?? 'pendiente');
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
-  const [canceling, setCanceling]   = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -61,7 +48,6 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       concepto_factura:  concepto || null,
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado,
-      empresa_id:         empresaId || null,
     });
     onUpdated({
       ...row,
@@ -70,8 +56,6 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       concepto_factura:  concepto || null,
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado as any,
-      empresa_id:        empresaId || null,
-      empresa_nombre:    (clientes.find(c => c.id === empresaId) as any)?.nombre_comercial || row.empresa_nombre,
     });
     setSaving(false);
     setEditing(false);
@@ -84,21 +68,12 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
     onDeleted(row.id);
   };
 
-  const handleCancelFactura = async () => {
-    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada.`)) return;
-    setCanceling(true);
-    await actualizarFactura(row.id, { estado_facturacion: 'cancelado' });
-    onUpdated({ ...row, estado_facturacion: 'cancelado' as any });
-    setCanceling(false);
-  };
-
   const handleCancel = () => {
     setNumFact(row.numero_factura ?? '');
     setMonto(String(row.monto_factura ?? ''));
     setConcepto(row.concepto_factura ?? '');
     setVenc(row.fecha_vencimiento?.slice(0, 10) ?? '');
     setEstado(row.estado_facturacion ?? 'pendiente');
-    setEmpresaId(row.empresa_id ?? '');
     setEditing(false);
   };
 
@@ -134,18 +109,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
             className="w-full border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500"
           />
         </td>
-        <td className="px-4 py-2">
-          <select
-            value={empresaId}
-            onChange={e => setEmpresaId(e.target.value)}
-            className="w-full border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500 bg-white"
-          >
-            <option value="">— Seleccionar —</option>
-            {clientes.map(c => (
-              <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
-            ))}
-          </select>
-        </td>
+        <td className="px-4 py-2 text-xs text-gray-800 font-medium">{row.empresa_nombre ?? '—'}</td>
         <td className="px-4 py-2">
           <input
             value={concepto}
@@ -157,13 +121,11 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
         <td className="px-4 py-2">
           <input
             type="number"
-            step="0.01"
             value={monto}
             onChange={e => setMonto(e.target.value)}
             placeholder="0.00"
             className="w-28 border border-yellow-300 rounded-lg px-2 py-1 text-xs text-right outline-none focus:border-yellow-500"
           />
-
         </td>
         <td className="px-4 py-2">
           <input
@@ -176,7 +138,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
         <td className="px-4 py-2">
           <select
             value={estado}
-            onChange={e => setEstado(e.target.value as any)}
+            onChange={e => setEstado(e.target.value)}
             className="border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500 bg-white"
           >
             {ESTADOS.map(e => (
@@ -189,10 +151,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   }
 
   return (
-    <tr 
-      onClick={() => setEditing(true)}
-      className={`border-b hover:bg-gray-50/50 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-purple-50/20' : ''}`}
-    >
+    <tr className={`border-b hover:bg-gray-50/50 transition-colors ${row.estado_facturacion === 'pago_parcial' ? 'bg-amber-50/20' : ''}`}>
       <td className="px-4 py-3">
         <div className="flex flex-col">
           <span className="text-xs font-mono font-bold text-gray-400">{row.numero}</span>
@@ -202,22 +161,19 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       <td className="px-4 py-3">
         <div className="flex items-center gap-1.5 justify-center">
           <button
-            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+            onClick={() => setEditing(true)}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-400 hover:text-blue-600 transition-all"
             title="Editar Factura"
           >
             <Pencil size={13} />
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               const montoStr = prompt('Monto del abono (MXN):');
               if (!montoStr) return;
-              const cleanMonto = parseFloat(montoStr.replace(/[^0-9.-]+/g, ""));
-              if (isNaN(cleanMonto)) { alert('Monto inválido'); return; }
               const ref = prompt('Referencia (opcional):', 'Transferencia');
               registrarPago(row.id, {
-                monto: cleanMonto,
+                monto: parseFloat(montoStr),
                 fecha: new Date().toISOString(),
                 referencia: ref || 'Abono'
               }).then(() => {
@@ -232,18 +188,15 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
           </button>
 
           <button
-            onClick={async (e) => {
-              e.stopPropagation();
+            onClick={async () => {
               const montoStr = prompt('Monto de la Nota de Crédito (MXN):');
               if (!montoStr) return;
-              const cleanMonto = parseFloat(montoStr.replace(/[^0-9.-]+/g, ""));
-              if (isNaN(cleanMonto)) { alert('Monto inválido'); return; }
               const motivo = prompt('Motivo de la Nota de Crédito:', 'Descuento / Devolución');
               const ncNum = prompt('Número de Nota de Crédito (opcional):');
               
               const res = await crearNotaCredito({
                 numero_nc: ncNum || undefined,
-                monto: cleanMonto,
+                monto: parseFloat(montoStr),
                 descripcion: motivo || 'Nota de crédito directa',
                 empresa_id: row.empresa_id || undefined,
                 os_id: row.id
@@ -262,19 +215,8 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
           </button>
 
 
-          {row.estado_facturacion !== 'cancelado' && (
-            <button
-              onClick={(e) => { e.stopPropagation(); handleCancelFactura(); }}
-              disabled={canceling}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-rose-100 text-gray-400 hover:text-rose-600 transition-all"
-              title="Cancelar Factura"
-            >
-              {canceling ? <Loader2 size={13} className="animate-spin" /> : <Ban size={13} />}
-            </button>
-          )}
-
           <button
-            onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+            onClick={handleDelete}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"
             title="Eliminar"
           >
@@ -294,13 +236,11 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
           <span className="text-sm font-black text-gray-900">{fmtMXN(row.monto_factura)}</span>
           <div className="flex flex-col items-end mt-1">
             {(row.total_pagado ?? 0) > 0 && (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
-                Cobrado: {fmtMXN(row.total_pagado)}
-              </span>
+              <span className="text-[10px] font-bold text-green-600">Cobrado: {fmtMXN(row.total_pagado)}</span>
             )}
-            {row.estado_facturacion === 'pago_parcial' && (
-              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100 mt-1">
-                Saldo: {fmtMXN(row.saldo_pendiente)}
+            {row.estado_facturacion !== 'pagada' && (
+              <span className="text-[10px] font-black text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                Falta: {fmtMXN(row.saldo_pendiente ?? row.monto_factura)}
               </span>
             )}
           </div>
@@ -322,35 +262,25 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function FacturacionPage() {
   const [rows,    setRows]    = useState<FacturaRow[]>([]);
-  const [clientes, setClientes] = useState<{ id: string; nombre_comercial: string | null }[]>([]);
   const [resumen, setResumen] = useState({ totalFacturado: 0, totalCobrado: 0, totalNotasCredito: 0, pendientes: 0, vencidas: 0 });
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([obtenerFacturas(), obtenerResumenFacturacion(), obtenerClientes()])
-      .then(([{ data: fData, error: fErr }, rData, { data: cData, error: cErr }]) => {
+    Promise.all([obtenerFacturas(), obtenerResumenFacturacion()])
+      .then(([{ data: fData, error: fErr }, rData]) => {
         if (fErr) setError(fErr);
         else {
           setRows(fData);
-          if (cErr) console.error(cErr);
-          else setClientes(cData || []);
-
-          // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS
-          const totalFCents = fData.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
-          const totalCCents = fData.reduce((s, r) => s + toCents(r.total_pagado), 0);
+          // Calculamos totales desde la tabla para máxima precisión
+          const totalF = fData.reduce((s, r) => s + (Number(r.monto_factura) || 0), 0);
+          const totalC = fData.reduce((s, r) => s + (Number(r.total_pagado) || 0), 0);
           const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
           const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
 
-          // Validación de identidad contable
-          const pendienteCents = totalFCents - totalCCents;
-          if (totalCCents + pendienteCents !== totalFCents) {
-            console.error(`ERROR CONTABLE: Cobrado(${totalCCents}) + Pendiente(${pendienteCents}) = ${totalCCents + pendienteCents} !== Facturado(${totalFCents})`);
-          }
-
           setResumen({
-            totalFacturado: fromCents(totalFCents),
-            totalCobrado: fromCents(totalCCents),
+            totalFacturado: totalF,
+            totalCobrado: totalC,
             pendientes: pends,
             vencidas: vencs,
             totalNotasCredito: rData.totalNotasCredito || 0
@@ -374,10 +304,9 @@ export default function FacturacionPage() {
     </div>
   );
 
-  const totalFacturado = resumen.totalFacturado;
+  const totalFacturado = resumen.totalFacturado - Math.abs(resumen.totalNotasCredito);
+
   const totalCobrado   = resumen.totalCobrado;
-  // Pendiente calculado en centavos para exactitud
-  const totalPendiente = fromCents(toCents(totalFacturado) - toCents(totalCobrado));
 
   const handleUpdated = (updated: FacturaRow) => {
     setRows(prev => prev.map(r => r.id === updated.id ? updated : r));
@@ -407,7 +336,7 @@ export default function FacturacionPage() {
       </div>
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-blue-200 p-5">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Facturado</p>
           <p className="text-2xl font-black text-blue-700">{fmtMXN(totalFacturado)}</p>
@@ -416,10 +345,6 @@ export default function FacturacionPage() {
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Cobrado</p>
           <p className="text-2xl font-black text-green-700">{fmtMXN(totalCobrado)}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-orange-200 p-5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Pendiente de Cobro</p>
-          <p className="text-2xl font-black text-orange-600">{fmtMXN(totalPendiente)}</p>
-        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto">
@@ -427,7 +352,7 @@ export default function FacturacionPage() {
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">OS</th>
-              <th className="px-4 py-3 w-32 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400">Acciones</th>
+              <th className="px-4 py-3 w-32 text-center text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-red-50/50">Acciones</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Factura #</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Cliente</th>
               <th className="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">Concepto</th>
@@ -440,7 +365,7 @@ export default function FacturacionPage() {
             {rows.length === 0 ? (
               <tr><td colSpan={8} className="text-center py-16 text-gray-400 text-sm">Sin facturas registradas</td></tr>
             ) : rows.map(r => (
-              <FilaFactura key={r.id} row={r} clientes={clientes} onUpdated={handleUpdated} onDeleted={handleDeleted} />
+              <FilaFactura key={r.id} row={r} onUpdated={handleUpdated} onDeleted={handleDeleted} />
             ))}
           </tbody>
         </table>

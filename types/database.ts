@@ -175,44 +175,6 @@ export type Database = {
         }
         Relationships: []
       }
-      documentos_usuario: {
-        Row: {
-          id: string
-          usuario_id: string
-          nombre: string
-          storage_path: string
-          tipo: string | null
-          tamanio: number | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          usuario_id: string
-          nombre: string
-          storage_path: string
-          tipo?: string | null
-          tamanio?: number | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          usuario_id?: string
-          nombre?: string
-          storage_path?: string
-          tipo?: string | null
-          tamanio?: number | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documentos_usuario_usuario_id_fkey"
-            columns: ["usuario_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       contactos: {
         Row: {
           activo: boolean | null
@@ -423,6 +385,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      documentos_usuario: {
+        Row: {
+          created_at: string | null
+          id: string
+          nombre: string
+          storage_path: string
+          tamanio: number | null
+          tipo: string | null
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          nombre: string
+          storage_path: string
+          tamanio?: number | null
+          tipo?: string | null
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          nombre?: string
+          storage_path?: string
+          tamanio?: number | null
+          tipo?: string | null
+          usuario_id?: string
+        }
+        Relationships: []
       }
       empresas: {
         Row: {
@@ -973,6 +965,7 @@ export type Database = {
       }
       ordenes_servicio: {
         Row: {
+          abonos: Json | null
           archivada: boolean
           concepto_factura: string | null
           cotizacion_id: string | null
@@ -1006,6 +999,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          abonos?: Json | null
           archivada?: boolean
           concepto_factura?: string | null
           cotizacion_id?: string | null
@@ -1039,6 +1033,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          abonos?: Json | null
           archivada?: boolean
           concepto_factura?: string | null
           cotizacion_id?: string | null

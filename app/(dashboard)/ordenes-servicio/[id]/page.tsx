@@ -26,6 +26,7 @@ import { obtenerUsuarios } from '@/app/actions/usuarios';
 import type { OSRow, UsuarioRow, CotizacionRow } from '@/app/actions/types';
 
 const OS_ESTADOS = [
+  'solicitud_recibida',
   'tecnico_asignado',
   'servicio_programado',
   'documentacion_enviada',
@@ -42,6 +43,7 @@ const OS_ESTADOS = [
 
 // ── Metadata de estados ───────────────────────────────────────────────────────
 const ESTADO_META: Record<string, { label: string; fase: number }> = {
+  solicitud_recibida:      { label: 'Solicitud Recibida',     fase: 1 },
   tecnico_asignado:        { label: 'Asignación de Técnico',  fase: 1 },
   servicio_programado:     { label: 'Servicio Programado',    fase: 1 },
   documentacion_enviada:   { label: 'Documentación Enviada',  fase: 1 },
@@ -418,12 +420,8 @@ export default function OSDetallePage() {
   const [montoFact,   setMontoFact]   = useState('');
   const [vencFact,    setVencFact]    = useState('');
   const [cotizacion,  setCotizacion]  = useState<CotizacionRow | null>(null);
-  const [folio,       setFolio]       = useState('');
-  const [editFolio,   setEditFolio]   = useState(false);
   const notasTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const descTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const folioTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const folioInputRef = useRef<HTMLInputElement>(null);
   const fotoOSRef   = useRef<HTMLInputElement>(null);
   const fotoOCRef   = useRef<HTMLInputElement>(null);
 
@@ -433,7 +431,6 @@ export default function OSDetallePage() {
       .then(([{ data, error }, { data: uData }]) => {
         setOs(data);
         setError(error);
-        setFolio(data?.numero ?? '');
         setNotas(data?.notas ?? '');
         setDesc(data?.descripcion_trabajo ?? '');
         setNumOS(data?.numero_os_manual ?? '');
@@ -550,18 +547,6 @@ export default function OSDetallePage() {
     }, 1200);
   }, [os]);
 
-  // Folio con debounce
-  const handleFolio = useCallback((val: string) => {
-    setFolio(val);
-    if (folioTimer.current) clearTimeout(folioTimer.current);
-    folioTimer.current = setTimeout(() => {
-      if (os) {
-        guardarDatosOS(os.id, { numero: val })
-          .then(() => setOs(prev => prev ? { ...prev, numero: val } : prev));
-      }
-    }, 800);
-  }, [os]);
-
   // ── Loading / Error ───────────────────────────────────────────────────────
   if (cargando) {
     return (
@@ -613,30 +598,7 @@ export default function OSDetallePage() {
       <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-3">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            {/* Folio editable */}
-            {editFolio ? (
-              <div className="flex items-center gap-2">
-                <input
-                  ref={folioInputRef}
-                  type="text"
-                  value={folio}
-                  onChange={e => handleFolio(e.target.value)}
-                  onBlur={() => setEditFolio(false)}
-                  onKeyDown={e => { if (e.key === 'Enter') setEditFolio(false); }}
-                  className="text-2xl font-bold text-gray-900 font-mono bg-yellow-50 border-2 border-yellow-400 rounded-xl px-3 py-1 outline-none transition-all w-72"
-                  autoFocus
-                />
-              </div>
-            ) : (
-              <div
-                className="flex items-center gap-2 group cursor-pointer"
-                onClick={() => { if (canEdit) { setEditFolio(true); setTimeout(() => folioInputRef.current?.select(), 50); } }}
-                title={canEdit ? 'Clic para editar el folio' : ''}
-              >
-                <h1 className="text-2xl font-bold text-gray-900 font-mono">{folio || os.numero}</h1>
-                {canEdit && <Pen size={14} className="text-gray-300 group-hover:text-yellow-500 transition-colors" />}
-              </div>
-            )}
+            <h1 className="text-2xl font-bold text-gray-900 font-mono">{os.numero}</h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {os.empresas?.nombre_comercial ?? '—'} · Creada {fmtFecha(os.created_at)}
             </p>

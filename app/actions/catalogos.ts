@@ -27,7 +27,8 @@ export async function obtenerManoDeObra(): Promise<{ data: ManoDeObraRow[]; erro
     .from('mano_de_obra')
     .select('id, nombre, categoria, precio, activo')
     .eq('activo', true)
-    .order('created_at', { ascending: true });
+    .order('categoria')
+    .order('nombre');
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as ManoDeObraRow[], error: null };
@@ -38,7 +39,8 @@ export async function obtenerManoDeObraCompleto(): Promise<{ data: ManoDeObraRow
   const { data, error } = await supabaseAdmin
     .from('mano_de_obra')
     .select('id, nombre, categoria, precio, activo')
-    .order('created_at', { ascending: true });
+    .order('categoria')
+    .order('nombre');
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as ManoDeObraRow[], error: null };

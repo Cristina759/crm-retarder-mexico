@@ -36,51 +36,26 @@ export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string |
 
 // ── crearOrdenServicio ────────────────────────────────────────────────────────
 export async function crearOrdenServicio(input: {
-  numero: string;
   empresa_id: string;
   oportunidad_id?: string;
   cotizacion_id?: string;
 }): Promise<{ error: string | null }> {
-  if (input.oportunidad_id) {
-    const { count } = await supabaseAdmin
-      .from('ordenes_servicio')
-      .select('id', { count: 'exact', head: true })
-      .eq('oportunidad_id', input.oportunidad_id);
-    
-    if (count && count > 0) {
-      return { error: null }; // Silently return success to avoid annoying errors when dragging back and forth
-    }
-  }
-
-  // Si no se proporcionó cotizacion_id pero sí oportunidad_id,
-  // buscar la cotización vinculada para heredar el monto en facturación
-  let cotizacion_id = input.cotizacion_id ?? null;
-  if (!cotizacion_id && input.oportunidad_id) {
-    try {
-      const { data: cotData } = await supabaseAdmin
-        .from('cotizaciones')
-        .select('id')
-        .eq('oportunidad_id', input.oportunidad_id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (cotData?.id) cotizacion_id = cotData.id;
-    } catch (e) {
-      console.error('[crearOrdenServicio] error buscando cotización vinculada:', e);
-    }
-  }
+  const { data: empresa } = await supabaseAdmin.from('empresas').select('nombre_comercial').eq('id', input.empresa_id).single();
+  const abrev = empresa?.nombre_comercial?.slice(0,3).toUpperCase() || 'OS';
+  const numero = `OS-${abrev}-${Date.now().toString().slice(-4)}`;
 
   const { error } = await supabaseAdmin
     .from('ordenes_servicio')
     .insert({ 
-      numero: input.numero, 
+      numero, 
       empresa_id: input.empresa_id, 
       oportunidad_id: input.oportunidad_id ?? null,
-      cotizacion_id,
-      estado: 'tecnico_asignado', 
+      cotizacion_id: input.cotizacion_id ?? null,
+      estado: 'solicitud_recibida', 
       fase: 1,
       estado_facturacion: 'pendiente'
     });
+
 
   return { error: error?.message ?? null };
 }
@@ -89,31 +64,29 @@ export async function crearOrdenServicio(input: {
 export async function actualizarEstadoOS(id: string, nuevoEstado: OSEstado): Promise<{ error: string | null }> {
   try {
     const nuevaFase = OS_FASE[nuevoEstado];
-     const update: any = { estado: nuevoEstado, fase: nuevaFase };
-    if (nuevoEstado === 'facturado') update.estado_facturacion = 'facturada';
-    else if (nuevoEstado === 'pagado') { update.estado_facturacion = 'pagada'; update.archivada = true; }
+    let update: any = { estado: nuevoEstado, fase: nuevaFase };
 
-    // Al pasar a facturado, asegurar que haya cotizacion_id para resolver el monto
     if (nuevoEstado === 'facturado') {
+      update.estado_facturacion = 'facturada';
+
+      // Si no tiene monto capturado, tomar el total de la cotización vinculada
       const { data: os } = await supabaseAdmin
         .from('ordenes_servicio')
-        .select('cotizacion_id, oportunidad_id, monto_factura')
+        .select('monto_factura, cotizacion_id')
         .eq('id', id)
         .single();
 
-      if (os && !os.cotizacion_id && !os.monto_factura && os.oportunidad_id) {
-        // Buscar cotización vinculada a la oportunidad
-        const { data: cotData } = await supabaseAdmin
+      if (os && (!os.monto_factura || os.monto_factura === 0) && os.cotizacion_id) {
+        const { data: cot } = await supabaseAdmin
           .from('cotizaciones')
-          .select('id')
-          .eq('oportunidad_id', os.oportunidad_id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (cotData?.id) {
-          update.cotizacion_id = cotData.id;
-        }
+          .select('total_mxn')
+          .eq('id', os.cotizacion_id)
+          .single();
+        if (cot?.total_mxn) update.monto_factura = cot.total_mxn;
       }
+    } else if (nuevoEstado === 'pagado') {
+      update.estado_facturacion = 'pagada';
+      update.archivada = true;
     }
 
     const { error } = await supabaseAdmin.from('ordenes_servicio').update(update).eq('id', id);

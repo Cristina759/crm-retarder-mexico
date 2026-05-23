@@ -5,7 +5,7 @@ import {
   Settings, Users, BookOpen, Wrench, Plus, Pencil, Trash2,
   X, Check, Loader2, AlertCircle, ChevronDown, Package,
   Building2, Mail, Shield, RefreshCw, FileText, Upload,
-  Download, ChevronRight, FolderOpen, Eye,
+  Download, ChevronRight, FolderOpen,
 } from 'lucide-react';
 import {
   obtenerManoDeObraCompleto, crearManoDeObra, actualizarManoDeObra, eliminarManoDeObra,
@@ -315,7 +315,6 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ url: string; tipo: string; nombre: string } | null>(null);
   const fileRef               = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -350,20 +349,6 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
     const { url, error: err } = await getDocumentoUrl(doc.storage_path);
     if (err || !url) { alert('No se pudo generar el enlace.'); return; }
     window.open(url, '_blank');
-  };
-
-  const handlePreview = async (doc: DocumentoRow) => {
-    const { url, error: err } = await getDocumentoUrl(doc.storage_path);
-    if (err || !url) { alert('No se pudo generar el enlace.'); return; }
-
-    const tipo = doc.tipo?.toUpperCase() || '';
-    const isPreviewable = ['PDF', 'JPG', 'JPEG', 'PNG', 'WEBP'].includes(tipo);
-
-    if (isPreviewable) {
-      setPreview({ url, tipo, nombre: doc.nombre });
-    } else {
-      window.open(url, '_blank');
-    }
   };
 
   const fmtSize = (bytes: number | null) => {
@@ -446,16 +431,9 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => handlePreview(doc)}
-                      className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors"
-                      title="Visualizar"
-                    >
-                      <Eye size={13} />
-                    </button>
-                    <button
                       onClick={() => handleDownload(doc)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
-                      title="Descargar"
+                      className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-400 transition-colors"
+                      title="Descargar / Ver"
                     >
                       <Download size={13} />
                     </button>
@@ -479,41 +457,6 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
             Cerrar
           </button>
         </div>
-
-        {/* Modal de Preview */}
-        {preview && (
-          <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col p-4 md:p-10">
-            <div className="flex items-center justify-between mb-4 text-white">
-              <div className="min-w-0">
-                <p className="text-sm font-bold truncate">{preview.nombre}</p>
-                <p className="text-[11px] text-gray-400 uppercase">{preview.tipo}</p>
-              </div>
-              <button
-                onClick={() => setPreview(null)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div className="flex-1 bg-white rounded-xl overflow-hidden relative">
-              {preview.tipo === 'PDF' ? (
-                <iframe
-                  src={preview.url}
-                  className="w-full h-full border-none"
-                  title="PDF Preview"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center p-4">
-                  <img
-                    src={preview.url}
-                    alt={preview.nombre}
-                    className="max-w-full max-h-full object-contain shadow-2xl"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -704,6 +647,31 @@ function TabUsuarios() {
 
 // ── Tab: General ──────────────────────────────────────────────────────────────
 function TabGeneral() {
+  const [tc, setTc]           = useState('');
+  const [tcGuardado, setTcGuardado] = useState<string | null>(null);
+  const [saved, setSaved]     = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('tc_usd_mxn_override');
+    if (stored) { setTc(stored); setTcGuardado(stored); }
+  }, []);
+
+  const handleSaveTC = () => {
+    const val = parseFloat(tc);
+    if (!val || val <= 0) return;
+    localStorage.setItem('tc_usd_mxn_override', String(val));
+    localStorage.setItem('tc_usd_mxn_override_ts', Date.now().toString());
+    setTcGuardado(String(val));
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleResetTC = () => {
+    localStorage.removeItem('tc_usd_mxn_override');
+    localStorage.removeItem('tc_usd_mxn_override_ts');
+    setTc(''); setTcGuardado(null);
+  };
+
   return (
     <div className="space-y-5 max-w-xl">
       {/* Empresa */}
@@ -725,6 +693,54 @@ function TabGeneral() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Tipo de cambio */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <RefreshCw size={16} className="text-[#0f2d55]" />
+          <h3 className="text-sm font-black text-[#0f2d55]">Tipo de cambio USD/MXN</h3>
+        </div>
+        <p className="text-[11px] text-gray-400 mb-4">
+          Sobreescribe el TC automático que usan los cotizadores. Se guarda localmente en este navegador.
+        </p>
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-mono">$</span>
+            <input
+              type="number"
+              value={tc}
+              onChange={e => setTc(e.target.value)}
+              placeholder="Ej. 17.50"
+              className="w-full border border-gray-200 rounded-xl pl-7 pr-14 h-10 text-sm outline-none focus:border-yellow-400"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">MXN</span>
+          </div>
+          <button
+            onClick={handleSaveTC}
+            disabled={!tc || parseFloat(tc) <= 0}
+            className={`h-10 px-4 rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2 ${
+              saved ? 'bg-green-500 text-white' : 'bg-[#0f2d55] hover:bg-[#1a3d6e] text-white'
+            }`}
+          >
+            {saved ? <Check size={14} /> : null}
+            {saved ? 'Guardado' : 'Aplicar'}
+          </button>
+          {tcGuardado && (
+            <button
+              onClick={handleResetTC}
+              className="h-10 px-3 rounded-xl text-sm text-gray-500 border border-gray-200 hover:bg-gray-50 transition-colors"
+              title="Restaurar TC automático"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        {tcGuardado && (
+          <p className="text-[11px] text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mt-3">
+            TC manual activo: <strong>${parseFloat(tcGuardado).toFixed(2)} MXN</strong> por USD
+          </p>
+        )}
       </div>
 
       {/* Roles info */}

@@ -15,8 +15,9 @@ import {
   type DragEndEvent
 } from '@dnd-kit/core';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Loader2, AlertCircle, ClipboardList, Lock, History, GripVertical } from 'lucide-react';
+import { Loader2, AlertCircle, ClipboardList, Lock, History, GripVertical, X, FileText } from 'lucide-react';
 import { obtenerOrdenes, obtenerOrdenesArchivadas, actualizarEstadoOS } from '@/app/actions/ordenes';
+import { actualizarFactura } from '@/app/actions/facturacion';
 import type { OSRow, OSEstado } from '@/app/actions/types';
 
 // ── Configuración del pipeline ────────────────────────────────────────────────
@@ -36,6 +37,7 @@ const FASES = [
 ];
 
 const COLUMNAS: { id: OSEstado; label: string; fase: number; dot: string }[] = [
+  { id: 'solicitud_recibida',      label: 'Solicitud Recibida',     fase: 1, dot: 'bg-slate-400'  },
   { id: 'tecnico_asignado',        label: 'Asignación de Técnico',  fase: 1, dot: 'bg-blue-400'   },
   { id: 'servicio_programado',     label: 'Servicio Programado',    fase: 1, dot: 'bg-blue-500'   },
   { id: 'documentacion_enviada',   label: 'Documentación Enviada',  fase: 1, dot: 'bg-blue-500'   },
@@ -185,6 +187,10 @@ export default function OrdenesServicioPage() {
   const [vistaHistorial, setVistaHistorial] = useState(false);
   const [faseFilter, setFaseFilter] = useState<number | null>(null);
   const [activeId,   setActiveId]   = useState<string | null>(null);
+  const [modalFactura, setModalFactura] = useState<{ os: OSRow } | null>(null);
+  const [montoFactura, setMontoFactura] = useState('');
+  const [numFactura,   setNumFactura]   = useState('');
+  const [guardandoF,   setGuardandoF]   = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -262,6 +268,14 @@ export default function OrdenesServicioPage() {
     }
 
 
+    // Si pasa a facturado, pedir monto primero
+    if (nuevoEstado === 'facturado') {
+      setMontoFactura('');
+      setNumFactura('');
+      setModalFactura({ os });
+      return;
+    }
+
     // Actualización optimista
     setOrdenes(prev => prev.map(o => o.id === os.id ? { ...o, estado: nuevoEstado } : o));
 
@@ -278,6 +292,30 @@ export default function OrdenesServicioPage() {
     if (nuevoEstado === 'pagado') {
       cargar();
     }
+  };
+
+  const confirmarFactura = async () => {
+    if (!modalFactura) return;
+    const monto = parseFloat(montoFactura);
+    if (!monto || monto <= 0) { alert('Captura un monto válido mayor a $0'); return; }
+
+    setGuardandoF(true);
+    const { os } = modalFactura;
+
+    // 1. Cambiar estado OS
+    const { error: err } = await actualizarEstadoOS(os.id, 'facturado');
+    if (err) { alert('Error: ' + err); setGuardandoF(false); return; }
+
+    // 2. Guardar monto y folio de factura
+    await actualizarFactura(os.id, {
+      monto_factura:     monto,
+      numero_factura:    numFactura.trim() || null,
+      estado_facturacion: 'facturada',
+    });
+
+    setOrdenes(prev => prev.map(o => o.id === os.id ? { ...o, estado: 'facturado' } : o));
+    setModalFactura(null);
+    setGuardandoF(false);
   };
 
   if (loading) return (
@@ -428,6 +466,65 @@ export default function OrdenesServicioPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Modal captura de factura ── */}
+      {modalFactura && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => setModalFactura(null)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-5"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText size={18} className="text-orange-600" />
+                <h2 className="text-base font-black text-gray-900">Capturar Factura</h2>
+              </div>
+              <button onClick={() => setModalFactura(null)} className="p-1.5 rounded-xl hover:bg-gray-100">
+                <X size={16} className="text-gray-400" />
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">
+              OS: <span className="font-bold text-gray-800">{modalFactura.os.numero_os_manual || modalFactura.os.numero}</span>
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-1">
+                  Monto Factura (MXN) *
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={montoFactura}
+                  onChange={e => setMontoFactura(e.target.value)}
+                  placeholder="0.00"
+                  autoFocus
+                  className="w-full border border-gray-200 rounded-2xl px-4 h-11 text-sm outline-none focus:border-orange-400 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-1">
+                  Folio / Número de Factura
+                </label>
+                <input
+                  type="text"
+                  value={numFactura}
+                  onChange={e => setNumFactura(e.target.value)}
+                  placeholder="Ej. F-1234 (opcional)"
+                  className="w-full border border-gray-200 rounded-2xl px-4 h-11 text-sm outline-none focus:border-orange-400 transition-colors"
+                />
+              </div>
+            </div>
+            <button
+              onClick={confirmarFactura}
+              disabled={guardandoF || !montoFactura || parseFloat(montoFactura) <= 0}
+              className="w-full h-11 bg-orange-600 text-white rounded-2xl font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-orange-700 transition-colors"
+            >
+              {guardandoF ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />}
+              {guardandoF ? 'Guardando...' : 'Confirmar y mover a Facturado'}
+            </button>
+          </div>
         </div>
       )}
     </div>
