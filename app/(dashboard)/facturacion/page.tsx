@@ -1,4 +1,4 @@
-'use client';
+  'use client';
 // Version: 2.0.0 - Aritmética de centavos (integer money)
 
 
@@ -267,7 +267,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
           </button>
 
 
-          {row.estado_facturacion !== 'cancelado' && (
+          {(row.estado_facturacion as string) !== 'cancelado' && (
             <button
               onClick={(e) => { e.stopPropagation(); handleCancelFactura(); }}
               disabled={canceling}
