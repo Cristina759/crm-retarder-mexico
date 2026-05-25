@@ -166,10 +166,11 @@ export async function obtenerResumenFacturacion(): Promise<{
       const abonadoCents = Math.round(totalAbonado * 100);
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
-        // Pagada sin abonos: contar monto neto (bruto − NC por OS) para no exceder el neto facturado
+        // Pagada sin abonos: asumir cobro completo al monto neto
         totalCobradoCents += montoNetoCents;
       } else {
-        totalCobradoCents += abonadoCents;
+        // Abonos: capear al monto neto para que cobrado nunca exceda lo facturado neto
+        totalCobradoCents += Math.min(abonadoCents, montoNetoCents);
       }
 
       const st = r.estado_facturacion ?? '';
@@ -182,8 +183,9 @@ export async function obtenerResumenFacturacion(): Promise<{
     ) / 100;
 
     const totalFacturado     = totalFacturadoCents / 100;
-    const totalCobrado       = totalCobradoCents   / 100;
     const totalNetoFacturado = (Math.round(totalFacturado * 100) - Math.round(totalNotasCredito * 100)) / 100;
+    // Cobrado nunca puede exceder el neto facturado (NCs globales sin os_id también lo limitan)
+    const totalCobrado       = Math.min(totalCobradoCents / 100, totalNetoFacturado);
     const totalPendiente     = Math.max(0, (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100);
 
     return {
