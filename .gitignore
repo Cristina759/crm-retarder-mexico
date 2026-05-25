@@ -58,3 +58,4 @@ scratch/
 
 # claude code worktree checkouts
 .claude/worktrees/
+.claude/settings.local.json
