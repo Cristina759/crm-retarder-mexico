@@ -449,12 +449,12 @@ export default function FacturacionPage() {
               <tr><td colSpan={8} className="text-center py-16 text-gray-400 text-sm">Sin facturas registradas</td></tr>
             ) : [...rows]
                 .sort((a, b) => {
-                  const numOf = (s: string | null) => { const m = s?.match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : -1; };
-                  const diff = numOf(b.numero_factura) - numOf(a.numero_factura);
+                  const numOf = (s: string | null) => { const m = s?.match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : Infinity; };
+                  const diff = numOf(a.numero_factura) - numOf(b.numero_factura);
                   if (diff !== 0) return diff;
                   if (!a.numero_factura) return 1;
                   if (!b.numero_factura) return -1;
-                  return b.numero_factura.localeCompare(a.numero_factura);
+                  return a.numero_factura.localeCompare(b.numero_factura);
                 })
                 .map(r => (
                   <FilaFactura key={r.id} row={r} clientes={clientes} onUpdated={handleUpdated} onDeleted={handleDeleted} />
