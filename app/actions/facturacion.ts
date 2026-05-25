@@ -28,14 +28,31 @@ export interface FacturaRow {
 // ── obtenerFacturas ───────────────────────────────────────────────────────────
 export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: string | null }> {
   try {
-    const { data: rows, error } = await supabaseAdmin
-      .from('ordenes_servicio')
-      .select('id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, estado, created_at, empresa_id, cotizacion_id, abonos')
-      .or('estado.in.(facturado,pagado),estado_facturacion.eq.cancelado')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const selectFields = 'id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, estado, created_at, empresa_id, cotizacion_id, abonos';
 
-    if (error) return { data: [], error: error.message };
+    const [{ data: rowsActivas, error: err1 }, { data: rowsCanceladas, error: err2 }] = await Promise.all([
+      supabaseAdmin
+        .from('ordenes_servicio')
+        .select(selectFields)
+        .in('estado', ['facturado', 'pagado'])
+        .order('created_at', { ascending: false })
+        .limit(200),
+      supabaseAdmin
+        .from('ordenes_servicio')
+        .select(selectFields)
+        .eq('estado_facturacion', 'cancelado')
+        .order('created_at', { ascending: false })
+        .limit(100),
+    ]);
+
+    if (err1) return { data: [], error: err1.message };
+
+    // Merge deduplicado por id
+    const seen = new Set<string>();
+    const rows: typeof rowsActivas = [];
+    for (const r of [...(rowsActivas ?? []), ...(rowsCanceladas ?? [])]) {
+      if (r && !seen.has(r.id)) { seen.add(r.id); rows.push(r); }
+    }
 
     const empresaIds = Array.from(new Set((rows ?? []).map(r => r.empresa_id).filter(Boolean)));
     const { data: empresas } = await supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds);
