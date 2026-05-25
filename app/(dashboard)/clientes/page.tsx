@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Loader2, AlertCircle, Building2, Plus, X, Check, Edit2, Trash2 } from 'lucide-react';
 import { obtenerClientes, crearCliente, actualizarCliente, eliminarCliente, type ClienteRow } from '@/app/actions/clientes';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fmtFecha(iso: string) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });

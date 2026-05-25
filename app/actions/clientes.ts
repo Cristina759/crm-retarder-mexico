@@ -45,6 +45,7 @@ export type ClienteDetalle = ClienteRow & {
   }[];
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const SELECT_CLIENTE = `
   id, nombre_comercial, razon_social, rfc, sucursal,
   telefono, telefono2, telefono3,

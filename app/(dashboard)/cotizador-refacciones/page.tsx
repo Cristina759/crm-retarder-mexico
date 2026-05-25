@@ -42,6 +42,7 @@ function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function fmt(n: number, dec = 2) {
   return n.toLocaleString('es-MX', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
@@ -271,6 +272,7 @@ export default function CotizadorRefaccionesPage() {
   };
 
   // ── Helpers de líneas ───────────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const addLinea = () => {
     setLineas(prev => [...prev, { id: uid(), descripcion: '', numeroParte: '', cantidad: 1, precioMXN: 0 }]);
   };

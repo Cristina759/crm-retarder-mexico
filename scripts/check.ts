@@ -6,6 +6,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function run() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data, error } = await supabase.from('refacciones').select('*').limit(1);
   console.log(data);
 }

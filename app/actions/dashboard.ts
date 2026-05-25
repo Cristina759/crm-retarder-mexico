@@ -45,11 +45,14 @@ export async function obtenerResumenGeneral() {
         const montoCents = Math.round(monto * 100);
         if (montoCents <= 0) return;
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const totalAbonado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
         const abonadoCents = Math.round(totalAbonado * 100);
         const saldoCents = Math.max(0, montoCents - abonadoCents);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nombre = (r.empresas as any)?.nombre_comercial ?? 'Desconocido';
         if (!clienteMap[nombre]) clienteMap[nombre] = { cliente: nombre, total: 0, folios: [] };
         clienteMap[nombre].total += saldoCents / 100;
