@@ -96,7 +96,6 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
       .from('oportunidades')
       .insert({
         empresa_id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tipo:         input.tipo.split('-')[0] as any,
         titulo:       `Cotización ${input.tipo} — ${input.empresa_nombre}`,
         estado:       'cotizacion_enviada',
@@ -136,7 +135,6 @@ export async function crearCotizacion(input: CrearCotizacionInput): Promise<{
 
     console.log('[crearCotizacion] creada:', cotData.folio ?? cotData.id);
     return { data: { id: cotData.id, folio: cotData.folio ?? '' }, error: null };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     console.error('[crearCotizacion] EXCEPCIÓN:', err);
     return { data: null, error: err.message ?? 'Error inesperado en el servidor' };

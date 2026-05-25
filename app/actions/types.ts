@@ -88,9 +88,7 @@ export interface OSRow {
   fecha_tentativa: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fotos_antes: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fotos_despues: any;
   firma_tecnico: string | null;
   firma_cliente: string | null;
@@ -107,7 +105,6 @@ export interface OSRow {
   monto_factura: number | null;
   concepto_factura: string | null;
   fecha_vencimiento: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   abonos: any[];
   created_at: string;
   updated_at: string;

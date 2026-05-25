@@ -69,7 +69,6 @@ export async function crearOportunidad(input: CrearOportunidadInput) {
       .insert({
         empresa_id: input.empresa_id,
         titulo: input.titulo,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         estado: (input.estado || 'lead') as any,
         probabilidad: input.probabilidad || 50,
         monto_estimado: input.monto_estimado || 0,

@@ -427,9 +427,7 @@ export default function CotizadorServiciosPage() {
   const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
   const [todosLosClientes, setTodosLosClientes] = useState<EmpresaBusquedaResult[]>([]);
   const [mostrarTodos, setMostrarTodos] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [rfc, setRfc] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [direccion, setDireccion] = useState('');
   const [emailCliente, setEmailCliente] = useState('');
   const [sucursal, setSucursal] = useState('');

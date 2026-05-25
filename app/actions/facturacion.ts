@@ -71,9 +71,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       finalMonto = Math.max(0, finalMonto - Math.abs(montoNC));
 
       // Abonos y Saldo
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let total_pagado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
       
       // Si está pagada pero no tiene abonos (factura vieja), asumimos cobro total
@@ -132,7 +130,7 @@ export async function obtenerResumenFacturacion(): Promise<{
     ]);
 
     if (errFacts || errNcs) {
-      return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
+      return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
     }
 
     // Cargar totales de cotizaciones vinculadas (fallback)
@@ -158,9 +156,7 @@ export async function obtenerResumenFacturacion(): Promise<{
 
       // Suma primero en decimal, redondea UNA sola vez por factura
       // (igual que obtenerFacturas) — evita acumulación de centavos extra
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const totalAbonado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
       const abonadoCents = Math.round(totalAbonado * 100);
 
@@ -204,7 +200,6 @@ export async function obtenerResumenFacturacion(): Promise<{
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function actualizarFactura(id: string, datos: any) {
   const { error } = await supabaseAdmin.from('ordenes_servicio').update(datos).eq('id', id);
   return { error: error?.message ?? null };
@@ -218,7 +213,6 @@ export async function registrarPago(id: string, pago: { monto: number, fecha: st
     const { data: os } = await supabaseAdmin.from('ordenes_servicio').select('abonos, monto_factura, cotizacion_id').eq('id', id).single();
     if (!os) return { error: 'No se encontró la orden' };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const abonos = (os.abonos as any[] | null) || [];
     const nuevosAbonos = [...abonos, { ...pago, id: Date.now().toString() }];
     
@@ -240,7 +234,6 @@ export async function registrarPago(id: string, pago: { monto: number, fecha: st
     const { error } = await supabaseAdmin.from('ordenes_servicio').update({
       abonos: nuevosAbonos,
       estado_facturacion: nuevoEstado
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any).eq('id', id);
 
     return { error: error?.message ?? null };
@@ -331,7 +324,6 @@ export async function buscarFacturasParaNC(query: string) {
     .not('numero_factura', 'is', null)
     .limit(10);
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((r: any) => ({
     id: r.id,
     numero_factura: r.numero_factura,

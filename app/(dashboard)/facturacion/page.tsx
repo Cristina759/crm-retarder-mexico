@@ -3,7 +3,6 @@
 
 
 import { useEffect, useState } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, crearNotaCredito, type FacturaRow } from '@/app/actions/facturacion';
 
@@ -39,7 +38,6 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
   const [vencimiento, setVenc]      = useState(row.fecha_vencimiento?.slice(0, 10) ?? '');
   const [estado, setEstado]         = useState<string>(row.estado_facturacion ?? 'pendiente');
   const [saving, setSaving]         = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [deleting, setDeleting]     = useState(false);
 
   const handleSave = async () => {
@@ -57,7 +55,6 @@ function FilaFactura({ row, onUpdated, onDeleted }: { row: FacturaRow; onUpdated
       monto_factura:     monto    ? parseFloat(monto) : null,
       concepto_factura:  concepto || null,
       fecha_vencimiento: vencimiento || null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       estado_facturacion: estado as any,
     });
     setSaving(false);

@@ -31,7 +31,6 @@ export async function obtenerOrdenes(): Promise<{ data: OSRow[]; error: string |
     }));
 
     return { data: result as unknown as OSRow[], error: null };
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) { return { data: [], error: 'Error de carga rápida' }; }
 }
 
@@ -65,8 +64,7 @@ export async function crearOrdenServicio(input: {
 export async function actualizarEstadoOS(id: string, nuevoEstado: OSEstado): Promise<{ error: string | null }> {
   try {
     const nuevaFase = OS_FASE[nuevoEstado];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const update: any = { estado: nuevoEstado, fase: nuevaFase };
+    let update: any = { estado: nuevoEstado, fase: nuevaFase };
 
     if (nuevoEstado === 'facturado') {
       update.estado_facturacion = 'facturada';
@@ -114,7 +112,6 @@ export async function asignarTecnicoOS(id: string, tecnico_id: string) {
   const { error } = await supabaseAdmin.from('ordenes_servicio').update({ tecnico_id }).eq('id', id);
   return { error: error?.message ?? null };
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function guardarDatosOS(id: string, datos: any) {
   const { error } = await supabaseAdmin.from('ordenes_servicio').update(datos).eq('id', id);
   return { error: error?.message ?? null };

@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  FunnelChart, Funnel, LabelList,
 } from 'recharts';
 import {
-  Loader2, TrendingUp, Building2, DollarSign,
+  Loader2, TrendingUp, ClipboardCheck, Building2, DollarSign,
   Receipt, Target, Megaphone, BarChart3, Users, CheckCircle2,
-  Percent, ArrowUpRight, Printer
+  XCircle, Percent, ArrowUpRight, Printer
 } from 'lucide-react';
 
 import {
@@ -91,13 +92,11 @@ function KPICard({
 }
 
 // ── Custom Tooltip ────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-xl shadow-lg px-3 py-2 text-xs">
       <p className="font-bold text-gray-700 mb-1">{label}</p>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {payload.map((p: any, i: number) => (
         <p key={i} style={{ color: p.color }} className="font-medium">
           {p.name}: {typeof p.value === 'number' && p.value > 999 ? fmtMXN(p.value) : p.value}
@@ -109,9 +108,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 // ── Tab: General ──────────────────────────────────────────────────────────────
 function TabGeneral() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data,   setData]   = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [osData, setOsData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -143,7 +140,6 @@ function TabGeneral() {
             </span>
           </div>
           <div className="space-y-3">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {data.pendientesPorCliente.map((c: any) => (
               <div key={c.cliente} className="flex items-start justify-between gap-4 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
                 <div className="flex-1 min-w-0">
@@ -212,7 +208,6 @@ function TabGeneral() {
 
 // ── Tab: Ventas ───────────────────────────────────────────────────────────────
 function TabVentas() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
 
   useEffect(() => { obtenerResumenVentas().then(setData); }, []);
@@ -233,7 +228,6 @@ function TabVentas() {
         {/* Ventas por mes — area chart */}
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 p-5">
           <p className="text-sm font-black text-[#0f2d55] mb-4">Ventas por Mes (últimos 6 meses)</p>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {data.meses.every((m: any) => m.monto === 0) ? (
             <div className="flex items-center justify-center h-48 text-gray-300 text-sm">Sin datos de ventas aún</div>
           ) : (
@@ -264,7 +258,6 @@ function TabVentas() {
                 data={[
                   { name: 'Ganadas',  value: data.ganadas  || 0 },
                   { name: 'Perdidas', value: data.perdidas || 0 },
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   { name: 'Activas',  value: data.porEstado.reduce((s: number, e: any) => s + e.count, 0) },
                 ]}
                 cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value"
@@ -283,7 +276,6 @@ function TabVentas() {
       {/* Funnel oportunidades */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
         <p className="text-sm font-black text-[#0f2d55] mb-4">Funnel de Oportunidades</p>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {data.porEstado.every((e: any) => e.count === 0) ? (
           <div className="flex items-center justify-center h-36 text-gray-300 text-sm">Sin oportunidades registradas</div>
         ) : (
@@ -294,7 +286,6 @@ function TabVentas() {
               <YAxis type="category" dataKey="estado" tick={{ fontSize: 11, fill: '#374151' }} axisLine={false} tickLine={false} width={80} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" name="Oportunidades" radius={[0, 6, 6, 0]}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {data.porEstado.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Bar>
             </BarChart>
@@ -307,7 +298,6 @@ function TabVentas() {
 
 // ── Tab: Marketing ────────────────────────────────────────────────────────────
 function TabMarketing() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
 
   useEffect(() => { obtenerResumenMarketing().then(setData); }, []);
@@ -364,7 +354,6 @@ function TabMarketing() {
               <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="leads" name="Leads" radius={[6, 6, 0, 0]}>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {canales.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Bar>
             </BarChart>

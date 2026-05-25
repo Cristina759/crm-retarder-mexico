@@ -259,7 +259,6 @@ export default function OportunidadesPage() {
       } else {
         setOportunidades(data || []);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setFetchError(err.message || 'Error desconocido al cargar');
     } finally {

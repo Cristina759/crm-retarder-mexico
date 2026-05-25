@@ -1,16 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, Building2, BarChart3 } from 'lucide-react';
+import { Loader2, TrendingUp, DollarSign, Receipt, Building2, BarChart3, PieChart } from 'lucide-react';
 import { obtenerResumenGeneral } from '@/app/actions/dashboard';
-
-interface ResumenData {
-  totalNetoFacturado: number;
-  totalNetoPagado: number;
-  totalPendiente: number;
-  pendientesPorCliente: { cliente: string; total: number }[];
-  empresas: number;
-}
 
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '$0.00';
@@ -18,7 +10,7 @@ function fmtMXN(n: number | null | undefined) {
 }
 
 export default function ReporteGeneralPage() {
-  const [data, setData] = useState<ResumenData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +19,7 @@ export default function ReporteGeneralPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading || !data) return (
+  if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-[#0f2d55]">
       <Loader2 className="w-10 h-10 animate-spin" />
       <p className="text-sm font-black uppercase tracking-widest animate-pulse text-gray-500">Consolidando Reporte Ejecutivo...</p>
@@ -84,7 +76,7 @@ export default function ReporteGeneralPage() {
               </tr>
             </thead>
             <tbody>
-              {data.pendientesPorCliente.slice(0, 8).map((c: { cliente: string; total: number }) => (
+              {data.pendientesPorCliente.slice(0, 8).map((c: any) => (
                 <tr key={c.cliente} className="border-t border-gray-50">
                   <td className="px-4 py-3 text-xs font-bold text-gray-700">{c.cliente}</td>
                   <td className="px-4 py-3 text-right text-xs font-black text-red-500">{fmtMXN(c.total)}</td>

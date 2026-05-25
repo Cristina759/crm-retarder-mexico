@@ -140,7 +140,7 @@ function OSCard({ os, onClick, esAdmin, overlay = false }: { os: OSRow; onClick:
 }
 
 // ── Columna Droppable ──────────────────────────────────────────────────────────
-function Columna({ col, ordenes, onClick, esAdmin }: { col: { id: string; label: string; dot: string }; ordenes: OSRow[]; onClick: (id: string) => void; esAdmin: boolean }) {
+function Columna({ col, ordenes, onClick, esAdmin }: { col: any; ordenes: OSRow[]; onClick: (id: string) => void; esAdmin: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
 
   return (
@@ -401,7 +401,7 @@ export default function OrdenesServicioPage() {
         >
           <div className="overflow-x-auto flex-1 -mx-4 px-4">
             <div className="flex gap-0 min-w-max">
-              {FASES.filter(f => !faseFilter || f.id === faseFilter).map((fase) => {
+              {FASES.filter(f => !faseFilter || f.id === faseFilter).map((fase, fi) => {
                 const cols = columnasFiltradas.filter(c => c.fase === fase.id);
                 if (cols.length === 0) return null;
                 return (

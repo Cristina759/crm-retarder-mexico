@@ -29,7 +29,6 @@ export async function crearUsuario(datos: {
   const { error } = await supabaseAdmin.from('usuarios').insert({
     nombre: datos.nombre,
     email: datos.email,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rol: datos.rol as any,
   });
   return { error: error?.message ?? null };
@@ -44,7 +43,6 @@ export async function actualizarUsuario(
     .update({
       ...(datos.nombre !== undefined && { nombre: datos.nombre }),
       ...(datos.email  !== undefined && { email:  datos.email  }),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...(datos.rol   !== undefined && { rol:   datos.rol as any }),
     })
     .eq('id', id);

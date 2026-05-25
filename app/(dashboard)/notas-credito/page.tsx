@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Loader2, AlertCircle, FileMinus, Plus, Trash2, X, Check, Search, ChevronDown } from 'lucide-react';
 import { obtenerNotasCredito, crearNotaCredito, eliminarNotaCredito, buscarFacturasParaNC, type NotaCreditoRow } from '@/app/actions/facturacion';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 
 
@@ -29,10 +27,8 @@ export default function NotasCreditoPage() {
   const [guardando,   setGuardando]   = useState(false);
 
   // Invoice/Factura Search
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [facturaSel, setFacturaSel] = useState<any>(null);
   const [queryFactura, setQueryFactura] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [sugerenciasFactura, setSugerenciasFactura] = useState<any[]>([]);
   const [buscandoFactura, setBuscandoFactura] = useState(false);
 

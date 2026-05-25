@@ -4,23 +4,13 @@ import { useEffect, useState } from 'react';
 import { Loader2, TrendingUp, DollarSign, Target, CheckCircle2, Percent } from 'lucide-react';
 import { obtenerResumenVentas } from '@/app/actions/dashboard';
 
-interface VentasData {
-  total: number;
-  tasaCierre: number;
-  ticketPromedio: number;
-  ganadas: number;
-  perdidas: number;
-  meses: { mes: string; monto: number }[];
-  porEstado: { estado: string; count: number }[];
-}
-
 function fmtMXN(n: number | null | undefined) {
   if (n === null || n === undefined) return '$0.00';
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(n);
 }
 
 export default function ReporteVentasPage() {
-  const [data, setData] = useState<VentasData | null>(null);
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +19,7 @@ export default function ReporteVentasPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading || !data) return (
+  if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-[#0f2d55]">
       <Loader2 className="w-10 h-10 animate-spin" />
       <p className="text-sm font-black uppercase tracking-widest animate-pulse">Analizando Datos Comerciales...</p>
@@ -81,7 +71,7 @@ export default function ReporteVentasPage() {
           <div className="w-2 h-4 bg-yellow-400" /> Desempeño Mensual (Último Semestre)
         </h3>
         <div className="grid grid-cols-6 gap-4">
-          {data.meses.map((m: { mes: string; monto: number }) => (
+          {data.meses.map((m: any) => (
             <div key={m.mes} className="flex flex-col items-center">
               <div className="w-full bg-gray-100 rounded-lg relative overflow-hidden mb-2" style={{ height: '100px' }}>
                 <div 
@@ -103,7 +93,7 @@ export default function ReporteVentasPage() {
         </h3>
         <div className="grid grid-cols-2 gap-10">
           <div className="space-y-3">
-            {data.porEstado.map((e: { estado: string; count: number }) => (
+            {data.porEstado.map((e: any) => (
               <div key={e.estado} className="flex items-center justify-between border-b border-gray-100 pb-2">
                 <span className="text-[11px] font-bold text-gray-500 uppercase">{e.estado}</span>
                 <div className="flex items-center gap-3">

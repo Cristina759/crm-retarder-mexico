@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { 
   Loader2, RefreshCw, Check, FileText, Printer, Mail, 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ChevronDown, X, Trash2, Plus, Search, AlertCircle 
 } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
@@ -344,9 +343,7 @@ export default function CotizadorFrenosPage() {
   const [empresaId,    setEmpresaId]    = useState('');
   const [sugerenciasEmpresa, setSugerenciasEmpresa] = useState<EmpresaBusquedaResult[]>([]);
   const [buscandoEmpresa, setBuscandoEmpresa] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [rfc,          setRfc]          = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [direccion,    setDireccion]    = useState('');
   const [emailCliente, setEmailCliente] = useState('');
   const [sucursal,     setSucursal]     = useState('');

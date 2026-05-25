@@ -417,9 +417,7 @@ export default function OSDetallePage() {
   const [numOS,       setNumOS]       = useState('');
   const [numOC,       setNumOC]       = useState('');
   const [numFact,     setNumFact]     = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [montoFact,   setMontoFact]   = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vencFact,    setVencFact]    = useState('');
   const [cotizacion,  setCotizacion]  = useState<CotizacionRow | null>(null);
   const notasTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -832,7 +830,6 @@ export default function OSDetallePage() {
                 value={numFact}
                 onChange={e => setNumFact(e.target.value)}
                 onBlur={() => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const datos: any = { numero_factura: numFact };
                   // Si hay cotización vinculada, ligamos el monto automáticamente
                   if (numFact && cotizacion?.total_mxn) {
