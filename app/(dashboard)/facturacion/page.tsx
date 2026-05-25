@@ -349,7 +349,7 @@ export default function FacturacionPage() {
           const totalFBrutoCents = activas.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
           const totalCBrutoCents = activas.reduce((s, r) => s + toCents(r.total_pagado), 0);
           const totalFCents = totalFBrutoCents - ncCents;
-          const totalCCents = totalCBrutoCents - ncCents;
+          const totalCCents = totalCBrutoCents;
 
           const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
           const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
