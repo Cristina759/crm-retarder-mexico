@@ -444,7 +444,13 @@ export default function OSDetallePage() {
         // Cargar cotización vinculada si existe
         if (data?.cotizacion_id) {
           obtenerCotizacionPorId(data.cotizacion_id).then(({ data: cot }) => {
-            if (cot) setCotizacion(cot);
+            if (cot) {
+              setCotizacion(cot);
+              // Auto-poblar monto si aún no tiene uno capturado
+              if (!data?.monto_factura && cot.total_mxn) {
+                setMontoFact(String(cot.total_mxn));
+              }
+            }
           });
         }
       });
@@ -824,23 +830,33 @@ export default function OSDetallePage() {
             <p className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
               <Receipt size={13} /> Datos de Facturación
             </p>
-            <div className="max-w-xs">
-              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Número de Factura</label>
-              <input
-                value={numFact}
-                onChange={e => setNumFact(e.target.value)}
-                onBlur={() => {
-                  const datos: any = { numero_factura: numFact };
-                  // Si hay cotización vinculada, ligamos el monto automáticamente
-                  if (numFact && cotizacion?.total_mxn) {
-                    datos.monto_factura = cotizacion.total_mxn;
-                  }
-                  guardarDatosOS(os.id, datos);
-                }}
-                placeholder="Ej. B-1234"
-                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
-              />
-
+            <div className="grid grid-cols-2 gap-3 max-w-sm">
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Número de Factura</label>
+                <input
+                  value={numFact}
+                  onChange={e => setNumFact(e.target.value)}
+                  onBlur={() => guardarDatosOS(os.id, { numero_factura: numFact || null })}
+                  placeholder="Ej. B-1234"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Monto Factura (MXN)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={montoFact}
+                  onChange={e => setMontoFact(e.target.value)}
+                  onBlur={() => {
+                    const v = parseFloat(montoFact);
+                    if (!isNaN(v)) guardarDatosOS(os.id, { monto_factura: v });
+                  }}
+                  placeholder="0.00"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
             </div>
             {numFact && (
               <p className="text-[10px] text-blue-500 bg-blue-50 rounded-lg px-3 py-2 flex items-center gap-2 font-medium">
