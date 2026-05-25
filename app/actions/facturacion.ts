@@ -130,7 +130,7 @@ export async function obtenerResumenFacturacion(): Promise<{
     ]);
 
     if (errFacts || errNcs) {
-      return { totalFacturado: 0, totalCobrado: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
+      return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
     }
 
     // Cargar totales de cotizaciones vinculadas (fallback)

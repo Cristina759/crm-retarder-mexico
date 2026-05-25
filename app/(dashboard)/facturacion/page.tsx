@@ -342,7 +342,7 @@ export default function FacturacionPage() {
           else setClientes(cData || []);
 
           // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS (excluir canceladas)
-          const activas = fData.filter(r => r.estado_facturacion !== 'cancelado');
+          const activas = fData.filter(r => (r.estado_facturacion as string) !== 'cancelado');
           const ncCents = toCents(rData.totalNotasCredito || 0);
 
           // Restar notas de crédito del facturado y del cobrado
