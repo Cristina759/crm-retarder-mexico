@@ -30,17 +30,21 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   try {
     const selectFields = 'id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, estado, created_at, empresa_id, cotizacion_id, abonos';
 
-    const [{ data: rowsActivas, error: err1 }, { data: rowsCanceladas, error: err2 }] = await Promise.all([
-      supabaseAdmin
-        .from('ordenes_servicio')
-        .select(selectFields)
+    const [{ data: rowsActivas, error: err1 }, { data: rowsCancelFact }, { data: rowsCancelOS }] = await Promise.all([
+      // OS facturadas/pagadas (flujo normal)
+      supabaseAdmin.from('ordenes_servicio').select(selectFields)
         .in('estado', ['facturado', 'pagado'])
         .order('created_at', { ascending: false })
         .limit(200),
-      supabaseAdmin
-        .from('ordenes_servicio')
-        .select(selectFields)
+      // Canceladas por estado_facturacion
+      supabaseAdmin.from('ordenes_servicio').select(selectFields)
         .eq('estado_facturacion', 'cancelado')
+        .order('created_at', { ascending: false })
+        .limit(100),
+      // OS canceladas (estado principal) que tengan numero_factura asignado
+      supabaseAdmin.from('ordenes_servicio').select(selectFields)
+        .eq('estado', 'cancelado')
+        .not('numero_factura', 'is', null)
         .order('created_at', { ascending: false })
         .limit(100),
     ]);
@@ -50,7 +54,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
     // Merge deduplicado por id
     const seen = new Set<string>();
     const rows: typeof rowsActivas = [];
-    for (const r of [...(rowsActivas ?? []), ...(rowsCanceladas ?? [])]) {
+    for (const r of [...(rowsActivas ?? []), ...(rowsCancelFact ?? []), ...(rowsCancelOS ?? [])]) {
       if (r && !seen.has(r.id)) { seen.add(r.id); rows.push(r); }
     }
 
@@ -79,6 +83,9 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
 
 
     const enriched: FacturaRow[] = (rows ?? []).map(r => {
+      // OS cuyo estado principal es 'cancelado' se tratan igual que estado_facturacion='cancelado'
+      const estadoFact = r.estado_facturacion || (r.estado === 'cancelado' ? 'cancelado' : null);
+
       const cot = cotMap.get(r.cotizacion_id || '');
       let finalMonto = Number(r.monto_factura) || 0;
       if (finalMonto === 0 && cot) finalMonto = Number(cot.total_mxn) || 0;
@@ -87,23 +94,17 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       const montoNC = ncMap.get(r.id) || 0;
       finalMonto = Math.max(0, finalMonto - Math.abs(montoNC));
 
-      // Abonos y Saldo
       // Facturas canceladas se muestran con $0 en todos los montos
-      if (r.estado_facturacion === 'cancelado') {
-        finalMonto = 0;
-      }
+      if (estadoFact === 'cancelado') finalMonto = 0;
 
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      let total_pagado = r.estado_facturacion === 'cancelado'
+      let total_pagado = estadoFact === 'cancelado'
         ? 0
         : abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
 
-      // Si está pagada pero no tiene abonos (factura vieja), asumimos cobro total
-      if (r.estado_facturacion === 'pagada' && total_pagado === 0) {
-        total_pagado = finalMonto;
-      }
+      if (estadoFact === 'pagada' && total_pagado === 0) total_pagado = finalMonto;
 
-      const saldo_pendiente = r.estado_facturacion === 'cancelado' ? 0 : Math.max(0, finalMonto - total_pagado);
+      const saldo_pendiente = estadoFact === 'cancelado' ? 0 : Math.max(0, finalMonto - total_pagado);
 
       // Fallback de Concepto
       let finalConcepto = r.concepto_factura;
@@ -119,7 +120,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
         monto_factura: finalMonto,
         concepto_factura: finalConcepto,
         fecha_vencimiento: r.fecha_vencimiento,
-        estado_facturacion: (r.estado_facturacion as EstadoFacturacion) || null,
+        estado_facturacion: (estadoFact as EstadoFacturacion) || null,
         created_at: r.created_at,
         empresa_id: r.empresa_id ?? null,
         empresa_nombre: empresaMap.get(r.empresa_id) || 'Empresa Desconocida',
