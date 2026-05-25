@@ -16,6 +16,36 @@ import { crearOrdenServicio } from '@/app/actions/ordenes';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const TIPOS = ['frenos', 'refacciones', 'servicios'] as const;
 
+const CHECKLIST_PREVENTIVO_PDF = [
+  { cat: 'SISTEMA MECÁNICO', items: ['Torque a tornillera','Limpieza de panel de conexiones','Placas laterales','Hules y tornillera en general','Revisión cardanes y crucetas'] },
+  { cat: 'SISTEMA ELÉCTRICO', items: ['Palanca control','Foco piloto','Interruptor','Relay de corte','Arneses de control y terminales','Sensor de velocidad','Sistema neumático'] },
+  { cat: 'SISTEMA DE BATERÍAS', items: ['Caja de contactores','Maza y positivo','Block de conexiones'] },
+];
+
+const PRECIO_PREVENTIVO_MXN = 4250;
+
+function numeroALetras(nInput: number): string {
+  const n = Math.round(nInput * 100) / 100;
+  const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const decenas  = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  function menor1000(x: number): string {
+    if (x === 0) return '';
+    if (x === 100) return 'CIEN';
+    if (x < 20) return unidades[x];
+    if (x < 100) { const d = Math.floor(x/10), u = x%10; return u === 0 ? decenas[d] : `${decenas[d]} Y ${unidades[u]}`; }
+    const c = Math.floor(x/100), r = x%100;
+    return r === 0 ? centenas[c] : `${centenas[c]} ${menor1000(r)}`;
+  }
+  const entero = Math.floor(n), cents = Math.round((n-entero)*100);
+  const miles = Math.floor(entero/1000), resto = entero%1000;
+  let letras = '';
+  if (miles === 1) letras = 'MIL'; else if (miles > 1) letras = `${menor1000(miles)} MIL`;
+  if (resto > 0) letras += (letras ? ' ' : '') + menor1000(resto);
+  if (!letras) letras = 'CERO';
+  return `${letras} PESOS ${String(cents).padStart(2,'0')}/100 MXN`;
+}
+
 const ESTADO_CONFIG: Record<string, { label: string; color: string }> = {
   borrador:           { label: 'Borrador',    color: 'bg-gray-100 text-gray-600' },
   enviada:            { label: 'Enviada',     color: 'bg-blue-100 text-blue-700' },
@@ -281,42 +311,195 @@ function ModalDetalleCotizacion({
   const printRef = useRef<HTMLDivElement>(null);
   const estadoConf = ESTADO_CONFIG[cot.estado ?? ''] ?? { label: cot.estado ?? '—', color: 'bg-gray-100 text-gray-600' };
 
-  const handlePrint = () => {
-    const contenido = printRef.current?.innerHTML;
-    if (!contenido) return;
-    const win = window.open('', '_blank', 'width=800,height=900');
+  const handlePrint = async () => {
+    const origin = window.location.origin;
+
+    // Generate QR
+    let qrDataUrl = '';
+    try {
+      const { default: QRCode } = await import('qrcode');
+      qrDataUrl = await QRCode.toDataURL('https://tgrpentarmexico.com/', { width: 100, margin: 1 });
+    } catch { /* skip QR */ }
+
+    // Parse notas
+    const notas = cot.notas ?? '';
+    type ItemsData = { preventivo?: boolean; correctivo?: boolean; unidades?: number; traslado_usd?: number; mano_obra?: { descripcion: string; precio: number }[]; refacciones?: { descripcion: string; precio: number }[] };
+    let itemsData: ItemsData | null = null;
+    let observaciones = '';
+    let tipoServicioLabel = '';
+    let unidadesN = 1;
+
+    if (cot.tipo === 'servicios') {
+      const itemsMatch = notas.match(/ITEMS: (\{[\s\S]*?\})\nOBSERVACIONES:/);
+      if (itemsMatch) { try { itemsData = JSON.parse(itemsMatch[1]); } catch { /* */ } }
+      const obsIdx = notas.indexOf('OBSERVACIONES:\n');
+      observaciones = obsIdx >= 0 ? notas.slice(obsIdx + 15).trim() : '';
+      tipoServicioLabel = notas.match(/^Tipo: (.+)$/m)?.[1] ?? '';
+      unidadesN = parseInt(notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1') || 1;
+    } else {
+      observaciones = notas;
+    }
+
+    const fmtMXN = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    const subtotal = cot.subtotal ?? 0;
+    const iva      = cot.iva ?? 0;
+    const total    = cot.total_mxn ?? 0;
+
+    // Build works column
+    let worksHTML = '';
+    if (itemsData) {
+      if (itemsData.preventivo) {
+        worksHTML += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>Servicio Preventivo (${unidadesN} u.)</span></div>`;
+        for (const c of CHECKLIST_PREVENTIVO_PDF) {
+          worksHTML += `<div class="p-checklist-cat">${c.cat}</div>`;
+          for (const item of c.items) worksHTML += `<div class="p-work-item" style="padding-left:8px"><span class="p-work-bullet">•</span><span>${item}</span></div>`;
+        }
+      }
+      for (const l of (itemsData.mano_obra ?? [])) {
+        if (l.descripcion || l.precio) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Mano de obra — ${l.descripcion || '—'}</span></div>`;
+      }
+      for (const l of (itemsData.refacciones ?? [])) {
+        if (l.descripcion || l.precio) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Refacción — ${l.descripcion || '—'}</span></div>`;
+      }
+      const trasladoMXN = (itemsData.traslado_usd ?? 0) * unidadesN;
+      if (trasladoMXN > 0) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Gastos de traslado</span></div>`;
+    } else {
+      const tipoDisplay = cot.tipo ? cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1) : 'Servicio';
+      worksHTML = `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>${tipoDisplay}</span></div>`;
+    }
+
+    // Build pricing column
+    let pricingHTML = '';
+    if (itemsData) {
+      if (itemsData.preventivo) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">Preventivo × ${unidadesN}</span><span class="p-price-val">${fmtMXN(PRECIO_PREVENTIVO_MXN * unidadesN)}</span></div>`;
+      for (const l of (itemsData.mano_obra ?? [])) {
+        if (l.descripcion || l.precio) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">${l.descripcion || 'Mano de obra'}</span><span class="p-price-val">${fmtMXN(l.precio)}</span></div>`;
+      }
+      for (const l of (itemsData.refacciones ?? [])) {
+        if (l.descripcion || l.precio) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">${l.descripcion || 'Refacción'}</span><span class="p-price-val">${fmtMXN(l.precio)}</span></div>`;
+      }
+      const trasladoMXN = (itemsData.traslado_usd ?? 0) * unidadesN;
+      if (trasladoMXN > 0) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">Traslado × ${unidadesN}</span><span class="p-price-val">${fmtMXN(trasladoMXN)}</span></div>`;
+    }
+    pricingHTML += `<div class="p-totals"><div class="p-total-line"><span>Subtotal</span><span>${fmtMXN(subtotal)}</span></div><div class="p-total-line iva"><span>IVA 16%</span><span>${fmtMXN(iva)}</span></div><div class="p-total-final"><span>TOTAL MXN</span><span>${fmtMXN(total)}</span></div></div>`;
+
+    const clienteNombre = cot.empresas?.nombre_comercial ?? '—';
+    const vendedor = cot.vendedor?.nombre ?? '';
+    const tipoDisplay = cot.tipo ? cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1) : '';
+    const letras = numeroALetras(total);
+
+    const clientBlockRows = [
+      vendedor ? `<div class="p-client-row"><span class="p-client-lbl">Atención a:</span> ${vendedor}</div>` : '',
+      tipoServicioLabel ? `<div class="p-client-row"><span class="p-client-lbl">Tipo de servicio:</span> ${tipoServicioLabel} &nbsp;|&nbsp; Unidades: ${unidadesN}</div>` : tipoDisplay ? `<div class="p-client-row"><span class="p-client-lbl">Tipo:</span> ${tipoDisplay}</div>` : '',
+    ].filter(Boolean).join('');
+
+    const obsSection = observaciones ? `
+      <hr class="p-hr"/>
+      <div class="p-obs-full">
+        <div class="p-section-title">Observaciones técnicas</div>
+        <pre class="p-obs-pre">${observaciones.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+      </div>` : '';
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Cotización ${cot.folio ?? ''}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm 14mm; }
+    body { margin: 0; padding: 0; }
+    .p-doc { font-family: Arial, sans-serif; font-size: 14px; color: #111; padding: 6px 8px; box-sizing: border-box; background: #fff; }
+    .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .p-logo { height: 120px; width: 120px; object-fit: contain; }
+    .p-header-right { text-align: right; }
+    .p-company { font-size: 22px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
+    .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 2px; }
+    .p-fecha-line { font-size: 12px; color: #555; margin-top: 2px; }
+    .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 5px 0; }
+    .p-hr { border: none; border-top: 1px solid #ddd; margin: 5px 0; }
+    .p-client-block { margin: 4px 0; }
+    .p-client-name { font-size: 17px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 3px; }
+    .p-client-row { font-size: 13px; color: #444; margin-bottom: 2px; line-height: 1.4; }
+    .p-client-lbl { font-weight: 700; color: #222; }
+    .p-two-col { display: flex; gap: 24px; margin: 8px 0; }
+    .p-col-works { flex: 2; }
+    .p-col-pricing { flex: 1; min-width: 180px; }
+    .p-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
+    .p-checklist-cat { font-size: 10px; font-weight: 700; color: #0d2244; text-transform: uppercase; margin-bottom: 2px; }
+    .p-work-item { display: flex; gap: 4px; font-size: 13px; margin-bottom: 2px; line-height: 1.4; }
+    .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
+    .p-price-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; gap: 8px; }
+    .p-price-desc { flex: 1; }
+    .p-price-val { font-weight: 600; white-space: nowrap; }
+    .p-totals { border-top: 1.5px solid #ddd; padding-top: 5px; margin-top: 5px; }
+    .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 3px; }
+    .p-total-line.iva { color: #555; }
+    .p-total-final { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
+    .p-letras { font-size: 13px; font-style: italic; color: #444; margin: 6px 0; }
+    .p-obs-full { margin: 8px 0; }
+    .p-obs-pre { font-family: Arial, sans-serif; font-size: 13px; white-space: pre-wrap; color: #333; margin: 4px 0; line-height: 1.6; }
+    .p-footer { border-top: 1px solid #ddd; padding-top: 6px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+    .p-footer-info { flex: 1; font-size: 12px; }
+    .p-footer-name { font-weight: 900; color: #0d2244; font-size: 13px; }
+    .p-footer-detail { color: #555; margin-top: 1px; }
+    .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
+    .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; }
+    .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; }
+  </style>
+</head>
+<body>
+<div class="p-doc">
+  <div class="p-header">
+    <img src="${origin}/logo-retarder.png" alt="Retarder México" class="p-logo" onerror="this.style.display='none'" />
+    <div class="p-header-right">
+      <div class="p-company">RETARDER MÉXICO</div>
+      <div class="p-doc-title">Cotización de Servicios</div>
+      <div class="p-fecha-line">Folio: ${cot.folio ?? '—'} &nbsp;|&nbsp; ${fechaCreacion}</div>
+    </div>
+  </div>
+  <hr class="p-redline"/>
+  <div class="p-client-block">
+    <div class="p-client-name">${clienteNombre}</div>
+    ${clientBlockRows}
+  </div>
+  <hr class="p-hr"/>
+  <div class="p-two-col">
+    <div class="p-col-works">
+      <div class="p-section-title">Incluye los siguientes trabajos</div>
+      ${worksHTML}
+    </div>
+    <div class="p-col-pricing">
+      <div class="p-section-title">Desglose económico</div>
+      ${pricingHTML}
+    </div>
+  </div>
+  <div class="p-letras"><strong>SON: ${letras}</strong></div>
+  ${obsSection}
+  <hr class="p-hr"/>
+  <div class="p-footer">
+    <div class="p-footer-info">
+      <div class="p-footer-name">Ing. Cristina Velasco</div>
+      <div class="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+      <div class="p-footer-web">www.tgrpentarmexico.com</div>
+    </div>
+    <div class="p-footer-logo">
+      <img src="${origin}/logo-pentar.png" alt="Pentar" style="height:50px;width:auto;display:block" onerror="this.style.display='none'" />
+    </div>
+    <div class="p-footer-qr">
+      ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR" style="width:60px;height:60px;display:block"/>` : ''}
+      <div style="font-size:6px;color:#888;text-align:center;margin-top:2px">Escanea para más info</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank', 'width=820,height=1060');
     if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Cotización ${cot.folio}</title>
-          <meta charset="utf-8" />
-          <style>
-            @page { size: A4; margin: 12mm 14mm; }
-            body { font-family: Arial, sans-serif; font-size: 10px; color: #111; margin: 0; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2d55; letter-spacing: 1px; }
-            .folio { font-size: 11px; font-weight: 700; margin-top: 2px; }
-            .fecha { font-size: 9px; color: #555; }
-            hr { border: none; border-top: 1px solid #ccc; margin: 6px 0; }
-            .section { margin: 6px 0; }
-            .label { font-weight: 700; display: inline-block; min-width: 100px; color: #333; }
-            .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; background: #dbeafe; color: #1d4ed8; }
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-            th { background: #0f2d55; color: white; padding: 4px 8px; font-size: 9px; text-transform: uppercase; text-align: left; }
-            td { padding: 4px 8px; border-bottom: 1px solid #eee; }
-            tr:nth-child(even) td { background: #f7f7f7; }
-            .total-row td { background: #fef9e7 !important; font-weight: 900; font-size: 12px; border-top: 2px solid #0f2d55; }
-            .notas { font-size: 8.5px; white-space: pre-wrap; color: #444; line-height: 1.6; margin-top: 6px; }
-          </style>
-        </head>
-        <body>${contenido}</body>
-      </html>
-    `);
+    win.document.write(html);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 400);
+    setTimeout(() => { win.print(); win.close(); }, 500);
   };
 
   const fechaCreacion = new Date(cot.created_at ?? '').toLocaleDateString('es-MX', {

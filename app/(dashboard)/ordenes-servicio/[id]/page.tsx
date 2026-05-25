@@ -446,9 +446,11 @@ export default function OSDetallePage() {
           obtenerCotizacionPorId(data.cotizacion_id).then(({ data: cot }) => {
             if (cot) {
               setCotizacion(cot);
-              // Auto-poblar monto si aún no tiene uno capturado
-              if (!data?.monto_factura && cot.total_mxn) {
+              // Auto-poblar monto si es 0 o null y hay cotización con total
+              const montoVacio = !data?.monto_factura || data.monto_factura === 0;
+              if (montoVacio && cot.total_mxn) {
                 setMontoFact(String(cot.total_mxn));
+                guardarDatosOS(data.id, { monto_factura: cot.total_mxn });
               }
             }
           });
@@ -836,7 +838,15 @@ export default function OSDetallePage() {
                 <input
                   value={numFact}
                   onChange={e => setNumFact(e.target.value)}
-                  onBlur={() => guardarDatosOS(os.id, { numero_factura: numFact || null })}
+                  onBlur={() => {
+                    const updates: Record<string, unknown> = { numero_factura: numFact || null };
+                    const montoVacio = !montoFact || parseFloat(montoFact) === 0;
+                    if (montoVacio && cotizacion?.total_mxn) {
+                      setMontoFact(String(cotizacion.total_mxn));
+                      updates.monto_factura = cotizacion.total_mxn;
+                    }
+                    guardarDatosOS(os.id, updates);
+                  }}
                   placeholder="Ej. B-1234"
                   className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-500 transition-colors"
                 />
