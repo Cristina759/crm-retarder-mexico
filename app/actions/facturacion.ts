@@ -119,23 +119,28 @@ export async function obtenerResumenFacturacion(): Promise<{
   totalNotasCredito: number; error: string | null;
 }> {
   try {
-    // Usamos el mismo filtro que obtenerFacturas para asegurar consistencia total
     const [{ data: facts, error: errFacts }, { data: ncs, error: errNcs }] = await Promise.all([
       supabaseAdmin
         .from('ordenes_servicio')
-        .select('monto_factura, estado_facturacion, cotizacion_id, abonos')
+        .select('id, monto_factura, estado_facturacion, cotizacion_id, abonos')
         .or('monto_factura.gt.0,numero_factura.neq.null,estado_facturacion.in.(facturada,pagada,pago_parcial,vencida)'),
 
-      supabaseAdmin.from('notas_credito').select('monto'),
+      supabaseAdmin.from('notas_credito').select('monto, os_id'),
     ]);
 
     if (errFacts || errNcs) {
       return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
     }
 
+    // NC por OS (para calcular monto neto por factura, igual que obtenerFacturas)
+    const ncPerOS = new Map<string, number>();
+    (ncs ?? []).forEach(nc => {
+      if (nc.os_id) ncPerOS.set(nc.os_id, (ncPerOS.get(nc.os_id) || 0) + (Number(nc.monto) || 0));
+    });
+
     // Cargar totales de cotizaciones vinculadas (fallback)
     const cotIds = Array.from(new Set((facts ?? []).map(r => r.cotizacion_id).filter((x): x is string => !!x)));
-    const { data: cots } = cotIds.length 
+    const { data: cots } = cotIds.length
       ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
       : { data: [] };
     const cotMap = new Map((cots ?? []).map(c => [c.id, Number(c.total_mxn) || 0]));
@@ -145,23 +150,24 @@ export async function obtenerResumenFacturacion(): Promise<{
     let pendientes = 0;
     let vencidas = 0;
 
-    (facts ?? []).filter(r => r.estado_facturacion !== 'cancelada').forEach(r => {
+    // 'cancelado' (no 'cancelada') es el valor real en BD
+    (facts ?? []).filter(r => r.estado_facturacion !== 'cancelado').forEach(r => {
       let monto = Number(r.monto_factura) || 0;
-      if (monto === 0 && r.cotizacion_id) {
-        monto = cotMap.get(r.cotizacion_id) || 0;
-      }
+      if (monto === 0 && r.cotizacion_id) monto = cotMap.get(r.cotizacion_id) || 0;
 
-      const montoCents = Math.round(monto * 100);
+      const montoCents    = Math.round(monto * 100);
+      const ncMontoCents  = Math.round((ncPerOS.get(r.id) || 0) * 100);
+      const montoNetoCents = Math.max(0, montoCents - ncMontoCents);
+
       totalFacturadoCents += montoCents;
 
-      // Suma primero en decimal, redondea UNA sola vez por factura
-      // (igual que obtenerFacturas) — evita acumulación de centavos extra
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
       const totalAbonado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
       const abonadoCents = Math.round(totalAbonado * 100);
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
-        totalCobradoCents += montoCents;
+        // Pagada sin abonos: contar monto neto (bruto − NC por OS) para no exceder el neto facturado
+        totalCobradoCents += montoNetoCents;
       } else {
         totalCobradoCents += abonadoCents;
       }
@@ -171,16 +177,14 @@ export async function obtenerResumenFacturacion(): Promise<{
       if (st === 'vencida') vencidas++;
     });
 
-    // Notas de crédito: igual, suma primero y redondea una vez
     const totalNotasCredito = Math.round(
       (ncs ?? []).reduce((s, r) => s + (Number(r.monto) || 0), 0) * 100
     ) / 100;
 
-    const totalFacturado = totalFacturadoCents / 100;
-    const totalCobrado   = totalCobradoCents   / 100;
-    // Pendiente = derivado (NO suma independiente de saldos por factura)
+    const totalFacturado     = totalFacturadoCents / 100;
+    const totalCobrado       = totalCobradoCents   / 100;
     const totalNetoFacturado = (Math.round(totalFacturado * 100) - Math.round(totalNotasCredito * 100)) / 100;
-    const totalPendiente     = (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100;
+    const totalPendiente     = Math.max(0, (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100);
 
     return {
       totalFacturado,
