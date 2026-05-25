@@ -341,25 +341,16 @@ export default function FacturacionPage() {
           if (cErr) console.error(cErr);
           else setClientes(cData || []);
 
-          // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS (excluir canceladas)
-          const activas = fData.filter(r => (r.estado_facturacion as string) !== 'cancelado');
-          const ncCents = toCents(rData.totalNotasCredito || 0);
+          const pends = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
+          const vencs = fData.filter(r => r.estado_facturacion === 'vencida').length;
 
-          // Restar notas de crédito del facturado y del cobrado
-          const totalFBrutoCents = activas.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
-          const totalCBrutoCents = activas.reduce((s, r) => s + toCents(r.total_pagado), 0);
-          const totalFCents = totalFBrutoCents - ncCents;
-          const totalCCents = totalCBrutoCents;
-
-          const pends  = fData.filter(r => ['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(r.estado_facturacion ?? '')).length;
-          const vencs  = fData.filter(r => r.estado_facturacion === 'vencida').length;
-
+          // Usar obtenerResumenFacturacion como fuente única de verdad (igual que el dashboard)
           setResumen({
-            totalFacturado: fromCents(totalFCents),
-            totalCobrado: fromCents(totalCCents),
-            pendientes: pends,
-            vencidas: vencs,
-            totalNotasCredito: rData.totalNotasCredito || 0
+            totalFacturado: rData.totalNetoFacturado,
+            totalCobrado:   rData.totalCobrado,
+            pendientes:     pends,
+            vencidas:       vencs,
+            totalNotasCredito: rData.totalNotasCredito || 0,
           });
         }
       })
