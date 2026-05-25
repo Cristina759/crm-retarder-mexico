@@ -1,5 +1,5 @@
-  'use client';
-// Version: 2.0.0 - Aritmética de centavos (integer money)
+﻿'use client';
+// Version: 2.0.0 - Aritm├®tica de centavos (integer money)
 
 
 import { useEffect, useState } from 'react';
@@ -9,7 +9,7 @@ import { obtenerClientes } from '@/app/actions/clientes';
 
 
 
-// ── Aritmética segura: centavos (integers) ───────────────────────────────────
+// ÔöÇÔöÇ Aritm├®tica segura: centavos (integers) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 // REGLA: nunca usar float para sumas de dinero. Todo pasa por centavos.
 function toCents(v: number | null | undefined): number {
   if (v === null || v === undefined) return 0;
@@ -19,11 +19,11 @@ function fromCents(c: number): number {
   return Number((c / 100).toFixed(2));
 }
 function fmtMXN(n: number | null | undefined) {
-  if (n === null || n === undefined) return '—';
+  if (n === null || n === undefined) return 'ÔÇö';
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2 }).format(n);
 }
 function fmtFecha(iso: string | null) {
-  if (!iso) return '—';
+  if (!iso) return 'ÔÇö';
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
@@ -40,7 +40,7 @@ const ESTADO_COLOR: Record<string, { color: string; label: string }> = {
 };
 
 
-// ── Fila editable ─────────────────────────────────────────────────────────────
+// ÔöÇÔöÇ Fila editable ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow; clientes: { id: string; nombre_comercial: string | null }[]; onUpdated: (updated: FacturaRow) => void; onDeleted: (id: string) => void }) {
   const [editing, setEditing]       = useState(false);
   const [numFact, setNumFact]       = useState(row.numero_factura ?? '');
@@ -83,14 +83,14 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   };
 
   const handleDelete = async () => {
-    if (!confirm(`¿Eliminar la factura ${row.numero}? Esto revertirá la OS al estado previo.`)) return;
+    if (!confirm(`┬┐Eliminar la factura ${row.numero}? Esto revertir├í la OS al estado previo.`)) return;
     setDeleting(true);
     await eliminarFactura(row.id);
     onDeleted(row.id);
   };
 
   const handleCancelFactura = async () => {
-    if (!confirm(`¿Cancelar la factura ${row.numero_factura || row.numero}? Se marcará como cancelada.`)) return;
+    if (!confirm(`┬┐Cancelar la factura ${row.numero_factura || row.numero}? Se marcar├í como cancelada.`)) return;
     setCanceling(true);
     await actualizarFactura(row.id, { estado_facturacion: 'cancelado' });
     onUpdated({ ...row, estado_facturacion: 'cancelado' as any });
@@ -145,7 +145,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
             onChange={e => setEmpresaId(e.target.value)}
             className="w-full border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500 bg-white"
           >
-            <option value="">— Seleccionar —</option>
+            <option value="">ÔÇö Seleccionar ÔÇö</option>
             {clientes.map(c => (
               <option key={c.id} value={c.id}>{c.nombre_comercial}</option>
             ))}
@@ -219,14 +219,14 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
               const montoStr = prompt('Monto del abono (MXN):');
               if (!montoStr) return;
               const cleanMonto = parseFloat(montoStr.replace(/[^0-9.-]+/g, ""));
-              if (isNaN(cleanMonto)) { alert('Monto inválido'); return; }
+              if (isNaN(cleanMonto)) { alert('Monto inv├ílido'); return; }
               const ref = prompt('Referencia (opcional):', 'Transferencia');
               registrarPago(row.id, {
                 monto: cleanMonto,
                 fecha: new Date().toISOString(),
                 referencia: ref || 'Abono'
               }).then(() => {
-                alert('Abono registrado con éxito.');
+                alert('Abono registrado con ├®xito.');
                 window.location.reload();
               });
             }}
@@ -239,29 +239,29 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
           <button
             onClick={async (e) => {
               e.stopPropagation();
-              const montoStr = prompt('Monto de la Nota de Crédito (MXN):');
+              const montoStr = prompt('Monto de la Nota de Cr├®dito (MXN):');
               if (!montoStr) return;
               const cleanMonto = parseFloat(montoStr.replace(/[^0-9.-]+/g, ""));
-              if (isNaN(cleanMonto)) { alert('Monto inválido'); return; }
-              const motivo = prompt('Motivo de la Nota de Crédito:', 'Descuento / Devolución');
-              const ncNum = prompt('Número de Nota de Crédito (opcional):');
+              if (isNaN(cleanMonto)) { alert('Monto inv├ílido'); return; }
+              const motivo = prompt('Motivo de la Nota de Cr├®dito:', 'Descuento / Devoluci├│n');
+              const ncNum = prompt('N├║mero de Nota de Cr├®dito (opcional):');
               
               const res = await crearNotaCredito({
                 numero_nc: ncNum || undefined,
                 monto: cleanMonto,
-                descripcion: motivo || 'Nota de crédito directa',
+                descripcion: motivo || 'Nota de cr├®dito directa',
                 empresa_id: row.empresa_id || undefined,
                 os_id: row.id
               });
 
               if (res.error) alert('Error: ' + res.error);
               else {
-                alert('Nota de Crédito creada y vinculada con éxito.');
+                alert('Nota de Cr├®dito creada y vinculada con ├®xito.');
                 window.location.reload();
               }
             }}
             className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition-all"
-            title="Crear Nota de Crédito"
+            title="Crear Nota de Cr├®dito"
           >
             <FileMinus size={13} />
           </button>
@@ -290,9 +290,9 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       <td className="px-4 py-3 font-mono text-xs font-bold text-[#0f2d55]">
         {row.numero_factura || <span className="text-gray-300 italic font-normal">Sin capturar</span>}
       </td>
-      <td className="px-4 py-3 text-xs text-gray-800 font-medium">{row.empresa_nombre ?? '—'}</td>
+      <td className="px-4 py-3 text-xs text-gray-800 font-medium">{row.empresa_nombre ?? 'ÔÇö'}</td>
       <td className="px-4 py-3 text-xs text-gray-500 max-w-[150px] truncate" title={row.concepto_factura ?? ''}>
-        {row.concepto_factura ?? '—'}
+        {row.concepto_factura ?? 'ÔÇö'}
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col items-end">
@@ -324,7 +324,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
 
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ÔöÇÔöÇ Page ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 export default function FacturacionPage() {
   const [rows,    setRows]    = useState<FacturaRow[]>([]);
   const [clientes, setClientes] = useState<{ id: string; nombre_comercial: string | null }[]>([]);
@@ -341,11 +341,11 @@ export default function FacturacionPage() {
           if (cErr) console.error(cErr);
           else setClientes(cData || []);
 
-          // Calculamos totales desde la tabla con ARITMÉTICA DE CENTAVOS (excluir canceladas)
+          // Calculamos totales desde la tabla con ARITM├ëTICA DE CENTAVOS (excluir canceladas)
           const activas = fData.filter(r => (r.estado_facturacion as string) !== 'cancelado');
           const ncCents = toCents(rData.totalNotasCredito || 0);
 
-          // Restar notas de crédito del facturado y del cobrado
+          // Restar notas de cr├®dito del facturado y del cobrado
           const totalFBrutoCents = activas.reduce((s, r) => s + toCents((r as any).monto_neto ?? r.monto_factura), 0);
           const totalCBrutoCents = activas.reduce((s, r) => s + toCents(r.total_pagado), 0);
           const totalFCents = totalFBrutoCents - ncCents;
@@ -400,9 +400,9 @@ export default function FacturacionPage() {
           <FileText size={18} className="text-white" />
         </div>
         <div className="flex-1">
-          <h1 className="text-lg font-black text-[#0f2d55]">Facturación (Control de Saldos v2.1)</h1>
+          <h1 className="text-lg font-black text-[#0f2d55]">Facturaci├│n (Control de Saldos v2.1)</h1>
 
-          <p className="text-[11px] text-gray-400">{rows.length} factura{rows.length !== 1 ? 's' : ''} · Haz clic en una fila para editar</p>
+          <p className="text-[11px] text-gray-400">{rows.length} factura{rows.length !== 1 ? 's' : ''} ┬À Haz clic en una fila para editar</p>
         </div>
         <button 
           onClick={() => window.open('/reportes/facturacion', '_blank')}
