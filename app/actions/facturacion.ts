@@ -104,6 +104,9 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
 
       if (estadoFact === 'pagada' && total_pagado === 0) total_pagado = finalMonto;
 
+      // Cobrado nunca puede exceder el monto neto (ya descontadas NCs)
+      total_pagado = Math.min(total_pagado, finalMonto);
+
       const saldo_pendiente = estadoFact === 'cancelado' ? 0 : Math.max(0, finalMonto - total_pagado);
 
       // Fallback de Concepto

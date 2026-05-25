@@ -228,6 +228,20 @@ export async function eliminarCotizacion(id: string): Promise<{ error: string | 
   return { error: null };
 }
 
+// ── buscarCotizacionesPorFolio ────────────────────────────────────────────────
+export async function buscarCotizacionesPorFolio(q: string): Promise<{
+  id: string; folio: string | null; total_mxn: number | null; tipo: string | null;
+  empresas: { nombre_comercial: string } | null;
+}[]> {
+  const { data } = await supabaseAdmin
+    .from('cotizaciones')
+    .select('id, folio, total_mxn, tipo, empresas:empresas(nombre_comercial)')
+    .ilike('folio', `%${q.trim()}%`)
+    .order('created_at', { ascending: false })
+    .limit(8);
+  return (data ?? []) as any[];
+}
+
 // ── obtenerCotizacionPorId ────────────────────────────────────────────────────
 export async function obtenerCotizacionPorId(id: string): Promise<{
   data: CotizacionRow | null;
