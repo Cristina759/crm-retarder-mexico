@@ -193,10 +193,12 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
     );
   }
 
+  const isCancelada = (row.estado_facturacion as string) === 'cancelado';
+
   return (
-    <tr 
+    <tr
       onClick={() => setEditing(true)}
-      className={`border-b hover:bg-gray-50/50 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-purple-50/20' : ''}`}
+      className={`border-b hover:bg-yellow-100/60 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-purple-50/20' : ''} ${isCancelada ? 'bg-yellow-50' : ''}`}
     >
       <td className="px-4 py-3">
         <div className="flex flex-col">
@@ -296,21 +298,27 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       </td>
       <td className="px-4 py-3">
         <div className="flex flex-col items-end">
-          <span className="text-sm font-black text-gray-900">{fmtMXN(row.monto_factura)}</span>
-          <div className="flex flex-col items-end mt-1">
-            {(row.total_pagado ?? 0) > 0 && (
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
-                Cobrado: {fmtMXN(row.total_pagado)}
-              </span>
-            )}
-            {row.estado_facturacion === 'pago_parcial' && (
-              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100 mt-1">
-                Saldo: {fmtMXN(row.saldo_pendiente)}
-              </span>
-            )}
-          </div>
-
-
+          <span className={`text-sm font-black ${isCancelada ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+            {isCancelada ? fmtMXN(0) : fmtMXN(row.monto_factura)}
+          </span>
+          {isCancelada ? (
+            <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-300 mt-1 uppercase tracking-widest">
+              CANCELADA
+            </span>
+          ) : (
+            <div className="flex flex-col items-end mt-1">
+              {(row.total_pagado ?? 0) > 0 && (
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">
+                  Cobrado: {fmtMXN(row.total_pagado)}
+                </span>
+              )}
+              {row.estado_facturacion === 'pago_parcial' && (
+                <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100 mt-1">
+                  Saldo: {fmtMXN(row.saldo_pendiente)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </td>
       <td className="px-4 py-3 text-center text-xs font-semibold text-gray-700">{fmtFecha(row.fecha_vencimiento)}</td>
@@ -439,9 +447,18 @@ export default function FacturacionPage() {
           <tbody>
             {rows.length === 0 ? (
               <tr><td colSpan={8} className="text-center py-16 text-gray-400 text-sm">Sin facturas registradas</td></tr>
-            ) : rows.map(r => (
-              <FilaFactura key={r.id} row={r} clientes={clientes} onUpdated={handleUpdated} onDeleted={handleDeleted} />
-            ))}
+            ) : [...rows]
+                .sort((a, b) => {
+                  const numOf = (s: string | null) => { const m = s?.match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : -1; };
+                  const diff = numOf(b.numero_factura) - numOf(a.numero_factura);
+                  if (diff !== 0) return diff;
+                  if (!a.numero_factura) return 1;
+                  if (!b.numero_factura) return -1;
+                  return b.numero_factura.localeCompare(a.numero_factura);
+                })
+                .map(r => (
+                  <FilaFactura key={r.id} row={r} clientes={clientes} onUpdated={handleUpdated} onDeleted={handleDeleted} />
+                ))}
           </tbody>
         </table>
       </div>

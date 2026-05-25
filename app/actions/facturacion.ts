@@ -30,8 +30,8 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   try {
     const { data: rows, error } = await supabaseAdmin
       .from('ordenes_servicio')
-      .select('id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, created_at, empresa_id, cotizacion_id, abonos')
-      .in('estado', ['facturado', 'pagado'])
+      .select('id, numero, numero_os_manual, numero_factura, monto_factura, concepto_factura, fecha_vencimiento, estado_facturacion, estado, created_at, empresa_id, cotizacion_id, abonos')
+      .or('estado.in.(facturado,pagado),estado_facturacion.eq.cancelado')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -71,15 +71,22 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
       finalMonto = Math.max(0, finalMonto - Math.abs(montoNC));
 
       // Abonos y Saldo
+      // Facturas canceladas se muestran con $0 en todos los montos
+      if (r.estado_facturacion === 'cancelado') {
+        finalMonto = 0;
+      }
+
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      let total_pagado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
-      
+      let total_pagado = r.estado_facturacion === 'cancelado'
+        ? 0
+        : abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
+
       // Si está pagada pero no tiene abonos (factura vieja), asumimos cobro total
       if (r.estado_facturacion === 'pagada' && total_pagado === 0) {
         total_pagado = finalMonto;
       }
-      
-      const saldo_pendiente = Math.max(0, finalMonto - total_pagado);
+
+      const saldo_pendiente = r.estado_facturacion === 'cancelado' ? 0 : Math.max(0, finalMonto - total_pagado);
 
       // Fallback de Concepto
       let finalConcepto = r.concepto_factura;
