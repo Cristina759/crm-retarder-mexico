@@ -206,15 +206,17 @@ export async function obtenerResumenFacturacion(): Promise<{
       if (st === 'vencida') vencidas++;
     });
 
-    const totalNotasCredito = Math.round(
-      (ncs ?? []).reduce((s, r) => s + (Number(r.monto) || 0), 0) * 100
-    ) / 100;
+const totalNotasCreditoCents = (ncs ?? []).reduce(
+        (s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0
+      );
+        const totalNotasCredito = totalNotasCreditoCents / 100;
 
-    const totalFacturado     = totalFacturadoCents / 100;
-    const totalNetoFacturado = (Math.round(totalFacturado * 100) - Math.round(totalNotasCredito * 100)) / 100;
-    // Cobrado nunca puede exceder el neto facturado (NCs globales sin os_id también lo limitan)
-    const totalCobrado       = Math.min(totalCobradoCents / 100, totalNetoFacturado);
-    const totalPendiente     = Math.max(0, (Math.round(totalNetoFacturado * 100) - Math.round(totalCobrado * 100)) / 100);
+        const totalFacturado = totalFacturadoCents / 100;
+        const totalNetoFacturadoCents = Math.max(0, totalFacturadoCents - totalNotasCreditoCents);
+        const totalNetoFacturado = totalNetoFacturadoCents / 100;
+        const totalCobradoFinalCents = Math.min(totalCobradoCents, totalNetoFacturadoCents);
+        const totalCobrado = totalCobradoFinalCents / 100;
+        const totalPendiente = Math.max(0, totalNetoFacturadoCents - totalCobradoFinalCents) / 100;
 
     return {
       totalFacturado,
