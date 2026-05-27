@@ -1002,7 +1002,7 @@ export default function CotizadorFrenosPage() {
                     src="/logo-retarder.png"
                     alt="Retarder"
                     className="p-logo-img"
-                    style={{ height: '120px', width: '120px', objectFit: 'contain' }}
+                    style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -1228,13 +1228,13 @@ export default function CotizadorFrenosPage() {
         /* ── Documento ── */
         .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .p-logos-left { display: flex; align-items: center; gap: 12px; }
-        .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 3.2cm; height: 3.2cm; object-fit: contain; display: block; }
+        .p-header { display: flex; flex-direction: column; margin-bottom: 6px; }
+        .p-logos-left { width: 100%; }
+        .p-logo-wrap { width: 100%; }
+        .p-logo-img { width: 100%; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
-        .p-header-right { text-align: right; }
+        .p-header-right { text-align: right; width: 100%; }
         .p-company { font-size: 24px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 3px; }
         .p-fecha-line { font-size: 11px; color: #555; margin-top: 3px; }
@@ -1263,7 +1263,7 @@ export default function CotizadorFrenosPage() {
         .p-total-final { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: #0d2244; border-top: 2.5px solid #0d2244; padding-top: 7px; margin-top: 5px; }
         .p-total-mxn { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #555; margin-top: 5px; padding-top: 5px; border-top: 1px dashed #ddd; }
         /* ── Letras y observaciones ── */
-        .p-letras { font-size: 11px; font-style: italic; color: #444; margin: 6px 0 8px 0; }
+        .p-letras { font-size: 11px; font-style: italic; font-weight: 700; color: #444; margin: 6px 0 8px 0; }
         .p-obs-two-col { display: flex; gap: 20px; margin: 8px 0; }
         .p-obs-two-col > div { flex: 1; }
         .p-obs-pre { font-family: Arial, sans-serif; font-size: 11px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.5; }
