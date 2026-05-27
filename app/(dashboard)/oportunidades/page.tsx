@@ -316,9 +316,12 @@ export default function OportunidadesPage() {
 
     // Si se movió a ganado → crear OS automáticamente
     if (nuevoEstado === 'ganado') {
+      const { data: cots } = await obtenerCotizaciones();
+      const cotVinculada = cots.find(c => c.oportunidad_id === opp.id);
       const { error: osError } = await crearOrdenServicio({
-        empresa_id:    opp.empresa_id,
+        empresa_id:     opp.empresa_id,
         oportunidad_id: opp.id,
+        monto_factura:  cotVinculada?.total_mxn ?? opp.monto_estimado ?? 0,
       });
       if (osError) console.error('[DragEnd] crear OS:', osError);
     }
