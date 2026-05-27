@@ -1002,7 +1002,7 @@ export default function CotizadorFrenosPage() {
                     src="/logo-retarder.png"
                     alt="Retarder"
                     className="p-logo-img"
-                    style={{ width: '180px', height: 'auto', objectFit: 'contain' }}
+                    style={{ width: '80px', height: 'auto', objectFit: 'contain' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -1229,13 +1229,13 @@ export default function CotizadorFrenosPage() {
         /* ── Documento ── */
         .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
-        .p-header { display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .p-logos-left { display: flex; align-items: center; }
-        .p-logo-wrap { display: flex; align-items: center; justify-content: center; }
-        .p-logo-img { width: 180px; height: auto; object-fit: contain; display: block; }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .p-logos-left { display: flex; align-items: center; gap: 12px; }
+        .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .p-logo-img { width: 80px; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
-        .p-header-right { text-align: right; width: 100%; }
+        .p-header-right { text-align: right; }
         .p-company { font-size: 24px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 3px; }
         .p-fecha-line { font-size: 11px; color: #555; margin-top: 3px; }
