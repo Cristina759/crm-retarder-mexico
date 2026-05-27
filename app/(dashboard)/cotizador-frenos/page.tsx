@@ -1197,7 +1197,7 @@ export default function CotizadorFrenosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 8mm 10mm; }
+        @page { size: A4 portrait; margin: 8mm 0; }
         @media print {
           html, body { margin: 0 !important; padding: 0 !important; }
           header, nav, footer, aside { display: none !important; }
@@ -1227,7 +1227,7 @@ export default function CotizadorFrenosPage() {
           .no-print { display: none !important; }
         }
         /* ── Documento ── */
-        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 0; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
