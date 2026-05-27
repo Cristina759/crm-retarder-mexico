@@ -436,7 +436,7 @@ export default function OSDetallePage() {
         setNumOS(data?.numero_os_manual ?? '');
         setNumOC(data?.numero_orden_compra ?? '');
         setNumFact(data?.numero_factura ?? '');
-        setMontoFact(data?.monto_factura ? String(data.monto_factura) : '');
+        setMontoFact(data?.monto_factura ? String(data.monto_factura) : data?.cotizacion?.total_mxn ? String(data.cotizacion.total_mxn) : '');
         setVencFact(data?.fecha_vencimiento?.slice(0, 10) ?? '');
         const exclude = ['Ing. Cristina Velasco', 'Ing. Juan Carlos Espinosa', 'Teresa Gutiérrez'];
         setUsuarios(uData.filter(u => !exclude.includes(u.nombre)));
