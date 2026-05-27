@@ -1173,7 +1173,8 @@ export default function CotizadorFrenosPage() {
               </div>
               <div className="p-footer-info">
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: +52 55 7372 1633</div>
                 <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
               <div className="p-footer-qr">
@@ -1228,9 +1229,9 @@ export default function CotizadorFrenosPage() {
         /* ── Documento ── */
         .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 10px; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
-        .p-header { display: flex; flex-direction: column; margin-bottom: 6px; }
-        .p-logos-left { width: 100%; }
-        .p-logo-wrap { width: 100%; display: flex; justify-content: center; }
+        .p-header { display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .p-logos-left { display: flex; align-items: center; }
+        .p-logo-wrap { display: flex; align-items: center; justify-content: center; }
         .p-logo-img { width: 180px; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
