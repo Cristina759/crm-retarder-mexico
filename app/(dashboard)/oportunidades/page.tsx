@@ -21,6 +21,7 @@ import {
 } from '@/app/actions/oportunidades';
 import type { OportunidadRow, OportunidadEstado } from '@/app/actions/types';
 import { crearOrdenServicio } from '@/app/actions/ordenes';
+import { obtenerCotizaciones } from '@/app/actions/cotizaciones';
 
 // ── Configuración de estados ──────────────────────────────────────────────────
 const ESTADOS: {
