@@ -1002,7 +1002,7 @@ export default function CotizadorFrenosPage() {
                     src="/logo-retarder.png"
                     alt="Retarder"
                     className="p-logo-img"
-                    style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
+                    style={{ width: '180px', height: 'auto', objectFit: 'contain' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -1230,8 +1230,8 @@ export default function CotizadorFrenosPage() {
         /* ── Header ── */
         .p-header { display: flex; flex-direction: column; margin-bottom: 6px; }
         .p-logos-left { width: 100%; }
-        .p-logo-wrap { width: 100%; }
-        .p-logo-img { width: 100%; height: auto; object-fit: contain; display: block; }
+        .p-logo-wrap { width: 100%; display: flex; justify-content: center; }
+        .p-logo-img { width: 180px; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; width: 100%; }
