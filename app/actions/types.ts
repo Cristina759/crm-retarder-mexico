@@ -58,7 +58,6 @@ export interface CrearOportunidadInput {
   probabilidad?: number;
   monto_estimado?: number;
   vendedor_id?: string;
-  cotizacion_id?: string;
 }
 
 export interface OportunidadRow {

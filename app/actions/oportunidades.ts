@@ -76,14 +76,6 @@ export async function crearOportunidad(input: CrearOportunidadInput) {
       })
       .select('id')
       .single();
-    if (error) return { data: null, error: error.message };
-    // Si se vincula una cotización, actualizar su oportunidad_id
-    if (input.cotizacion_id && data?.id) {
-      await supabaseAdmin
-        .from('cotizaciones')
-        .update({ oportunidad_id: data.id })
-        .eq('id', input.cotizacion_id);
-    }
-    return { data, error: null };
+    return { data, error: error?.message ?? null };
   } catch (e) { return { data: null, error: String(e) }; }
 }
