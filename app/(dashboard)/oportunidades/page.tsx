@@ -13,15 +13,18 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { Trash2, GripVertical, LayoutList, Columns3, Loader2 } from 'lucide-react';
+import { Trash2, GripVertical, LayoutList, Columns3, Loader2, Plus, X, Check } from 'lucide-react';
 import {
   obtenerOportunidades,
   actualizarEstadoOportunidad,
   eliminarOportunidad,
+  crearOportunidad,
 } from '@/app/actions/oportunidades';
 import type { OportunidadRow, OportunidadEstado } from '@/app/actions/types';
 import { crearOrdenServicio } from '@/app/actions/ordenes';
-import { obtenerCotizaciones } from '@/app/actions/cotizaciones';
+import { obtenerCotizaciones, buscarCotizacionesPorFolio, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
+
+type CotSugerencia = { id: string; folio: string | null; total_mxn: number | null; tipo: string | null; empresas: { nombre_comercial: string } | null };
 
 // ── Configuración de estados ──────────────────────────────────────────────────
 const ESTADOS: {
@@ -237,6 +240,21 @@ export default function OportunidadesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [view,       setView]       = useState<'kanban' | 'tabla'>('kanban');
 
+  // ── Formulario nueva oportunidad ──
+  const [mostrarForm,   setMostrarForm]   = useState(false);
+  const [formTitulo,    setFormTitulo]    = useState('');
+  const [formEmpresa,   setFormEmpresa]   = useState('');
+  const [formEmpresaId, setFormEmpresaId] = useState('');
+  const [formMonto,     setFormMonto]     = useState('');
+  const [formCotId,     setFormCotId]     = useState('');
+  const [formCotFolio,  setFormCotFolio]  = useState('');
+  const [sugsEmpresa,   setSugsEmpresa]   = useState<EmpresaBusquedaResult[]>([]);
+  const [sugsCot,       setSugsCot]       = useState<CotSugerencia[]>([]);
+  const [buscandoEmp,   setBuscandoEmp]   = useState(false);
+  const [buscandoCot,   setBuscandoCot]   = useState(false);
+  const [creando,       setCreando]       = useState(false);
+  const [errorCrear,    setErrorCrear]    = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } })
@@ -268,6 +286,26 @@ export default function OportunidadesPage() {
   };
 
   useEffect(() => { cargar(); }, []);
+
+  const handleCrearOportunidad = async () => {
+    if (!formEmpresaId) { setErrorCrear('Selecciona una empresa de la lista.'); return; }
+    if (!formTitulo.trim()) { setErrorCrear('Escribe un título.'); return; }
+    setCreando(true);
+    setErrorCrear(null);
+    const { error } = await crearOportunidad({
+      empresa_id:    formEmpresaId,
+      titulo:        formTitulo.trim(),
+      monto_estimado: parseFloat(formMonto) || 0,
+      cotizacion_id: formCotId || undefined,
+    });
+    setCreando(false);
+    if (error) { setErrorCrear(error); return; }
+    setMostrarForm(false);
+    setFormTitulo(''); setFormEmpresa(''); setFormEmpresaId('');
+    setFormMonto(''); setFormCotId(''); setFormCotFolio('');
+    setSugsEmpresa([]); setSugsCot([]);
+    await cargar();
+  };
 
   const activeOpp = useMemo(
     () => oportunidades.find(o => o.id === activeId) ?? null,
@@ -368,6 +406,12 @@ export default function OportunidadesPage() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
+            onClick={() => { setMostrarForm(f => !f); setErrorCrear(null); }}
+            className="flex items-center gap-1.5 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-colors"
+          >
+            <Plus size={14} /> Nueva oportunidad
+          </button>
+          <button
             onClick={() => setView('kanban')}
             className={`p-2 rounded-xl transition-colors ${view === 'kanban' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             title="Vista kanban"
@@ -386,6 +430,146 @@ export default function OportunidadesPage() {
 
       {/* ── Barra de progreso ── */}
       <ProgressBar oportunidades={oportunidades} />
+
+      {/* ── Formulario nueva oportunidad ── */}
+      {mostrarForm && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-bold text-gray-800">Nueva oportunidad</p>
+            <button onClick={() => setMostrarForm(false)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Empresa */}
+            <div className="relative">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
+                Empresa {formEmpresaId && <Check size={11} className="text-green-600" />}
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formEmpresa}
+                  onChange={async e => {
+                    const q = e.target.value;
+                    setFormEmpresa(q); setFormEmpresaId('');
+                    if (q.length >= 2) {
+                      setBuscandoEmp(true);
+                      setSugsEmpresa(await buscarEmpresas(q));
+                      setBuscandoEmp(false);
+                    } else { setSugsEmpresa([]); }
+                  }}
+                  placeholder="Busca una empresa..."
+                  className={`w-full border rounded-xl px-3 pr-8 h-10 text-sm font-semibold outline-none transition-all ${
+                    formEmpresaId ? 'border-green-300 bg-green-50/10 text-gray-800' : 'border-gray-300 text-gray-800 focus:border-red-400'
+                  }`}
+                />
+                {buscandoEmp && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+                {sugsEmpresa.length > 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                    <div className="p-2 border-b border-gray-100 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between">
+                      <span>Seleccionar empresa</span>
+                      <button onClick={() => setSugsEmpresa([])}><X size={13} /></button>
+                    </div>
+                    {sugsEmpresa.map(emp => (
+                      <button key={emp.id} type="button"
+                        onClick={() => { setFormEmpresa(emp.nombre_comercial); setFormEmpresaId(emp.id); setSugsEmpresa([]); }}
+                        className="w-full text-left px-3 py-2 hover:bg-red-50 transition-colors text-sm font-semibold text-gray-800 hover:text-red-700">
+                        {emp.nombre_comercial}
+                        {emp.rfc && <span className="text-[10px] text-gray-400 font-normal ml-2">{emp.rfc}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Título */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Título</label>
+              <input
+                type="text"
+                value={formTitulo}
+                onChange={e => setFormTitulo(e.target.value)}
+                placeholder="Ej. Instalación freno P10..."
+                className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+              />
+            </div>
+
+            {/* Monto estimado */}
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Monto estimado (MXN)</label>
+              <input
+                type="number"
+                value={formMonto}
+                onChange={e => setFormMonto(e.target.value)}
+                placeholder="0"
+                min="0"
+                className="w-full border border-gray-300 rounded-xl px-3 h-10 text-sm font-semibold text-gray-800 outline-none focus:border-red-400 transition-colors placeholder:text-gray-300"
+              />
+            </div>
+
+            {/* Folio de cotización */}
+            <div className="relative">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1 flex items-center gap-1">
+                Folio de cotización <span className="normal-case font-normal text-gray-400">(opcional)</span>
+                {formCotId && <Check size={11} className="text-green-600" />}
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formCotFolio}
+                  onChange={async e => {
+                    const q = e.target.value;
+                    setFormCotFolio(q); setFormCotId('');
+                    if (q.length >= 2) {
+                      setBuscandoCot(true);
+                      setSugsCot(await buscarCotizacionesPorFolio(q));
+                      setBuscandoCot(false);
+                    } else { setSugsCot([]); }
+                  }}
+                  placeholder="Ej. COT-0042..."
+                  className={`w-full border rounded-xl px-3 pr-8 h-10 text-sm font-semibold outline-none transition-all ${
+                    formCotId ? 'border-green-300 bg-green-50/10 text-gray-800' : 'border-gray-300 text-gray-800 focus:border-red-400'
+                  }`}
+                />
+                {buscandoCot && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />}
+                {sugsCot.length > 0 && (
+                  <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden max-h-48 overflow-y-auto">
+                    <div className="p-2 border-b border-gray-100 bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest flex justify-between">
+                      <span>Seleccionar cotización</span>
+                      <button onClick={() => setSugsCot([])}><X size={13} /></button>
+                    </div>
+                    {sugsCot.map(cot => (
+                      <button key={cot.id} type="button"
+                        onClick={() => { setFormCotFolio(cot.folio ?? ''); setFormCotId(cot.id); setSugsCot([]); }}
+                        className="w-full text-left px-3 py-2 hover:bg-red-50 transition-colors">
+                        <p className="text-sm font-bold text-gray-800 hover:text-red-700">{cot.folio}</p>
+                        <p className="text-[10px] text-gray-400">{cot.empresas?.nombre_comercial} · {cot.tipo} · {cot.total_mxn != null ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(cot.total_mxn) : '—'}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {errorCrear && <p className="text-xs text-red-600 font-semibold">{errorCrear}</p>}
+
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setMostrarForm(false)} className="px-4 h-9 rounded-xl border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+              Cancelar
+            </button>
+            <button
+              onClick={handleCrearOportunidad}
+              disabled={creando}
+              className="px-4 h-9 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {creando ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              Guardar oportunidad
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Resumen por estado ── */}
       <div className="flex gap-2 overflow-x-auto pb-1">
