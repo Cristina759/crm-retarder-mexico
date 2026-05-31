@@ -752,26 +752,6 @@ export default function CotizadorFrenosPage() {
             />
           </div>
 
-          {/* Modo Resumido Toggle */}
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between mt-2">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${modoResumido ? 'bg-blue-500 text-white' : 'bg-white text-blue-500 border border-blue-100'}`}>
-                <FileText size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-black text-blue-900 uppercase tracking-tighter">Modo de Visualización</p>
-                <p className="text-[10px] text-blue-600 font-bold">{modoResumido ? 'Resumido (Una sola línea)' : 'Detallado (Lista de componentes)'}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setModoResumido(!modoResumido)}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${
-                modoResumido ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-200 hover:bg-blue-50'
-              }`}
-            >
-              {modoResumido ? 'Ver Detalle' : 'Resumir Todo'}
-            </button>
-          </div>
         </div>
 
 
@@ -1197,27 +1177,28 @@ export default function CotizadorFrenosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 8mm 0; }
+        @page { size: A4 portrait; margin: 10mm 12mm; }
         @media print {
-          html, body { margin: 0 !important; padding: 0 !important; }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+          }
           header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
             display: block !important;
-            position: absolute !important;
+            position: fixed !important;
             top: 0 !important;
             left: 0 !important;
-            right: 0 !important;
-            min-height: 260mm !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
           }
           .p-doc {
             width: 100% !important;
-            max-height: 280mm !important;
             box-sizing: border-box !important;
             display: flex !important;
             flex-direction: column !important;
