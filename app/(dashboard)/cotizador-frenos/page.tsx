@@ -1207,7 +1207,7 @@ export default function CotizadorFrenosPage() {
           }
           .p-header { align-items: center !important; }
           .p-logo-img { max-width: 200px !important; width: 200px !important; }
-          .p-spacer { flex: 1; }
+          .p-spacer { display: none !important; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }
