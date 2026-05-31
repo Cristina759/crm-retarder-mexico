@@ -1182,7 +1182,6 @@ export default function CotizadorFrenosPage() {
           html, body {
             margin: 0 !important;
             padding: 0 !important;
-            width: 210mm !important;
           }
           header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
@@ -1192,6 +1191,8 @@ export default function CotizadorFrenosPage() {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -1203,6 +1204,8 @@ export default function CotizadorFrenosPage() {
             display: flex !important;
             flex-direction: column !important;
           }
+          .p-header { align-items: center !important; }
+          .p-logo-img { max-width: 200px !important; width: 200px !important; }
           .p-spacer { flex: 1; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
