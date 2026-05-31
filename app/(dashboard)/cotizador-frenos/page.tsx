@@ -1200,10 +1200,8 @@ export default function CotizadorFrenosPage() {
           }
           .p-doc {
             width: 100% !important;
-            min-height: 100% !important;
             box-sizing: border-box !important;
-            display: flex !important;
-            flex-direction: column !important;
+            display: block !important;
           }
           .p-header { align-items: center !important; }
           .p-logo-img { max-width: 200px !important; width: 200px !important; }
