@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Plus, Pencil, Trash2, Check, X, Loader2, Package } from 'lucide-react';
 import {
@@ -39,7 +39,7 @@ function fmtMXN(n: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 2 }).format(n);
 }
 
-export default function CatalogoRefaccionesPage() {
+function CatalogoRefaccionesContent() {
   const searchParams  = useSearchParams();
   const catParam      = searchParams.get('cat') as RefaccionRow['categoria'] | null;
   const catsVisibles  = catParam ? [catParam] : CATEGORIAS;
@@ -306,5 +306,13 @@ export default function CatalogoRefaccionesPage() {
         })
       )}
     </div>
+  );
+}
+
+export default function CatalogoRefaccionesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20 gap-2 text-gray-400"><Loader2 size={20} className="animate-spin" /> Cargando...</div>}>
+      <CatalogoRefaccionesContent />
+    </Suspense>
   );
 }
