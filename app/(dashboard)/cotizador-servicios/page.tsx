@@ -47,6 +47,7 @@ interface LineaServicio {
   id: string;
   descripcion: string;
   precio: number; // MXN
+  cantidad?: number; // solo para refacciones
 }
 
 type ModalTab = 'mo' | 'ref';
@@ -331,12 +332,14 @@ function CardLineas({
   onChange,
   onAbrirCatalogo,
   accentColor = 'blue',
+  showCantidad = false,
 }: {
   titulo: string;
   lineas: LineaServicio[];
   onAdd: () => void;
   onRemove: (id: string) => void;
-  onChange: (id: string, field: 'descripcion' | 'precio', value: string) => void;
+  onChange: (id: string, field: 'descripcion' | 'precio' | 'cantidad', value: string) => void;
+  showCantidad?: boolean;
   onAbrirCatalogo?: () => void;
   accentColor?: 'blue' | 'orange';
 }) {
@@ -379,6 +382,20 @@ function CardLineas({
                 placeholder="Descripción..."
                 className="flex-1 border border-gray-200 rounded-xl px-3 h-9 text-xs text-gray-800 outline-none focus:border-blue-400 transition-colors"
               />
+              {showCantidad && (
+                <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2 h-9 w-16 focus-within:border-blue-400 transition-colors">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={l.cantidad ?? 1}
+                    onChange={e => onChange(l.id, 'cantidad', e.target.value)}
+                    placeholder="1"
+                    className="w-full outline-none text-xs text-gray-800 font-semibold bg-transparent text-center"
+                    title="Cantidad"
+                  />
+                </div>
+              )}
               <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2.5 h-9 w-28 focus-within:border-blue-400 transition-colors">
                 <span className="text-[10px] text-gray-400 font-semibold">$</span>
                 <input
@@ -406,7 +423,7 @@ function CardLineas({
       {lineas.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-100 flex justify-end">
           <span className="text-xs font-bold text-gray-700">
-            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0), 0))} MXN
+            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0))} MXN
           </span>
         </div>
       )}
@@ -553,12 +570,12 @@ export default function CotizadorServiciosPage() {
   };
 
   const agregarDesdeCatalogoRef = (item: RefaccionRow) => {
-    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta }]);
+    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta, cantidad: 1 }]);
   };
 
   // ── Helpers de líneas ───────────────────────────────────────────────────────
-  const addLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>) => {
-    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0 }]);
+  const addLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>, conCantidad = false) => {
+    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0, ...(conCantidad ? { cantidad: 1 } : {}) }]);
   };
 
   const removeLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>, id: string) => {
@@ -568,11 +585,11 @@ export default function CotizadorServiciosPage() {
   const changeLinea = (
     setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>,
     id: string,
-    field: 'descripcion' | 'precio',
+    field: 'descripcion' | 'precio' | 'cantidad',
     value: string
   ) => {
     setter(prev => prev.map(l =>
-      l.id === id ? { ...l, [field]: field === 'precio' ? parseFloat(value) || 0 : value } : l
+      l.id === id ? { ...l, [field]: (field === 'precio' || field === 'cantidad') ? parseFloat(value) || (field === 'cantidad' ? 1 : 0) : value } : l
     ));
   };
 
@@ -583,7 +600,7 @@ export default function CotizadorServiciosPage() {
   // Todo en MXN — sin conversión de divisas
   const subtotalPreventivoMXN = tipoPreventivo ? PRECIO_PREVENTIVO_MXN * unidadesN : 0;
   const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0), 0);
-  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0), 0);
+  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
   const subtotalTraslado       = trasladoN * unidadesN;
   const subtotalMXN           = subtotalPreventivoMXN + subtotalManoObra + subtotalRefacciones + subtotalTraslado;
   const iva                   = Math.round(subtotalMXN * 0.16 * 100) / 100;
@@ -615,7 +632,7 @@ export default function CotizadorServiciosPage() {
       unidades: unidadesN,
       traslado_usd: trasladoN,
       mano_obra: lineasManoObra.map(({ descripcion, precio }) => ({ descripcion, precio })),
-      refacciones: lineasRefacciones.map(({ descripcion, precio }) => ({ descripcion, precio })),
+      refacciones: lineasRefacciones.map(({ descripcion, precio, cantidad }) => ({ descripcion, precio, cantidad: cantidad ?? 1 })),
     };
 
     try {
@@ -1026,11 +1043,12 @@ export default function CotizadorServiciosPage() {
               <CardLineas
                 titulo="Refacciones"
                 lineas={lineasRefacciones}
-                onAdd={() => addLinea(setLineasRefacciones)}
+                onAdd={() => addLinea(setLineasRefacciones, true)}
                 onRemove={id => removeLinea(setLineasRefacciones, id)}
                 onChange={(id, field, value) => changeLinea(setLineasRefacciones, id, field, value)}
                 onAbrirCatalogo={() => abrirModal('ref')}
                 accentColor="orange"
+                showCantidad
               />
             </div>
 
@@ -1279,7 +1297,7 @@ export default function CotizadorServiciosPage() {
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
-                    <span>Refacción — {l.descripcion || '—'}</span>
+                    <span>Refacción — {l.descripcion || '—'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
@@ -1307,8 +1325,8 @@ export default function CotizadorServiciosPage() {
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
-                    <span className="p-price-desc">{l.descripcion || 'Refacción'}</span>
-                    <span className="p-price-val">{fmtMXN(l.precio)}</span>
+                    <span className="p-price-desc">{l.descripcion || 'Refacción'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
+                    <span className="p-price-val">{fmtMXN((l.precio || 0) * (l.cantidad ?? 1))}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
@@ -1346,6 +1364,9 @@ export default function CotizadorServiciosPage() {
             </div>
 
             <hr className="p-hr" />
+
+            {/* Spacer para empujar footer al fondo */}
+            <div className="p-spacer" />
 
             {/* Footer */}
             <div className="p-footer">
@@ -1409,15 +1430,19 @@ export default function CotizadorServiciosPage() {
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
             position: fixed !important;
             top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-            width: 100% !important;
+            width: 100% !important; height: 100% !important;
             margin: 0 !important; padding: 0 !important;
             box-sizing: border-box !important;
             background: white !important;
           }
-          .p-doc { display: block !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
+          .p-doc { flex: 1 !important; display: flex !important; flex-direction: column !important;
+                   visibility: visible !important; width: 100% !important; max-width: 100% !important;
+                   margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
+          .p-spacer { flex: 1 !important; display: block !important; }
           .no-print { display: none !important; }
         }
 

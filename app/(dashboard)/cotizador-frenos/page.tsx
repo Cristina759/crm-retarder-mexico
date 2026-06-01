@@ -1187,20 +1187,24 @@ export default function CotizadorFrenosPage() {
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
             bottom: 0 !important;
             width: 100% !important;
+            height: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
             background: white !important;
           }
           .p-doc {
-            display: block !important;
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
             visibility: visible !important;
             width: 100% !important;
             max-width: 100% !important;
@@ -1210,7 +1214,7 @@ export default function CotizadorFrenosPage() {
           }
           .p-header { align-items: center !important; }
           .p-logo-img { max-width: 200px !important; width: 200px !important; }
-          .p-spacer { display: none !important; }
+          .p-spacer { flex: 1 !important; display: block !important; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }

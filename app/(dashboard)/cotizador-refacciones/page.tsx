@@ -240,9 +240,24 @@ export default function CotizadorRefaccionesPage() {
   const imprimirVentana = () => {
     const area = document.getElementById('print-area');
     if (!area) return;
-    const estiloDoc = Array.from(document.querySelectorAll('style'))
+    // Extraer solo el bloque de estilos del documento (.p-doc, .p-header, etc.)
+    let estiloDoc = Array.from(document.querySelectorAll('style'))
       .map(s => s.innerHTML)
       .find(css => css.includes('.p-doc') || css.includes('.p-header')) ?? '';
+    // Eliminar bloque @media print (contaría braces para encontrar el cierre)
+    const mpIdx = estiloDoc.indexOf('@media print');
+    if (mpIdx !== -1) {
+      let depth = 0, i = mpIdx;
+      while (i < estiloDoc.length) {
+        if (estiloDoc[i] === '{') depth++;
+        else if (estiloDoc[i] === '}') { depth--; if (depth === 0) { i++; break; } }
+        i++;
+      }
+      estiloDoc = estiloDoc.slice(0, mpIdx) + estiloDoc.slice(i);
+    }
+    // Hacer absolutas las rutas de imágenes
+    const origin = window.location.origin;
+    const html = area.innerHTML.replace(/src="\//g, `src="${origin}/`);
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) { window.print(); return; }
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -251,12 +266,14 @@ export default function CotizadorRefaccionesPage() {
         html, body { margin: 0; padding: 0; background: white; }
         @page { size: A4 portrait; margin: 5mm; }
         ${estiloDoc}
-        .p-doc { display: block !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
+        .p-doc { display: block !important; visibility: visible !important;
+                 width: 100% !important; max-width: 100% !important;
+                 margin: 0 !important; padding: 4px !important; }
       </style>
-    </head><body>${area.innerHTML}</body></html>`);
+    </head><body>${html}</body></html>`);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 600);
+    setTimeout(() => { win.print(); win.close(); }, 800);
   };
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
