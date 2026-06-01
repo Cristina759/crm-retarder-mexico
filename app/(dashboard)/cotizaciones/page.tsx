@@ -620,15 +620,31 @@ function ModalDetalleCotizacion({
             <div style={{ marginTop: 8, fontSize: 10 }}>
               <span style={{ fontWeight: 900 }}>IMPORTE CON LETRA:</span> — (Favor de verificar en el formato impreso)
             </div>
-            {cot.notas && (
-              <div>
-                <hr />
-                <div style={{ fontWeight: 700, fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, color: '#0f2d55', marginBottom: 4 }}>
-                  Notas
+            {(() => {
+              const n = cot.notas ?? '';
+              const OBS = 'OBSERVACIONES:\n', POL = 'POLITICAS:\n';
+              const oi = n.indexOf(OBS), pi = n.indexOf(POL);
+              const obs = oi >= 0 ? n.slice(oi + OBS.length, pi >= 0 ? pi : n.length).trim() : '';
+              const pol = pi >= 0 ? n.slice(pi + POL.length).trim() : '';
+              if (!obs && !pol) return null;
+              return (
+                <div>
+                  <hr />
+                  {obs && (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, color: '#0f2d55', marginBottom: 4 }}>Observaciones</div>
+                      <p className="notas" style={{ whiteSpace: 'pre-line' }}>{obs}</p>
+                    </>
+                  )}
+                  {pol && (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: 9, textTransform: 'uppercase', letterSpacing: 1, color: '#c00', marginBottom: 4, marginTop: 6 }}>Políticas y Garantías</div>
+                      <p className="notas" style={{ whiteSpace: 'pre-line', color: '#c00' }}>{pol}</p>
+                    </>
+                  )}
                 </div>
-                <p className="notas">{cot.notas}</p>
-              </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* Info extra solo en pantalla */}
