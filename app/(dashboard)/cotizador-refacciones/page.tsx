@@ -240,21 +240,22 @@ export default function CotizadorRefaccionesPage() {
   const imprimirVentana = () => {
     const area = document.getElementById('print-area');
     if (!area) return;
-    const estilos = Array.from(document.querySelectorAll('style'))
-      .map(s => s.innerHTML).join('\n');
+    const estiloDoc = Array.from(document.querySelectorAll('style'))
+      .map(s => s.innerHTML)
+      .find(css => css.includes('.p-doc') || css.includes('.p-header')) ?? '';
     const win = window.open('', '_blank', 'width=900,height=700');
     if (!win) { window.print(); return; }
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
       <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: white; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: white; }
         @page { size: A4 portrait; margin: 10mm 12mm; }
-        ${estilos}
+        ${estiloDoc}
       </style>
     </head><body>${area.innerHTML}</body></html>`);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 500);
+    setTimeout(() => { win.print(); win.close(); }, 600);
   };
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
