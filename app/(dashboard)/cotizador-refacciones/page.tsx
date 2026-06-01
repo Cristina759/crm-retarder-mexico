@@ -17,7 +17,7 @@ interface LineaRefaccion {
   precioMXN: number;
 }
 
-const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MECÁNICO', 'SOPORTERÍA', 'CARDANES'];
+const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MECÁNICO', 'SOPORTERÍA', 'CARDANES', 'MATERIAL ELÉCTRICO'];
 
 const catColor: Record<string, string> = {
   'ELÉCTRICO':   'bg-yellow-100 text-yellow-800',
@@ -26,6 +26,7 @@ const catColor: Record<string, string> = {
   'TORNILLERÍA': 'bg-orange-100 text-orange-800',
   'SOPORTERÍA':  'bg-green-100 text-green-800',
   'CARDANES':    'bg-purple-100 text-purple-800',
+  'MATERIAL ELÉCTRICO': 'bg-red-100 text-red-800',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

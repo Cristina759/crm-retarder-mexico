@@ -13,7 +13,7 @@ export type ManoDeObraRow = {
 export type RefaccionRow = {
   id: string;
   nombre: string;
-  categoria: 'ELÉCTRICO' | 'NEUMÁTICO' | 'TORNILLERÍA' | 'MECÁNICO' | 'SOPORTERÍA' | 'CARDANES';
+  categoria: 'ELÉCTRICO' | 'NEUMÁTICO' | 'TORNILLERÍA' | 'MECÁNICO' | 'SOPORTERÍA' | 'CARDANES' | 'MATERIAL ELÉCTRICO';
   precio_venta: number;
   numero_parte: string | null;
   activo: boolean;

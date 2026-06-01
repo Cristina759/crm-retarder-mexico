@@ -53,7 +53,7 @@ interface LineaServicio {
 type ModalTab = 'mo' | 'ref';
 
 const CATS_MO  = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'MECÁNICO'] as const;
-const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA'] as const;
+const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MATERIAL ELÉCTRICO', 'SOPORTERÍA', 'CARDANES', 'MECÁNICO'] as const;
 
 // ── Modal Catálogo ────────────────────────────────────────────────────────────
 function ModalCatalogo({
