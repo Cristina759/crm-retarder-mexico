@@ -1473,7 +1473,7 @@ export default function CotizadorServiciosPage() {
 
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .p-logo { height: 120px; width: 120px; object-fit: contain; }
+        .p-logo { height: 200px; width: 200px; object-fit: contain; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 22px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 2px; }
