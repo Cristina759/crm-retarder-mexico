@@ -49,6 +49,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   const [vencimiento, setVenc]      = useState(row.fecha_vencimiento?.slice(0, 10) ?? '');
   const [estado, setEstado]         = useState(row.estado_facturacion ?? 'pendiente');
   const [empresaId, setEmpresaId]   = useState(row.empresa_id ?? '');
+  const [fechaFactura, setFecha]    = useState(row.created_at?.slice(0, 10) ?? '');
   const [saving, setSaving]         = useState(false);
   const [deleting, setDeleting]     = useState(false);
   const [canceling, setCanceling]   = useState(false);
@@ -62,6 +63,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado,
       empresa_id:         empresaId || null,
+      ...(fechaFactura ? { created_at: new Date(fechaFactura).toISOString() } : {}),
     });
     if (error) {
       alert('Error al guardar: ' + error);
@@ -77,6 +79,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       estado_facturacion: estado as any,
       empresa_id:        empresaId || null,
       empresa_nombre:    (clientes.find(c => c.id === empresaId) as any)?.nombre_comercial || row.empresa_nombre,
+      created_at:        fechaFactura ? new Date(fechaFactura).toISOString() : row.created_at,
     });
     setSaving(false);
     setEditing(false);
@@ -104,6 +107,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
     setVenc(row.fecha_vencimiento?.slice(0, 10) ?? '');
     setEstado(row.estado_facturacion ?? 'pendiente');
     setEmpresaId(row.empresa_id ?? '');
+    setFecha(row.created_at?.slice(0, 10) ?? '');
     setEditing(false);
   };
 
@@ -112,7 +116,18 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   if (editing) {
     return (
       <tr className="border-b border-yellow-100 bg-yellow-50/40">
-        <td className="px-4 py-2 text-xs font-mono text-gray-700">{row.numero}</td>
+        <td className="px-4 py-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-mono font-bold text-gray-700">{row.numero}</span>
+            <input
+              type="date"
+              value={fechaFactura}
+              onChange={e => setFecha(e.target.value)}
+              className="border border-yellow-300 rounded-lg px-2 py-1 text-xs outline-none focus:border-yellow-500 w-32"
+              title="Fecha de la factura"
+            />
+          </div>
+        </td>
         <td className="px-4 py-2">
           <div className="flex items-center gap-1 justify-center">
             <button
