@@ -383,16 +383,25 @@ function CardLineas({
                 className="flex-1 border border-gray-200 rounded-xl px-3 h-9 text-xs text-gray-800 outline-none focus:border-blue-400 transition-colors"
               />
               {showCantidad && (
-                <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2 h-9 w-16 focus-within:border-blue-400 transition-colors">
+                <div className="flex items-center border border-gray-200 rounded-xl h-9 overflow-hidden focus-within:border-blue-400 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => onChange(l.id, 'cantidad', String(Math.max(1, (l.cantidad ?? 1) - 1)))}
+                    className="px-2 h-full text-gray-500 hover:bg-gray-100 font-bold text-sm leading-none"
+                  >−</button>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={l.cantidad ?? 1}
                     onChange={e => onChange(l.id, 'cantidad', e.target.value.replace(/\D/g, '') || '1')}
-                    placeholder="1"
-                    className="no-spin w-full outline-none text-xs text-gray-800 font-semibold bg-transparent text-center"
+                    className="w-8 outline-none text-xs text-gray-800 font-bold bg-transparent text-center"
                     title="Cantidad"
                   />
+                  <button
+                    type="button"
+                    onClick={() => onChange(l.id, 'cantidad', String((l.cantidad ?? 1) + 1))}
+                    className="px-2 h-full text-gray-500 hover:bg-gray-100 font-bold text-sm leading-none"
+                  >+</button>
                 </div>
               )}
               <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2.5 h-9 w-28 focus-within:border-blue-400 transition-colors">
