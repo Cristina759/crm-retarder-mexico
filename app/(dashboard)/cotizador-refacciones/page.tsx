@@ -249,8 +249,9 @@ export default function CotizadorRefaccionesPage() {
       <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; background: white; }
-        @page { size: A4 portrait; margin: 10mm 12mm; }
+        @page { size: A4 portrait; margin: 5mm; }
         ${estiloDoc}
+        .p-doc { display: block !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
       </style>
     </head><body>${area.innerHTML}</body></html>`);
     win.document.close();
@@ -910,7 +911,7 @@ export default function CotizadorRefaccionesPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4; margin: 10mm 12mm; }
+        @page { size: A4 portrait; margin: 5mm; }
         @media print {
           html, body { margin: 0 !important; padding: 0 !important; }
           header, nav, footer { display: none !important; }
@@ -925,7 +926,7 @@ export default function CotizadorRefaccionesPage() {
             box-sizing: border-box !important;
             background: white !important;
           }
-          .p-doc { width: 100% !important; box-sizing: border-box !important; display: block !important; }
+          .p-doc { display: block !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
           .p-logo { width: 200px !important; height: auto !important; }
           .no-print { display: none !important; }
         }

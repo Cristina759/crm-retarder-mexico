@@ -1401,7 +1401,7 @@ export default function CotizadorServiciosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 10mm 12mm; }
+        @page { size: A4 portrait; margin: 5mm; }
 
         @media print {
           html, body { margin: 0 !important; padding: 0 !important; }
@@ -1417,7 +1417,7 @@ export default function CotizadorServiciosPage() {
             box-sizing: border-box !important;
             background: white !important;
           }
-          .p-doc { width: 100% !important; box-sizing: border-box !important; display: block !important; }
+          .p-doc { display: block !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
           .no-print { display: none !important; }
         }
 
