@@ -51,6 +51,20 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
   const [empresaId, setEmpresaId]   = useState(row.empresa_id ?? '');
   const [fechaFactura, setFecha]    = useState(row.created_at?.slice(0, 10) ?? '');
   const [saving, setSaving]         = useState(false);
+
+  // Sincronizar estado local cuando el prop row cambia (después de onUpdated)
+  useEffect(() => {
+    if (!editing) {
+      setNumFact(row.numero_factura ?? '');
+      setMonto(String(row.monto_factura ?? ''));
+      setConcepto(row.concepto_factura ?? '');
+      setVenc(row.fecha_vencimiento?.slice(0, 10) ?? '');
+      setEstado(row.estado_facturacion ?? 'pendiente');
+      setEmpresaId(row.empresa_id ?? '');
+      setFecha(row.created_at?.slice(0, 10) ?? '');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row]);
   const [deleting, setDeleting]     = useState(false);
   const [canceling, setCanceling]   = useState(false);
 
