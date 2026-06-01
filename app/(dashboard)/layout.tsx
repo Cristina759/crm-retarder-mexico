@@ -7,7 +7,7 @@ import { UserButton, useUser } from '@clerk/nextjs';
 import {
   LayoutDashboard, ShoppingCart, Wrench, FileText, ClipboardList,
   TrendingUp, ClipboardCheck, Settings, ChevronLeft, Receipt, FileMinus, Building2,
-  ChevronDown, Hammer, Package,
+  ChevronDown, Hammer, Package, Zap, Link2, Bolt, Nut,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,8 +46,12 @@ const NAV_SECTIONS = [
 ];
 
 const HERRAMIENTAS_ITEMS = [
-  { href: '/catalogo-mano-de-obra',  label: 'Catálogo Mano de Obra',  icon: Hammer  },
-  { href: '/catalogo-refacciones',   label: 'Catálogo Refacciones',   icon: Package },
+  { href: '/catalogo-mano-de-obra',                    label: 'Mano de Obra',       icon: Hammer   },
+  { href: '/catalogo-refacciones?cat=SOPORTERÍA',      label: 'Soportería',         icon: Package  },
+  { href: '/catalogo-refacciones?cat=CARDANES',        label: 'Cardanes',           icon: Link2    },
+  { href: '/catalogo-refacciones?cat=MATERIAL ELÉCTRICO', label: 'Mat. Eléctrico',  icon: Zap      },
+  { href: '/catalogo-refacciones?cat=TORNILLERÍA',     label: 'Tornillería',        icon: Bolt     },
+  { href: '/catalogo-refacciones',                     label: 'Todas las refacc.',  icon: Nut      },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

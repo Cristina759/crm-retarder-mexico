@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Plus, Pencil, Trash2, Check, X, Loader2, Package } from 'lucide-react';
 import {
   obtenerRefaccionesCompleto,
@@ -10,21 +11,28 @@ import {
   type RefaccionRow,
 } from '@/app/actions/catalogos';
 
-const CATEGORIAS: RefaccionRow['categoria'][] = ['ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MECÁNICO'];
+const CATEGORIAS: RefaccionRow['categoria'][] = [
+  'SOPORTERÍA', 'CARDANES', 'MATERIAL ELÉCTRICO', 'TORNILLERÍA', 'ELÉCTRICO', 'NEUMÁTICO', 'MECÁNICO',
+];
 
 const CAT_COLORS: Record<string, string> = {
-  'ELÉCTRICO':   'bg-yellow-100 text-yellow-800',
-  'NEUMÁTICO':   'bg-blue-100 text-blue-800',
-  'TORNILLERÍA': 'bg-orange-100 text-orange-800',
-  'MECÁNICO':    'bg-gray-100 text-gray-700',
+  'SOPORTERÍA':        'bg-green-100 text-green-800',
+  'CARDANES':          'bg-purple-100 text-purple-800',
+  'MATERIAL ELÉCTRICO':'bg-red-100 text-red-800',
+  'TORNILLERÍA':       'bg-orange-100 text-orange-800',
+  'ELÉCTRICO':         'bg-yellow-100 text-yellow-800',
+  'NEUMÁTICO':         'bg-blue-100 text-blue-800',
+  'MECÁNICO':          'bg-gray-100 text-gray-700',
 };
 
-// Mapeo nombres amigables
 const CAT_LABELS: Record<string, string> = {
-  'ELÉCTRICO':   'Material Eléctrico',
-  'NEUMÁTICO':   'Cardanes',
-  'TORNILLERÍA': 'Tornillería',
-  'MECÁNICO':    'Soportería',
+  'SOPORTERÍA':        'Soportería',
+  'CARDANES':          'Cardanes',
+  'MATERIAL ELÉCTRICO':'Material Eléctrico',
+  'TORNILLERÍA':       'Tornillería',
+  'ELÉCTRICO':         'Eléctrico',
+  'NEUMÁTICO':         'Neumático',
+  'MECÁNICO':          'Mecánico',
 };
 
 function fmtMXN(n: number) {
@@ -32,6 +40,10 @@ function fmtMXN(n: number) {
 }
 
 export default function CatalogoRefaccionesPage() {
+  const searchParams  = useSearchParams();
+  const catParam      = searchParams.get('cat') as RefaccionRow['categoria'] | null;
+  const catsVisibles  = catParam ? [catParam] : CATEGORIAS;
+
   const [items, setItems]           = useState<RefaccionRow[]>([]);
   const [cargando, setCargando]     = useState(true);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -116,8 +128,12 @@ export default function CatalogoRefaccionesPage() {
             <Package size={20} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-[#0f2d55]">Catálogo de Refacciones</h1>
-            <p className="text-xs text-gray-500">{items.filter(i => i.activo).length} refacciones activas</p>
+            <h1 className="text-xl font-black text-[#0f2d55]">
+              {catParam ? `Catálogo: ${CAT_LABELS[catParam] ?? catParam}` : 'Catálogo de Refacciones'}
+            </h1>
+            <p className="text-xs text-gray-500">
+              {items.filter(i => i.activo && (!catParam || i.categoria === catParam)).length} items activos
+            </p>
           </div>
         </div>
         <button
@@ -194,7 +210,7 @@ export default function CatalogoRefaccionesPage() {
           <Loader2 size={20} className="animate-spin" /> Cargando catálogo...
         </div>
       ) : (
-        CATEGORIAS.map(cat => {
+        catsVisibles.map(cat => {
           const catItems = grouped[cat];
           return (
             <div key={cat} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
