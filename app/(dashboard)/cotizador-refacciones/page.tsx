@@ -236,6 +236,26 @@ export default function CotizadorRefaccionesPage() {
 
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [imprimirAlGuardar, setImprimirAlGuardar] = useState(false);
+
+  const imprimirVentana = () => {
+    const area = document.getElementById('print-area');
+    if (!area) return;
+    const estilos = Array.from(document.querySelectorAll('style'))
+      .map(s => s.innerHTML).join('\n');
+    const win = window.open('', '_blank', 'width=900,height=700');
+    if (!win) { window.print(); return; }
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: white; }
+        @page { size: A4 portrait; margin: 10mm 12mm; }
+        ${estilos}
+      </style>
+    </head><body>${area.innerHTML}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 500);
+  };
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null);
@@ -359,7 +379,7 @@ export default function CotizadorRefaccionesPage() {
       console.log('[CotizadorRefacciones] cotización creada:', data?.folio);
       setGuardadoOk(true);
       setTimeout(() => setGuardadoOk(false), 4000);
-      if (imprimirAlGuardar) window.print();
+      if (imprimirAlGuardar) imprimirVentana();
 
     } catch (e: unknown) {
       setErrorGuardar(`Error inesperado: ${e instanceof Error ? e.message : String(e)}`);
@@ -736,7 +756,7 @@ export default function CotizadorRefaccionesPage() {
             )}
 
             <button
-              onClick={() => window.print()}
+              onClick={imprimirVentana}
               disabled={!cliente.trim() || lineasActivas.length === 0}
               className="w-full h-11 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
             >
