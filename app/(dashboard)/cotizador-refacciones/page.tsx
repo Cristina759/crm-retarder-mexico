@@ -889,12 +889,23 @@ export default function CotizadorRefaccionesPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4; margin: 15mm 18mm; }
+        @page { size: A4; margin: 10mm 12mm; }
         @media print {
+          html, body { margin: 0 !important; padding: 0 !important; }
           header, nav, footer { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
-          #print-area { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+          #print-area {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+            width: 100% !important;
+            margin: 0 !important; padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+          .p-doc { width: 100% !important; box-sizing: border-box !important; display: block !important; }
+          .p-logo { width: 200px !important; height: auto !important; }
+          .no-print { display: none !important; }
         }
         .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; }
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
