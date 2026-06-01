@@ -902,6 +902,7 @@ export default function CotizadorRefaccionesPage() {
             width: 100% !important;
             margin: 0 !important; padding: 0 !important;
             box-sizing: border-box !important;
+            background: white !important;
           }
           .p-doc { width: 100% !important; box-sizing: border-box !important; display: block !important; }
           .p-logo { width: 200px !important; height: auto !important; }

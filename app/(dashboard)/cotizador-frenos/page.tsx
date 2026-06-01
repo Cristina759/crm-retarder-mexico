@@ -1197,6 +1197,7 @@ export default function CotizadorFrenosPage() {
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
+            background: white !important;
           }
           .p-doc {
             width: 100% !important;
