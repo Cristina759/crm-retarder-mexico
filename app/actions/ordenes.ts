@@ -119,6 +119,19 @@ export async function guardarDatosOS(id: string, datos: any) {
   return { error: error?.message ?? null };
 }
 export async function eliminarOrdenServicio(id: string) {
+  // Protección: no permitir borrar OS que ya tienen factura asignada
+  const { data: os } = await supabaseAdmin
+    .from('ordenes_servicio')
+    .select('numero_factura, numero')
+    .eq('id', id)
+    .single();
+
+  if (os?.numero_factura) {
+    return {
+      error: `No se puede eliminar esta OS porque ya tiene la factura ${os.numero_factura} asignada. Si necesitas eliminarla, primero quita el número de factura desde Facturación.`,
+    };
+  }
+
   const { error } = await supabaseAdmin.from('ordenes_servicio').delete().eq('id', id);
   return { error: error?.message ?? null };
 }
