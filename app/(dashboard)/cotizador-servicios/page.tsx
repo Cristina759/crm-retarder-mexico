@@ -1352,7 +1352,8 @@ export default function CotizadorServiciosPage() {
               {/* Izquierda: datos Juan Carlos */}
               <div className="p-footer-info" style={{ order: 1 }}>
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: +52 55 7372 1633</div>
                 <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
               {/* Centro: logo Pentar */}
@@ -1400,27 +1401,23 @@ export default function CotizadorServiciosPage() {
 
       {/* ── CSS de impresión ── */}
       <style>{`
-        @page { size: A4 portrait; margin: 12mm 14mm; }
+        @page { size: A4 portrait; margin: 10mm 12mm; }
 
         @media print {
-          /* ── Limitar body a UNA sola página ── */
-          html, body {
-            height: 100vh !important;
-            max-height: 100vh !important;
-            overflow: hidden !important;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
+          html, body { margin: 0 !important; padding: 0 !important; }
           header, nav, footer { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
             display: block !important;
             position: fixed !important;
-            top: 0 !important; left: 0 !important;
+            top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
             width: 100% !important;
-            margin: 0 !important;
+            margin: 0 !important; padding: 0 !important;
+            box-sizing: border-box !important;
           }
+          .p-doc { width: 100% !important; box-sizing: border-box !important; display: block !important; }
+          .no-print { display: none !important; }
         }
 
         /* ── Documento ── */
@@ -1480,10 +1477,10 @@ export default function CotizadorServiciosPage() {
 
         /* ── Footer ── */
         .p-footer { border-top: 1px solid #ddd; padding-top: 6px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
-        .p-footer-info { flex: 1; font-size: 12px; order: 1; }
+        .p-footer-info { flex: 1; font-size: 11px; order: 1; }
         .p-footer-name { font-weight: 900; color: #0d2244; font-size: 13px; }
-        .p-footer-detail { color: #555; margin-top: 1px; }
-        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
+        .p-footer-detail { color: #555; margin-top: 2px; }
+        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 3px; }
         .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; order: 2; }
         .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; order: 3; }
       `}</style>
