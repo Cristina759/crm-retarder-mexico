@@ -565,7 +565,7 @@ export default function CotizadorServiciosPage() {
   };
 
   const agregarDesdeCatalogoMO = (item: ManoDeObraRow) => {
-    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio }]);
+    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio, cantidad: 1 }]);
   };
 
   const agregarDesdeCatalogoRef = (item: RefaccionRow) => {
@@ -598,7 +598,7 @@ export default function CotizadorServiciosPage() {
 
   // Todo en MXN — sin conversión de divisas
   const subtotalPreventivoMXN = tipoPreventivo ? PRECIO_PREVENTIVO_MXN * unidadesN : 0;
-  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0), 0);
+  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
   const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
   const subtotalTraslado       = trasladoN * unidadesN;
   const subtotalMXN           = subtotalPreventivoMXN + subtotalManoObra + subtotalRefacciones + subtotalTraslado;
@@ -1031,11 +1031,12 @@ export default function CotizadorServiciosPage() {
               <CardLineas
                 titulo="Mano de Obra"
                 lineas={lineasManoObra}
-                onAdd={() => addLinea(setLineasManoObra)}
+                onAdd={() => addLinea(setLineasManoObra, true)}
                 onRemove={id => removeLinea(setLineasManoObra, id)}
                 onChange={(id, field, value) => changeLinea(setLineasManoObra, id, field, value)}
                 onAbrirCatalogo={() => abrirModal('mo')}
                 accentColor="blue"
+                showCantidad
               />
 
               {/* Refacciones */}
@@ -1290,7 +1291,7 @@ export default function CotizadorServiciosPage() {
                 {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
-                    <span>Mano de obra — {l.descripcion || '—'}</span>
+                    <span>Mano de obra — {l.descripcion || '—'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
                   </div>
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
@@ -1318,8 +1319,8 @@ export default function CotizadorServiciosPage() {
                 )}
                 {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
-                    <span className="p-price-desc">{l.descripcion || 'Mano de obra'}</span>
-                    <span className="p-price-val">{fmtMXN(l.precio)}</span>
+                    <span className="p-price-desc">{l.descripcion || 'Mano de obra'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
+                    <span className="p-price-val">{fmtMXN((l.precio || 0) * (l.cantidad ?? 1))}</span>
                   </div>
                 ))}
                 {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
