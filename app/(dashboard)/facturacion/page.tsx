@@ -63,7 +63,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       fecha_vencimiento: vencimiento || null,
       estado_facturacion: estado,
       empresa_id:         empresaId || null,
-      ...(fechaFactura ? { created_at: new Date(fechaFactura).toISOString() } : {}),
+      ...(fechaFactura ? { created_at: new Date(fechaFactura + 'T12:00:00').toISOString() } : {}),
     });
     if (error) {
       alert('Error al guardar: ' + error);
@@ -79,7 +79,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       estado_facturacion: estado as any,
       empresa_id:        empresaId || null,
       empresa_nombre:    (clientes.find(c => c.id === empresaId) as any)?.nombre_comercial || row.empresa_nombre,
-      created_at:        fechaFactura ? new Date(fechaFactura).toISOString() : row.created_at,
+      created_at:        fechaFactura ? new Date(fechaFactura + 'T12:00:00').toISOString() : row.created_at,
     });
     setSaving(false);
     setEditing(false);
