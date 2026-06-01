@@ -385,13 +385,12 @@ function CardLineas({
               {showCantidad && (
                 <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2 h-9 w-16 focus-within:border-blue-400 transition-colors">
                   <input
-                    type="number"
-                    min="1"
-                    step="1"
+                    type="text"
+                    inputMode="numeric"
                     value={l.cantidad ?? 1}
-                    onChange={e => onChange(l.id, 'cantidad', e.target.value)}
+                    onChange={e => onChange(l.id, 'cantidad', e.target.value.replace(/\D/g, '') || '1')}
                     placeholder="1"
-                    className="w-full outline-none text-xs text-gray-800 font-semibold bg-transparent text-center"
+                    className="no-spin w-full outline-none text-xs text-gray-800 font-semibold bg-transparent text-center"
                     title="Cantidad"
                   />
                 </div>
@@ -399,11 +398,11 @@ function CardLineas({
               <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2.5 h-9 w-28 focus-within:border-blue-400 transition-colors">
                 <span className="text-[10px] text-gray-400 font-semibold">$</span>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={l.precio || ''}
                   onChange={e => onChange(l.id, 'precio', e.target.value)}
+                  onBlur={e => onChange(l.id, 'precio', String(parseFloat(e.target.value) || 0))}
                   placeholder="0.00"
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent"
                 />
@@ -1420,8 +1419,13 @@ export default function CotizadorServiciosPage() {
         />
       )}
 
-      {/* ── CSS de impresión ── */}
+      {/* ── CSS global + impresión ── */}
       <style>{`
+        /* Ocultar flechas de inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
         @page { size: A4 portrait; margin: 5mm; }
 
         @media print {
