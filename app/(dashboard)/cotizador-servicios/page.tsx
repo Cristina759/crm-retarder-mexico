@@ -658,9 +658,10 @@ export default function CotizadorServiciosPage() {
           `Tipo: ${tipoServicio}`,
           `Unidades: ${unidadesN}`,
           `Subtotal MXN: $${fmt(subtotalMXN)}`,
-          `Traslado × ${unidadesN}: $${fmt(subtotalTraslado)} MXN`,
+          subtotalTraslado > 0 ? `Traslado × ${unidadesN}: $${fmt(subtotalTraslado)} MXN` : '',
           `ITEMS: ${JSON.stringify(items)}`,
           `OBSERVACIONES:\n${observaciones}`,
+          politicas ? `POLITICAS:\n${politicas}` : '',
         ].filter(Boolean).join('\n'),
       });
 

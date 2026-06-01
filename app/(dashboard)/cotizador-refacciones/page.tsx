@@ -390,6 +390,7 @@ export default function CotizadorRefaccionesPage() {
           `Folio: ${folio}`,
           `REFACCIONES:\n${lineasActivas.map(l => `  - ${l.descripcion}${l.numeroParte ? ` (${l.numeroParte})` : ''}: ${l.cantidad} × ${fmtMXN(l.precioMXN)}`).join('\n')}`,
           `OBSERVACIONES:\n${observaciones}`,
+          politicas ? `POLITICAS:\n${politicas}` : '',
         ].filter(Boolean).join('\n'),
       });
 

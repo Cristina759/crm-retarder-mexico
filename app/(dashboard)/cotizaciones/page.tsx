@@ -326,17 +326,36 @@ function ModalDetalleCotizacion({
     type ItemsData = { preventivo?: boolean; correctivo?: boolean; unidades?: number; traslado_usd?: number; mano_obra?: { descripcion: string; precio: number }[]; refacciones?: { descripcion: string; precio: number }[] };
     let itemsData: ItemsData | null = null;
     let observaciones = '';
+    let politicas = '';
     let tipoServicioLabel = '';
     let unidadesN = 1;
 
+    // Extraer OBSERVACIONES y POLITICAS para cualquier tipo de cotización
+    const OBS_KEY = 'OBSERVACIONES:\n';
+    const POL_KEY = 'POLITICAS:\n';
+    const obsIdx = notas.indexOf(OBS_KEY);
+    const polIdx = notas.indexOf(POL_KEY);
+    if (obsIdx >= 0) {
+      const obsEnd = polIdx >= 0 ? polIdx : notas.length;
+      observaciones = notas.slice(obsIdx + OBS_KEY.length, obsEnd).trim();
+    }
+    if (polIdx >= 0) {
+      politicas = notas.slice(polIdx + POL_KEY.length).trim();
+    }
+
     if (cot.tipo === 'servicios') {
-      const itemsMatch = notas.match(/ITEMS: (\{[\s\S]*?\})\nOBSERVACIONES:/);
-      if (itemsMatch) { try { itemsData = JSON.parse(itemsMatch[1]); } catch { /* */ } }
-      const obsIdx = notas.indexOf('OBSERVACIONES:\n');
-      observaciones = obsIdx >= 0 ? notas.slice(obsIdx + 15).trim() : '';
+      // Extraer ITEMS JSON: buscar "ITEMS: " y leer hasta el primer salto de línea
+      const itemsIdx = notas.indexOf('ITEMS: ');
+      if (itemsIdx >= 0) {
+        const afterItems = notas.slice(itemsIdx + 7);
+        const nlPos = afterItems.indexOf('\n');
+        const jsonStr = nlPos >= 0 ? afterItems.slice(0, nlPos) : afterItems;
+        try { itemsData = JSON.parse(jsonStr); } catch { /* */ }
+      }
       tipoServicioLabel = notas.match(/^Tipo: (.+)$/m)?.[1] ?? '';
       unidadesN = parseInt(notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1') || 1;
-    } else {
+    } else if (!observaciones) {
+      // Fallback: para tipos sin secciones, usar notas completo como observaciones
       observaciones = notas;
     }
 
@@ -398,6 +417,12 @@ function ModalDetalleCotizacion({
       <div class="p-obs-full">
         <div class="p-section-title">Observaciones técnicas</div>
         <pre class="p-obs-pre">${observaciones.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+      </div>` : '';
+
+    const polSection = politicas ? `
+      <div class="p-obs-full" style="margin-top:6px">
+        <div class="p-section-title" style="color:#c0392b;border-color:#c0392b">Políticas y condiciones</div>
+        <pre class="p-obs-pre" style="color:#c0392b;font-weight:700">${politicas.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
       </div>` : '';
 
     const html = `<!DOCTYPE html>
@@ -475,6 +500,7 @@ function ModalDetalleCotizacion({
   </div>
   <div class="p-letras"><strong>SON: ${letras}</strong></div>
   ${obsSection}
+  ${polSection}
   <hr class="p-hr"/>
   <div class="p-footer">
     <div class="p-footer-info">
