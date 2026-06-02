@@ -1457,71 +1457,71 @@ export default function CotizadorServiciosPage() {
           .p-doc { flex: 1 !important; display: flex !important; flex-direction: column !important;
                    visibility: visible !important; width: 100% !important; max-width: 100% !important;
                    margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
-          .p-spacer { flex: 1 !important; display: block !important; }
+          .p-spacer { flex: 0 !important; display: block !important; min-height: 4px !important; }
           .no-print { display: none !important; }
         }
 
         /* ── Documento ── */
         .p-doc {
           font-family: Arial, sans-serif;
-          font-size: 14px;
+          font-size: 12px;
           color: #111;
-          padding: 6px 8px;
+          padding: 4px 6px;
           box-sizing: border-box;
           background: #fff;
         }
 
         /* ── Header ── */
-        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .p-logo { height: 200px; width: 200px; object-fit: contain; }
+        .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .p-logo { height: 80px; width: 80px; object-fit: contain; }
         .p-header-right { text-align: right; }
-        .p-company { font-size: 22px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
-        .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 2px; }
-        .p-fecha-line { font-size: 12px; color: #555; margin-top: 2px; }
+        .p-company { font-size: 18px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
+        .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }
+        .p-fecha-line { font-size: 10px; color: #555; margin-top: 1px; }
 
         /* ── Separadores ── */
-        .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 5px 0; }
-        .p-hr { border: none; border-top: 1px solid #ddd; margin: 5px 0; }
+        .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 3px 0; }
+        .p-hr { border: none; border-top: 1px solid #ddd; margin: 3px 0; }
 
         /* ── Cliente ── */
-        .p-client-block { margin: 4px 0; }
-        .p-client-name { font-size: 17px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 3px; }
-        .p-client-row { font-size: 13px; color: #444; margin-bottom: 2px; line-height: 1.4; }
+        .p-client-block { margin: 3px 0; }
+        .p-client-name { font-size: 14px; font-weight: 900; color: #c0392b; text-transform: uppercase; margin-bottom: 2px; }
+        .p-client-row { font-size: 11px; color: #444; margin-bottom: 1px; line-height: 1.3; }
         .p-client-lbl { font-weight: 700; color: #222; }
 
         /* ── Dos columnas ── */
-        .p-two-col { display: flex; gap: 24px; margin: 8px 0; }
+        .p-two-col { display: flex; gap: 16px; margin: 5px 0; }
         .p-col-works { flex: 2; }
-        .p-col-pricing { flex: 1; min-width: 180px; }
-        .p-section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 5px; }
-        .p-checklist-cat { font-size: 10px; font-weight: 700; color: #0d2244; text-transform: uppercase; margin-bottom: 2px; }
-        .p-work-item { display: flex; gap: 4px; font-size: 13px; margin-bottom: 2px; line-height: 1.4; }
+        .p-col-pricing { flex: 1; min-width: 160px; }
+        .p-section-title { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; color: #0d2244; border-bottom: 1.5px solid #0d2244; padding-bottom: 2px; margin-bottom: 4px; }
+        .p-checklist-cat { font-size: 9px; font-weight: 700; color: #0d2244; text-transform: uppercase; margin-bottom: 1px; }
+        .p-work-item { display: flex; gap: 4px; font-size: 11px; margin-bottom: 1px; line-height: 1.3; }
         .p-work-bullet { color: #c0392b; font-weight: 900; flex-shrink: 0; }
 
         /* ── Precios ── */
-        .p-price-item { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px; gap: 8px; }
+        .p-price-item { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px; gap: 8px; }
         .p-price-desc { flex: 1; }
         .p-price-val { font-weight: 600; white-space: nowrap; }
-        .p-totals { border-top: 1.5px solid #ddd; padding-top: 5px; margin-top: 5px; }
-        .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 3px; }
+        .p-totals { border-top: 1.5px solid #ddd; padding-top: 4px; margin-top: 4px; }
+        .p-total-line { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px; }
         .p-total-line.iva { color: #555; }
-        .p-total-final { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
+        .p-total-final { display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 3px; margin-top: 2px; }
 
         /* ── Letras y observaciones ── */
-        .p-letras { font-size: 13px; font-style: italic; color: #444; margin: 6px 0; }
-        .p-obs-full { margin: 8px 0; }
-        .p-obs-pre { font-family: Arial, sans-serif; font-size: 14px; white-space: pre-wrap; color: #333; margin: 4px 0; line-height: 1.6; }
+        .p-letras { font-size: 11px; font-style: italic; color: #444; margin: 4px 0; }
+        .p-obs-full { margin: 4px 0; }
+        .p-obs-pre { font-family: Arial, sans-serif; font-size: 11px; white-space: pre-wrap; color: #333; margin: 2px 0; line-height: 1.4; }
 
         /* ── Políticas ── */
-        .p-policies { margin: 4px 0; }
-        .p-policy-line { font-size: 13px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
+        .p-policies { margin: 3px 0; }
+        .p-policy-line { font-size: 11px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
 
         /* ── Footer ── */
-        .p-footer { border-top: 1px solid #ddd; padding-top: 6px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
-        .p-footer-info { flex: 1; font-size: 11px; order: 1; }
-        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 13px; }
-        .p-footer-detail { color: #555; margin-top: 2px; }
-        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 3px; }
+        .p-footer { border-top: 1px solid #ddd; padding-top: 4px; margin-top: 6px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+        .p-footer-info { flex: 1; font-size: 10px; order: 1; }
+        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 11px; }
+        .p-footer-detail { color: #555; margin-top: 1px; }
+        .p-footer-web { font-size: 10px; color: #c0392b; font-weight: 700; margin-top: 2px; }
         .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; order: 2; }
         .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; order: 3; }
       `}</style>
