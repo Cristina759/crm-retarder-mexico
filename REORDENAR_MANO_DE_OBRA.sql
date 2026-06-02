@@ -1,0 +1,75 @@
+-- ============================================================
+-- REINSERTAR MANO DE OBRA EN ORDEN EXACTO DEL EXCEL
+-- Pega este SQL en el Editor SQL de Supabase y dale Run
+-- ============================================================
+
+DELETE FROM mano_de_obra WHERE true;
+
+INSERT INTO mano_de_obra (nombre, categoria, precio, activo, created_at) VALUES
+-- ── ELÉCTRICO ─────────────────────────────────────────────────
+('SERVICIO PREVENTIVO',                                                                        'ELÉCTRICO', 4250.00, true, '2026-01-01T00:00:01Z'),
+('CAMBIO Y RECONECTAR RELEY DE CORTE O VELOCIDAD /RELEVADOR)',                                'ELÉCTRICO', 300.00,  true, '2026-01-01T00:00:02Z'),
+('CAMBIO DE BULBO DE AIRE',                                                                    'ELÉCTRICO', 300.00,  true, '2026-01-01T00:00:03Z'),
+('CAMBIO PALANCA',                                                                             'ELÉCTRICO', 300.00,  true, '2026-01-01T00:00:04Z'),
+('CAMBIO CAJA DE CONTACTORES',                                                                 'ELÉCTRICO', 600.00,  true, '2026-01-01T00:00:05Z'),
+('CAMBIO CAJA ELECTRONICA',                                                                    'ELÉCTRICO', 800.00,  true, '2026-01-01T00:00:06Z'),
+('CAMBIO DE FOCO PILOTO',                                                                      'ELÉCTRICO', 100.00,  true, '2026-01-01T00:00:07Z'),
+('REPARACION ARNES SENSOR VELOCIDAD',                                                          'ELÉCTRICO', 150.00,  true, '2026-01-01T00:00:08Z'),
+('CAMBIO DE SENSOR DE VELOCIDAD',                                                              'ELÉCTRICO', 350.00,  true, '2026-01-01T00:00:09Z'),
+('CAMBIO ARNES CORRIENTE (CAL 0) (CAJA CONTACTORES)(BATERIA POSITIVO)',                       'ELÉCTRICO', 250.00,  true, '2026-01-01T00:00:10Z'),
+('CAMBIO ARNES DE TIERRA (CAL 8) REPARACION DE MAZA NEGATIVO',                               'ELÉCTRICO', 250.00,  true, '2026-01-01T00:00:11Z'),
+('CAMBIO DE ARNES (7 VIAS)',                                                                   'ELÉCTRICO', 800.00,  true, '2026-01-01T00:00:12Z'),
+('CAMBIO DE ARNES DE POTENCIA (4 VIAS)',                                                       'ELÉCTRICO', 350.00,  true, '2026-01-01T00:00:13Z'),
+('CAMBIO DE ARNES TIERRA (DE FRENO A BATERIAS) REP. O FAB. MAZA NEGATIVO',                   'ELÉCTRICO', 250.00,  true, '2026-01-01T00:00:14Z'),
+('REPARACION DE ARNES DE CONTROL (CAMBIO DE TERMINALES) 4 LINEAS BLOCK CONEXIÓN',            'ELÉCTRICO', 150.00,  true, '2026-01-01T00:00:15Z'),
+('SISTEMA DE CONTROL COMPLETO CAJA MECANICA',                                                  'ELÉCTRICO', 2000.00, true, '2026-01-01T00:00:16Z'),
+('FABRICACION LINEAS SENSOR C/CONECTOR',                                                       'ELÉCTRICO', 150.00,  true, '2026-01-01T00:00:17Z'),
+('SISTEMA DE CONTROL COMPLETO CAJA ELECTRONICA',                                               'ELÉCTRICO', 2500.00, true, '2026-01-01T00:00:18Z'),
+('CAMBIO DE INTERRUPTOR',                                                                       'ELÉCTRICO', 150.00,  true, '2026-01-01T00:00:19Z'),
+('CAMBIO DE BLOCK CONEXIONES',                                                                  'ELÉCTRICO', 400.00,  true, '2026-01-01T00:00:20Z'),
+('REPARACION LINEAS DE TABLERO',                                                                'ELÉCTRICO', 200.00,  true, '2026-01-01T00:00:21Z'),
+('REPARACION LINEAS DE TABLERO ALIMENTACION O PORT FUSIBLE',                                   'ELÉCTRICO', 200.00,  true, '2026-01-01T00:00:22Z'),
+('REPARACION ARNES DE 7 VIAS (SIN Realizar cambio completo)',                                  'ELÉCTRICO', 250.00,  true, '2026-01-01T00:00:23Z'),
+('REPARACION CAJA CONTACTORES',                                                                 'ELÉCTRICO', 300.00,  true, '2026-01-01T00:00:24Z'),
+('CAMBIO DE MEGA FUSIBLE O PORTA MEGA FUSIBLE',                                                'ELÉCTRICO', 200.00,  true, '2026-01-01T00:00:25Z'),
+('INSTALACION DE SISTEMA ELECTRICO COMPLETO',                                                  'ELÉCTRICO', 3000.00, true, '2026-01-01T00:00:26Z'),
+('REVISIÓN DE CONSUMOS',                                                                        'ELÉCTRICO', 500.00,  true, '2026-01-01T00:00:27Z'),
+-- ── NEUMÁTICO ─────────────────────────────────────────────────
+('INSTALACIÓN SISTEMA NEUMATICO',                                                               'NEUMÁTICO', 1000.00, true, '2026-01-01T00:00:28Z'),
+('REPARACION SISTEMA NEUMATICO (BULBO)',                                                        'NEUMÁTICO', 300.00,  true, '2026-01-01T00:00:29Z'),
+('CAMBIO MANGUERA',                                                                             'NEUMÁTICO', 250.00,  true, '2026-01-01T00:00:30Z'),
+('KIT DE LUCES LED',                                                                            'NEUMÁTICO', 4250.00, true, '2026-01-01T00:00:31Z'),
+-- ── MECÁNICO ──────────────────────────────────────────────────
+('LIMPIEZA DE FRENOS SIN DESARMAR',                                                             'MECÁNICO',  400.00,  true, '2026-01-01T00:00:32Z'),
+('INSTALACION MECANICA O REINSTALACION DE FRENO',                                              'MECÁNICO',  3500.00, true, '2026-01-01T00:00:33Z'),
+('SOLO BAJAR PURO FRENO',                                                                       'MECÁNICO',  1500.00, true, '2026-01-01T00:00:34Z'),
+('CAMBIO DE SOPORTE DE CHASIS TIPO "L" C/U',                                                  'MECÁNICO',  400.00,  true, '2026-01-01T00:00:35Z'),
+('CAMBIO DE ROTOR FRENO INSTALADO C/U',                                                        'MECÁNICO',  600.00,  true, '2026-01-01T00:00:36Z'),
+('MONTAJE DE FRENO (AXIAL) COMPLETO CON KIT DE CONTROL',                                       'MECÁNICO',  6000.00, true, '2026-01-01T00:00:37Z'),
+('CAMBIO DE SILENTBLOKS',                                                                       'MECÁNICO',  2500.00, true, '2026-01-01T00:00:38Z'),
+('CAMBIO DE RETEN DE FRENO',                                                                    'MECÁNICO',  700.00,  true, '2026-01-01T00:00:39Z'),
+('CAMBIO O REPARARCION DE ARNES INTERIOR (CONEXIÓN)',                                          'MECÁNICO',  500.00,  true, '2026-01-01T00:00:40Z'),
+('BAJAR CARDANES Y DESCONECTAR ARNESES DE FRENO',                                              'MECÁNICO',  750.00,  true, '2026-01-01T00:00:41Z'),
+('MONTAJE DE CARDANES Y ARNESES DE FRENO',                                                     'MECÁNICO',  750.00,  true, '2026-01-01T00:00:42Z'),
+('CAMBIO DE PLACAS LATERALES C/U',                                                              'MECÁNICO',  300.00,  true, '2026-01-01T00:00:43Z'),
+('DESARMADO DE FRENO QUITANDO BOBINAS (SIEMPRE Y CUANDO SALGAN)',                              'MECÁNICO',  1000.00, true, '2026-01-01T00:00:44Z'),
+('REPARACION DE FRENO (BALEROS, RETENES Y CASQUILLOS, REPARACION ARMADO) SIN BOBINAS',        'MECÁNICO',  2500.00, true, '2026-01-01T00:00:45Z'),
+('CAMBIO O REPARACION ARNES INTERIOR (CONEXIÓN)',                                              'MECÁNICO',  500.00,  true, '2026-01-01T00:00:46Z'),
+('CAMBIO KIT DE ENGRASE SISTEMA DE LUBRICACION',                                               'MECÁNICO',  570.00,  true, '2026-01-01T00:00:47Z'),
+('CAMBIO DE 1 KIT DE REPARACION DE BOBINA',                                                    'MECÁNICO',  200.00,  true, '2026-01-01T00:00:48Z'),
+('REPARACION DE CUERDA DE FRENO O PLACA LATERAL C/U',                                         'MECÁNICO',  100.00,  true, '2026-01-01T00:00:49Z'),
+('REFRESCO, CUERDAS DE TORNILLOS, DE CRUCETA C/U',                                            'MECÁNICO',  100.00,  true, '2026-01-01T00:00:50Z'),
+('CAMBIO SEGUROS DE CRUCETAS',                                                                  'MECÁNICO',  200.00,  true, '2026-01-01T00:00:51Z'),
+('CAMBIO DE CRUCETA',                                                                           'MECÁNICO',  500.00,  true, '2026-01-01T00:00:52Z'),
+('CAMBIO DE BOBINA C/U',                                                                        'MECÁNICO',  300.00,  true, '2026-01-01T00:00:53Z'),
+('CAMBIO DE PLACA POLAR C/U',                                                                   'MECÁNICO',  200.00,  true, '2026-01-01T00:00:54Z'),
+('CALIBRACION ENTRE HIERRO ROTOR',                                                              'MECÁNICO',  550.00,  true, '2026-01-01T00:00:55Z'),
+('BAJAR Y SUBIR CARDANES LADO DE FRENO CAJA Y DIFERENCIAL',                                   'MECÁNICO',  1500.00, true, '2026-01-01T00:00:56Z'),
+('CAMBIO TORNILLO PLATO ACOPLE C/U',                                                            'MECÁNICO',  75.00,   true, '2026-01-01T00:00:57Z'),
+('DESINSTALACION FRENO (CON ARNES)',                                                            'MECÁNICO',  2500.00, true, '2026-01-01T00:00:58Z'),
+('CAMBIO DE TERMINALES',                                                                        'MECÁNICO',  200.00,  true, '2026-01-01T00:00:59Z'),
+('RECONEXIÓN ELECTRICA',                                                                        'MECÁNICO',  200.00,  true, '2026-01-01T00:01:00Z'),
+('SUBIR FRENO',                                                                                 'MECÁNICO',  750.00,  true, '2026-01-01T00:01:01Z'),
+('CAMBIO CORTA CORRIENTE',                                                                      'MECÁNICO',  350.00,  true, '2026-01-01T00:01:02Z');
+
+SELECT categoria, COUNT(*) as total FROM mano_de_obra GROUP BY categoria ORDER BY MIN(created_at);
