@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Loader2, X, FileText, Building2, User, Printer, ChevronRight } from 'lucide-react';
+import { Trash2, Loader2, X, FileText, Building2, User, Printer, ChevronRight, Pencil, Save, Check } from 'lucide-react';
 import {
   obtenerCotizaciones,
   crearCotizacion,
   eliminarCotizacion,
+  actualizarCotizacion,
   buscarEmpresas,
   type EmpresaBusquedaResult,
 } from '@/app/actions/cotizaciones';
@@ -56,7 +57,7 @@ const ESTADO_CONFIG: Record<string, { label: string; color: string }> = {
 
 function formatMXN(n: number) {
   return new Intl.NumberFormat('es-MX', {
-    style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
+    style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(n);
 }
 
@@ -302,12 +303,57 @@ function ModalNuevaCotizacion({
 
 // ── Modal detalle de cotización ───────────────────────────────────────────────
 function ModalDetalleCotizacion({
-  cot,
+  cot: cotInit,
   onClose,
+  onUpdated,
 }: {
   cot: CotizacionRow;
   onClose: () => void;
+  onUpdated?: (c: CotizacionRow) => void;
 }) {
+  const [cot, setCot]       = useState<CotizacionRow>(cotInit);
+  const [editing, setEditing] = useState(false);
+  const [saving,  setSaving]  = useState(false);
+  // Campos editables
+  const OBS_KEY = 'OBSERVACIONES:\n', POL_KEY = 'POLITICAS:\n';
+  const parseNotas = (n: string) => {
+    const oi = n.indexOf(OBS_KEY), pi = n.indexOf(POL_KEY);
+    const obs = oi >= 0 ? n.slice(oi + OBS_KEY.length, pi >= 0 ? pi : n.length).trim() : '';
+    const pol = pi >= 0 ? n.slice(pi + POL_KEY.length).trim() : '';
+    return { obs, pol };
+  };
+  const notasParsed = parseNotas(cot.notas ?? '');
+  const [editEstado, setEditEstado] = useState(cot.estado ?? 'enviada');
+  const [editObs,    setEditObs]    = useState(notasParsed.obs);
+  const [editPol,    setEditPol]    = useState(notasParsed.pol);
+
+  const handleSave = async () => {
+    setSaving(true);
+    // Reconstruir notas preservando secciones no editables (ej. ITEMS)
+    const rawNotas = cot.notas ?? '';
+    const itemsMatch = rawNotas.match(/^(ITEMS:.*$)/m);
+    const itemsLine  = itemsMatch ? itemsMatch[0] : '';
+    const otherLines = rawNotas.split('\n').filter(l =>
+      !l.startsWith('OBSERVACIONES:') && !l.startsWith('POLITICAS:') && l !== itemsLine.trim()
+        && !rawNotas.slice(rawNotas.indexOf('OBSERVACIONES:')).includes(l)
+    );
+    // Forma más segura: tomar todo lo que está ANTES de OBSERVACIONES
+    const obsIdx = rawNotas.indexOf('OBSERVACIONES:\n');
+    const base   = obsIdx >= 0 ? rawNotas.slice(0, obsIdx).trimEnd() : rawNotas.replace(/OBSERVACIONES:[\s\S]*/,'').trimEnd();
+    const nuevasNotas = [
+      base,
+      editObs  ? `OBSERVACIONES:\n${editObs}` : '',
+      editPol  ? `POLITICAS:\n${editPol}`      : '',
+    ].filter(Boolean).join('\n');
+
+    await actualizarCotizacion(cot.id, { estado: editEstado as any, notas: nuevasNotas });
+    const updated = { ...cot, estado: editEstado, notas: nuevasNotas };
+    setCot(updated);
+    onUpdated?.(updated);
+    setSaving(false);
+    setEditing(false);
+  };
+
   const printRef = useRef<HTMLDivElement>(null);
   const estadoConf = ESTADO_CONFIG[cot.estado ?? ''] ?? { label: cot.estado ?? '—', color: 'bg-gray-100 text-gray-600' };
 
@@ -360,13 +406,37 @@ function ModalDetalleCotizacion({
     }
 
     const fmtMXN = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-    const subtotal = cot.subtotal ?? 0;
-    const iva      = cot.iva ?? 0;
-    const total    = cot.total_mxn ?? 0;
+    const fmtUSD = (n: number) => `$${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)} USD`;
+    const subtotalMXN = cot.subtotal ?? 0;
+    const ivaMXN      = cot.iva ?? 0;
+    const totalMXN    = cot.total_mxn ?? 0;
+
+    // ── Frenos: imprimir en USD ───────────────────────────────────────────────
+    const esFrenos = (cot.tipo ?? '').startsWith('frenos');
+    const tcMatch  = notas.match(/TC:\s*\$([0-9.]+)/);
+    const tc       = esFrenos && tcMatch ? parseFloat(tcMatch[1]) : 1;
+
+    const fmt     = esFrenos ? fmtUSD : fmtMXN;
+    const subtotal = esFrenos && tc > 0 ? subtotalMXN / tc : subtotalMXN;
+    const iva      = esFrenos && tc > 0 ? ivaMXN      / tc : ivaMXN;
+    const total    = esFrenos && tc > 0 ? totalMXN    / tc : totalMXN;
+    const monedaLabel = esFrenos ? 'TOTAL USD' : 'TOTAL MXN';
+
+    // Componentes de frenos almacenados en notas: "  - NOMBRE: $PRECIO USD"
+    type FrenosComp = { nombre: string; precio: number };
+    const frenosComps: FrenosComp[] = esFrenos
+      ? [...notas.matchAll(/^\s+- (.+?):\s*\$([0-9.]+)\s+USD/gm)].map(m => ({ nombre: m[1].trim(), precio: parseFloat(m[2]) }))
+      : [];
 
     // Build works column
     let worksHTML = '';
-    if (itemsData) {
+    if (esFrenos) {
+      const modelo = notas.match(/^Modelo: (.+)$/m)?.[1] ?? '';
+      const unidFrenosN = parseInt(notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1') || 1;
+      if (modelo) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>${modelo}</span></div>`;
+      worksHTML += `<div class="p-work-item" style="padding-left:8px;font-size:11px;color:#555">Camiones ${unidFrenosN > 1 ? `× ${unidFrenosN}` : '1 unidad'}</div>`;
+      frenosComps.forEach(c => { worksHTML += `<div class="p-work-item"><span class="p-work-bullet">•</span><span>${c.nombre}</span></div>`; });
+    } else if (itemsData) {
       if (itemsData.preventivo) {
         worksHTML += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>Servicio Preventivo (${unidadesN} u.)</span></div>`;
         for (const c of CHECKLIST_PREVENTIVO_PDF) {
@@ -389,7 +459,11 @@ function ModalDetalleCotizacion({
 
     // Build pricing column
     let pricingHTML = '';
-    if (itemsData) {
+    if (esFrenos) {
+      frenosComps.forEach(c => {
+        pricingHTML += `<div class="p-price-item"><span class="p-price-desc">${c.nombre}</span><span class="p-price-val">${fmtUSD(c.precio)}</span></div>`;
+      });
+    } else if (itemsData) {
       if (itemsData.preventivo) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">Preventivo × ${unidadesN}</span><span class="p-price-val">${fmtMXN(PRECIO_PREVENTIVO_MXN * unidadesN)}</span></div>`;
       for (const l of (itemsData.mano_obra ?? [])) {
         if (l.descripcion || l.precio) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">${l.descripcion || 'Mano de obra'}</span><span class="p-price-val">${fmtMXN(l.precio)}</span></div>`;
@@ -400,12 +474,14 @@ function ModalDetalleCotizacion({
       const trasladoMXN = (itemsData.traslado_usd ?? 0) * unidadesN;
       if (trasladoMXN > 0) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">Traslado × ${unidadesN}</span><span class="p-price-val">${fmtMXN(trasladoMXN)}</span></div>`;
     }
-    pricingHTML += `<div class="p-totals"><div class="p-total-line"><span>Subtotal</span><span>${fmtMXN(subtotal)}</span></div><div class="p-total-line iva"><span>IVA 16%</span><span>${fmtMXN(iva)}</span></div><div class="p-total-final"><span>TOTAL MXN</span><span>${fmtMXN(total)}</span></div></div>`;
+    pricingHTML += `<div class="p-totals"><div class="p-total-line"><span>Subtotal</span><span>${fmt(subtotal)}</span></div><div class="p-total-line iva"><span>IVA 16%</span><span>${fmt(iva)}</span></div><div class="p-total-final"><span>${monedaLabel}</span><span>${fmt(total)}</span></div></div>`;
 
     const clienteNombre = cot.empresas?.nombre_comercial ?? '—';
     const vendedor = cot.vendedor?.nombre ?? '';
     const tipoDisplay = cot.tipo ? cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1) : '';
-    const letras = numeroALetras(total);
+    const letras = esFrenos
+      ? numeroALetras(total).replace('PESOS', 'DÓLARES').replace('MXN', 'USD')
+      : numeroALetras(total);
 
     const clientBlockRows = [
       vendedor ? `<div class="p-client-row"><span class="p-client-lbl">Atención a:</span> ${vendedor}</div>` : '',
@@ -470,6 +546,7 @@ function ModalDetalleCotizacion({
     .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
     .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; }
     .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; }
+    @media print { .no-print { display: none !important; } }
   </style>
 </head>
 <body>
@@ -517,16 +594,31 @@ function ModalDetalleCotizacion({
     </div>
   </div>
 </div>
+<div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:9999">
+  <button onclick="window.print()" style="background:#0f2d55;color:#fff;border:none;padding:10px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">🖨️ Imprimir PDF</button>
+</div>
 </body>
 </html>`;
 
-    const win = window.open('', '_blank', 'width=820,height=1060');
-    if (!win) return;
+    const win = window.open('', '_blank', 'width=860,height=1100');
+    if (!win) { alert('Activa las ventanas emergentes para imprimir.'); return; }
     win.document.write(html);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 500);
   };
+
+  // ── Detectar si es frenos para mostrar USD en el preview ─────────────────
+  const esFrenosPreview = (cot.tipo ?? '').startsWith('frenos');
+  const tcPreviewMatch  = (cot.notas ?? '').match(/TC:\s*\$([0-9.]+)/);
+  const tcPreview       = esFrenosPreview && tcPreviewMatch ? parseFloat(tcPreviewMatch[1]) : 1;
+  const subtotalPreview = esFrenosPreview && tcPreview > 0 ? (cot.subtotal ?? 0) / tcPreview : (cot.subtotal ?? 0);
+  const ivaPreview      = esFrenosPreview && tcPreview > 0 ? (cot.iva ?? 0)      / tcPreview : (cot.iva ?? 0);
+  const totalPreview    = esFrenosPreview && tcPreview > 0 ? (cot.total_mxn ?? 0) / tcPreview : (cot.total_mxn ?? 0);
+  const fmtPreview      = esFrenosPreview
+    ? (n: number) => `$${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)} USD`
+    : formatMXN;
+  const monedaPreview   = esFrenosPreview ? 'Importe USD' : 'Importe MXN';
+  const totalLabel      = esFrenosPreview ? 'TOTAL USD'   : 'TOTAL MXN';
 
   const fechaCreacion = new Date(cot.created_at ?? '').toLocaleDateString('es-MX', {
     day: '2-digit', month: 'long', year: 'numeric',
@@ -548,6 +640,27 @@ function ModalDetalleCotizacion({
             <p className="text-xs text-gray-400 mt-0.5">{cot.empresas?.nombre_comercial ?? '—'}</p>
           </div>
           <div className="flex items-center gap-2">
+            {!editing ? (
+              <button
+                onClick={() => { setEditing(true); setEditEstado(cot.estado ?? 'enviada'); const p = parseNotas(cot.notas ?? ''); setEditObs(p.obs); setEditPol(p.pol); }}
+                className="flex items-center gap-1.5 px-3 h-9 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200 transition-colors"
+              >
+                <Pencil size={13} /> Editar
+              </button>
+            ) : (
+              <>
+                <button onClick={() => setEditing(false)} className="px-3 h-9 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50">
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-1.5 px-3 h-9 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Guardar
+                </button>
+              </>
+            )}
             <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 px-3 h-9 bg-[#0f2d55] text-white rounded-xl text-xs font-bold hover:bg-[#1a4a7a] transition-colors"
@@ -562,6 +675,44 @@ function ModalDetalleCotizacion({
 
         {/* Contenido scrolleable */}
         <div className="overflow-y-auto px-6 py-4 space-y-4 flex-1">
+        {/* ── Formulario de edición ── */}
+        {editing && (
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-3">
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-wider">Editando cotización</p>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 block mb-1">Estado</label>
+              <select
+                value={editEstado}
+                onChange={e => setEditEstado(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 h-9 text-sm outline-none focus:border-blue-400"
+              >
+                {Object.entries(ESTADO_CONFIG).map(([k, v]) => (
+                  <option key={k} value={k}>{v.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 block mb-1">Observaciones</label>
+              <textarea
+                value={editObs}
+                onChange={e => setEditObs(e.target.value)}
+                rows={4}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-400 resize-none"
+                placeholder="Observaciones técnicas / logísticas..."
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 block mb-1">Políticas y Garantías</label>
+              <textarea
+                value={editPol}
+                onChange={e => setEditPol(e.target.value)}
+                rows={3}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-400 resize-none"
+                placeholder="Políticas y garantías..."
+              />
+            </div>
+          </div>
+        )}
 
           {/* Contenido imprimible */}
           <div ref={printRef}>
@@ -595,23 +746,23 @@ function ModalDetalleCotizacion({
               <thead>
                 <tr>
                   <th>Concepto</th>
-                  <th style={{ textAlign: 'right' }}>Importe MXN</th>
+                  <th style={{ textAlign: 'right' }}>{monedaPreview}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Subtotal</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.subtotal ?? 0)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtPreview(subtotalPreview)}</td>
                 </tr>
                 <tr>
                   <td>IVA 16%</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.iva ?? 0)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtPreview(ivaPreview)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="total-row">
-                  <td><strong>TOTAL MXN</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{formatMXN(cot.total_mxn ?? 0)}</strong></td>
+                  <td><strong>{totalLabel}</strong></td>
+                  <td style={{ textAlign: 'right' }}><strong>{fmtPreview(totalPreview)}</strong></td>
                 </tr>
               </tfoot>
             </table>
@@ -843,6 +994,10 @@ export default function CotizacionesPage() {
         <ModalDetalleCotizacion
           cot={cotDetalle}
           onClose={() => setCotDetalle(null)}
+          onUpdated={updated => {
+            setCotizaciones(prev => prev.map(c => c.id === updated.id ? updated : c));
+            setCotDetalle(updated);
+          }}
         />
       )}
     </div>

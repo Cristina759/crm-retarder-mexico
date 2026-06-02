@@ -14,7 +14,7 @@ interface LineaRefaccion {
   descripcion: string;
   numeroParte: string;
   cantidad: number;
-  precioMXN: number;
+  precioMXN: string;
 }
 
 const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MECÁNICO', 'SOPORTERÍA', 'CARDANES', 'MATERIAL ELÉCTRICO'];
@@ -220,7 +220,7 @@ export default function CotizadorRefaccionesPage() {
   const [folio, setFolio] = useState('');
 
   const [lineas, setLineas] = useState<LineaRefaccion[]>([
-    { id: uid(), descripcion: '', numeroParte: '', cantidad: 1, precioMXN: 0 },
+    { id: uid(), descripcion: '', numeroParte: '', cantidad: 1, precioMXN: '' },
   ]);
 
   const [traslado, setTraslado] = useState('0');
@@ -236,7 +236,6 @@ export default function CotizadorRefaccionesPage() {
   const [modalAbierto, setModalAbierto] = useState(false);
 
   const [qrDataUrl, setQrDataUrl] = useState('');
-  const [imprimirAlGuardar, setImprimirAlGuardar] = useState(false);
 
   const imprimirVentana = () => {
     const area = document.getElementById('print-area');
@@ -270,11 +269,15 @@ export default function CotizadorRefaccionesPage() {
         .p-doc { display: block !important; visibility: visible !important;
                  width: 100% !important; max-width: 100% !important;
                  margin: 0 !important; padding: 4px !important; }
+        @media print { .no-print { display: none !important; } }
       </style>
-    </head><body>${html}</body></html>`);
+    </head><body>${html}
+    <div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:9999">
+      <button onclick="window.print()" style="background:#0f2d55;color:#fff;border:none;padding:10px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">🖨️ Imprimir PDF</button>
+    </div>
+    </body></html>`);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 800);
   };
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
@@ -312,7 +315,7 @@ export default function CotizadorRefaccionesPage() {
 
   // ── Helpers de líneas ───────────────────────────────────────────────────────
   const addLinea = () => {
-    setLineas(prev => [...prev, { id: uid(), descripcion: '', numeroParte: '', cantidad: 1, precioMXN: 0 }]);
+    setLineas(prev => [...prev, { id: uid(), descripcion: '', numeroParte: '', cantidad: 1, precioMXN: '' }]);
   };
 
   const removeLinea = (id: string) => {
@@ -323,7 +326,7 @@ export default function CotizadorRefaccionesPage() {
     setLineas(prev => prev.map(l => {
       if (l.id !== id) return l;
       if (field === 'cantidad') return { ...l, cantidad: parseInt(value) || 1 };
-      if (field === 'precioMXN') return { ...l, precioMXN: parseFloat(value) || 0 };
+      if (field === 'precioMXN') return { ...l, precioMXN: value };
       return { ...l, [field]: value };
     }));
   };
@@ -345,24 +348,24 @@ export default function CotizadorRefaccionesPage() {
       }
 
       // 2. Si no existe, buscar una línea vacía para llenarla
-      const vacia = prev.find(l => !l.descripcion && l.precioMXN === 0);
+      const vacia = prev.find(l => !l.descripcion && !parseFloat(l.precioMXN));
       if (vacia) {
         return prev.map(l => l.id === vacia.id
-          ? { ...l, descripcion: item.nombre, numeroParte: item.numero_parte ?? '', precioMXN: item.precio_venta, cantidad: 1 }
+          ? { ...l, descripcion: item.nombre, numeroParte: item.numero_parte ?? '', precioMXN: String(item.precio_venta), cantidad: 1 }
           : l
         );
       }
 
       // 3. Si no hay vacías ni repetidas, añadir nueva línea
-      return [...prev, { id: uid(), descripcion: item.nombre, numeroParte: item.numero_parte ?? '', cantidad: 1, precioMXN: item.precio_venta }];
+      return [...prev, { id: uid(), descripcion: item.nombre, numeroParte: item.numero_parte ?? '', cantidad: 1, precioMXN: String(item.precio_venta) }];
     });
   }, []);
 
 
   // ── Cálculos ─────────────────────────────────────────────────────────────────
   const trasladoN = parseFloat(traslado) || 0;
-  const lineasActivas = lineas.filter(l => l.descripcion || l.precioMXN);
-  const subtotalRef = lineasActivas.reduce((s, l) => s + l.precioMXN * l.cantidad, 0);
+  const lineasActivas = lineas.filter(l => l.descripcion || parseFloat(l.precioMXN));
+  const subtotalRef = lineasActivas.reduce((s, l) => s + (parseFloat(l.precioMXN) || 0) * l.cantidad, 0);
   const subtotal = subtotalRef + trasladoN;
   const iva = Math.round(subtotal * 0.16 * 100) / 100;
   const totalMXN = Math.round(subtotal * 1.16 * 100) / 100;
@@ -389,7 +392,7 @@ export default function CotizadorRefaccionesPage() {
         total_mxn: totalMXN,
         notas: [
           `Folio: ${folio}`,
-          `REFACCIONES:\n${lineasActivas.map(l => `  - ${l.descripcion}${l.numeroParte ? ` (${l.numeroParte})` : ''}: ${l.cantidad} × ${fmtMXN(l.precioMXN)}`).join('\n')}`,
+          `REFACCIONES:\n${lineasActivas.map(l => `  - ${l.descripcion}${l.numeroParte ? ` (${l.numeroParte})` : ''}: ${l.cantidad} × ${fmtMXN(parseFloat(l.precioMXN) || 0)}`).join('\n')}`,
           `OBSERVACIONES:\n${observaciones}`,
           politicas ? `POLITICAS:\n${politicas}` : '',
         ].filter(Boolean).join('\n'),
@@ -400,7 +403,7 @@ export default function CotizadorRefaccionesPage() {
       console.log('[CotizadorRefacciones] cotización creada:', data?.folio);
       setGuardadoOk(true);
       setTimeout(() => setGuardadoOk(false), 4000);
-      if (imprimirAlGuardar) imprimirVentana();
+      imprimirVentana();
 
     } catch (e: unknown) {
       setErrorGuardar(`Error inesperado: ${e instanceof Error ? e.message : String(e)}`);
@@ -658,11 +661,11 @@ export default function CotizadorRefaccionesPage() {
               <div className="flex items-center border border-gray-200 rounded-xl px-2 h-9 gap-1 focus-within:border-red-400 transition-colors">
                 <span className="text-[10px] text-gray-500">$</span>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={l.precioMXN}
                   onChange={e => changeLinea(l.id, 'precioMXN', e.target.value)}
+                  onFocus={e => e.target.select()}
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent text-right"
                 />
               </div>
@@ -731,7 +734,7 @@ export default function CotizadorRefaccionesPage() {
               {lineasActivas.map(l => (
                 <div key={l.id} className="flex justify-between text-sm">
                   <span className="text-gray-300 truncate max-w-[180px]">{l.descripcion || 'Refacción'} ×{l.cantidad}</span>
-                  <span className="font-semibold">{fmtMXN(l.precioMXN * l.cantidad)}</span>
+                  <span className="font-semibold">{fmtMXN((parseFloat(l.precioMXN) || 0) * l.cantidad)}</span>
                 </div>
               ))}
               {trasladoN > 0 && (
@@ -754,15 +757,6 @@ export default function CotizadorRefaccionesPage() {
               <span className="text-3xl font-black text-yellow-400">{fmtMXN(totalMXN)}</span>
             </div>
 
-            <label className="flex items-center gap-2 cursor-pointer mt-1">
-              <input
-                type="checkbox"
-                checked={imprimirAlGuardar}
-                onChange={e => setImprimirAlGuardar(e.target.checked)}
-                className="w-4 h-4 accent-yellow-400 cursor-pointer"
-              />
-              <span className="text-xs text-gray-400">Imprimir automáticamente al guardar</span>
-            </label>
           </div>
 
           {/* Botones */}
@@ -867,7 +861,7 @@ export default function CotizadorRefaccionesPage() {
                 {lineasActivas.map(l => (
                   <div key={l.id} className="p-price-item">
                     <span className="p-price-desc">{l.descripcion || 'Refacción'} ×{l.cantidad}</span>
-                    <span className="p-price-val">{fmtMXN(l.precioMXN * l.cantidad)}</span>
+                    <span className="p-price-val">{fmtMXN((parseFloat(l.precioMXN) || 0) * l.cantidad)}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (
