@@ -486,13 +486,31 @@ export default function OSDetallePage() {
     }, 800);
   }, [os]);
 
-  // Guardar foto OS
+  // Parsear foto_os como array (backward compat con base64 individual)
+  const fotosOS: string[] = (() => {
+    if (!os?.foto_os) return [];
+    if (os.foto_os.startsWith('[')) { try { return JSON.parse(os.foto_os); } catch { return []; } }
+    return [os.foto_os];
+  })();
+
+  // Guardar fotos OS (múltiples)
   const handleFotoOS = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !os) return;
-    const base64 = await fileToBase64(file);
-    await guardarDatosOS(os.id, { foto_os: base64 });
-    setOs(prev => prev ? { ...prev, foto_os: base64 } : prev);
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length || !os) return;
+    const nuevas = await Promise.all(files.map(fileToBase64));
+    const todas = [...fotosOS, ...nuevas];
+    const json = JSON.stringify(todas);
+    await guardarDatosOS(os.id, { foto_os: json });
+    setOs(prev => prev ? { ...prev, foto_os: json } : prev);
+    e.target.value = '';
+  };
+
+  const eliminarFotoOS = async (idx: number) => {
+    if (!os) return;
+    const nuevas = fotosOS.filter((_, i) => i !== idx);
+    const json = nuevas.length ? JSON.stringify(nuevas) : null;
+    await guardarDatosOS(os.id, { foto_os: json ?? '' });
+    setOs(prev => prev ? { ...prev, foto_os: json } : prev);
   };
 
   // Guardar número OC
@@ -722,49 +740,61 @@ export default function OSDetallePage() {
                 className={`w-full border rounded-xl px-3 h-10 text-sm outline-none transition-all ${!canEdit ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : numOS ? 'border-green-300 focus:border-green-400 bg-green-50/20' : 'border-red-300 ring-4 ring-red-50'}`}
               />
             </div>
-            {/* Foto OS */}
+            {/* Foto OS - múltiples */}
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className={`text-[10px] font-bold block ${!os.foto_os ? 'text-red-500' : 'text-gray-500'}`}>Foto de la OS *</label>
-                {!os.foto_os && <span className="text-[9px] font-black text-red-600 uppercase">Falta foto</span>}
-              </div>
-              {os.foto_os ? (
-                <div className="relative group">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={os.foto_os} 
-                    alt="OS" 
-                    className="w-full max-h-48 object-contain rounded-xl border border-green-200 bg-green-50/10 shadow-sm cursor-pointer hover:brightness-95 transition-all" 
-                    onClick={() => {
-                      const win = window.open();
-                      if (win && os.foto_os) win.document.write(`<img src="${os.foto_os}" style="max-width:100%; height:auto;" />`);
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                    <div className="bg-white/90 p-2 rounded-full shadow-lg text-green-600">
-                      <Eye size={20} />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => { guardarDatosOS(os.id, { foto_os: '' }); setOs(prev => prev ? { ...prev, foto_os: null } : prev); }}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+              <div className="flex justify-between items-center mb-2">
+                <label className={`text-[10px] font-bold block ${fotosOS.length === 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                  Foto de la OS * {fotosOS.length > 0 && <span className="text-gray-400 font-normal">({fotosOS.length})</span>}
+                </label>
+                <div className="flex items-center gap-2">
+                  {fotosOS.length === 0 && <span className="text-[9px] font-black text-red-600 uppercase">Falta foto</span>}
+                  {canEdit && (
+                    <button
+                      onClick={() => fotoOSRef.current?.click()}
+                      className="flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-xl transition-colors"
+                    >
+                      <Camera size={11} /> Agregar foto
+                    </button>
+                  )}
                 </div>
+              </div>
 
-              ) : canEdit ? (
-                <button
-                  onClick={() => fotoOSRef.current?.click()}
-                  className="w-full h-24 border-2 border-dashed border-red-200 bg-red-50/20 rounded-xl flex flex-col items-center justify-center gap-1 text-red-500 hover:bg-red-50 transition-all hover:border-red-300 group"
-                >
-                  <Camera size={24} className="group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-tight">Tomar Foto de la O.S. Física</span>
-                </button>
+              {fotosOS.length === 0 ? (
+                canEdit ? (
+                  <button
+                    onClick={() => fotoOSRef.current?.click()}
+                    className="w-full h-24 border-2 border-dashed border-red-200 bg-red-50/20 rounded-xl flex flex-col items-center justify-center gap-1 text-red-500 hover:bg-red-50 transition-all hover:border-red-300 group"
+                  >
+                    <Camera size={24} className="group-hover:scale-110 transition-transform" />
+                    <span className="text-[10px] font-black uppercase tracking-tight">Tomar Foto de la O.S. Física</span>
+                  </button>
+                ) : (
+                  <p className="text-sm text-gray-400 text-center py-4">Sin foto</p>
+                )
               ) : (
-                <p className="text-sm text-gray-400 text-center py-4">Sin foto</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {fotosOS.map((src, i) => (
+                    <div key={i} className="relative group aspect-square">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={`OS-${i}`}
+                        className="w-full h-full object-cover rounded-xl cursor-pointer hover:brightness-75 transition-all border border-green-200"
+                        onClick={() => { const w = window.open(); if (w) w.document.write(`<img src="${src}" style="max-width:100%;height:auto;" />`); }}
+                      />
+                      {canEdit && (
+                        <button
+                          onClick={() => eliminarFotoOS(i)}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
-              {canEdit && <input ref={fotoOSRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoOS} />}
+              {canEdit && <input ref={fotoOSRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotoOS} />}
             </div>
           </div>
 

@@ -360,13 +360,37 @@ function ModalDetalleCotizacion({
     }
 
     const fmtMXN = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
-    const subtotal = cot.subtotal ?? 0;
-    const iva      = cot.iva ?? 0;
-    const total    = cot.total_mxn ?? 0;
+    const fmtUSD = (n: number) => `$${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)} USD`;
+    const subtotalMXN = cot.subtotal ?? 0;
+    const ivaMXN      = cot.iva ?? 0;
+    const totalMXN    = cot.total_mxn ?? 0;
+
+    // ── Frenos: imprimir en USD ───────────────────────────────────────────────
+    const esFrenos = (cot.tipo ?? '').startsWith('frenos');
+    const tcMatch  = notas.match(/TC:\s*\$([0-9.]+)/);
+    const tc       = esFrenos && tcMatch ? parseFloat(tcMatch[1]) : 1;
+
+    const fmt     = esFrenos ? fmtUSD : fmtMXN;
+    const subtotal = esFrenos && tc > 0 ? subtotalMXN / tc : subtotalMXN;
+    const iva      = esFrenos && tc > 0 ? ivaMXN      / tc : ivaMXN;
+    const total    = esFrenos && tc > 0 ? totalMXN    / tc : totalMXN;
+    const monedaLabel = esFrenos ? 'TOTAL USD' : 'TOTAL MXN';
+
+    // Componentes de frenos almacenados en notas: "  - NOMBRE: $PRECIO USD"
+    type FrenosComp = { nombre: string; precio: number };
+    const frenosComps: FrenosComp[] = esFrenos
+      ? [...notas.matchAll(/^\s+- (.+?):\s*\$([0-9.]+)\s+USD/gm)].map(m => ({ nombre: m[1].trim(), precio: parseFloat(m[2]) }))
+      : [];
 
     // Build works column
     let worksHTML = '';
-    if (itemsData) {
+    if (esFrenos) {
+      const modelo = notas.match(/^Modelo: (.+)$/m)?.[1] ?? '';
+      const unidFrenosN = parseInt(notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1') || 1;
+      if (modelo) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>${modelo}</span></div>`;
+      worksHTML += `<div class="p-work-item" style="padding-left:8px;font-size:11px;color:#555">Camiones ${unidFrenosN > 1 ? `× ${unidFrenosN}` : '1 unidad'}</div>`;
+      frenosComps.forEach(c => { worksHTML += `<div class="p-work-item"><span class="p-work-bullet">•</span><span>${c.nombre}</span></div>`; });
+    } else if (itemsData) {
       if (itemsData.preventivo) {
         worksHTML += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>Servicio Preventivo (${unidadesN} u.)</span></div>`;
         for (const c of CHECKLIST_PREVENTIVO_PDF) {
@@ -389,7 +413,11 @@ function ModalDetalleCotizacion({
 
     // Build pricing column
     let pricingHTML = '';
-    if (itemsData) {
+    if (esFrenos) {
+      frenosComps.forEach(c => {
+        pricingHTML += `<div class="p-price-item"><span class="p-price-desc">${c.nombre}</span><span class="p-price-val">${fmtUSD(c.precio)}</span></div>`;
+      });
+    } else if (itemsData) {
       if (itemsData.preventivo) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">Preventivo × ${unidadesN}</span><span class="p-price-val">${fmtMXN(PRECIO_PREVENTIVO_MXN * unidadesN)}</span></div>`;
       for (const l of (itemsData.mano_obra ?? [])) {
         if (l.descripcion || l.precio) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">${l.descripcion || 'Mano de obra'}</span><span class="p-price-val">${fmtMXN(l.precio)}</span></div>`;
@@ -400,12 +428,14 @@ function ModalDetalleCotizacion({
       const trasladoMXN = (itemsData.traslado_usd ?? 0) * unidadesN;
       if (trasladoMXN > 0) pricingHTML += `<div class="p-price-item"><span class="p-price-desc">Traslado × ${unidadesN}</span><span class="p-price-val">${fmtMXN(trasladoMXN)}</span></div>`;
     }
-    pricingHTML += `<div class="p-totals"><div class="p-total-line"><span>Subtotal</span><span>${fmtMXN(subtotal)}</span></div><div class="p-total-line iva"><span>IVA 16%</span><span>${fmtMXN(iva)}</span></div><div class="p-total-final"><span>TOTAL MXN</span><span>${fmtMXN(total)}</span></div></div>`;
+    pricingHTML += `<div class="p-totals"><div class="p-total-line"><span>Subtotal</span><span>${fmt(subtotal)}</span></div><div class="p-total-line iva"><span>IVA 16%</span><span>${fmt(iva)}</span></div><div class="p-total-final"><span>${monedaLabel}</span><span>${fmt(total)}</span></div></div>`;
 
     const clienteNombre = cot.empresas?.nombre_comercial ?? '—';
     const vendedor = cot.vendedor?.nombre ?? '';
     const tipoDisplay = cot.tipo ? cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1) : '';
-    const letras = numeroALetras(total);
+    const letras = esFrenos
+      ? numeroALetras(total).replace('PESOS', 'DÓLARES').replace('MXN', 'USD')
+      : numeroALetras(total);
 
     const clientBlockRows = [
       vendedor ? `<div class="p-client-row"><span class="p-client-lbl">Atención a:</span> ${vendedor}</div>` : '',
@@ -470,6 +500,7 @@ function ModalDetalleCotizacion({
     .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 2px; }
     .p-footer-logo { flex: 1; display: flex; justify-content: center; align-items: center; }
     .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; }
+    @media print { .no-print { display: none !important; } }
   </style>
 </head>
 <body>
@@ -517,16 +548,31 @@ function ModalDetalleCotizacion({
     </div>
   </div>
 </div>
+<div class="no-print" style="position:fixed;bottom:20px;right:20px;z-index:9999">
+  <button onclick="window.print()" style="background:#0f2d55;color:#fff;border:none;padding:10px 22px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)">🖨️ Imprimir PDF</button>
+</div>
 </body>
 </html>`;
 
-    const win = window.open('', '_blank', 'width=820,height=1060');
-    if (!win) return;
+    const win = window.open('', '_blank', 'width=860,height=1100');
+    if (!win) { alert('Activa las ventanas emergentes para imprimir.'); return; }
     win.document.write(html);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 500);
   };
+
+  // ── Detectar si es frenos para mostrar USD en el preview ─────────────────
+  const esFrenosPreview = (cot.tipo ?? '').startsWith('frenos');
+  const tcPreviewMatch  = (cot.notas ?? '').match(/TC:\s*\$([0-9.]+)/);
+  const tcPreview       = esFrenosPreview && tcPreviewMatch ? parseFloat(tcPreviewMatch[1]) : 1;
+  const subtotalPreview = esFrenosPreview && tcPreview > 0 ? (cot.subtotal ?? 0) / tcPreview : (cot.subtotal ?? 0);
+  const ivaPreview      = esFrenosPreview && tcPreview > 0 ? (cot.iva ?? 0)      / tcPreview : (cot.iva ?? 0);
+  const totalPreview    = esFrenosPreview && tcPreview > 0 ? (cot.total_mxn ?? 0) / tcPreview : (cot.total_mxn ?? 0);
+  const fmtPreview      = esFrenosPreview
+    ? (n: number) => `$${new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n)} USD`
+    : formatMXN;
+  const monedaPreview   = esFrenosPreview ? 'Importe USD' : 'Importe MXN';
+  const totalLabel      = esFrenosPreview ? 'TOTAL USD'   : 'TOTAL MXN';
 
   const fechaCreacion = new Date(cot.created_at ?? '').toLocaleDateString('es-MX', {
     day: '2-digit', month: 'long', year: 'numeric',
@@ -595,23 +641,23 @@ function ModalDetalleCotizacion({
               <thead>
                 <tr>
                   <th>Concepto</th>
-                  <th style={{ textAlign: 'right' }}>Importe MXN</th>
+                  <th style={{ textAlign: 'right' }}>{monedaPreview}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Subtotal</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.subtotal ?? 0)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtPreview(subtotalPreview)}</td>
                 </tr>
                 <tr>
                   <td>IVA 16%</td>
-                  <td style={{ textAlign: 'right' }}>{formatMXN(cot.iva ?? 0)}</td>
+                  <td style={{ textAlign: 'right' }}>{fmtPreview(ivaPreview)}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="total-row">
-                  <td><strong>TOTAL MXN</strong></td>
-                  <td style={{ textAlign: 'right' }}><strong>{formatMXN(cot.total_mxn ?? 0)}</strong></td>
+                  <td><strong>{totalLabel}</strong></td>
+                  <td style={{ textAlign: 'right' }}><strong>{fmtPreview(totalPreview)}</strong></td>
                 </tr>
               </tfoot>
             </table>
