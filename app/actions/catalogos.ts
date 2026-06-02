@@ -27,7 +27,7 @@ export async function obtenerManoDeObra(): Promise<{ data: ManoDeObraRow[]; erro
     .from('mano_de_obra')
     .select('id, nombre, categoria, precio, activo')
     .eq('activo', true)
-    .order('sort_order', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as ManoDeObraRow[], error: null };
@@ -38,7 +38,7 @@ export async function obtenerManoDeObraCompleto(): Promise<{ data: ManoDeObraRow
   const { data, error } = await supabaseAdmin
     .from('mano_de_obra')
     .select('id, nombre, categoria, precio, activo')
-    .order('sort_order', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as ManoDeObraRow[], error: null };
@@ -80,7 +80,7 @@ export async function obtenerRefacciones(): Promise<{ data: RefaccionRow[]; erro
     .select('id, nombre, categoria, precio_venta, numero_parte, activo')
     .eq('activo', true)
     .order('categoria')
-    .order('sort_order', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as RefaccionRow[], error: null };
@@ -92,7 +92,7 @@ export async function obtenerRefaccionesCompleto(): Promise<{ data: RefaccionRow
     .from('refacciones')
     .select('id, nombre, categoria, precio_venta, numero_parte, activo')
     .order('categoria')
-    .order('sort_order', { ascending: true });
+    .order('created_at', { ascending: true });
 
   if (error) return { data: [], error: error.message };
   return { data: (data ?? []) as RefaccionRow[], error: null };
