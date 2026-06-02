@@ -1508,7 +1508,7 @@ export default function CotizadorServiciosPage() {
         .p-total-final { display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 3px; margin-top: 2px; }
 
         /* ── Letras y observaciones ── */
-        .p-letras { font-size: 11px; font-style: italic; color: #444; margin: 4px 0; }
+        .p-letras { font-size: 11px; font-style: italic; font-weight: 700; color: #444; margin: 4px 0; }
         .p-obs-full { margin: 4px 0; }
         .p-obs-pre { font-family: Arial, sans-serif; font-size: 11px; white-space: pre-wrap; color: #333; margin: 2px 0; line-height: 1.4; }
 

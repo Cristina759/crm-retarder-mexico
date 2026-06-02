@@ -975,7 +975,7 @@ export default function CotizadorRefaccionesPage() {
         .p-total-line { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
         .p-total-line.iva { color: #555; }
         .p-total-final { display: flex; justify-content: space-between; font-size: 13px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
-        .p-letras { font-size: 10px; font-style: italic; color: #444; margin: 6px 0 8px 0; }
+        .p-letras { font-size: 10px; font-style: italic; font-weight: 700; color: #444; margin: 6px 0 8px 0; }
         .p-obs-two-col { display: flex; gap: 20px; margin: 8px 0; }
         .p-obs-two-col > div { flex: 1; }
         .p-obs-pre { font-family: Arial, sans-serif; font-size: 10px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.5; }

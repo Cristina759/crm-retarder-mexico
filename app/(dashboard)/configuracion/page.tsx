@@ -5,7 +5,7 @@ import {
   Settings, Users, BookOpen, Wrench, Plus, Pencil, Trash2,
   X, Check, Loader2, AlertCircle, ChevronDown, Package,
   Building2, Mail, Shield, RefreshCw, FileText, Upload,
-  Download, ChevronRight, FolderOpen,
+  Download, ChevronRight, FolderOpen, Eye,
 } from 'lucide-react';
 import {
   obtenerManoDeObraCompleto, crearManoDeObra, actualizarManoDeObra, eliminarManoDeObra,
@@ -316,6 +316,7 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
   const [uploading, setUploading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
   const fileRef               = useRef<HTMLInputElement>(null);
+  const [visorDoc, setVisorDoc] = useState<{ url: string; nombre: string; tipo: string } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -349,6 +350,12 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
     const { url, error: err } = await getDocumentoUrl(doc.storage_path);
     if (err || !url) { alert('No se pudo generar el enlace.'); return; }
     window.open(url, '_blank');
+  };
+
+  const handleVer = async (doc: DocumentoRow) => {
+    const { url, error: err } = await getDocumentoUrl(doc.storage_path);
+    if (err || !url) { alert('No se pudo generar el enlace.'); return; }
+    setVisorDoc({ url, nombre: doc.nombre, tipo: (doc.tipo ?? '').toUpperCase() });
   };
 
   const fmtSize = (bytes: number | null) => {
@@ -431,9 +438,16 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      onClick={() => handleVer(doc)}
+                      className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-400 transition-colors"
+                      title="Ver documento"
+                    >
+                      <Eye size={13} />
+                    </button>
+                    <button
                       onClick={() => handleDownload(doc)}
                       className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-400 transition-colors"
-                      title="Descargar / Ver"
+                      title="Descargar"
                     >
                       <Download size={13} />
                     </button>
@@ -458,6 +472,58 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
           </button>
         </div>
       </div>
+
+      {/* ── Modal visor de documento ─────────────────────────────────────── */}
+      {visorDoc && (
+        <div className="fixed inset-0 z-[60] bg-black/70 flex flex-col items-center justify-center p-4" onClick={() => setVisorDoc(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full flex flex-col" style={{ maxWidth: 900, maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
+            {/* Header visor */}
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100 flex-shrink-0">
+              <FileText size={16} className="text-[#0f2d55]" />
+              <p className="flex-1 text-sm font-bold text-[#0f2d55] truncate">{visorDoc.nombre}</p>
+              <a
+                href={visorDoc.url}
+                download={visorDoc.nombre}
+                className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-400 transition-colors"
+                title="Descargar"
+                onClick={e => e.stopPropagation()}
+              >
+                <Download size={14} />
+              </a>
+              <button onClick={() => setVisorDoc(null)} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400">
+                <X size={16} />
+              </button>
+            </div>
+            {/* Contenido */}
+            <div className="flex-1 overflow-hidden rounded-b-2xl bg-gray-100" style={{ minHeight: 400 }}>
+              {['PDF'].includes(visorDoc.tipo) ? (
+                <iframe
+                  src={visorDoc.url}
+                  className="w-full h-full rounded-b-2xl"
+                  style={{ minHeight: 500, border: 'none' }}
+                  title={visorDoc.nombre}
+                />
+              ) : ['JPG', 'JPEG', 'PNG', 'WEBP', 'GIF'].includes(visorDoc.tipo) ? (
+                <div className="flex items-center justify-center w-full h-full p-4" style={{ minHeight: 400 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={visorDoc.url}
+                    alt={visorDoc.nombre}
+                    className="max-w-full max-h-[70vh] rounded-xl object-contain shadow"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(visorDoc.url)}&embedded=true`}
+                  className="w-full h-full rounded-b-2xl"
+                  style={{ minHeight: 500, border: 'none' }}
+                  title={visorDoc.nombre}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

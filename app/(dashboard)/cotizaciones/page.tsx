@@ -460,7 +460,7 @@ function ModalDetalleCotizacion({
     .p-total-line { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 3px; }
     .p-total-line.iva { color: #555; }
     .p-total-final { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; color: #0d2244; border-top: 2px solid #0d2244; padding-top: 4px; margin-top: 3px; }
-    .p-letras { font-size: 13px; font-style: italic; color: #444; margin: 6px 0; }
+    .p-letras { font-size: 13px; font-style: italic; font-weight: 700; color: #444; margin: 6px 0; }
     .p-obs-full { margin: 8px 0; }
     .p-obs-pre { font-family: Arial, sans-serif; font-size: 13px; white-space: pre-wrap; color: #333; margin: 4px 0; line-height: 1.6; }
     .p-footer { border-top: 1px solid #ddd; padding-top: 6px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
