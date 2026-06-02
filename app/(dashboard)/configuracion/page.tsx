@@ -436,7 +436,7 @@ function PanelDocumentos({ usuario, onClose }: { usuario: UsuarioRow; onClose: (
                       {doc.tipo} · {fmtSize(doc.tamanio)} · {new Date(doc.created_at).toLocaleDateString('es-MX')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleVer(doc)}
                       className="p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-400 transition-colors"
