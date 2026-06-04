@@ -190,8 +190,8 @@ export async function obtenerResumenFacturacion(): Promise<{
       totalFacturadoCents += montoCents;
 
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      const totalAbonado = abonos.reduce((s: number, a: any) => s + (Number(a?.monto) || 0), 0);
-      const abonadoCents = Math.round(totalAbonado * 100);
+      // Redondear cada abono individualmente para evitar errores de punto flotante
+      const abonadoCents = abonos.reduce((s: number, a: any) => s + Math.round((Number(a?.monto) || 0) * 100), 0);
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
         // Pagada sin abonos: asumir cobro completo al monto bruto
