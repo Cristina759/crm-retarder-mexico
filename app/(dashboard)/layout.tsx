@@ -7,7 +7,7 @@ import { UserButton, useUser } from '@clerk/nextjs';
 import {
   LayoutDashboard, ShoppingCart, Wrench, FileText, ClipboardList,
   TrendingUp, ClipboardCheck, Settings, ChevronLeft, Receipt, FileMinus, Building2,
-  ChevronDown, Hammer, Package, Zap, Link2, Bolt, Nut,
+  ChevronDown, Hammer, Package, Zap, Link2, Bolt, Nut, BookOpen,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -46,6 +46,7 @@ const NAV_SECTIONS = [
 ];
 
 const HERRAMIENTAS_ITEMS = [
+  { href: '/catalogo-general',                         label: 'Catálogo General',   icon: BookOpen },
   { href: '/catalogo-mano-de-obra',                    label: 'Mano de Obra',       icon: Hammer   },
   { href: '/catalogo-refacciones?cat=SOPORTERÍA',      label: 'Soportería',         icon: Package  },
   { href: '/catalogo-refacciones?cat=CARDANES',        label: 'Cardanes',           icon: Link2    },
