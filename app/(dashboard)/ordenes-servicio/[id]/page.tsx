@@ -75,8 +75,8 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-// Comprime imagen a máx 1200px y calidad 0.75 para no exceder límite Supabase
-function comprimirImagen(file: File, maxPx = 1200, calidad = 0.75): Promise<string> {
+// Comprime imagen a máx 800px y calidad 0.60 — soporta hasta 12 fotos por OS
+function comprimirImagen(file: File, maxPx = 800, calidad = 0.60): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = reject;
