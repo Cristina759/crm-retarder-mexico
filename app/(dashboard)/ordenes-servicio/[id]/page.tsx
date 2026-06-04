@@ -425,6 +425,15 @@ export default function OSDetallePage() {
   const fotoOSRef   = useRef<HTMLInputElement>(null);
   const fotoOCRef   = useRef<HTMLInputElement>(null);
 
+  // Helpers para manejar foto_os como array (backward-compatible)
+  const parseFotosOS = (raw: string | null | undefined): string[] => {
+    if (!raw) return [];
+    try { const p = JSON.parse(raw); return Array.isArray(p) ? p : [raw]; }
+    catch { return raw ? [raw] : []; }
+  };
+  const serializeFotosOS = (arr: string[]): string =>
+    arr.length === 1 ? arr[0] : JSON.stringify(arr);
+
   // Cargar OS y usuarios
   useEffect(() => {
     Promise.all([obtenerOrdenPorId(id), obtenerUsuarios()])
@@ -486,13 +495,27 @@ export default function OSDetallePage() {
     }, 800);
   }, [os]);
 
-  // Guardar foto OS
+  // Agregar foto(s) a la OS (multi-foto)
   const handleFotoOS = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !os) return;
-    const base64 = await fileToBase64(file);
-    await guardarDatosOS(os.id, { foto_os: base64 });
-    setOs(prev => prev ? { ...prev, foto_os: base64 } : prev);
+    if (!os) return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const nuevas = await Promise.all(files.map(f => fileToBase64(f)));
+    const actuales = parseFotosOS(os.foto_os);
+    const todas = [...actuales, ...nuevas];
+    const serialized = serializeFotosOS(todas);
+    await guardarDatosOS(os.id, { foto_os: serialized });
+    setOs(prev => prev ? { ...prev, foto_os: serialized } : prev);
+    if (fotoOSRef.current) fotoOSRef.current.value = '';
+  };
+
+  const handleEliminarFotoOS = async (idx: number) => {
+    if (!os) return;
+    const actuales = parseFotosOS(os.foto_os);
+    const nuevas = actuales.filter((_, i) => i !== idx);
+    const serialized = nuevas.length ? serializeFotosOS(nuevas) : '';
+    await guardarDatosOS(os.id, { foto_os: serialized || null });
+    setOs(prev => prev ? { ...prev, foto_os: serialized || null } : prev);
   };
 
   // Guardar número OC
@@ -724,45 +747,70 @@ export default function OSDetallePage() {
             {/* Foto OS */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-[10px] font-bold block text-gray-500">Foto de la OS (opcional)</label>
-              </div>
-              {os.foto_os ? (
-                <div className="relative group">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
-                    src={os.foto_os} 
-                    alt="OS" 
-                    className="w-full max-h-48 object-contain rounded-xl border border-green-200 bg-green-50/10 shadow-sm cursor-pointer hover:brightness-95 transition-all" 
-                    onClick={() => {
-                      const win = window.open();
-                      if (win && os.foto_os) win.document.write(`<img src="${os.foto_os}" style="max-width:100%; height:auto;" />`);
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                    <div className="bg-white/90 p-2 rounded-full shadow-lg text-green-600">
-                      <Eye size={20} />
-                    </div>
-                  </div>
+                <label className="text-[10px] font-bold block text-gray-500">
+                  Fotos de la OS (opcional) — {parseFotosOS(os.foto_os).length} foto{parseFotosOS(os.foto_os).length !== 1 ? 's' : ''}
+                </label>
+                {canEdit && (
                   <button
-                    onClick={() => { guardarDatosOS(os.id, { foto_os: '' }); setOs(prev => prev ? { ...prev, foto_os: null } : prev); }}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    onClick={() => fotoOSRef.current?.click()}
+                    className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
                   >
-                    <Trash2 size={12} />
+                    <Camera size={12} /> Agregar foto
                   </button>
-                </div>
+                )}
+              </div>
 
+              {/* Grid de fotos */}
+              {parseFotosOS(os.foto_os).length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {parseFotosOS(os.foto_os).map((src, idx) => (
+                    <div key={idx} className="relative group aspect-square">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt={`OS foto ${idx + 1}`}
+                        className="w-full h-full object-cover rounded-xl border border-gray-200 cursor-pointer hover:brightness-90 transition-all"
+                        onClick={() => {
+                          const win = window.open();
+                          if (win) win.document.write(`<img src="${src}" style="max-width:100%; height:auto;" />`);
+                        }}
+                      />
+                      {canEdit && (
+                        <button
+                          onClick={() => handleEliminarFotoOS(idx)}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                      <div className="absolute bottom-1 left-1 bg-black/50 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                        {idx + 1}
+                      </div>
+                    </div>
+                  ))}
+                  {/* Botón agregar dentro del grid */}
+                  {canEdit && (
+                    <button
+                      onClick={() => fotoOSRef.current?.click()}
+                      className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-blue-300 hover:text-blue-400 hover:bg-blue-50/30 transition-all"
+                    >
+                      <Camera size={20} />
+                      <span className="text-[9px] font-bold">Agregar</span>
+                    </button>
+                  )}
+                </div>
               ) : canEdit ? (
                 <button
                   onClick={() => fotoOSRef.current?.click()}
-                  className="w-full h-24 border-2 border-dashed border-red-200 bg-red-50/20 rounded-xl flex flex-col items-center justify-center gap-1 text-red-500 hover:bg-red-50 transition-all hover:border-red-300 group"
+                  className="w-full h-24 border-2 border-dashed border-gray-200 bg-gray-50/30 rounded-xl flex flex-col items-center justify-center gap-1 text-gray-400 hover:bg-gray-50 hover:border-gray-300 transition-all group"
                 >
                   <Camera size={24} className="group-hover:scale-110 transition-transform" />
-                  <span className="text-[10px] font-black uppercase tracking-tight">Tomar Foto de la O.S. Física</span>
+                  <span className="text-[10px] font-bold uppercase tracking-tight">Agregar fotos de la O.S. Física</span>
                 </button>
               ) : (
-                <p className="text-sm text-gray-400 text-center py-4">Sin foto</p>
+                <p className="text-sm text-gray-400 text-center py-4">Sin fotos</p>
               )}
-              {canEdit && <input ref={fotoOSRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFotoOS} />}
+              {canEdit && <input ref={fotoOSRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFotoOS} />}
             </div>
           </div>
 
