@@ -17,7 +17,8 @@ export async function obtenerCatalogoGeneral(): Promise<{
   data: ItemCatalogoGeneral[];
   error: string | null;
 }> {
-  const { data, error } = await supabaseAdmin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabaseAdmin as any)
     .from('catalogo_general')
     .select('*')
     .order('descripcion', { ascending: true });
