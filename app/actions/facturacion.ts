@@ -139,7 +139,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
-// ── resumenFacturacion — aritmética exacta con BigInt, NC restada globalmente ──
+// ── resumenFacturacion — NC restada globalmente del cobrado bruto ──────────────
 export async function obtenerResumenFacturacion(): Promise<{
   totalFacturado: number; totalCobrado: number;
   totalNetoFacturado: number; totalPendiente: number;
@@ -159,9 +159,9 @@ export async function obtenerResumenFacturacion(): Promise<{
       return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
     }
 
-    // Acumuladores en centavos enteros (evita punto flotante)
-    let totalFacturadoCents = 0n;
-    let cobradoBrutoCents   = 0n; // abonos reales cobrados, sin restar NC
+    // Acumuladores en centavos enteros usando Math.round por valor (evita flotante)
+    let totalFacturadoCents = 0;
+    let cobradoBrutoCents   = 0; // abonos sin restar NC (NC se resta globalmente al final)
     let pendientes = 0;
     let vencidas   = 0;
 
@@ -169,19 +169,16 @@ export async function obtenerResumenFacturacion(): Promise<{
       const st = r.estado_facturacion ?? '';
       if (st === 'cancelado' || st === 'cancelada') return;
 
-      const montoCents = BigInt(Math.round((Number(r.monto_factura) || 0) * 100));
+      const montoCents = Math.round((Number(r.monto_factura) || 0) * 100);
       totalFacturadoCents += montoCents;
 
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      const esVacio = abonos.length === 0;
 
-      if (st === 'pagada' && esVacio) {
-        // Pagada sin abonos: se asume cobrado completo
+      if (st === 'pagada' && abonos.length === 0) {
         cobradoBrutoCents += montoCents;
       } else {
-        // Sumar abonos directamente (BigInt por cada uno)
         for (const a of abonos) {
-          cobradoBrutoCents += BigInt(Math.round((Number(a?.monto) || 0) * 100));
+          cobradoBrutoCents += Math.round((Number(a?.monto) || 0) * 100);
         }
       }
 
@@ -189,20 +186,17 @@ export async function obtenerResumenFacturacion(): Promise<{
       if (st === 'vencida') vencidas++;
     });
 
-    // Notas de crédito en cents
+    // NC sumadas individualmente para evitar flotante
     const totalNotasCreditoCents = (ncs ?? []).reduce(
-      (s, r) => s + BigInt(Math.round((Number(r.monto) || 0) * 100)),
-      0n
+      (s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0
     );
 
-    // Fórmulas finales: NC se resta globalmente de cobrado y facturado
-    const totalFacturado          = Number(totalFacturadoCents) / 100;
-    const totalNotasCredito       = Number(totalNotasCreditoCents) / 100;
-    const totalNetoFacturadoCents = totalFacturadoCents - totalNotasCreditoCents;
-    const totalNetoFacturado      = Number(totalNetoFacturadoCents) / 100;
-    const totalCobradoCents       = cobradoBrutoCents - totalNotasCreditoCents;
-    const totalCobrado            = Number(totalCobradoCents) / 100;
-    const totalPendiente          = Number(totalNetoFacturadoCents - totalCobradoCents) / 100;
+    // NC se resta globalmente: cobrado = cobrado_bruto - totalNC
+    const totalFacturado         = totalFacturadoCents / 100;
+    const totalNotasCredito      = totalNotasCreditoCents / 100;
+    const totalNetoFacturado     = (totalFacturadoCents - totalNotasCreditoCents) / 100;
+    const totalCobrado           = (cobradoBrutoCents   - totalNotasCreditoCents) / 100;
+    const totalPendiente         = totalNetoFacturado - totalCobrado;
 
     return { totalFacturado, totalCobrado, totalNetoFacturado, totalPendiente, pendientes, vencidas, totalNotasCredito, error: null };
 
