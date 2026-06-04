@@ -75,6 +75,30 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+// Comprime imagen a máx 1200px y calidad 0.75 para no exceder límite Supabase
+function comprimirImagen(file: File, maxPx = 1200, calidad = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+        const w = Math.round(img.width  * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width  = w;
+        canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', calidad));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // ── Timeline ──────────────────────────────────────────────────────────────────
 function Timeline({ estado }: { estado: string }) {
   const estados = Object.keys(ESTADO_META);
@@ -500,7 +524,7 @@ export default function OSDetallePage() {
     if (!os) return;
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    const nuevas = await Promise.all(files.map(f => fileToBase64(f)));
+    const nuevas = await Promise.all(files.map(f => comprimirImagen(f)));
     const actuales = parseFotosOS(os.foto_os);
     const todas = [...actuales, ...nuevas];
     const serialized = serializeFotosOS(todas);
