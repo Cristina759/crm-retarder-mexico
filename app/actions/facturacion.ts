@@ -194,11 +194,11 @@ export async function obtenerResumenFacturacion(): Promise<{
       const abonadoCents = Math.round(totalAbonado * 100);
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
-        // Pagada sin abonos: asumir cobro completo al monto neto
-        totalCobradoCents += montoCents;
+        // Pagada sin abonos: cobro = monto NETO (ya descontada NC)
+        totalCobradoCents += montoNetoCents;
       } else {
-        // Abonos: capear al monto neto para que cobrado nunca exceda lo facturado neto
-        totalCobradoCents += Math.min(abonadoCents, montoCents);
+        // Abonos: capear al monto neto
+        totalCobradoCents += Math.min(abonadoCents, montoNetoCents);
       }
 
       const st = r.estado_facturacion ?? '';
@@ -206,17 +206,16 @@ export async function obtenerResumenFacturacion(): Promise<{
       if (st === 'vencida') vencidas++;
     });
 
-const totalNotasCreditoCents = (ncs ?? []).reduce(
-        (s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0
-      );
-        const totalNotasCredito = totalNotasCreditoCents / 100;
-
-        const totalFacturado = totalFacturadoCents / 100;
-        const totalNetoFacturadoCents = Math.max(0, totalFacturadoCents - totalNotasCreditoCents);
-        const totalNetoFacturado = totalNetoFacturadoCents / 100;
-        const totalCobradoFinalCents = Math.min(totalCobradoCents, totalNetoFacturadoCents);
-        const totalCobrado = totalCobradoFinalCents / 100;
-        const totalPendiente = Math.max(0, totalNetoFacturadoCents - totalCobradoFinalCents) / 100;
+    const totalNotasCreditoCents = (ncs ?? []).reduce(
+      (s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0
+    );
+    const totalNotasCredito       = totalNotasCreditoCents / 100;
+    const totalFacturado          = totalFacturadoCents / 100;
+    const totalNetoFacturadoCents = Math.max(0, totalFacturadoCents - totalNotasCreditoCents);
+    const totalNetoFacturado      = totalNetoFacturadoCents / 100;
+    // Cobrado directo — ya calculado usando montoNeto por fila, sin restar NC globalmente
+    const totalCobrado            = totalCobradoCents / 100;
+    const totalPendiente          = Math.max(0, totalNetoFacturado - totalCobrado);
 
     return {
       totalFacturado,
