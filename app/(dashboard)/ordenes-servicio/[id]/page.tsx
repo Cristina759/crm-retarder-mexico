@@ -625,7 +625,7 @@ export default function OSDetallePage() {
                 className={`flex items-center gap-2 font-bold text-sm px-4 py-2.5 rounded-2xl transition-all shadow-lg ${
                   avanzando 
                     ? 'bg-gray-100 text-gray-400' 
-                    : (!esAdmin && os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os))
+                    : (!esAdmin && os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual))
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-70'
                       : 'bg-yellow-400 hover:bg-yellow-500 text-yellow-900 shadow-yellow-100'
                 }`}
@@ -633,7 +633,7 @@ export default function OSDetallePage() {
                 {avanzando ? <Loader2 size={15} className="animate-spin" /> : <ChevronRight size={15} />}
                 {proxLabel ? `→ ${proxLabel}` : 'Avanzar'}
               </button>
-              {!esAdmin && os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual || !os.foto_os) && (
+              {!esAdmin && os.estado === 'tecnico_asignado' && (!os.tecnico_id || !os.numero_os_manual) && (
                 <span className="text-[10px] text-red-500 font-bold animate-pulse">Completa los campos obligatorios (*)</span>
               )}
             </div>
@@ -658,7 +658,6 @@ export default function OSDetallePage() {
             {[
               { ok: !!os.tecnico_id,          label: 'Técnico asignado'  },
               { ok: !!os.numero_os_manual,     label: 'Número OS manual'  },
-              { ok: !!os.foto_os,             label: 'Foto OS subida'    },
             ].map(c => (
               <span key={c.label} className={`flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
                 c.ok ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'
@@ -702,10 +701,10 @@ export default function OSDetallePage() {
           </div>
 
           {/* ── Número OS manual + foto (candados 2 y 3) ── */}
-          <div className={`bg-white rounded-2xl border p-5 space-y-4 ${(!os.numero_os_manual || !os.foto_os) ? 'border-amber-300' : 'border-gray-200'}`}>
+          <div className={`bg-white rounded-2xl border p-5 space-y-4 ${!os.numero_os_manual ? 'border-amber-300' : 'border-gray-200'}`}>
             <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-              {os.numero_os_manual && os.foto_os ? <Unlock size={13} className="text-green-500" /> : <Lock size={13} className="text-amber-500" />}
-              Orden de Servicio Física *
+              {os.numero_os_manual ? <Unlock size={13} className="text-green-500" /> : <Lock size={13} className="text-amber-500" />}
+              Orden de Servicio Física
             </p>
             {/* Número manual */}
             <div>
@@ -725,8 +724,7 @@ export default function OSDetallePage() {
             {/* Foto OS */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className={`text-[10px] font-bold block ${!os.foto_os ? 'text-red-500' : 'text-gray-500'}`}>Foto de la OS *</label>
-                {!os.foto_os && <span className="text-[9px] font-black text-red-600 uppercase">Falta foto</span>}
+                <label className="text-[10px] font-bold block text-gray-500">Foto de la OS (opcional)</label>
               </div>
               {os.foto_os ? (
                 <div className="relative group">

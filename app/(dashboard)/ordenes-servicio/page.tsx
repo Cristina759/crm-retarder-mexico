@@ -55,7 +55,7 @@ const COLUMNAS: { id: OSEstado; label: string; fase: number; dot: string }[] = [
 const TOTAL = COLUMNAS.length;
 
 function candadosCompletos(os: OSRow): boolean {
-  return !!(os.tecnico_id && os.numero_os_manual && os.foto_os);
+  return !!(os.tecnico_id && os.numero_os_manual);
 }
 
 function fmtFecha(iso: string) {
@@ -252,14 +252,12 @@ export default function OrdenesServicioPage() {
     // ── CANDADO DE SEGURIDAD (Bypass para Admin) ──
     if (!esAdmin && os.estado === 'tecnico_asignado' && nuevoEstado !== 'tecnico_asignado') {
       const faltaTecnico = !os.tecnico_id;
-      const faltaFoto    = !os.foto_os;
       const faltaManual  = !os.numero_os_manual;
 
-      if (faltaTecnico || faltaFoto || faltaManual) {
+      if (faltaTecnico || faltaManual) {
         let msj = '🔒 CANDADO ACTIVO:\nPara avanzar esta orden, primero debes completar los siguientes requisitos:\n';
         if (faltaTecnico) msj += '\n• Asignar un técnico';
         if (faltaManual)  msj += '\n• Ingresar el número de O.S. manual';
-        if (faltaFoto)    msj += '\n• Subir la foto de la orden de servicio';
         
         msj += '\n\nPor favor, haz clic en la tarjeta para completar estos datos.';
         alert(msj);
