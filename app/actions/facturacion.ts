@@ -139,7 +139,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
-// ── resumenFacturacion (CONCORDANTE CON SQL) ──────────────────────────────────
+// ── resumenFacturacion — usa RPC SQL con aritmética NUMERIC exacta ─────────────
 export async function obtenerResumenFacturacion(): Promise<{
   totalFacturado: number; totalCobrado: number;
   totalNetoFacturado: number; totalPendiente: number;
@@ -147,12 +147,30 @@ export async function obtenerResumenFacturacion(): Promise<{
   totalNotasCredito: number; error: string | null;
 }> {
   try {
+    // Primero intentar la función SQL con aritmética NUMERIC exacta
+    const { data: rpc, error: rpcErr } = await supabaseAdmin
+      .rpc('get_resumen_facturacion');
+
+    if (!rpcErr && rpc && rpc.length > 0) {
+      const r = rpc[0];
+      return {
+        totalFacturado:      Number(r.total_facturado)      || 0,
+        totalCobrado:        Number(r.total_cobrado)        || 0,
+        totalNetoFacturado:  Number(r.total_neto_facturado) || 0,
+        totalPendiente:      Number(r.total_pendiente)      || 0,
+        totalNotasCredito:   Number(r.total_notas_credito)  || 0,
+        pendientes:          Number(r.cnt_pendientes)       || 0,
+        vencidas:            Number(r.cnt_vencidas)         || 0,
+        error: null,
+      };
+    }
+
+    // Fallback JS si la función aún no existe en BD
     const [{ data: facts, error: errFacts }, { data: ncs, error: errNcs }] = await Promise.all([
       supabaseAdmin
         .from('ordenes_servicio')
         .select('id, monto_factura, estado_facturacion, cotizacion_id, abonos')
         .or('monto_factura.gt.0,numero_factura.neq.null,estado_facturacion.in.(facturada,pagada,pago_parcial,vencida)'),
-
       supabaseAdmin.from('notas_credito').select('monto, os_id'),
     ]);
 
@@ -160,13 +178,11 @@ export async function obtenerResumenFacturacion(): Promise<{
       return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
     }
 
-    // NC por OS (para calcular monto neto por factura, igual que obtenerFacturas)
     const ncPerOS = new Map<string, number>();
     (ncs ?? []).forEach(nc => {
-      if (nc.os_id) ncPerOS.set(nc.os_id, (ncPerOS.get(nc.os_id) || 0) + (Number(nc.monto) || 0));
+      if (nc.os_id) ncPerOS.set(nc.os_id, (ncPerOS.get(nc.os_id) || 0) + Math.round((Number(nc.monto) || 0) * 100));
     });
 
-    // Cargar totales de cotizaciones vinculadas (fallback)
     const cotIds = Array.from(new Set((facts ?? []).map(r => r.cotizacion_id).filter((x): x is string => !!x)));
     const { data: cots } = cotIds.length
       ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
@@ -174,31 +190,27 @@ export async function obtenerResumenFacturacion(): Promise<{
     const cotMap = new Map((cots ?? []).map(c => [c.id, Number(c.total_mxn) || 0]));
 
     let totalFacturadoCents = 0;
-    let totalCobradoCents = 0;
+    let totalCobradoCents   = 0;
     let pendientes = 0;
-    let vencidas = 0;
+    let vencidas   = 0;
 
-    // 'cancelado' (no 'cancelada') es el valor real en BD
     (facts ?? []).filter(r => r.estado_facturacion !== 'cancelado').forEach(r => {
       let monto = Number(r.monto_factura) || 0;
       if (monto === 0 && r.cotizacion_id) monto = cotMap.get(r.cotizacion_id) || 0;
 
-      const montoCents    = Math.round(monto * 100);
-      const ncMontoCents  = Math.round((ncPerOS.get(r.id) || 0) * 100);
-      const montoNetoCents = Math.max(0, montoCents - ncMontoCents);
+      const montoCents     = Math.round(monto * 100);
+      const ncCents        = ncPerOS.get(r.id) || 0;
+      const montoNetoCents = Math.max(0, montoCents - ncCents);
 
       totalFacturadoCents += montoCents;
 
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      // Redondear cada abono individualmente para evitar errores de punto flotante
       const abonadoCents = abonos.reduce((s: number, a: any) => s + Math.round((Number(a?.monto) || 0) * 100), 0);
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
-        // Pagada sin abonos: asumir cobro completo al monto bruto
-        totalCobradoCents += montoCents;
+        totalCobradoCents += montoNetoCents;
       } else {
-        // Abonos: capear al monto bruto (sin descontar NC aquí)
-        totalCobradoCents += Math.min(abonadoCents, montoCents);
+        totalCobradoCents += Math.min(abonadoCents, montoNetoCents);
       }
 
       const st = r.estado_facturacion ?? '';
@@ -206,9 +218,7 @@ export async function obtenerResumenFacturacion(): Promise<{
       if (st === 'vencida') vencidas++;
     });
 
-    const totalNotasCreditoCents  = (ncs ?? []).reduce(
-      (s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0
-    );
+    const totalNotasCreditoCents  = (ncs ?? []).reduce((s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0);
     const totalNotasCredito       = totalNotasCreditoCents / 100;
     const totalFacturado          = totalFacturadoCents / 100;
     const totalNetoFacturadoCents = Math.max(0, totalFacturadoCents - totalNotasCreditoCents);
@@ -216,18 +226,7 @@ export async function obtenerResumenFacturacion(): Promise<{
     const totalCobrado            = totalCobradoCents / 100;
     const totalPendiente          = Math.max(0, totalNetoFacturadoCents - totalCobradoCents) / 100;
 
-    return {
-      totalFacturado,
-      totalCobrado,
-      totalNetoFacturado,
-      totalPendiente,
-      pendientes,
-      vencidas,
-      totalNotasCredito,
-      error: null,
-    };
-
-
+    return { totalFacturado, totalCobrado, totalNetoFacturado, totalPendiente, pendientes, vencidas, totalNotasCredito, error: null };
 
   } catch (e) {
     return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: String(e) };
