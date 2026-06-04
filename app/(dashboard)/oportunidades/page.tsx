@@ -44,7 +44,7 @@ const ESTADOS: {
 
 function formatMXN(n: number | null | undefined) {
   const value = n ?? 0;
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(value);
 }
 
 // ── Barra de progreso ─────────────────────────────────────────────────────────

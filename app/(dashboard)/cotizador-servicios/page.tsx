@@ -46,7 +46,7 @@ const CHECKLIST_PREVENTIVO = [
 interface LineaServicio {
   id: string;
   descripcion: string;
-  precio: string; // MXN
+  precio: number; // MXN
   cantidad?: number; // solo para refacciones
 }
 
@@ -411,7 +411,7 @@ function CardLineas({
                   inputMode="decimal"
                   value={l.precio || ''}
                   onChange={e => onChange(l.id, 'precio', e.target.value)}
-                  onFocus={e => e.target.select()}
+                  onBlur={e => onChange(l.id, 'precio', String(parseFloat(e.target.value) || 0))}
                   placeholder="0.00"
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent"
                 />
@@ -431,7 +431,7 @@ function CardLineas({
       {lineas.length > 0 && (
         <div className="mt-2 pt-2 border-t border-gray-100 flex justify-end">
           <span className="text-xs font-bold text-gray-700">
-            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (parseFloat(l.precio) || 0) * (l.cantidad ?? 1), 0))} MXN
+            Subtotal: {fmtMXN(lineas.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0))} MXN
           </span>
         </div>
       )}
@@ -574,16 +574,16 @@ export default function CotizadorServiciosPage() {
   };
 
   const agregarDesdeCatalogoMO = (item: ManoDeObraRow) => {
-    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: String(item.precio), cantidad: 1 }]);
+    setLineasManoObra(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio, cantidad: 1 }]);
   };
 
   const agregarDesdeCatalogoRef = (item: RefaccionRow) => {
-    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: String(item.precio_venta), cantidad: 1 }]);
+    setLineasRefacciones(prev => [...prev, { id: uid(), descripcion: item.nombre, precio: item.precio_venta, cantidad: 1 }]);
   };
 
   // ── Helpers de líneas ───────────────────────────────────────────────────────
   const addLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>, conCantidad = false) => {
-    setter(prev => [...prev, { id: uid(), descripcion: '', precio: '', ...(conCantidad ? { cantidad: 1 } : {}) }]);
+    setter(prev => [...prev, { id: uid(), descripcion: '', precio: 0, ...(conCantidad ? { cantidad: 1 } : {}) }]);
   };
 
   const removeLinea = (setter: React.Dispatch<React.SetStateAction<LineaServicio[]>>, id: string) => {
@@ -597,7 +597,7 @@ export default function CotizadorServiciosPage() {
     value: string
   ) => {
     setter(prev => prev.map(l =>
-      l.id === id ? { ...l, [field]: field === 'cantidad' ? (parseFloat(value) || 1) : value } : l
+      l.id === id ? { ...l, [field]: (field === 'precio' || field === 'cantidad') ? parseFloat(value) || (field === 'cantidad' ? 1 : 0) : value } : l
     ));
   };
 
@@ -607,8 +607,8 @@ export default function CotizadorServiciosPage() {
 
   // Todo en MXN — sin conversión de divisas
   const subtotalPreventivoMXN = tipoPreventivo ? PRECIO_PREVENTIVO_MXN * unidadesN : 0;
-  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (parseFloat(l.precio) || 0) * (l.cantidad ?? 1), 0);
-  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (parseFloat(l.precio) || 0) * (l.cantidad ?? 1), 0);
+  const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
+  const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
   const subtotalTraslado       = trasladoN * unidadesN;
   const subtotalMXN           = subtotalPreventivoMXN + subtotalManoObra + subtotalRefacciones + subtotalTraslado;
   const iva                   = Math.round(subtotalMXN * 0.16 * 100) / 100;
@@ -1089,11 +1089,11 @@ export default function CotizadorServiciosPage() {
                     <div className="flex items-center gap-1 border border-gray-300 rounded-xl px-3 h-10 focus-within:border-blue-400 transition-colors">
                       <span className="text-xs text-gray-600 font-semibold">$</span>
                       <input
-                        type="text"
-                        inputMode="decimal"
+                        type="number"
+                        min="0"
+                        step="0.01"
                         value={traslado}
                         onChange={e => setTraslado(e.target.value)}
-                        onFocus={e => e.target.select()}
                         placeholder="0"
                         className="flex-1 outline-none text-sm text-gray-800 font-semibold bg-transparent"
                       />
@@ -1298,13 +1298,13 @@ export default function CotizadorServiciosPage() {
                     ))}
                   </>
                 )}
-                {lineasManoObra.filter(l => l.descripcion || parseFloat(l.precio)).map(l => (
+                {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
                     <span>Mano de obra — {l.descripcion || '—'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
                   </div>
                 ))}
-                {lineasRefacciones.filter(l => l.descripcion || parseFloat(l.precio)).map(l => (
+                {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-work-item">
                     <span className="p-work-bullet">·</span>
                     <span>Refacción — {l.descripcion || '—'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
@@ -1327,16 +1327,16 @@ export default function CotizadorServiciosPage() {
                     <span className="p-price-val">{fmtMXN(subtotalPreventivoMXN)} MXN</span>
                   </div>
                 )}
-                {lineasManoObra.filter(l => l.descripcion || parseFloat(l.precio)).map(l => (
+                {lineasManoObra.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
                     <span className="p-price-desc">{l.descripcion || 'Mano de obra'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
-                    <span className="p-price-val">{fmtMXN((parseFloat(l.precio) || 0) * (l.cantidad ?? 1))}</span>
+                    <span className="p-price-val">{fmtMXN((l.precio || 0) * (l.cantidad ?? 1))}</span>
                   </div>
                 ))}
-                {lineasRefacciones.filter(l => l.descripcion || parseFloat(l.precio)).map(l => (
+                {lineasRefacciones.filter(l => l.descripcion || l.precio).map(l => (
                   <div key={l.id} className="p-price-item">
                     <span className="p-price-desc">{l.descripcion || 'Refacción'}{(l.cantidad ?? 1) > 1 ? ` × ${l.cantidad}` : ''}</span>
-                    <span className="p-price-val">{fmtMXN((parseFloat(l.precio) || 0) * (l.cantidad ?? 1))}</span>
+                    <span className="p-price-val">{fmtMXN((l.precio || 0) * (l.cantidad ?? 1))}</span>
                   </div>
                 ))}
                 {trasladoN > 0 && (

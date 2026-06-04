@@ -133,7 +133,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       <tr className="border-b border-yellow-100 bg-yellow-50/40">
         <td className="px-4 py-2">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-mono font-bold text-gray-700">{row.numero?.replace(/^FACT[-\s]*/i, '').replace(/[-\s]*FACT$/i, '')}</span>
+            <span className="text-xs font-mono font-bold text-gray-700">{row.numero}</span>
             <input
               type="date"
               value={fechaFactura}
@@ -232,7 +232,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
     >
       <td className="px-4 py-3">
         <div className="flex flex-col">
-          <span className="text-xs font-mono font-bold text-gray-700">{row.numero?.replace(/^FACT[-\s]*/i, '').replace(/[-\s]*FACT$/i, '')}</span>
+          <span className="text-xs font-mono font-bold text-gray-700">{row.numero}</span>
           <span className="text-[11px] font-semibold text-blue-600">{fmtFecha(row.created_at)}</span>
         </div>
       </td>
