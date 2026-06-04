@@ -139,7 +139,7 @@ export async function obtenerFacturas(): Promise<{ data: FacturaRow[]; error: st
   } catch (e) { return { data: [], error: String(e) }; }
 }
 
-// ── resumenFacturacion — usa RPC SQL con aritmética NUMERIC exacta ─────────────
+// ── resumenFacturacion — aritmética exacta con BigInt, NC restada globalmente ──
 export async function obtenerResumenFacturacion(): Promise<{
   totalFacturado: number; totalCobrado: number;
   totalNetoFacturado: number; totalPendiente: number;
@@ -147,84 +147,62 @@ export async function obtenerResumenFacturacion(): Promise<{
   totalNotasCredito: number; error: string | null;
 }> {
   try {
-    // Primero intentar la función SQL con aritmética NUMERIC exacta
-    const { data: rpc, error: rpcErr } = await supabaseAdmin
-      .rpc('get_resumen_facturacion');
-
-    if (!rpcErr && rpc && rpc.length > 0) {
-      const r = rpc[0];
-      return {
-        totalFacturado:      Number(r.total_facturado)      || 0,
-        totalCobrado:        Number(r.total_cobrado)        || 0,
-        totalNetoFacturado:  Number(r.total_neto_facturado) || 0,
-        totalPendiente:      Number(r.total_pendiente)      || 0,
-        totalNotasCredito:   Number(r.total_notas_credito)  || 0,
-        pendientes:          Number(r.cnt_pendientes)       || 0,
-        vencidas:            Number(r.cnt_vencidas)         || 0,
-        error: null,
-      };
-    }
-
-    // Fallback JS si la función aún no existe en BD
     const [{ data: facts, error: errFacts }, { data: ncs, error: errNcs }] = await Promise.all([
       supabaseAdmin
         .from('ordenes_servicio')
-        .select('id, monto_factura, estado_facturacion, cotizacion_id, abonos')
-        .or('monto_factura.gt.0,numero_factura.neq.null,estado_facturacion.in.(facturada,pagada,pago_parcial,vencida)'),
-      supabaseAdmin.from('notas_credito').select('monto, os_id'),
+        .select('monto_factura, estado_facturacion, abonos')
+        .not('monto_factura', 'is', null),
+      supabaseAdmin.from('notas_credito').select('monto'),
     ]);
 
     if (errFacts || errNcs) {
       return { totalFacturado: 0, totalCobrado: 0, totalNetoFacturado: 0, totalPendiente: 0, pendientes: 0, vencidas: 0, totalNotasCredito: 0, error: errFacts?.message || errNcs?.message || 'Error de BD' };
     }
 
-    const ncPerOS = new Map<string, number>();
-    (ncs ?? []).forEach(nc => {
-      if (nc.os_id) ncPerOS.set(nc.os_id, (ncPerOS.get(nc.os_id) || 0) + Math.round((Number(nc.monto) || 0) * 100));
-    });
-
-    const cotIds = Array.from(new Set((facts ?? []).map(r => r.cotizacion_id).filter((x): x is string => !!x)));
-    const { data: cots } = cotIds.length
-      ? await supabaseAdmin.from('cotizaciones').select('id, total_mxn').in('id', cotIds)
-      : { data: [] };
-    const cotMap = new Map((cots ?? []).map(c => [c.id, Number(c.total_mxn) || 0]));
-
-    let totalFacturadoCents = 0;
-    let totalCobradoCents   = 0;
+    // Acumuladores en centavos enteros (evita punto flotante)
+    let totalFacturadoCents = 0n;
+    let cobradoBrutoCents   = 0n; // abonos reales cobrados, sin restar NC
     let pendientes = 0;
     let vencidas   = 0;
 
-    (facts ?? []).filter(r => r.estado_facturacion !== 'cancelado').forEach(r => {
-      let monto = Number(r.monto_factura) || 0;
-      if (monto === 0 && r.cotizacion_id) monto = cotMap.get(r.cotizacion_id) || 0;
+    (facts ?? []).forEach(r => {
+      const st = r.estado_facturacion ?? '';
+      if (st === 'cancelado' || st === 'cancelada') return;
 
-      const montoCents     = Math.round(monto * 100);
-      const ncCents        = ncPerOS.get(r.id) || 0;
-      const montoNetoCents = Math.max(0, montoCents - ncCents);
-
+      const montoCents = BigInt(Math.round((Number(r.monto_factura) || 0) * 100));
       totalFacturadoCents += montoCents;
 
       const abonos = Array.isArray(r.abonos) ? (r.abonos as any[]) : [];
-      const abonadoCents = abonos.reduce((s: number, a: any) => s + Math.round((Number(a?.monto) || 0) * 100), 0);
+      const esVacio = abonos.length === 0;
 
-      if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
-        totalCobradoCents += montoNetoCents;
+      if (st === 'pagada' && esVacio) {
+        // Pagada sin abonos: se asume cobrado completo
+        cobradoBrutoCents += montoCents;
       } else {
-        totalCobradoCents += Math.min(abonadoCents, montoNetoCents);
+        // Sumar abonos directamente (BigInt por cada uno)
+        for (const a of abonos) {
+          cobradoBrutoCents += BigInt(Math.round((Number(a?.monto) || 0) * 100));
+        }
       }
 
-      const st = r.estado_facturacion ?? '';
       if (['pendiente', 'facturada', 'enviada_cliente', 'pago_parcial'].includes(st)) pendientes++;
       if (st === 'vencida') vencidas++;
     });
 
-    const totalNotasCreditoCents  = (ncs ?? []).reduce((s, r) => s + Math.round((Number(r.monto) || 0) * 100), 0);
-    const totalNotasCredito       = totalNotasCreditoCents / 100;
-    const totalFacturado          = totalFacturadoCents / 100;
-    const totalNetoFacturadoCents = Math.max(0, totalFacturadoCents - totalNotasCreditoCents);
-    const totalNetoFacturado      = totalNetoFacturadoCents / 100;
-    const totalCobrado            = totalCobradoCents / 100;
-    const totalPendiente          = Math.max(0, totalNetoFacturadoCents - totalCobradoCents) / 100;
+    // Notas de crédito en cents
+    const totalNotasCreditoCents = (ncs ?? []).reduce(
+      (s, r) => s + BigInt(Math.round((Number(r.monto) || 0) * 100)),
+      0n
+    );
+
+    // Fórmulas finales: NC se resta globalmente de cobrado y facturado
+    const totalFacturado          = Number(totalFacturadoCents) / 100;
+    const totalNotasCredito       = Number(totalNotasCreditoCents) / 100;
+    const totalNetoFacturadoCents = totalFacturadoCents - totalNotasCreditoCents;
+    const totalNetoFacturado      = Number(totalNetoFacturadoCents) / 100;
+    const totalCobradoCents       = cobradoBrutoCents - totalNotasCreditoCents;
+    const totalCobrado            = Number(totalCobradoCents) / 100;
+    const totalPendiente          = Number(totalNetoFacturadoCents - totalCobradoCents) / 100;
 
     return { totalFacturado, totalCobrado, totalNetoFacturado, totalPendiente, pendientes, vencidas, totalNotasCredito, error: null };
 
