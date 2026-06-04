@@ -195,7 +195,7 @@ export async function obtenerResumenFacturacion(): Promise<{
 
       if (r.estado_facturacion === 'pagada' && abonadoCents === 0) {
         // Pagada sin abonos: asumir cobro completo al monto neto
-        totalCobradoCents += montoNetoCents;
+        totalCobradoCents += montoCents;
       } else {
         // Abonos: capear al monto neto para que cobrado nunca exceda lo facturado neto
         totalCobradoCents += Math.min(abonadoCents, montoCents);
@@ -368,4 +368,5 @@ export async function buscarFacturasParaNC(query: string) {
     empresa_nombre: r.empresas?.nombre_comercial
   }));
 }
+
 
