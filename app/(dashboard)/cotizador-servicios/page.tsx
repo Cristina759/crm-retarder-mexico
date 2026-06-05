@@ -712,6 +712,8 @@ export default function CotizadorServiciosPage() {
         notas: [
           `Folio: ${folio}`,
           cliente.trim() ? `ATENCION_A: ${cliente.trim()}` : '',
+          emailCliente.trim() ? `EMAIL: ${emailCliente.trim()}` : '',
+          sucursal.trim() ? `SUCURSAL: ${sucursal.trim()}` : '',
           `Tipo: ${tipoServicio}`,
           `Unidades: ${unidadesN}`,
           `Subtotal MXN: $${fmt(subtotalMXN)}`,
