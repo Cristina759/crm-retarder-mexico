@@ -13,7 +13,7 @@ import type { ManoDeObraRow, RefaccionRow } from '@/app/actions/catalogos';
 import type { ItemCatalogoGeneral } from '@/app/actions/catalogo-general';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
-const PRECIO_PREVENTIVO_MXN = 4250; // precio fijo en PESOS MEXICANOS
+const PRECIO_PREVENTIVO_DEFAULT = 4250;
 
 const CHECKLIST_PREVENTIVO = [
   {
@@ -519,6 +519,7 @@ export default function CotizadorServiciosPage() {
   // Personalizar servicio
   const [unidades, setUnidades] = useState('1');
   const [traslado, setTraslado] = useState('0');
+  const [precioPreventivoMXN, setPrecioPreventivoMXN] = useState(PRECIO_PREVENTIVO_DEFAULT);
   const [observaciones, setObservaciones] = useState(
     `*ESTE SERVICIO INCLUYE LOS PUNTOS DESCRITOS EN EL CHECKLIST\n*TIEMPO ESTIMADO DE REALIZACIÓN: 4 A 6 HORAS POR UNIDAD\n*EL CLIENTE DEBE PROPORCIONAR EL ESPACIO ADECUADO SI EL SERVICIO ES EN SITIO\n*SE REQUIERE CONFIRMACIÓN DE CITA CON 48 HORAS DE ANTICIPACIÓN`
   );
@@ -661,7 +662,7 @@ export default function CotizadorServiciosPage() {
   const trasladoN = parseFloat(traslado) || 0;
 
   // Todo en MXN — sin conversión de divisas
-  const subtotalPreventivoMXN = tipoPreventivo ? PRECIO_PREVENTIVO_MXN * unidadesN : 0;
+  const subtotalPreventivoMXN = tipoPreventivo ? precioPreventivoMXN * unidadesN : 0;
   const subtotalManoObra      = lineasManoObra.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
   const subtotalRefacciones   = lineasRefacciones.reduce((s, l) => s + (l.precio || 0) * (l.cantidad ?? 1), 0);
   const subtotalTraslado       = trasladoN * unidadesN;
@@ -1006,11 +1007,16 @@ export default function CotizadorServiciosPage() {
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-green-200">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Precio por unidad</p>
-              <p className="text-2xl font-black text-green-700">
-                {fmtMXN(PRECIO_PREVENTIVO_MXN)}
-                <span className="text-sm font-semibold"> MXN</span>
-              </p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Precio por unidad</p>
+              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                <span className="text-lg font-black text-green-700">$</span>
+                <PriceInput
+                  value={precioPreventivoMXN}
+                  onChange={v => setPrecioPreventivoMXN(v)}
+                  className="text-2xl font-black text-green-700 bg-transparent outline-none border-b-2 border-green-300 focus:border-green-600 w-36 text-left"
+                />
+                <span className="text-sm font-semibold text-green-700">MXN</span>
+              </div>
             </div>
           </button>
 
