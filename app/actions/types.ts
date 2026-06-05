@@ -33,12 +33,13 @@ export interface CotizacionRow {
   notas: string | null;
   created_at: string | null;
   updated_at: string | null;
-  empresas: { nombre_comercial: string } | null;
+  empresas: { nombre_comercial: string; email?: string | null } | null;
   vendedor: { nombre: string } | null;
   oportunidad: { estado: string } | null;
 }
 
 export interface CrearCotizacionInput {
+
   empresa_id?: string;
   empresa_nombre: string;
   tipo: string;

@@ -36,19 +36,19 @@ export async function obtenerCotizaciones(): Promise<{
 
     const [empresasRes, oppsRes] = await Promise.all([
       empresaIds.length
-        ? supabaseAdmin.from('empresas').select('id, nombre_comercial').in('id', empresaIds)
-        : Promise.resolve({ data: [] as Array<{ id: string; nombre_comercial: string }> }),
+        ? supabaseAdmin.from('empresas').select('id, nombre_comercial, email').in('id', empresaIds)
+        : Promise.resolve({ data: [] as Array<{ id: string; nombre_comercial: string; email: string | null }> }),
       oppIds.length
         ? supabaseAdmin.from('oportunidades').select('id, estado').in('id', oppIds)
         : Promise.resolve({ data: [] as Array<{ id: string; estado: string }> }),
     ]);
 
-    const empresaMap = new Map((empresasRes.data ?? []).map(e => [e.id, e.nombre_comercial]));
+    const empresaMap = new Map((empresasRes.data ?? []).map(e => [e.id, { nombre_comercial: e.nombre_comercial, email: e.email ?? null }]));
     const oppMap     = new Map((oppsRes.data ?? []).map(o => [o.id, o.estado]));
 
     const enriched: CotizacionRow[] = rows.map(r => ({
       ...r,
-      empresas:    empresaMap.has(r.empresa_id) ? { nombre_comercial: empresaMap.get(r.empresa_id)! } : null,
+      empresas:    empresaMap.has(r.empresa_id) ? empresaMap.get(r.empresa_id)! : null,
       vendedor:    null,
       oportunidad: r.oportunidad_id && oppMap.has(r.oportunidad_id) ? { estado: oppMap.get(r.oportunidad_id)! } : null,
     })) as CotizacionRow[];
