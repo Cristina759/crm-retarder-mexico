@@ -56,7 +56,7 @@ const ESTADO_CONFIG: Record<string, { label: string; color: string }> = {
 
 function formatMXN(n: number) {
   return new Intl.NumberFormat('es-MX', {
-    style: 'currency', currency: 'MXN', maximumFractionDigits: 0,
+    style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(n);
 }
 
