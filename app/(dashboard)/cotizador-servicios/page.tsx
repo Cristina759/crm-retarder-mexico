@@ -1287,8 +1287,8 @@ export default function CotizadorServiciosPage() {
 
             {/* Bloque cliente */}
             <div className="p-client-block">
-              <div className="p-client-row"><span className="p-client-lbl">Atención a:</span> <strong>{cliente}</strong></div>
-              {empresa && <div className="p-client-name">{empresa}</div>}
+              <div className="p-client-name">{cliente}</div>
+              {empresa && <div className="p-client-row"><span className="p-client-lbl">Empresa:</span> {empresa}</div>}
               {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
               <div className="p-client-row"><span className="p-client-lbl">Tipo de servicio:</span> {tipoServicio} &nbsp;|&nbsp; Unidades: {unidadesN}</div>
               {descripcion && <div className="p-client-row"><span className="p-client-lbl">Descripción:</span> {descripcion}</div>}
