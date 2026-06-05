@@ -566,10 +566,10 @@ function ModalDetalleCotizacion({
     pricingHTML += `<div class="p-totals"><div class="p-total-line"><span>Subtotal</span><span>${fmtMXN(subtotal)}</span></div><div class="p-total-line iva"><span>IVA 16%</span><span>${fmtMXN(iva)}</span></div><div class="p-total-final"><span>TOTAL MXN</span><span>${fmtMXN(total)}</span></div></div>`;
 
     const clienteNombre = cot.empresas?.nombre_comercial ?? '—';
-    const notas = cot.notas ?? '';
-    const atencionA  = notas.match(/^ATENCION_A:\s*(.+)$/m)?.[1]?.trim() ?? '';
-    const emailCot   = notas.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
-    const sucursalCot = notas.match(/^SUCURSAL:\s*(.+)$/m)?.[1]?.trim() ?? '';
+    const notasCot = cot.notas ?? '';
+    const atencionA  = notasCot.match(/^ATENCION_A:\s*(.+)$/m)?.[1]?.trim() ?? '';
+    const emailCot   = notasCot.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
+    const sucursalCot = notasCot.match(/^SUCURSAL:\s*(.+)$/m)?.[1]?.trim() ?? '';
     const tipoDisplay = cot.tipo ? cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1) : '';
     const letras = numeroALetras(total);
 
