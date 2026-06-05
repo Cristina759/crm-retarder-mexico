@@ -122,6 +122,11 @@ function ModalCatalogo({
     });
   }, [catalogo, busqueda, categoria]);
 
+  const catsRef = useMemo(() => {
+    const cats = Array.from(new Set(catalogo.map(i => i.categoria).filter(Boolean))) as string[];
+    return ['TODOS', ...cats.sort()];
+  }, [catalogo]);
+
   const catsGen = useMemo(() => {
     const cats = Array.from(new Set(catalogoGen.map(i => i.categoria).filter(Boolean))) as string[];
     return ['TODOS', ...cats.sort()];
@@ -139,7 +144,7 @@ function ModalCatalogo({
     });
   }, [catalogoGen, busqueda, categoria]);
 
-  const cats     = tab === 'gen' ? catsGen : CATS_REF;
+  const cats     = tab === 'gen' ? catsGen : catsRef;
   const cantidad = tab === 'gen' ? filtradosGen.length : filtrados.length;
 
   return (
