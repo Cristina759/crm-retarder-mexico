@@ -510,6 +510,10 @@ export default function CotizadorRefaccionesPage() {
         total_mxn: totalMXN,
         notas: [
           `Folio: ${folio}`,
+          cliente.trim() ? `ATENCION_A: ${cliente.trim()}` : '',
+          emailCliente.trim() ? `EMAIL: ${emailCliente.trim()}` : '',
+          sucursal.trim() ? `SUCURSAL: ${sucursal.trim()}` : '',
+          descripcion.trim() ? `DESCRIPCION: ${descripcion.trim()}` : '',
           `REFACCIONES:\n${lineasActivas.map(l => `  - ${l.descripcion}${l.numeroParte ? ` (${l.numeroParte})` : ''}: ${l.cantidad} × ${fmtMXN(l.precioMXN)}`).join('\n')}`,
           `OBSERVACIONES:\n${observaciones}`,
           politicas ? `POLITICAS:\n${politicas}` : '',

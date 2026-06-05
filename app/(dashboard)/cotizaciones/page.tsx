@@ -567,9 +567,10 @@ function ModalDetalleCotizacion({
 
     const clienteNombre = cot.empresas?.nombre_comercial ?? '—';
     const notasCot = cot.notas ?? '';
-    const atencionA  = notasCot.match(/^ATENCION_A:\s*(.+)$/m)?.[1]?.trim() ?? '';
-    const emailCot   = notasCot.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
+    const atencionA   = notasCot.match(/^ATENCION_A:\s*(.+)$/m)?.[1]?.trim() ?? '';
+    const emailCot    = notasCot.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
     const sucursalCot = notasCot.match(/^SUCURSAL:\s*(.+)$/m)?.[1]?.trim() ?? '';
+    const descripcionCot = notasCot.match(/^DESCRIPCION:\s*(.+)$/m)?.[1]?.trim() ?? '';
     const tipoDisplay = cot.tipo ? cot.tipo.charAt(0).toUpperCase() + cot.tipo.slice(1) : '';
     const letras = numeroALetras(total);
 
@@ -577,6 +578,7 @@ function ModalDetalleCotizacion({
       atencionA  ? `<div class="p-client-row"><span class="p-client-lbl">Atención a:</span> ${atencionA}</div>` : '',
       emailCot   ? `<div class="p-client-row"><span class="p-client-lbl">Email:</span> ${emailCot}</div>` : '',
       sucursalCot ? `<div class="p-client-row"><span class="p-client-lbl">Sucursal:</span> ${sucursalCot}</div>` : '',
+      descripcionCot ? `<div class="p-client-row"><span class="p-client-lbl">Descripción:</span> ${descripcionCot}</div>` : '',
       tipoServicioLabel ? `<div class="p-client-row"><span class="p-client-lbl">Tipo de servicio:</span> ${tipoServicioLabel} &nbsp;|&nbsp; Unidades: ${unidadesN}</div>` : tipoDisplay ? `<div class="p-client-row"><span class="p-client-lbl">Tipo:</span> ${tipoDisplay}</div>` : '',
     ].filter(Boolean).join('');
 
