@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Shield, Wrench, Printer, Mail, X, Search, BookOpen, ChevronDown } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
@@ -56,6 +56,42 @@ type ModalTab = 'mo' | 'ref' | 'gen';
 
 const CATS_MO  = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'MECÁNICO'] as const;
 const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MATERIAL ELÉCTRICO', 'SOPORTERÍA', 'CARDANES', 'MECÁNICO'] as const;
+
+// ── PriceInput: permite escribir decimales sin perder el punto ─────────────────
+function PriceInput({ value, onChange, className }: { value: number; onChange: (v: number) => void; className?: string }) {
+  const [raw, setRaw] = useState(value === 0 ? '' : String(value));
+  const prevVal = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevVal.current) {
+      prevVal.current = value;
+      if (parseFloat(raw) !== value) setRaw(value === 0 ? '' : String(value));
+    }
+  });
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={raw}
+      placeholder="0.00"
+      onChange={e => {
+        const v = e.target.value;
+        if (v !== '' && !/^-?\d*\.?\d*$/.test(v)) return;
+        setRaw(v);
+        const n = parseFloat(v);
+        if (!isNaN(n)) onChange(n);
+        else if (v === '') onChange(0);
+      }}
+      onBlur={() => {
+        const n = parseFloat(raw) || 0;
+        setRaw(n === 0 ? '' : String(n));
+        onChange(n);
+      }}
+      className={className}
+    />
+  );
+}
 
 // ── Modal Catálogo ────────────────────────────────────────────────────────────
 function ModalCatalogo({
@@ -423,13 +459,9 @@ function CardLineas({
               )}
               <div className="flex items-center gap-1 border border-gray-200 rounded-xl px-2.5 h-9 w-28 focus-within:border-blue-400 transition-colors">
                 <span className="text-[10px] text-gray-400 font-semibold">$</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={l.precio || ''}
-                  onChange={e => onChange(l.id, 'precio', e.target.value)}
-                  onBlur={e => onChange(l.id, 'precio', String(parseFloat(e.target.value) || 0))}
-                  placeholder="0.00"
+                <PriceInput
+                  value={typeof l.precio === 'number' ? l.precio : parseFloat(String(l.precio)) || 0}
+                  onChange={v => onChange(l.id, 'precio', String(v))}
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent"
                 />
                 <span className="text-[9px] text-gray-400">MXN</span>

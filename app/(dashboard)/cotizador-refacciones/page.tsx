@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Printer, Search, BookOpen, X, ChevronDown } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
@@ -82,6 +82,42 @@ function numeroALetras(nInput: number): string {
   if (resto > 0) letras += (letras ? ' ' : '') + menor1000(resto);
   if (!letras) letras = 'CERO';
   return `${letras} PESOS ${String(cents).padStart(2, '0')}/100 MXN`;
+}
+
+// ── PriceInput: permite escribir decimales sin perder el punto ─────────────────
+function PriceInput({ value, onChange, className }: { value: number; onChange: (v: number) => void; className?: string }) {
+  const [raw, setRaw] = useState(value === 0 ? '' : String(value));
+  const prevVal = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevVal.current) {
+      prevVal.current = value;
+      if (parseFloat(raw) !== value) setRaw(value === 0 ? '' : String(value));
+    }
+  });
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={raw}
+      placeholder="0.00"
+      onChange={e => {
+        const v = e.target.value;
+        if (v !== '' && !/^-?\d*\.?\d*$/.test(v)) return;
+        setRaw(v);
+        const n = parseFloat(v);
+        if (!isNaN(n)) onChange(n);
+        else if (v === '') onChange(0);
+      }}
+      onBlur={() => {
+        const n = parseFloat(raw) || 0;
+        setRaw(n === 0 ? '' : String(n));
+        onChange(n);
+      }}
+      className={className}
+    />
+  );
 }
 
 type TabRef = 'ref' | 'gen';
@@ -742,12 +778,9 @@ export default function CotizadorRefaccionesPage() {
               />
               <div className="flex items-center border border-gray-200 rounded-xl px-2 h-9 gap-1 focus-within:border-red-400 transition-colors">
                 <span className="text-[10px] text-gray-500">$</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                <PriceInput
                   value={l.precioMXN}
-                  onChange={e => changeLinea(l.id, 'precioMXN', e.target.value)}
+                  onChange={v => changeLinea(l.id, 'precioMXN', String(v))}
                   className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent text-right"
                 />
               </div>
