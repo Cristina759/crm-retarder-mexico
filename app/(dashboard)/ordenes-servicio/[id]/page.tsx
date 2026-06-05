@@ -23,6 +23,7 @@ import {
 } from '@/app/actions/ordenes';
 import { obtenerCotizacionPorId } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
+import { subirFotoOS, eliminarFotoOS } from '@/app/actions/storage';
 import type { OSRow, UsuarioRow, CotizacionRow } from '@/app/actions/types';
 
 const OS_ESTADOS = [
@@ -519,23 +520,37 @@ export default function OSDetallePage() {
     }, 800);
   }, [os]);
 
-  // Agregar foto(s) a la OS (multi-foto)
+  // Agregar foto(s) a la OS — sube a Supabase Storage (sin límite de tamaño)
+  const [subiendo, setSubiendo] = useState(false);
   const handleFotoOS = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!os) return;
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    const nuevas = await Promise.all(files.map(f => comprimirImagen(f)));
+    setSubiendo(true);
     const actuales = parseFotosOS(os.foto_os);
-    const todas = [...actuales, ...nuevas];
+    const nuevasUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const compressed = await comprimirImagen(files[i]);
+      const { url, error } = await subirFotoOS(os.id, compressed, actuales.length + i);
+      if (url) nuevasUrls.push(url);
+      else console.error('Error subiendo foto:', error);
+    }
+    const todas = [...actuales, ...nuevasUrls];
     const serialized = serializeFotosOS(todas);
     await guardarDatosOS(os.id, { foto_os: serialized });
     setOs(prev => prev ? { ...prev, foto_os: serialized } : prev);
     if (fotoOSRef.current) fotoOSRef.current.value = '';
+    setSubiendo(false);
   };
 
   const handleEliminarFotoOS = async (idx: number) => {
     if (!os) return;
     const actuales = parseFotosOS(os.foto_os);
+    const urlAEliminar = actuales[idx];
+    // Eliminar del storage si es URL (no base64 legacy)
+    if (urlAEliminar && urlAEliminar.startsWith('http')) {
+      await eliminarFotoOS(urlAEliminar);
+    }
     const nuevas = actuales.filter((_, i) => i !== idx);
     const serialized = nuevas.length ? serializeFotosOS(nuevas) : '';
     await guardarDatosOS(os.id, { foto_os: serialized || null });
@@ -776,10 +791,11 @@ export default function OSDetallePage() {
                 </label>
                 {canEdit && (
                   <button
-                    onClick={() => fotoOSRef.current?.click()}
-                    className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+                    onClick={() => !subiendo && fotoOSRef.current?.click()}
+                    disabled={subiendo}
+                    className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50"
                   >
-                    <Camera size={12} /> Agregar foto
+                    {subiendo ? <><Loader2 size={12} className="animate-spin" /> Subiendo…</> : <><Camera size={12} /> Agregar foto</>}
                   </button>
                 )}
               </div>
