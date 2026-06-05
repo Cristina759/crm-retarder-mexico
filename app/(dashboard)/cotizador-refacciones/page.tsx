@@ -5,8 +5,10 @@ import QRCode from 'qrcode';
 import { Loader2, RefreshCw, Check, FileText, Plus, Trash2, Printer, Search, BookOpen, X, ChevronDown } from 'lucide-react';
 import { crearCotizacion, buscarEmpresas, type EmpresaBusquedaResult } from '@/app/actions/cotizaciones';
 import { obtenerRefacciones } from '@/app/actions/catalogos';
+import { obtenerCatalogoGeneral } from '@/app/actions/catalogo-general';
 import { obtenerClientes } from '@/app/actions/clientes';
 import type { RefaccionRow } from '@/app/actions/catalogos';
+import type { ItemCatalogoGeneral } from '@/app/actions/catalogo-general';
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface LineaRefaccion {
@@ -82,20 +84,32 @@ function numeroALetras(nInput: number): string {
   return `${letras} PESOS ${String(cents).padStart(2, '0')}/100 MXN`;
 }
 
+type TabRef = 'ref' | 'gen';
+
 // ── Modal Catálogo ────────────────────────────────────────────────────────────
 function ModalCatalogo({
   catalogo,
+  catalogoGen,
   cargando,
   onAgregar,
+  onAgregarGen,
   onClose,
 }: {
   catalogo: RefaccionRow[];
+  catalogoGen: ItemCatalogoGeneral[];
   cargando: boolean;
   onAgregar: (item: RefaccionRow) => void;
+  onAgregarGen: (item: ItemCatalogoGeneral) => void;
   onClose: () => void;
 }) {
+  const [tab, setTab] = useState<TabRef>('ref');
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState('TODOS');
+
+  useEffect(() => {
+    setBusqueda('');
+    setCategoria('TODOS');
+  }, [tab]);
 
   const filtrados = useMemo(() => {
     return catalogo.filter(item => {
@@ -108,6 +122,26 @@ function ModalCatalogo({
     });
   }, [catalogo, busqueda, categoria]);
 
+  const catsGen = useMemo(() => {
+    const cats = Array.from(new Set(catalogoGen.map(i => i.categoria).filter(Boolean))) as string[];
+    return ['TODOS', ...cats.sort()];
+  }, [catalogoGen]);
+
+  const filtradosGen = useMemo(() => {
+    return catalogoGen.filter(item => {
+      const matchCat  = categoria === 'TODOS' || item.categoria === categoria;
+      const matchBusc = !busqueda ||
+        item.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
+        (item.codigo ?? '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (item.categoria ?? '').toLowerCase().includes(busqueda.toLowerCase()) ||
+        (item.area ?? '').toLowerCase().includes(busqueda.toLowerCase());
+      return matchCat && matchBusc;
+    });
+  }, [catalogoGen, busqueda, categoria]);
+
+  const cats     = tab === 'gen' ? catsGen : CATS_REF;
+  const cantidad = tab === 'gen' ? filtradosGen.length : filtrados.length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl" style={{ maxHeight: '85vh' }}>
@@ -116,10 +150,26 @@ function ModalCatalogo({
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <BookOpen size={18} className="text-[#0f2d55]" />
-            <h2 className="font-black text-base text-[#0f2d55]">Catálogo de Refacciones</h2>
+            <h2 className="font-black text-base text-[#0f2d55]">Catálogo</h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">
             <X size={18} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-gray-100">
+          <button
+            onClick={() => setTab('ref')}
+            className={`flex-1 py-3 text-xs font-bold transition-colors ${tab === 'ref' ? 'border-b-2 border-[#0f2d55] text-[#0f2d55]' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <Search size={12} className="inline mr-1" />Refacciones
+          </button>
+          <button
+            onClick={() => setTab('gen')}
+            className={`flex-1 py-3 text-xs font-bold transition-colors ${tab === 'gen' ? 'border-b-2 border-[#0f2d55] text-[#0f2d55]' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <BookOpen size={12} className="inline mr-1" />Catálogo General
           </button>
         </div>
 
@@ -131,7 +181,7 @@ function ModalCatalogo({
               type="text"
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
-              placeholder="Buscar por nombre, P/N o categoría…"
+              placeholder={tab === 'gen' ? 'Buscar por descripción, código, área…' : 'Buscar por nombre, P/N o categoría…'}
               className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400"
               autoFocus
             />
@@ -142,7 +192,7 @@ function ModalCatalogo({
             )}
           </div>
           <div className="flex gap-1.5 flex-wrap">
-            {CATS_REF.map(c => (
+            {cats.map(c => (
               <button
                 key={c}
                 onClick={() => setCategoria(c)}
@@ -153,7 +203,7 @@ function ModalCatalogo({
                 {c}
               </button>
             ))}
-            <span className="ml-auto text-[10px] text-gray-400 self-center">{filtrados.length} item{filtrados.length !== 1 ? 's' : ''}</span>
+            <span className="ml-auto text-[10px] text-gray-400 self-center">{cantidad} item{cantidad !== 1 ? 's' : ''}</span>
           </div>
         </div>
 
@@ -164,36 +214,47 @@ function ModalCatalogo({
               <Loader2 size={20} className="animate-spin" />
               <span className="text-sm">Cargando catálogo…</span>
             </div>
-          ) : filtrados.length === 0 ? (
+          ) : cantidad === 0 ? (
             <div className="text-center py-10 text-gray-400 text-sm">No se encontraron resultados</div>
-          ) : (
+          ) : tab === 'ref' ? (
             filtrados.map(item => (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-colors group"
-              >
+              <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition-colors group">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-800 leading-snug">{item.nombre}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${catColor[item.categoria] ?? 'bg-gray-100 text-gray-600'}`}>
                       {item.categoria}
                     </span>
-                    {item.numero_parte && (
-                      <span className="text-[10px] text-gray-400">P/N: {item.numero_parte}</span>
-                    )}
+                    {item.numero_parte && <span className="text-[10px] text-gray-400">P/N: {item.numero_parte}</span>}
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-sm font-black text-[#0f2d55]">{fmtMXN(item.precio_venta)}</p>
+                  <p className="text-[9px] text-gray-400">MXN</p>
+                </div>
+                <button onClick={() => onAgregar(item)} className="w-8 h-8 rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white flex items-center justify-center flex-shrink-0 transition-colors opacity-0 group-hover:opacity-100" title="Agregar">
+                  <Plus size={15} strokeWidth={3} />
+                </button>
+              </div>
+            ))
+          ) : (
+            filtradosGen.map(item => (
+              <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50/30 transition-colors group">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 leading-snug">{item.descripcion}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {item.categoria && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">{item.categoria}</span>}
+                    {item.area && <span className="text-[10px] text-gray-400">{item.area}</span>}
+                    {item.codigo && <span className="text-[10px] text-gray-400">Cód: {item.codigo}</span>}
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-sm font-black text-[#0f2d55]">
-                    {fmtMXN(item.precio_venta)}
+                    {item.precio_venta != null ? fmtMXN(item.precio_venta) : '—'}
                   </p>
                   <p className="text-[9px] text-gray-400">MXN</p>
                 </div>
-                <button
-                  onClick={() => onAgregar(item)}
-                  className="w-8 h-8 rounded-xl bg-[#0f2d55] hover:bg-[#1a4a7a] text-white flex items-center justify-center flex-shrink-0 transition-colors opacity-0 group-hover:opacity-100"
-                  title="Agregar"
-                >
+                <button onClick={() => onAgregarGen(item)} className="w-8 h-8 rounded-xl bg-green-600 hover:bg-green-700 text-white flex items-center justify-center flex-shrink-0 transition-colors opacity-0 group-hover:opacity-100" title="Agregar">
                   <Plus size={15} strokeWidth={3} />
                 </button>
               </div>
@@ -232,6 +293,7 @@ export default function CotizadorRefaccionesPage() {
   );
 
   const [catalogo, setCatalogo] = useState<RefaccionRow[]>([]);
+  const [catalogoGen, setCatalogoGen] = useState<ItemCatalogoGeneral[]>([]);
   const [cargandoCatalogo, setCargandoCatalogo] = useState(false);
   const [modalAbierto, setModalAbierto] = useState(false);
 
@@ -288,8 +350,9 @@ export default function CotizadorRefaccionesPage() {
       .catch(() => {});
 
     setCargandoCatalogo(true);
-    obtenerRefacciones().then(({ data }) => {
-      setCatalogo(data);
+    Promise.all([obtenerRefacciones(), obtenerCatalogoGeneral()]).then(([ref, gen]) => {
+      setCatalogo(ref.data);
+      setCatalogoGen(gen.data);
       setCargandoCatalogo(false);
     });
   }, []);
@@ -355,6 +418,23 @@ export default function CotizadorRefaccionesPage() {
 
       // 3. Si no hay vacías ni repetidas, añadir nueva línea
       return [...prev, { id: uid(), descripcion: item.nombre, numeroParte: item.numero_parte ?? '', cantidad: 1, precioMXN: item.precio_venta }];
+    });
+  }, []);
+
+  const agregarDesdeCatalogoGen = useCallback((item: ItemCatalogoGeneral) => {
+    setLineas(prev => {
+      const existente = prev.find(l => l.descripcion.toLowerCase() === item.descripcion.toLowerCase());
+      if (existente) {
+        return prev.map(l => l.id === existente.id ? { ...l, cantidad: l.cantidad + 1 } : l);
+      }
+      const vacia = prev.find(l => !l.descripcion && l.precioMXN === 0);
+      if (vacia) {
+        return prev.map(l => l.id === vacia.id
+          ? { ...l, descripcion: item.descripcion, numeroParte: item.codigo ?? '', precioMXN: item.precio_venta ?? 0, cantidad: 1 }
+          : l
+        );
+      }
+      return [...prev, { id: uid(), descripcion: item.descripcion, numeroParte: item.codigo ?? '', cantidad: 1, precioMXN: item.precio_venta ?? 0 }];
     });
   }, []);
 
@@ -802,8 +882,10 @@ export default function CotizadorRefaccionesPage() {
       {modalAbierto && (
         <ModalCatalogo
           catalogo={catalogo}
+          catalogoGen={catalogoGen}
           cargando={cargandoCatalogo}
-          onAgregar={item => { agregarDesdeCatalogo(item); setModalAbierto(false); }}
+          onAgregar={item => { agregarDesdeCatalogo(item); }}
+          onAgregarGen={item => { agregarDesdeCatalogoGen(item); }}
           onClose={() => setModalAbierto(false)}
         />
       )}
