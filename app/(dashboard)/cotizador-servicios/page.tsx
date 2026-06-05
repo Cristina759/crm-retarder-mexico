@@ -710,6 +710,7 @@ export default function CotizadorServiciosPage() {
         total_mxn:      totalMXN,
         notas: [
           `Folio: ${folio}`,
+          cliente.trim() ? `ATENCION_A: ${cliente.trim()}` : '',
           `Tipo: ${tipoServicio}`,
           `Unidades: ${unidadesN}`,
           `Subtotal MXN: $${fmt(subtotalMXN)}`,
