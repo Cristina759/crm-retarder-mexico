@@ -343,6 +343,8 @@ function ModalDetalleCotizacion({
       politicas = notas.slice(polIdx + POL_KEY.length).trim();
     }
 
+    const esFreno = (cot.tipo ?? '').startsWith('frenos');
+
     if (cot.tipo === 'servicios') {
       // Extraer ITEMS JSON: buscar "ITEMS: " y leer hasta el primer salto de línea
       const itemsIdx = notas.indexOf('ITEMS: ');
@@ -354,9 +356,170 @@ function ModalDetalleCotizacion({
       }
       tipoServicioLabel = notas.match(/^Tipo: (.+)$/m)?.[1] ?? '';
       unidadesN = parseInt(notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1') || 1;
+    } else if (esFreno) {
+      // Frenos: extraer obs y politicas (ya extraídas arriba)
+      // Si no hay obs separada, limpiar el notas de las líneas de datos técnicos
+      if (!observaciones) {
+        const lineas = notas.split('\n').filter(l =>
+          !l.startsWith('Modelo:') && !l.startsWith('Marca:') &&
+          !l.startsWith('Unidades:') && !l.startsWith('TC:') && !l.trim().startsWith('-')
+        );
+        observaciones = lineas.join('\n').trim();
+      }
     } else if (!observaciones) {
-      // Fallback: para tipos sin secciones, usar notas completo como observaciones
       observaciones = notas;
+    }
+
+    // ── Frenos: generar PDF en USD ───────────────────────────────────────────
+    if (esFreno) {
+      const fmtUSD = (n: number) => `$${new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)}`;
+      const tcMatch = notas.match(/TC:\s*\$?([\d,]+\.?\d*)\s*MXN\/USD/);
+      const tc = tcMatch ? parseFloat(tcMatch[1].replace(/,/g,'')) : 1;
+      const totalMXN   = cot.total_mxn ?? 0;
+      const totalUSD   = tc > 0 ? Math.round(totalMXN / tc * 100) / 100 : 0;
+      const ivaUSD     = Math.round(totalUSD / 1.16 * 0.16 * 100) / 100;
+      const subtotalUSD = Math.round(totalUSD / 1.16 * 100) / 100;
+
+      // Parsear componentes desde notas: líneas "  - NOMBRE: $X USD"
+      const compLines = notas.split('\n').filter(l => /^\s*-\s+.+:\s*\$[\d,.]+\s*USD/.test(l));
+      let desgloseFrenos = '';
+      for (const line of compLines) {
+        const m = line.match(/^\s*-\s+(.+):\s*\$([\d,.]+)\s*USD/);
+        if (m) {
+          const nombre = m[1].trim();
+          const precio = parseFloat(m[2].replace(/,/g,''));
+          desgloseFrenos += `<div class="p-price-item"><span class="p-price-desc">${nombre}</span><span class="p-price-val">${fmtUSD(precio)} USD</span></div>`;
+        }
+      }
+      // Trabajos: mismos componentes como lista
+      let trabajosFrenos = '';
+      const modeloLine = notas.match(/^Modelo: (.+)$/m)?.[1] ?? '';
+      const marcaLine  = notas.match(/^Marca: (.+)$/m)?.[1]  ?? '';
+      const unidLine   = notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1';
+      if (modeloLine) trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>Freno Retarder ${modeloLine}</span></div>`;
+      if (marcaLine)  trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>${marcaLine}</span></div>`;
+      for (const line of compLines) {
+        const m = line.match(/^\s*-\s+(.+):\s*\$[\d,.]+\s*USD/);
+        if (m) trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">•</span><span>${m[1].trim()}</span></div>`;
+      }
+      if (unidLine !== '1') trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Unidades: ${unidLine}</span></div>`;
+
+      const letrasUSD = (() => {
+        const unidades = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+        const decenas  = ['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+        const centenas = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+        function menor1000(x:number):string{if(x===0)return '';if(x===100)return 'CIEN';if(x<20)return unidades[x];if(x<100){const d=Math.floor(x/10),u=x%10;return u===0?decenas[d]:`${decenas[d]} Y ${unidades[u]}`;}const c=Math.floor(x/100),r=x%100;return r===0?centenas[c]:`${centenas[c]} ${menor1000(r)}`;}
+        const n=Math.round(totalUSD*100)/100;const entero=Math.floor(n);const cents=Math.round((n-entero)*100);
+        const miles=Math.floor(entero/1000);const resto=entero%1000;
+        let letras='';if(miles===1)letras='MIL';else if(miles>1)letras=`${menor1000(miles)} MIL`;
+        if(resto>0)letras+=(letras?' ':'')+menor1000(resto);if(!letras)letras='CERO';
+        return `${letras} DÓLARES ${String(cents).padStart(2,'0')}/100 USD`;
+      })();
+
+      const clienteNF = cot.empresas?.nombre_comercial ?? '—';
+      const fechaCF   = new Date(cot.created_at ?? '').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+      const obsF = observaciones ? `<hr class="p-hr"/><div class="p-obs-full"><div class="p-section-title">Observaciones técnicas</div><pre class="p-obs-pre">${observaciones.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
+      const polF = politicas     ? `<div class="p-obs-full" style="margin-top:6px"><div class="p-section-title" style="color:#c0392b;border-color:#c0392b">Políticas y condiciones</div><pre class="p-obs-pre" style="color:#c0392b;font-weight:700">${politicas.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
+
+      const htmlFreno = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
+<title>Cotización ${cot.folio??''}</title>
+<style>
+  @page{size:A4 portrait;margin:12mm 14mm;}
+  html,body{height:100%;margin:0;padding:0;}
+  .p-doc{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:6px 8px;box-sizing:border-box;background:#fff;min-height:calc(297mm - 24mm);display:flex;flex-direction:column;}
+  .p-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .p-logo{height:90px;width:90px;object-fit:contain;}
+  .p-header-right{text-align:right;}
+  .p-company{font-size:24px;font-weight:900;color:#0d2244;}
+  .p-doc-title{font-size:14px;font-weight:700;color:#0d2244;margin-top:2px;}
+  .p-fecha-line{font-size:12px;color:#555;margin-top:2px;}
+  .p-redline{border:none;border-top:2.5px solid #c0392b;margin:5px 0;}
+  .p-hr{border:none;border-top:1px solid #ddd;margin:6px 0;}
+  .p-client-name{font-size:18px;font-weight:900;color:#c0392b;text-transform:uppercase;margin-bottom:3px;}
+  .p-client-row{font-size:13px;color:#444;margin-bottom:2px;}
+  .p-client-lbl{font-weight:700;color:#222;}
+  .p-two-col{display:flex;gap:24px;margin:8px 0;}
+  .p-col-works{flex:2;}
+  .p-col-pricing{flex:1;min-width:200px;}
+  .p-section-title{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;color:#0d2244;border-bottom:1.5px solid #0d2244;padding-bottom:2px;margin-bottom:5px;}
+  .p-work-item{display:flex;gap:4px;font-size:13px;margin-bottom:2px;line-height:1.4;}
+  .p-work-bullet{color:#c0392b;font-weight:900;flex-shrink:0;}
+  .p-price-item{display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px;gap:8px;}
+  .p-price-desc{flex:1;}
+  .p-price-val{font-weight:600;white-space:nowrap;}
+  .p-totals{border-top:1.5px solid #ddd;padding-top:5px;margin-top:5px;}
+  .p-total-line{display:flex;justify-content:space-between;font-size:14px;margin-bottom:3px;}
+  .p-total-line.iva{color:#555;}
+  .p-total-final{display:flex;justify-content:space-between;font-size:17px;font-weight:900;color:#0d2244;border-top:2px solid #0d2244;padding-top:4px;margin-top:3px;}
+  .p-letras{font-size:13px;font-style:italic;font-weight:700;color:#444;margin:6px 0;}
+  .p-obs-full{margin:6px 0;}
+  .p-obs-pre{font-family:Arial,sans-serif;font-size:12px;white-space:pre-wrap;color:#333;margin:3px 0;line-height:1.5;}
+  .p-spacer{flex:1;}
+  .p-footer{border-top:1px solid #ddd;padding-top:6px;margin-top:10px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:8px;}
+  .p-footer-info{flex:1;font-size:12px;}
+  .p-footer-name{font-weight:900;color:#0d2244;font-size:13px;}
+  .p-footer-detail{color:#555;margin-top:1px;}
+  .p-footer-web{font-size:11px;color:#c0392b;font-weight:700;margin-top:2px;}
+  .p-footer-logo{flex:1;display:flex;justify-content:center;align-items:center;}
+  .p-footer-qr{flex:1;display:flex;flex-direction:column;align-items:flex-end;}
+</style></head><body>
+<div class="p-doc">
+  <div class="p-header">
+    <img src="${origin}/logo-retarder.png" alt="Retarder México" class="p-logo" onerror="this.style.display='none'"/>
+    <div class="p-header-right">
+      <div class="p-company">RETARDER MÉXICO</div>
+      <div class="p-doc-title">Cotización de Frenos</div>
+      <div class="p-fecha-line">Folio: ${cot.folio??'—'} &nbsp;|&nbsp; ${fechaCF}</div>
+    </div>
+  </div>
+  <hr class="p-redline"/>
+  <div class="p-client-block">
+    <div class="p-client-name">${clienteNF}</div>
+    ${cot.empresas?.email ? `<div class="p-client-row"><span class="p-client-lbl">Email:</span> ${cot.empresas.email}</div>` : ''}
+  </div>
+  <hr class="p-hr"/>
+  <div class="p-two-col">
+    <div class="p-col-works">
+      <div class="p-section-title">Incluye los siguientes trabajos</div>
+      ${trabajosFrenos}
+    </div>
+    <div class="p-col-pricing">
+      <div class="p-section-title">Desglose económico</div>
+      ${desgloseFrenos}
+      <div class="p-totals">
+        <div class="p-total-line"><span>Subtotal</span><span>${fmtUSD(subtotalUSD)} USD</span></div>
+        <div class="p-total-line iva"><span>IVA 16%</span><span>${fmtUSD(ivaUSD)} USD</span></div>
+        <div class="p-total-final"><span>TOTAL</span><span>${fmtUSD(totalUSD)} USD</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="p-letras"><strong>SON: ${letrasUSD}</strong></div>
+  ${obsF}${polF}
+  <div class="p-spacer"></div>
+  <hr class="p-hr"/>
+  <div class="p-footer">
+    <div class="p-footer-info">
+      <div class="p-footer-name">Ing. Cristina Velasco</div>
+      <div class="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com &nbsp;|&nbsp; Tel: +52 55 7372 1633</div>
+      <div class="p-footer-web">www.tgrpentarmexico.com</div>
+    </div>
+    <div class="p-footer-logo">
+      <img src="${origin}/logo-pentar.png" alt="Pentar" style="height:50px;width:auto;display:block" onerror="this.style.display='none'"/>
+    </div>
+    <div class="p-footer-qr">
+      ${qrDataUrl?`<img src="${qrDataUrl}" alt="QR" style="width:60px;height:60px;display:block"/>`:''}
+      <div style="font-size:6px;color:#888;text-align:center;margin-top:2px">Escanea para más info</div>
+    </div>
+  </div>
+</div></body></html>`;
+
+      const winF = window.open('','_blank','width=820,height=1060');
+      if(!winF)return;
+      winF.document.write(htmlFreno);
+      winF.document.close();
+      winF.focus();
+      setTimeout(()=>{winF.print();winF.close();},500);
+      return;
     }
 
     const fmtMXN = (n: number) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
