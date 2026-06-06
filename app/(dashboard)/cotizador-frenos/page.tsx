@@ -1016,8 +1016,8 @@ export default function CotizadorFrenosPage() {
               <div className="p-client-name">{empresa}</div>
               {rfc && <div className="p-client-row"><span className="p-client-lbl">RFC:</span> {rfc}</div>}
               {direccion && <div className="p-client-row"><span className="p-client-lbl">Dirección:</span> {direccion}</div>}
-              {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
               {atencionA && <div className="p-client-row"><span className="p-client-lbl">Atención a:</span> {atencionA}</div>}
+              {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
               {descripcion && <div className="p-client-row"><span className="p-client-lbl">Descripción:</span> {descripcion}</div>}
             </div>
 
