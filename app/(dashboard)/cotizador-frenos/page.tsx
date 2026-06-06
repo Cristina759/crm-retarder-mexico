@@ -463,6 +463,52 @@ export default function CotizadorFrenosPage() {
   const ivaUSD       = Math.round(totalPDFUSD * 0.16 * 100) / 100;
   const totalFinalUSD = Math.round(totalPDFUSD * 1.16 * 100) / 100;
   const [fechaHoy, setFechaHoy] = useState('');
+  const [ultimaFechaFrenos, setUltimaFechaFrenos] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ultima_cotizacion_frenos');
+      if (raw) { const p = JSON.parse(raw); setUltimaFechaFrenos(p.fechaImpresion ?? null); }
+    } catch { /* sin localStorage */ }
+  }, []);
+
+  const guardarEnLSFrenos = () => {
+    try {
+      const datos = {
+        cliente: empresa, sucursal, email: emailCliente, atencionA, descripcion,
+        modeloSelId, modelos, unidades, traslado, manoObra, kitLed,
+        observacionesTec: observaciones, observacionesLog: notasCot, politicas,
+        fechaImpresion: new Date().toISOString(),
+      };
+      localStorage.setItem('ultima_cotizacion_frenos', JSON.stringify(datos));
+      setUltimaFechaFrenos(datos.fechaImpresion);
+    } catch { /* sin localStorage */ }
+  };
+
+  const guardarYImprimirFrenos = () => { guardarEnLSFrenos(); window.print(); };
+
+  const reimprimirFrenos = () => {
+    try {
+      const raw = localStorage.getItem('ultima_cotizacion_frenos');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      setEmpresa(d.cliente ?? '');
+      setSucursal(d.sucursal ?? '');
+      setEmailCliente(d.email ?? '');
+      setAtencionA(d.atencionA ?? '');
+      setDescripcion(d.descripcion ?? '');
+      if (d.modeloSelId) setModeloSelId(d.modeloSelId);
+      if (d.modelos) setModelos(d.modelos);
+      setUnidades(d.unidades ?? '1');
+      setTraslado(d.traslado ?? '');
+      setManoObra(d.manoObra ?? '');
+      setKitLed(d.kitLed ?? '');
+      setObservaciones(d.observacionesTec ?? '');
+      setNotasCot(d.observacionesLog ?? '');
+      setPoliticas(d.politicas ?? '');
+      setTimeout(() => window.print(), 100);
+    } catch { /* sin localStorage */ }
+  };
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
@@ -922,7 +968,7 @@ export default function CotizadorFrenosPage() {
         {/* Botones imprimir + enviar correo */}
         <div className="flex gap-2">
           <button
-            onClick={() => window.print()}
+            onClick={guardarYImprimirFrenos}
             disabled={!marcaActual}
             className="flex-1 h-12 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
@@ -938,6 +984,15 @@ export default function CotizadorFrenosPage() {
             {emailCliente ? `Enviar a ${emailCliente.split('@')[0]}…` : 'Enviar por correo'}
           </button>
         </div>
+        <button
+          onClick={reimprimirFrenos}
+          disabled={!ultimaFechaFrenos}
+          title={ultimaFechaFrenos ? `Última impresión: ${new Date(ultimaFechaFrenos).toLocaleString('es-MX')}` : 'Sin cotización guardada'}
+          className="w-full h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+        >
+          <RefreshCw size={14} /> Reimprimir última cotización
+          {ultimaFechaFrenos && <span className="text-gray-400 font-normal">· {new Date(ultimaFechaFrenos).toLocaleString('es-MX')}</span>}
+        </button>
       </div>
 
       {/* Botón guardar en Supabase */}
