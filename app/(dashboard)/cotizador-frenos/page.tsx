@@ -498,8 +498,9 @@ export default function CotizadorFrenosPage() {
           trasladoN > 0 ? `Traslado: ${fmtMXN(trasladoN)}` : '',
           manoObraN > 0 ? `Mano de obra: ${fmtMXN(manoObraN)}` : '',
           kitLedN   > 0 ? `Kit LED: ${fmtMXN(kitLedN)}` : '',
-          notasCot  ? `OBSERVACIONES:\n${notasCot}` : '',
-          politicas ? `POLITICAS:\n${politicas}` : '',
+          observaciones ? `OBS_TEC:\n${observaciones}` : '',
+          notasCot      ? `OBS_LOG:\n${notasCot}` : '',
+          politicas     ? `POLITICAS:\n${politicas}` : '',
         ].filter(Boolean).join('\n'),
       });
 

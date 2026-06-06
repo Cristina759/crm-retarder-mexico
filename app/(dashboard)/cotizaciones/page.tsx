@@ -423,8 +423,16 @@ function ModalDetalleCotizacion({
       const emailCotF   = notasFreno.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
       const sucursalF   = notasFreno.match(/^SUCURSAL:\s*(.+)$/m)?.[1]?.trim() ?? '';
       const descripcionF = notasFreno.match(/^DESCRIPCION:\s*(.+)$/m)?.[1]?.trim() ?? '';
-      const obsF = observaciones ? `<hr class="p-hr"/><div class="p-obs-full"><div class="p-section-title">Observaciones técnicas</div><pre class="p-obs-pre">${observaciones.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
-      const polF = politicas     ? `<div class="p-obs-full" style="margin-top:6px"><div class="p-section-title" style="color:#c0392b;border-color:#c0392b">Políticas y condiciones</div><pre class="p-obs-pre" style="color:#c0392b;font-weight:700">${politicas.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
+      const obsTec = notasFreno.match(/^OBS_TEC:\n([\s\S]*?)(?=\n[A-Z_]+:|$)/m)?.[1]?.trim()
+                  ?? (observaciones || '');
+      const obsLog = notasFreno.match(/^OBS_LOG:\n([\s\S]*?)(?=\n[A-Z_]+:|$)/m)?.[1]?.trim()
+                  ?? notasFreno.match(/^OBSERVACIONES:\n([\s\S]*?)(?=\n[A-Z_]+:|$)/m)?.[1]?.trim() ?? '';
+      const obsF = (obsTec || obsLog) ? `<hr class="p-hr"/>
+        <div style="display:flex;gap:20px;margin:8px 0;">
+          ${obsTec ? `<div style="flex:1"><div class="p-section-title">Observaciones técnicas</div><pre class="p-obs-pre">${obsTec.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : ''}
+          ${obsLog ? `<div style="flex:1"><div class="p-section-title">Observaciones logísticas</div><pre class="p-obs-pre">${obsLog.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : ''}
+        </div>` : '';
+      const polF = politicas ? `<div class="p-obs-full" style="margin-top:6px"><div class="p-section-title" style="color:#c0392b;border-color:#c0392b">Políticas y condiciones</div><pre class="p-obs-pre" style="color:#c0392b;font-weight:700">${politicas.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
 
       const htmlFreno = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
 <title>Cotización ${cot.folio??''}</title>
