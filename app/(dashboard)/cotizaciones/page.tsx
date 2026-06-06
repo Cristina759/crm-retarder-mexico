@@ -604,7 +604,8 @@ function ModalDetalleCotizacion({
   <style>
     @page { size: A4 portrait; margin: 12mm 14mm; }
     body { margin: 0; padding: 0; }
-    .p-doc { font-family: Arial, sans-serif; font-size: 14px; color: #111; padding: 6px 8px; box-sizing: border-box; background: #fff; }
+    .p-doc { font-family: Arial, sans-serif; font-size: 14px; color: #111; padding: 6px 8px; box-sizing: border-box; background: #fff; min-height: calc(297mm - 24mm); display: flex; flex-direction: column; }
+    .p-spacer { flex: 1; }
     .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .p-logo { height: 150px; width: 150px; object-fit: contain; }
     .p-header-right { text-align: right; }
@@ -673,6 +674,7 @@ function ModalDetalleCotizacion({
   <div class="p-letras"><strong>SON: ${letras}</strong></div>
   ${obsSection}
   ${polSection}
+  <div class="p-spacer"></div>
   <hr class="p-hr"/>
   <div class="p-footer">
     <div class="p-footer-info">

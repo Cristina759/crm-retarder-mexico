@@ -1216,6 +1216,7 @@ export default function CotizadorFrenosPage() {
             margin: 0 !important;
             padding: 4px !important;
             box-sizing: border-box !important;
+            min-height: calc(297mm - 10mm) !important;
           }
           .p-header { align-items: center !important; }
           .p-logo-img { max-width: 250px !important; width: 250px !important; }
