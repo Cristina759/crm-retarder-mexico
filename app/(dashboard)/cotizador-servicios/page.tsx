@@ -680,6 +680,52 @@ export default function CotizadorServiciosPage() {
 
   const formularioVisible = tipoPreventivo || tipoCorrectivo;
   const [fechaHoy, setFechaHoy] = useState('');
+  const [ultimaFechaSvc, setUltimaFechaSvc] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ultima_cotizacion_servicios');
+      if (raw) { const p = JSON.parse(raw); setUltimaFechaSvc(p.fechaImpresion ?? null); }
+    } catch { /* sin localStorage */ }
+  }, []);
+
+  const guardarEnLSSvc = () => {
+    try {
+      const datos = {
+        cliente, empresa, sucursal, email: emailCliente, descripcion,
+        tipoPreventivo, tipoCorrectivo,
+        lineasManoObra, lineasRefacciones,
+        unidades, traslado, precioPreventivoMXN,
+        observaciones, politicas,
+        fechaImpresion: new Date().toISOString(),
+      };
+      localStorage.setItem('ultima_cotizacion_servicios', JSON.stringify(datos));
+      setUltimaFechaSvc(datos.fechaImpresion);
+    } catch { /* sin localStorage */ }
+  };
+
+  const reimprimirSvc = () => {
+    try {
+      const raw = localStorage.getItem('ultima_cotizacion_servicios');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      setCliente(d.cliente ?? '');
+      setEmpresa(d.empresa ?? '');
+      setSucursal(d.sucursal ?? '');
+      setEmailCliente(d.email ?? '');
+      setDescripcion(d.descripcion ?? '');
+      setTipoPreventivo(d.tipoPreventivo ?? false);
+      setTipoCorrectivo(d.tipoCorrectivo ?? false);
+      if (d.lineasManoObra) setLineasManoObra(d.lineasManoObra);
+      if (d.lineasRefacciones) setLineasRefacciones(d.lineasRefacciones);
+      setUnidades(d.unidades ?? '1');
+      setTraslado(d.traslado ?? '0');
+      if (d.precioPreventivoMXN) setPrecioPreventivoMXN(d.precioPreventivoMXN);
+      setObservaciones(d.observaciones ?? '');
+      setPoliticas(d.politicas ?? '');
+      setTimeout(() => window.print(), 100);
+    } catch { /* sin localStorage */ }
+  };
 
   // ── Guardar ──────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
@@ -734,7 +780,7 @@ export default function CotizadorServiciosPage() {
       setGuardadoOk(true);
       setTimeout(() => setGuardadoOk(false), 4000);
 
-      if (imprimirAlGuardar) window.print();
+      if (imprimirAlGuardar) { guardarEnLSSvc(); window.print(); }
 
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -1285,11 +1331,21 @@ export default function CotizadorServiciosPage() {
                 )}
 
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => { guardarEnLSSvc(); window.print(); }}
                   disabled={!tipoServicio || !cliente.trim()}
                   className="w-full h-11 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
                 >
                   <Printer size={16} /> Imprimir / Vista previa PDF
+                </button>
+
+                <button
+                  onClick={reimprimirSvc}
+                  disabled={!ultimaFechaSvc}
+                  title={ultimaFechaSvc ? `Última impresión: ${new Date(ultimaFechaSvc).toLocaleString('es-MX')}` : 'Sin cotización guardada'}
+                  className="w-full h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={14} /> Reimprimir última cotización
+                  {ultimaFechaSvc && <span className="text-gray-400 font-normal">· {new Date(ultimaFechaSvc).toLocaleString('es-MX')}</span>}
                 </button>
 
                 <button

@@ -463,6 +463,42 @@ export default function CotizadorFrenosPage() {
   const ivaUSD       = Math.round(totalPDFUSD * 0.16 * 100) / 100;
   const totalFinalUSD = Math.round(totalPDFUSD * 1.16 * 100) / 100;
   const [fechaHoy, setFechaHoy] = useState('');
+  const [ultimaFechaFrenos, setUltimaFechaFrenos] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('reimprimir_frenos');
+      if (raw) { const p = JSON.parse(raw); setUltimaFechaFrenos(p.fecha ?? null); }
+    } catch { /* sin localStorage */ }
+  }, []);
+
+  const guardarYImprimirFrenos = () => {
+    try {
+      const area = document.getElementById('print-area');
+      if (area) {
+        const estilos = Array.from(document.styleSheets)
+          .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
+          .join('');
+        const fecha = new Date().toISOString();
+        localStorage.setItem('reimprimir_frenos', JSON.stringify({ html: area.outerHTML, estilos, fecha }));
+        setUltimaFechaFrenos(fecha);
+      }
+    } catch { /* sin localStorage */ }
+    window.print();
+  };
+
+  const reimprimirFrenos = () => {
+    try {
+      const raw = localStorage.getItem('reimprimir_frenos');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      const win = window.open('', '_blank');
+      if (!win) return;
+      win.document.write(`<style>${data.estilos}</style>${data.html}`);
+      win.document.close();
+      setTimeout(() => { win.print(); }, 500);
+    } catch { /* sin localStorage */ }
+  };
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
@@ -922,7 +958,7 @@ export default function CotizadorFrenosPage() {
         {/* Botones imprimir + enviar correo */}
         <div className="flex gap-2">
           <button
-            onClick={() => window.print()}
+            onClick={guardarYImprimirFrenos}
             disabled={!marcaActual}
             className="flex-1 h-12 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
           >
@@ -938,6 +974,15 @@ export default function CotizadorFrenosPage() {
             {emailCliente ? `Enviar a ${emailCliente.split('@')[0]}…` : 'Enviar por correo'}
           </button>
         </div>
+        <button
+          onClick={reimprimirFrenos}
+          disabled={!ultimaFechaFrenos}
+          title={ultimaFechaFrenos ? `Última impresión: ${new Date(ultimaFechaFrenos).toLocaleString('es-MX')}` : 'Sin cotización guardada'}
+          className="w-full h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+        >
+          <RefreshCw size={14} /> Reimprimir última cotización
+          {ultimaFechaFrenos && <span className="text-gray-400 font-normal">· {new Date(ultimaFechaFrenos).toLocaleString('es-MX')}</span>}
+        </button>
       </div>
 
       {/* Botón guardar en Supabase */}

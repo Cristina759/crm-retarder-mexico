@@ -732,10 +732,27 @@ function ModalDetalleCotizacion({
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePrint}
+              onClick={() => {
+                const tipo = cot.tipo ?? '';
+                const clave = tipo.includes('frenos') ? 'reimprimir_frenos'
+                  : tipo.includes('refacciones') ? 'reimprimir_refacciones'
+                  : tipo.includes('servicios')   ? 'reimprimir_servicios'
+                  : null;
+                if (!clave) { alert('No hay reimpresión guardada para esta cotización'); return; }
+                try {
+                  const raw = localStorage.getItem(clave);
+                  if (!raw) { alert('No hay reimpresión guardada para esta cotización'); return; }
+                  const data = JSON.parse(raw);
+                  const win = window.open('', '_blank');
+                  if (!win) return;
+                  win.document.write(`<style>${data.estilos}</style>${data.html}`);
+                  win.document.close();
+                  win.print();
+                } catch { alert('No hay reimpresión guardada para esta cotización'); }
+              }}
               className="flex items-center gap-1.5 px-3 h-9 bg-[#0f2d55] text-white rounded-xl text-xs font-bold hover:bg-[#1a4a7a] transition-colors"
             >
-              <Printer size={13} /> Imprimir PDF
+              <Printer size={13} /> Reimprimir
             </button>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
               <X size={18} className="text-gray-500" />

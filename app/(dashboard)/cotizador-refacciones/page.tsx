@@ -342,6 +342,16 @@ export default function CotizadorRefaccionesPage() {
   const [imprimirAlGuardar, setImprimirAlGuardar] = useState(false);
 
   const imprimirVentana = () => {
+    try {
+      const lineasActivas = lineas.filter(l => l.descripcion.trim());
+      const datos = {
+        cliente: empresa, atencionA: cliente, email: emailCliente, sucursal, descripcion,
+        lineas: lineasActivas, observaciones, politicas,
+        fechaImpresion: new Date().toISOString(),
+      };
+      localStorage.setItem('ultima_cotizacion_refacciones', JSON.stringify(datos));
+      setUltimaFechaRef(datos.fechaImpresion);
+    } catch { /* sin localStorage */ }
     const area = document.getElementById('print-area');
     if (!area) return;
     // Extraer solo el bloque de estilos del documento (.p-doc, .p-header, etc.)
@@ -382,6 +392,31 @@ export default function CotizadorRefaccionesPage() {
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null);
+  const [ultimaFechaRef, setUltimaFechaRef] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ultima_cotizacion_refacciones');
+      if (raw) { const p = JSON.parse(raw); setUltimaFechaRef(p.fechaImpresion ?? null); }
+    } catch { /* sin localStorage */ }
+  }, []);
+
+  const reimprimirRefacciones = () => {
+    try {
+      const raw = localStorage.getItem('ultima_cotizacion_refacciones');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      setCliente(d.atencionA ?? '');
+      setEmpresa(d.cliente ?? '');
+      setEmailCliente(d.email ?? '');
+      setSucursal(d.sucursal ?? '');
+      setDescripcion(d.descripcion ?? '');
+      if (d.lineas) setLineas(d.lineas);
+      setObservaciones(d.observaciones ?? '');
+      setPoliticas(d.politicas ?? '');
+      setTimeout(() => imprimirVentana(), 100);
+    } catch { /* sin localStorage */ }
+  };
 
   useEffect(() => {
     setFolio(generarFolio());
@@ -904,6 +939,16 @@ export default function CotizadorRefaccionesPage() {
               className="w-full h-11 bg-[#0f2d55] hover:bg-[#1a4a7a] text-white font-bold text-sm rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
             >
               <Printer size={16} /> Imprimir / PDF
+            </button>
+
+            <button
+              onClick={reimprimirRefacciones}
+              disabled={!ultimaFechaRef}
+              title={ultimaFechaRef ? `Última impresión: ${new Date(ultimaFechaRef).toLocaleString('es-MX')}` : 'Sin cotización guardada'}
+              className="w-full h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
+            >
+              <RefreshCw size={14} /> Reimprimir última cotización
+              {ultimaFechaRef && <span className="text-gray-400 font-normal">· {new Date(ultimaFechaRef).toLocaleString('es-MX')}</span>}
             </button>
 
             <button
