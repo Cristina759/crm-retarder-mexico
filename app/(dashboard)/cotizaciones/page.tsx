@@ -577,7 +577,6 @@ function ModalDetalleCotizacion({
     const clientBlockRows = [
       atencionA  ? `<div class="p-client-row"><span class="p-client-lbl">Atención a:</span> ${atencionA}</div>` : '',
       emailCot   ? `<div class="p-client-row"><span class="p-client-lbl">Email:</span> ${emailCot}</div>` : '',
-      sucursalCot ? `<div class="p-client-row"><span class="p-client-lbl">Sucursal:</span> ${sucursalCot}</div>` : '',
       descripcionCot ? `<div class="p-client-row"><span class="p-client-lbl">Descripción:</span> ${descripcionCot}</div>` : '',
       tipoServicioLabel ? `<div class="p-client-row"><span class="p-client-lbl">Tipo de servicio:</span> ${tipoServicioLabel} &nbsp;|&nbsp; Unidades: ${unidadesN}</div>` : tipoDisplay ? `<div class="p-client-row"><span class="p-client-lbl">Tipo:</span> ${tipoDisplay}</div>` : '',
     ].filter(Boolean).join('');
@@ -650,6 +649,7 @@ function ModalDetalleCotizacion({
       <div class="p-company">RETARDER MÉXICO</div>
       <div class="p-doc-title">Cotización de Servicios</div>
       <div class="p-fecha-line">Folio: ${cot.folio ?? '—'} &nbsp;|&nbsp; ${fechaCreacion}</div>
+      ${sucursalCot ? `<div class="p-fecha-line">Sucursal: <strong>${sucursalCot}</strong></div>` : ''}
     </div>
   </div>
   <hr class="p-redline"/>
