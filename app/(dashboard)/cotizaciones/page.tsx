@@ -537,12 +537,6 @@ function ModalDetalleCotizacion({
           for (const item of c.items) worksHTML += `<div class="p-work-item" style="padding-left:8px"><span class="p-work-bullet">•</span><span>${item}</span></div>`;
         }
       }
-      for (const l of (itemsData.mano_obra ?? [])) {
-        if (l.descripcion || l.precio) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Mano de obra — ${l.descripcion || '—'}</span></div>`;
-      }
-      for (const l of (itemsData.refacciones ?? [])) {
-        if (l.descripcion || l.precio) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Refacción — ${l.descripcion || '—'}</span></div>`;
-      }
       const trasladoMXN = (itemsData.traslado_usd ?? 0) * unidadesN;
       if (trasladoMXN > 0) worksHTML += `<div class="p-work-item"><span class="p-work-bullet">·</span><span>Gastos de traslado</span></div>`;
     } else {
