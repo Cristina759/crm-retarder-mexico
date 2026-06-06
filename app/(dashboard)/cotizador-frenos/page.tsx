@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { 
   Loader2, RefreshCw, Check, FileText, Printer, Mail, 
@@ -464,64 +464,41 @@ export default function CotizadorFrenosPage() {
   const totalFinalUSD = Math.round(totalPDFUSD * 1.16 * 100) / 100;
   const [fechaHoy, setFechaHoy] = useState('');
   const [ultimaFechaFrenos, setUltimaFechaFrenos] = useState<string | null>(null);
-  const [pendienteReimprimir, setPendienteReimprimir] = useState(false);
-  const modeloEsperadoRef = useRef<string | null>(null);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('ultima_cotizacion_frenos');
-      if (raw) { const p = JSON.parse(raw); setUltimaFechaFrenos(p.fechaImpresion ?? null); }
+      const raw = localStorage.getItem('reimprimir_frenos');
+      if (raw) { const p = JSON.parse(raw); setUltimaFechaFrenos(p.fecha ?? null); }
     } catch { /* sin localStorage */ }
   }, []);
 
-  const guardarEnLSFrenos = () => {
+  const guardarYImprimirFrenos = () => {
     try {
-      const datos = {
-        cliente: empresa, sucursal, email: emailCliente, atencionA, descripcion,
-        modeloSelId, modelos, unidades, traslado, manoObra, kitLed,
-        tc, folio, modoResumido,
-        observacionesTec: observaciones, observacionesLog: notasCot, politicas,
-        fechaImpresion: new Date().toISOString(),
-      };
-      localStorage.setItem('ultima_cotizacion_frenos', JSON.stringify(datos));
-      setUltimaFechaFrenos(datos.fechaImpresion);
+      const area = document.getElementById('print-area');
+      if (area) {
+        const estilos = Array.from(document.styleSheets)
+          .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
+          .join('');
+        const fecha = new Date().toISOString();
+        localStorage.setItem('reimprimir_frenos', JSON.stringify({ html: area.outerHTML, estilos, fecha }));
+        setUltimaFechaFrenos(fecha);
+      }
     } catch { /* sin localStorage */ }
+    window.print();
   };
-
-  const guardarYImprimirFrenos = () => { guardarEnLSFrenos(); window.print(); };
 
   const reimprimirFrenos = () => {
     try {
-      const raw = localStorage.getItem('ultima_cotizacion_frenos');
+      const raw = localStorage.getItem('reimprimir_frenos');
       if (!raw) return;
-      const d = JSON.parse(raw);
-      setEmpresa(d.cliente ?? '');
-      setSucursal(d.sucursal ?? '');
-      setEmailCliente(d.email ?? '');
-      setAtencionA(d.atencionA ?? '');
-      setDescripcion(d.descripcion ?? '');
-      if (d.modeloSelId) { modeloEsperadoRef.current = d.modeloSelId; setModeloSelId(d.modeloSelId); }
-      if (d.modelos) setModelos(d.modelos);
-      if (d.tc) setTc(d.tc);
-      if (d.folio) setFolio(d.folio);
-      if (d.modoResumido !== undefined) setModoResumido(d.modoResumido);
-      setUnidades(d.unidades ?? '1');
-      setTraslado(d.traslado ?? '');
-      setManoObra(d.manoObra ?? '');
-      setKitLed(d.kitLed ?? '');
-      setObservaciones(d.observacionesTec ?? '');
-      setNotasCot(d.observacionesLog ?? '');
-      setPoliticas(d.politicas ?? '');
-      setPendienteReimprimir(true);
+      const data = JSON.parse(raw);
+      const win = window.open('', '_blank');
+      if (!win) return;
+      win.document.write(`<style>${data.estilos}</style>${data.html}`);
+      win.document.close();
+      setTimeout(() => { win.print(); }, 500);
     } catch { /* sin localStorage */ }
   };
-
-  useEffect(() => {
-    if (pendienteReimprimir && modeloSelId === modeloEsperadoRef.current) {
-      window.print();
-      setPendienteReimprimir(false);
-    }
-  }, [pendienteReimprimir, modeloSelId, modelos]);
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
