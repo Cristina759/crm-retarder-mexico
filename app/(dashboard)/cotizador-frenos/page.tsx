@@ -1215,18 +1215,18 @@ export default function CotizadorFrenosPage() {
             box-sizing: border-box !important;
           }
           .p-header { align-items: center !important; }
-          .p-logo-img { max-width: 200px !important; width: 200px !important; }
+          .p-logo-img { max-width: 250px !important; width: 250px !important; }
           .p-spacer { flex: 1 !important; display: block !important; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }
         /* ── Documento ── */
-        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 0; box-sizing: border-box; background: #fff; width: 100%; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 0; box-sizing: border-box; background: #fff; width: 100%; display: flex; flex-direction: column; min-height: 277mm; }
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 200px; height: auto; object-fit: contain; display: block; }
+        .p-logo-img { width: 250px; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }
