@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import QRCode from 'qrcode';
 import { 
   Loader2, RefreshCw, Check, FileText, Printer, Mail, 
@@ -464,6 +464,8 @@ export default function CotizadorFrenosPage() {
   const totalFinalUSD = Math.round(totalPDFUSD * 1.16 * 100) / 100;
   const [fechaHoy, setFechaHoy] = useState('');
   const [ultimaFechaFrenos, setUltimaFechaFrenos] = useState<string | null>(null);
+  const [pendienteReimprimir, setPendienteReimprimir] = useState(false);
+  const modeloEsperadoRef = useRef<string | null>(null);
 
   useEffect(() => {
     try {
@@ -498,7 +500,7 @@ export default function CotizadorFrenosPage() {
       setEmailCliente(d.email ?? '');
       setAtencionA(d.atencionA ?? '');
       setDescripcion(d.descripcion ?? '');
-      if (d.modeloSelId) setModeloSelId(d.modeloSelId);
+      if (d.modeloSelId) { modeloEsperadoRef.current = d.modeloSelId; setModeloSelId(d.modeloSelId); }
       if (d.modelos) setModelos(d.modelos);
       if (d.tc) setTc(d.tc);
       if (d.folio) setFolio(d.folio);
@@ -510,9 +512,16 @@ export default function CotizadorFrenosPage() {
       setObservaciones(d.observacionesTec ?? '');
       setNotasCot(d.observacionesLog ?? '');
       setPoliticas(d.politicas ?? '');
-      setTimeout(() => window.print(), 100);
+      setPendienteReimprimir(true);
     } catch { /* sin localStorage */ }
   };
+
+  useEffect(() => {
+    if (pendienteReimprimir && modeloSelId === modeloEsperadoRef.current) {
+      window.print();
+      setPendienteReimprimir(false);
+    }
+  }, [pendienteReimprimir, modeloSelId, modelos]);
 
   // ── Guardar ─────────────────────────────────────────────────────────────────
   const handleGuardar = async () => {
