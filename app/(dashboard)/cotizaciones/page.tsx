@@ -430,8 +430,8 @@ function ModalDetalleCotizacion({
 <title>Cotización ${cot.folio??''}</title>
 <style>
   @page{size:A4 portrait;margin:12mm 14mm;}
-  html,body{height:100%;margin:0;padding:0;}
-  .p-doc{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:6px 8px;box-sizing:border-box;background:#fff;min-height:calc(297mm - 24mm);display:flex;flex-direction:column;}
+  html,body{height:100%;margin:0;padding:0;display:flex;flex-direction:column;}
+  .p-doc{font-family:Arial,sans-serif;font-size:13px;color:#111;padding:6px 8px;box-sizing:border-box;background:#fff;min-height:calc(297mm - 24mm);display:flex;flex-direction:column;flex:1;}
   .p-spacer{flex:1;}
   .p-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
   .p-logo{height:250px;width:250px;object-fit:contain;}
@@ -604,8 +604,8 @@ function ModalDetalleCotizacion({
   <title>Cotización ${cot.folio ?? ''}</title>
   <style>
     @page { size: A4 portrait; margin: 12mm 14mm; }
-    body { margin: 0; padding: 0; }
-    .p-doc { font-family: Arial, sans-serif; font-size: 14px; color: #111; padding: 6px 8px; box-sizing: border-box; background: #fff; min-height: calc(297mm - 24mm); display: flex; flex-direction: column; }
+    html, body { height: 100%; margin: 0; padding: 0; display: flex; flex-direction: column; }
+    .p-doc { font-family: Arial, sans-serif; font-size: 14px; color: #111; padding: 6px 8px; box-sizing: border-box; background: #fff; min-height: calc(297mm - 24mm); display: flex; flex-direction: column; flex: 1; }
     .p-spacer { flex: 1; }
     .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .p-logo { height: 150px; width: 150px; object-fit: contain; }

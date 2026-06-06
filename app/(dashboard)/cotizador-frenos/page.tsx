@@ -1226,7 +1226,7 @@ export default function CotizadorFrenosPage() {
           .no-print { display: none !important; }
         }
         /* ── Documento ── */
-        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 0; box-sizing: border-box; background: #fff; width: 100%; display: flex; flex-direction: column; min-height: 277mm; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 4px 0; box-sizing: border-box; background: #fff; width: 100%; }
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
