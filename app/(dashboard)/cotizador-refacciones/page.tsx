@@ -1075,7 +1075,7 @@ export default function CotizadorRefaccionesPage() {
         }
         .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; }
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .p-logo { height: 120px; width: 120px; object-fit: contain; }
+        .p-logo { height: 150px; width: 150px; object-fit: contain; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 20px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }
