@@ -444,9 +444,9 @@ function ModalDetalleCotizacion({
   .p-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
   .p-logo{height:250px;width:250px;object-fit:contain;}
   .p-header-right{text-align:right;}
-  .p-company{font-size:24px;font-weight:900;color:#0d2244;}
-  .p-doc-title{font-size:14px;font-weight:700;color:#0d2244;margin-top:2px;}
-  .p-fecha-line{font-size:12px;color:#555;margin-top:2px;}
+  .p-company{font-size:32px;font-weight:900;color:#0d2244;}
+  .p-doc-title{font-size:18px;font-weight:700;color:#0d2244;margin-top:4px;}
+  .p-fecha-line{font-size:14px;color:#555;margin-top:4px;}
   .p-redline{border:none;border-top:2.5px solid #c0392b;margin:5px 0;}
   .p-hr{border:none;border-top:1px solid #ddd;margin:6px 0;}
   .p-client-name{font-size:18px;font-weight:900;color:#c0392b;text-transform:uppercase;margin-bottom:3px;}

@@ -1236,9 +1236,9 @@ export default function CotizadorFrenosPage() {
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-logo-divider { width: 1px; height: 60px; background: #ddd; margin: 0 6px; flex-shrink: 0; }
         .p-header-right { text-align: right; }
-        .p-company { font-size: 24px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
-        .p-doc-title { font-size: 14px; font-weight: 700; color: #0d2244; margin-top: 3px; }
-        .p-fecha-line { font-size: 11px; color: #555; margin-top: 3px; }
+        .p-company { font-size: 32px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
+        .p-doc-title { font-size: 18px; font-weight: 700; color: #0d2244; margin-top: 4px; }
+        .p-fecha-line { font-size: 14px; color: #555; margin-top: 4px; }
         /* ── Separadores ── */
         .p-redline { border: none; border-top: 3px solid #c0392b; margin: 7px 0; }
         .p-hr { border: none; border-top: 1px solid #ddd; margin: 8px 0; }
