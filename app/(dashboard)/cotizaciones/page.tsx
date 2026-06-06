@@ -376,14 +376,9 @@ function ModalDetalleCotizacion({
       const tcMatch = notas.match(/TC:\s*\$?([\d,]+\.?\d*)\s*MXN\/USD/);
       const tc = tcMatch ? parseFloat(tcMatch[1].replace(/,/g,'')) : 1;
       const totalMXN   = cot.total_mxn ?? 0;
-      // Sumar componentes desde notas para evitar errores de redondeo al reconvertir MXN→USD
-      const compSumLines = notas.split('\n').filter(l => /^\s*-\s+.+:\s*\$[\d,.]+\s*USD/.test(l));
-      const compSumTotal = compSumLines.reduce((acc, l) => {
-        const m = l.match(/\$([\d,.]+)\s*USD/); return acc + (m ? parseFloat(m[1].replace(/,/g,'')) : 0);
-      }, 0);
-      const subtotalUSD = compSumTotal > 0 ? Math.round(compSumTotal * 100) / 100 : Math.round(totalMXN / tc / 1.16 * 100) / 100;
-      const ivaUSD      = Math.round(subtotalUSD * 0.16 * 100) / 100;
-      const totalUSD    = Math.round((subtotalUSD + ivaUSD) * 100) / 100;
+      const totalUSD   = tc > 0 ? Math.round(totalMXN / tc * 100) / 100 : 0;
+      const ivaUSD     = Math.round(totalUSD / 1.16 * 0.16 * 100) / 100;
+      const subtotalUSD = Math.round(totalUSD / 1.16 * 100) / 100;
 
       // Parsear componentes desde notas: líneas "  - NOMBRE: $X USD"
       const compLines = notas.split('\n').filter(l => /^\s*-\s+.+:\s*\$[\d,.]+\s*USD/.test(l));
@@ -398,13 +393,11 @@ function ModalDetalleCotizacion({
       }
       // Trabajos: mismos componentes como lista
       let trabajosFrenos = '';
-      const frenoHeader = notas.match(/^FRENO_HEADER:\s*(.+)$/m)?.[1]?.trim() ?? '';
-      const modeloLine  = notas.match(/^Modelo: (.+)$/m)?.[1]?.trim() ?? '';
-      const marcaLine   = notas.match(/^Marca: (.+)$/m)?.[1]?.trim()  ?? '';
-      const unidLine    = notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1';
-      // Usar FRENO_HEADER si existe; si no, combinar Modelo + Marca en una sola línea
-      const frenoHeaderLine = frenoHeader || (modeloLine ? `Freno Retarder ${modeloLine}${marcaLine ? ` — ${marcaLine}` : ''}` : '');
-      if (frenoHeaderLine) trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>${frenoHeaderLine}</span></div>`;
+      const modeloLine = notas.match(/^Modelo: (.+)$/m)?.[1] ?? '';
+      const marcaLine  = notas.match(/^Marca: (.+)$/m)?.[1]  ?? '';
+      const unidLine   = notas.match(/^Unidades: (\d+)$/m)?.[1] ?? '1';
+      if (modeloLine) trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>Freno Retarder ${modeloLine}</span></div>`;
+      if (marcaLine)  trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">▸</span><span>${marcaLine}</span></div>`;
       for (const line of compLines) {
         const m = line.match(/^\s*-\s+(.+):\s*\$[\d,.]+\s*USD/);
         if (m) trabajosFrenos += `<div class="p-work-item"><span class="p-work-bullet">•</span><span>${m[1].trim()}</span></div>`;
