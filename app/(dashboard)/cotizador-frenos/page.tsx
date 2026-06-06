@@ -485,6 +485,7 @@ export default function CotizadorFrenosPage() {
         notas: [
           atencionA.trim()    ? `ATENCION_A: ${atencionA.trim()}`    : '',
           emailCliente.trim() ? `EMAIL: ${emailCliente.trim()}`       : '',
+          sucursal.trim()     ? `SUCURSAL: ${sucursal.trim()}`        : '',
           descripcion.trim()  ? `DESCRIPCION: ${descripcion.trim()}`  : '',
           `Modelo: ${modeloBaseData!.nombre} — ${modeloBaseData!.tonelaje}`,
           `Marca: ${marcaActual.label} (${marcaActual.nm} Nm)`,
