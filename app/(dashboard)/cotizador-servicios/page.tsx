@@ -714,6 +714,7 @@ export default function CotizadorServiciosPage() {
           cliente.trim() ? `ATENCION_A: ${cliente.trim()}` : '',
           emailCliente.trim() ? `EMAIL: ${emailCliente.trim()}` : '',
           sucursal.trim() ? `SUCURSAL: ${sucursal.trim()}` : '',
+          descripcion.trim() ? `DESCRIPCION: ${descripcion.trim()}` : '',
           `Tipo: ${tipoServicio}`,
           `Unidades: ${unidadesN}`,
           `Subtotal MXN: $${fmt(subtotalMXN)}`,
@@ -1539,7 +1540,7 @@ export default function CotizadorServiciosPage() {
 
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .p-logo { height: 120px; width: 120px; object-fit: contain; }
+        .p-logo { height: 150px; width: 150px; object-fit: contain; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 18px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
         .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }
