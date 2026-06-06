@@ -477,6 +477,7 @@ export default function CotizadorFrenosPage() {
       const datos = {
         cliente: empresa, sucursal, email: emailCliente, atencionA, descripcion,
         modeloSelId, modelos, unidades, traslado, manoObra, kitLed,
+        tc, folio, modoResumido,
         observacionesTec: observaciones, observacionesLog: notasCot, politicas,
         fechaImpresion: new Date().toISOString(),
       };
@@ -499,6 +500,9 @@ export default function CotizadorFrenosPage() {
       setDescripcion(d.descripcion ?? '');
       if (d.modeloSelId) setModeloSelId(d.modeloSelId);
       if (d.modelos) setModelos(d.modelos);
+      if (d.tc) setTc(d.tc);
+      if (d.folio) setFolio(d.folio);
+      if (d.modoResumido !== undefined) setModoResumido(d.modoResumido);
       setUnidades(d.unidades ?? '1');
       setTraslado(d.traslado ?? '');
       setManoObra(d.manoObra ?? '');
