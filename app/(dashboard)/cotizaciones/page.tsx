@@ -416,8 +416,13 @@ function ModalDetalleCotizacion({
         return `${letras} DÓLARES ${String(cents).padStart(2,'0')}/100 USD`;
       })();
 
-      const clienteNF = cot.empresas?.nombre_comercial ?? '—';
-      const fechaCF   = new Date(cot.created_at ?? '').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+      const clienteNF   = cot.empresas?.nombre_comercial ?? '—';
+      const fechaCF     = new Date(cot.created_at ?? '').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+      const notasFreno  = cot.notas ?? '';
+      const atencionAF  = notasFreno.match(/^ATENCION_A:\s*(.+)$/m)?.[1]?.trim() ?? '';
+      const emailCotF   = notasFreno.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
+      const sucursalF   = notasFreno.match(/^SUCURSAL:\s*(.+)$/m)?.[1]?.trim() ?? '';
+      const descripcionF = notasFreno.match(/^DESCRIPCION:\s*(.+)$/m)?.[1]?.trim() ?? '';
       const obsF = observaciones ? `<hr class="p-hr"/><div class="p-obs-full"><div class="p-section-title">Observaciones técnicas</div><pre class="p-obs-pre">${observaciones.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
       const polF = politicas     ? `<div class="p-obs-full" style="margin-top:6px"><div class="p-section-title" style="color:#c0392b;border-color:#c0392b">Políticas y condiciones</div><pre class="p-obs-pre" style="color:#c0392b;font-weight:700">${politicas.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : '';
 
@@ -470,12 +475,15 @@ function ModalDetalleCotizacion({
       <div class="p-company">RETARDER MÉXICO</div>
       <div class="p-doc-title">Cotización de Frenos</div>
       <div class="p-fecha-line">Folio: ${cot.folio??'—'} &nbsp;|&nbsp; ${fechaCF}</div>
+      ${sucursalF ? `<div class="p-fecha-line">Sucursal: <strong>${sucursalF}</strong></div>` : ''}
     </div>
   </div>
   <hr class="p-redline"/>
   <div class="p-client-block">
     <div class="p-client-name">${clienteNF}</div>
-    ${cot.empresas?.email ? `<div class="p-client-row"><span class="p-client-lbl">Email:</span> ${cot.empresas.email}</div>` : ''}
+    ${atencionAF  ? `<div class="p-client-row"><span class="p-client-lbl">Atención a:</span> ${atencionAF}</div>` : ''}
+    ${emailCotF   ? `<div class="p-client-row"><span class="p-client-lbl">Email:</span> ${emailCotF}</div>` : (cot.empresas?.email ? `<div class="p-client-row"><span class="p-client-lbl">Email:</span> ${cot.empresas.email}</div>` : '')}
+    ${descripcionF ? `<div class="p-client-row"><span class="p-client-lbl">Descripción:</span> ${descripcionF}</div>` : ''}
   </div>
   <hr class="p-hr"/>
   <div class="p-two-col">

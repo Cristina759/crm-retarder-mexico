@@ -483,6 +483,9 @@ export default function CotizadorFrenosPage() {
         iva:            Math.round(iva * 100) / 100,
         total_mxn:      Math.round(totalMXN * 100) / 100,
         notas: [
+          atencionA.trim()    ? `ATENCION_A: ${atencionA.trim()}`    : '',
+          emailCliente.trim() ? `EMAIL: ${emailCliente.trim()}`       : '',
+          descripcion.trim()  ? `DESCRIPCION: ${descripcion.trim()}`  : '',
           `Modelo: ${modeloBaseData!.nombre} — ${modeloBaseData!.tonelaje}`,
           `Marca: ${marcaActual.label} (${marcaActual.nm} Nm)`,
           `Unidades: ${unidadesN}`,
