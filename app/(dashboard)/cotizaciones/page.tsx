@@ -423,10 +423,10 @@ function ModalDetalleCotizacion({
       const emailCotF   = notasFreno.match(/^EMAIL:\s*(.+)$/m)?.[1]?.trim() ?? '';
       const sucursalF   = notasFreno.match(/^SUCURSAL:\s*(.+)$/m)?.[1]?.trim() ?? '';
       const descripcionF = notasFreno.match(/^DESCRIPCION:\s*(.+)$/m)?.[1]?.trim() ?? '';
-      const obsTec = notasFreno.match(/^OBS_TEC:\n([\s\S]*?)(?=\n[A-Z_]+:|$)/m)?.[1]?.trim()
+      const obsTec = notasFreno.match(/OBS_TEC:\n([\s\S]*?)(?=\nOBS_LOG:|\nPOLITICAS:|$)/)?.[1]?.trim()
                   ?? (observaciones || '');
-      const obsLog = notasFreno.match(/^OBS_LOG:\n([\s\S]*?)(?=\n[A-Z_]+:|$)/m)?.[1]?.trim()
-                  ?? notasFreno.match(/^OBSERVACIONES:\n([\s\S]*?)(?=\n[A-Z_]+:|$)/m)?.[1]?.trim() ?? '';
+      const obsLog = notasFreno.match(/OBS_LOG:\n([\s\S]*?)(?=\nPOLITICAS:|$)/)?.[1]?.trim()
+                  ?? notasFreno.match(/OBSERVACIONES:\n([\s\S]*?)(?=\nPOLITICAS:|$)/)?.[1]?.trim() ?? '';
       const obsF = (obsTec || obsLog) ? `<hr class="p-hr"/>
         <div style="display:flex;gap:20px;margin:8px 0;">
           ${obsTec ? `<div style="flex:1"><div class="p-section-title">Observaciones técnicas</div><pre class="p-obs-pre">${obsTec.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre></div>` : ''}
