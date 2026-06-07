@@ -472,15 +472,37 @@ export default function CotizadorFrenosPage() {
     } catch { /* sin localStorage */ }
   }, []);
 
-  const guardarYImprimirFrenos = () => {
+  const imgToBase64 = (src: string): Promise<string> => new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(src); // si falla, deja la ruta original
+    img.src = src;
+  });
+
+  const guardarYImprimirFrenos = async () => {
     try {
       const area = document.getElementById('print-area');
       if (area) {
+        const clone = area.cloneNode(true) as HTMLElement;
+        // Convertir imágenes con rutas relativas a base64
+        const imgs = Array.from(clone.querySelectorAll('img'));
+        await Promise.all(imgs.map(async (el) => {
+          if (el.src && !el.src.startsWith('data:')) {
+            el.src = await imgToBase64(el.src);
+          }
+        }));
         const estilos = Array.from(document.styleSheets)
           .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
           .join('');
         const fecha = new Date().toISOString();
-        localStorage.setItem('reimprimir_frenos', JSON.stringify({ html: area.outerHTML, estilos, fecha }));
+        localStorage.setItem('reimprimir_frenos', JSON.stringify({ html: clone.outerHTML, estilos, fecha }));
         setUltimaFechaFrenos(fecha);
       }
     } catch { /* sin localStorage */ }
