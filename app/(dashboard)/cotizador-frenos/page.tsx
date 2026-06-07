@@ -1287,9 +1287,15 @@ export default function CotizadorFrenosPage() {
             box-sizing: border-box !important;
             min-height: calc(297mm - 10mm) !important;
           }
-          .p-header { align-items: center !important; }
+          .p-header { align-items: center !important; margin-bottom: 0 !important; }
           .p-logo-img { max-width: 250px !important; width: 250px !important; }
           .p-redline { margin-top: 0 !important; margin-bottom: 4px !important; }
+          .p-client-block { margin-top: 4px !important; }
+          .p-hr { margin: 4px 0 !important; }
+          .p-two-col { margin: 4px 0 !important; }
+          .p-obs-block { margin: 4px 0 !important; }
+          .p-policies { margin: 4px 0 !important; }
+          .p-letras { margin: 4px 0 !important; }
           .p-spacer { flex: 1 !important; display: block !important; max-height: 40mm !important; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
