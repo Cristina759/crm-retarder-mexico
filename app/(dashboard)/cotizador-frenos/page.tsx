@@ -488,9 +488,13 @@ export default function CotizadorFrenosPage() {
 
   const guardarYImprimirFrenos = async () => {
     try {
-      const area = document.getElementById('print-area');
-      if (area) {
-        const clone = area.cloneNode(true) as HTMLElement;
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        // Mostrar temporalmente para que el navegador renderice imágenes
+        printArea.style.display = 'block';
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        const clone = printArea.cloneNode(true) as HTMLElement;
         const imgs = Array.from(clone.querySelectorAll('img'));
         await Promise.all(imgs.map(async (el) => {
           if (el.src && !el.src.startsWith('data:')) {
@@ -500,9 +504,11 @@ export default function CotizadorFrenosPage() {
         const estilos = Array.from(document.styleSheets)
           .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
           .join('');
+
+        // Restaurar display:none antes de guardar e imprimir
+        printArea.style.display = 'none';
+
         const fecha = new Date().toISOString();
-        console.log('HTML guardado:', clone.outerHTML);
-        console.log('Imágenes encontradas:', Array.from(document.getElementById('print-area')!.querySelectorAll('img')).map(img => ({ src: (img as HTMLImageElement).src, natural: (img as HTMLImageElement).naturalWidth })));
         localStorage.setItem('reimprimir_frenos', JSON.stringify({ html: clone.outerHTML, estilos, fecha }));
         setUltimaFechaFrenos(fecha);
       }
