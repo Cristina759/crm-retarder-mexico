@@ -1289,7 +1289,7 @@ export default function CotizadorFrenosPage() {
           }
           .p-header { align-items: center !important; }
           .p-logo-img { max-width: 250px !important; width: 250px !important; }
-          .p-spacer { flex: 1 !important; display: block !important; }
+          .p-spacer { flex: 1 !important; display: block !important; max-height: 40mm !important; }
           .p-total-mxn { display: none !important; }
           .no-print { display: none !important; }
         }
