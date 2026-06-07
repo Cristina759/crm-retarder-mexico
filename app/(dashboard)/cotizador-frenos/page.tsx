@@ -472,19 +472,20 @@ export default function CotizadorFrenosPage() {
     } catch { /* sin localStorage */ }
   }, []);
 
-  const imgToBase64 = (src: string): Promise<string> => new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d')!.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = () => resolve(src); // si falla, deja la ruta original
-    img.src = src;
-  });
+  const imgToBase64 = async (src: string): Promise<string> => {
+    try {
+      const resp = await fetch(src);
+      const blob = await resp.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return src; // si falla, deja la ruta original
+    }
+  };
 
   const guardarYImprimirFrenos = async () => {
     try {
