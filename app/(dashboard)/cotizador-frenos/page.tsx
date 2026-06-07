@@ -501,6 +501,8 @@ export default function CotizadorFrenosPage() {
           .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
           .join('');
         const fecha = new Date().toISOString();
+        console.log('HTML guardado:', clone.outerHTML);
+        console.log('Imágenes encontradas:', Array.from(document.getElementById('print-area')!.querySelectorAll('img')).map(img => ({ src: (img as HTMLImageElement).src, natural: (img as HTMLImageElement).naturalWidth })));
         localStorage.setItem('reimprimir_frenos', JSON.stringify({ html: clone.outerHTML, estilos, fecha }));
         setUltimaFechaFrenos(fecha);
       }
