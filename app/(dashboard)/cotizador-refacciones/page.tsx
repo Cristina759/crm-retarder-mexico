@@ -341,7 +341,21 @@ export default function CotizadorRefaccionesPage() {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [imprimirAlGuardar, setImprimirAlGuardar] = useState(false);
 
-  const imprimirVentana = () => {
+  const imgToBase64Canvas = (src: string): Promise<string> => new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+
+  const imprimirVentana = async () => {
     try {
       const lineasActivas = lineas.filter(l => l.descripcion.trim());
       const datos = {
@@ -351,6 +365,20 @@ export default function CotizadorRefaccionesPage() {
       };
       localStorage.setItem('ultima_cotizacion_refacciones', JSON.stringify(datos));
       setUltimaFechaRef(datos.fechaImpresion);
+    } catch { /* sin localStorage */ }
+    try {
+      const areaRef = document.getElementById('print-area');
+      if (areaRef) {
+        const clone = areaRef.cloneNode(true) as HTMLElement;
+        const imgs = Array.from(clone.querySelectorAll('img'));
+        await Promise.all(imgs.map(async (el) => {
+          if (el.src && !el.src.startsWith('data:')) el.src = await imgToBase64Canvas(el.src);
+        }));
+        const estilos = Array.from(document.styleSheets)
+          .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
+          .join('');
+        localStorage.setItem('reimprimir_refacciones', JSON.stringify({ html: clone.outerHTML, estilos, fecha: new Date().toISOString() }));
+      }
     } catch { /* sin localStorage */ }
     const area = document.getElementById('print-area');
     if (!area) return;

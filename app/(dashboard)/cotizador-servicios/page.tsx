@@ -689,7 +689,21 @@ export default function CotizadorServiciosPage() {
     } catch { /* sin localStorage */ }
   }, []);
 
-  const guardarEnLSSvc = () => {
+  const imgToBase64Canvas = (src: string): Promise<string> => new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+
+  const guardarEnLSSvc = async () => {
     try {
       const datos = {
         cliente, empresa, sucursal, email: emailCliente, descripcion,
@@ -701,6 +715,20 @@ export default function CotizadorServiciosPage() {
       };
       localStorage.setItem('ultima_cotizacion_servicios', JSON.stringify(datos));
       setUltimaFechaSvc(datos.fechaImpresion);
+    } catch { /* sin localStorage */ }
+    try {
+      const areaSvc = document.getElementById('print-area');
+      if (areaSvc) {
+        const clone = areaSvc.cloneNode(true) as HTMLElement;
+        const imgs = Array.from(clone.querySelectorAll('img'));
+        await Promise.all(imgs.map(async (el) => {
+          if (el.src && !el.src.startsWith('data:')) el.src = await imgToBase64Canvas(el.src);
+        }));
+        const estilos = Array.from(document.styleSheets)
+          .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
+          .join('');
+        localStorage.setItem('reimprimir_servicios', JSON.stringify({ html: clone.outerHTML, estilos, fecha: new Date().toISOString() }));
+      }
     } catch { /* sin localStorage */ }
   };
 
