@@ -1019,8 +1019,8 @@ export default function CotizadorRefaccionesPage() {
 
             {/* Bloque cliente */}
             <div className="p-client-block">
-              <div className="p-client-name">{cliente}</div>
-              {empresa && <div className="p-client-row"><span className="p-client-lbl">Empresa:</span> {empresa}</div>}
+              <div className="p-client-name">{empresa || cliente}</div>
+              {empresa && <div className="p-client-row"><span className="p-client-lbl">Atención a:</span> {cliente}</div>}
               {emailCliente && <div className="p-client-row"><span className="p-client-lbl">Email:</span> {emailCliente}</div>}
               {descripcion && <div className="p-client-row"><span className="p-client-lbl">Descripción:</span> {descripcion}</div>}
             </div>
