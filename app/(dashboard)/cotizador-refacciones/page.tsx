@@ -342,17 +342,22 @@ export default function CotizadorRefaccionesPage() {
   const [imprimirAlGuardar, setImprimirAlGuardar] = useState(false);
 
   const imgToBase64Canvas = (src: string): Promise<string> => new Promise((resolve) => {
+    const absSrc = src.startsWith('http') ? src : new URL(src, location.href).href;
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d')!.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d')!.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch {
+        resolve(absSrc);
+      }
     };
-    img.onerror = () => resolve(src);
-    img.src = src;
+    img.onerror = () => resolve(absSrc);
+    img.src = absSrc;
   });
 
   const imprimirVentana = async () => {

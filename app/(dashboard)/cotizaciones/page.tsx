@@ -745,9 +745,9 @@ function ModalDetalleCotizacion({
                   const data = JSON.parse(raw);
                   const win = window.open('', '_blank');
                   if (!win) return;
-                  win.document.write(`<style>${data.estilos}</style>${data.html}`);
+                  win.document.write(`<base href="${location.origin}"><style>${data.estilos}</style>${data.html}`);
                   win.document.close();
-                  win.print();
+                  setTimeout(() => win.print(), 500);
                 } catch { alert('No hay reimpresión guardada para esta cotización'); }
               }}
               className="flex items-center gap-1.5 px-3 h-9 bg-[#0f2d55] text-white rounded-xl text-xs font-bold hover:bg-[#1a4a7a] transition-colors"

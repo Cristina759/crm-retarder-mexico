@@ -473,17 +473,22 @@ export default function CotizadorFrenosPage() {
   }, []);
 
   const imgToBase64Canvas = (src: string): Promise<string> => new Promise((resolve) => {
+    const absSrc = src.startsWith('http') ? src : new URL(src, location.href).href;
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d')!.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/png'));
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext('2d')!.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch {
+        resolve(absSrc);
+      }
     };
-    img.onerror = () => resolve(src);
-    img.src = src;
+    img.onerror = () => resolve(absSrc);
+    img.src = absSrc;
   });
 
   const guardarYImprimirFrenos = async () => {
@@ -523,7 +528,7 @@ export default function CotizadorFrenosPage() {
       const data = JSON.parse(raw);
       const win = window.open('', '_blank');
       if (!win) return;
-      win.document.write(`<style>${data.estilos}</style>${data.html}`);
+      win.document.write(`<base href="${location.origin}"><style>${data.estilos}</style>${data.html}`);
       win.document.close();
       setTimeout(() => { win.print(); }, 500);
     } catch { /* sin localStorage */ }
