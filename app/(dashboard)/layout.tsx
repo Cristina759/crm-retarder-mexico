@@ -7,7 +7,7 @@ import { UserButton, useUser } from '@clerk/nextjs';
 import {
   LayoutDashboard, ShoppingCart, Wrench, FileText, ClipboardList,
   TrendingUp, ClipboardCheck, Settings, ChevronLeft, Receipt, FileMinus, Building2,
-  ChevronDown, Hammer, Package, Zap, Link2, Bolt, Nut, BookOpen,
+  ChevronDown, Hammer, Package, Zap, Link2, Bolt, Nut, BookOpen, Truck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,9 +30,10 @@ const NAV_SECTIONS = [
   {
     label: 'OPERACIONES',
     items: [
-      { href: '/oportunidades',   label: 'Pipeline Comercial', icon: TrendingUp     },
-      { href: '/ordenes-servicio', label: 'Órdenes de Servicio', icon: ClipboardCheck },
-      { href: '/clientes',        label: 'Clientes',           icon: Building2      },
+      { href: '/oportunidades',          label: 'Pipeline Comercial',   icon: TrendingUp     },
+      { href: '/ordenes-servicio',       label: 'Órdenes de Servicio',  icon: ClipboardCheck },
+      { href: '/clientes',               label: 'Clientes',             icon: Building2      },
+      { href: '/documentos-unidades',    label: 'Docs. Unidades',       icon: Truck          },
     ],
   },
   {
