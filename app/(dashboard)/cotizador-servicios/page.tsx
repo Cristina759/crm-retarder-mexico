@@ -756,7 +756,7 @@ export default function CotizadorServiciosPage() {
       if (d.precioPreventivoMXN) setPrecioPreventivoMXN(d.precioPreventivoMXN);
       setObservaciones(d.observaciones ?? '');
       setPoliticas(d.politicas ?? '');
-      setTimeout(() => window.print(), 100);
+      setTimeout(() => window.print(), 600);
     } catch { /* sin localStorage */ }
   };
 
@@ -1629,8 +1629,9 @@ export default function CotizadorServiciosPage() {
           }
           .p-doc { flex: 1 !important; display: flex !important; flex-direction: column !important;
                    visibility: visible !important; width: 100% !important; max-width: 100% !important;
-                   margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
-          .p-spacer { flex: 0 !important; display: block !important; min-height: 4px !important; }
+                   margin: 0 !important; padding: 4px !important; box-sizing: border-box !important;
+                   min-height: calc(297mm - 10mm) !important; }
+          .p-spacer { flex: 1 !important; display: block !important; min-height: 4mm !important; max-height: 40mm !important; }
           .no-print { display: none !important; }
         }
 
@@ -1642,7 +1643,12 @@ export default function CotizadorServiciosPage() {
           padding: 4px 6px;
           box-sizing: border-box;
           background: #fff;
+          display: flex;
+          flex-direction: column;
+          min-height: calc(297mm - 10mm);
+          width: 100%;
         }
+        .p-spacer { flex: 1; min-height: 4mm; }
 
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
