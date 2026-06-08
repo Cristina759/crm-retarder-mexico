@@ -1623,6 +1623,7 @@ export default function CotizadorServiciosPage() {
                    margin: 0 !important; padding: 4px !important; box-sizing: border-box !important;
                    min-height: calc(297mm - 10mm) !important; }
           .p-spacer { flex: 1 !important; display: block !important; min-height: 4mm !important; max-height: 40mm !important; }
+          .p-logo-img { width: 250px !important; max-width: 250px !important; height: auto !important; }
           .no-print { display: none !important; }
         }
 
