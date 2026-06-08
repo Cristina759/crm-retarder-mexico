@@ -986,7 +986,7 @@ export default function CotizadorRefaccionesPage() {
                     src="/logo-retarder.png"
                     alt="Retarder"
                     className="p-logo-img"
-                    style={{ width: '250px', height: 'auto', objectFit: 'contain' }}
+                    style={{ width: '300px', height: 'auto', objectFit: 'contain' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -1142,7 +1142,7 @@ export default function CotizadorRefaccionesPage() {
             min-height: calc(297mm - 10mm) !important;
           }
           .p-spacer { flex: 1 !important; display: block !important; max-height: 40mm !important; }
-          .p-logo-img { width: 250px !important; max-width: 250px !important; height: auto !important; }
+          .p-logo-img { width: 300px !important; max-width: 300px !important; height: auto !important; }
           .no-print { display: none !important; }
         }
         .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; min-height: calc(297mm - 10mm); width: 100%; }
@@ -1150,7 +1150,7 @@ export default function CotizadorRefaccionesPage() {
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 250px; height: auto; object-fit: contain; display: block; }
+        .p-logo-img { width: 300px; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 32px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
