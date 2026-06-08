@@ -2,6 +2,10 @@
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
+// La tabla documentos_unidades no está en los tipos generados aún — usamos cast any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabaseAdmin as any;
+
 const BUCKET = 'documentos-unidades';
 
 export interface DocUnidad {
@@ -18,7 +22,7 @@ export interface DocUnidad {
 }
 
 export async function listarDocsUnidades(): Promise<{ data: DocUnidad[]; error: string | null }> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await db
     .from('documentos_unidades')
     .select('*')
     .order('created_at', { ascending: false });
@@ -50,7 +54,7 @@ export async function subirDocUnidad(formData: FormData): Promise<{ error: strin
 
   const { data: urlData } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
 
-  const { error: dbErr } = await supabaseAdmin.from('documentos_unidades').insert({
+  const { error: dbErr } = await db.from('documentos_unidades').insert({
     nombre, descripcion, cliente, numero_unidad, tipo_doc,
     archivo_url: urlData.publicUrl,
     archivo_nombre: archivo.name,
@@ -65,7 +69,7 @@ export async function subirDocUnidad(formData: FormData): Promise<{ error: strin
 }
 
 export async function eliminarDocUnidad(id: string): Promise<{ error: string | null }> {
-  const { data: doc } = await supabaseAdmin
+  const { data: doc } = await db
     .from('documentos_unidades').select('archivo_url').eq('id', id).single();
 
   if (doc?.archivo_url) {
@@ -77,6 +81,6 @@ export async function eliminarDocUnidad(id: string): Promise<{ error: string | n
     }
   }
 
-  const { error } = await supabaseAdmin.from('documentos_unidades').delete().eq('id', id);
+  const { error } = await db.from('documentos_unidades').delete().eq('id', id);
   return { error: error?.message ?? null };
 }
