@@ -1008,15 +1008,6 @@ export default function CotizadorFrenosPage() {
             {emailCliente ? `Enviar a ${emailCliente.split('@')[0]}…` : 'Enviar por correo'}
           </button>
         </div>
-        <button
-          onClick={reimprimirFrenos}
-          disabled={!ultimaFechaFrenos}
-          title={ultimaFechaFrenos ? `Última impresión: ${new Date(ultimaFechaFrenos).toLocaleString('es-MX')}` : 'Sin cotización guardada'}
-          className="w-full h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
-        >
-          <RefreshCw size={14} /> Reimprimir última cotización
-          {ultimaFechaFrenos && <span className="text-gray-400 font-normal">· {new Date(ultimaFechaFrenos).toLocaleString('es-MX')}</span>}
-        </button>
       </div>
 
       {/* Botón guardar en Supabase */}

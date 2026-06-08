@@ -1371,15 +1371,6 @@ export default function CotizadorServiciosPage() {
                   <Printer size={16} /> Imprimir / Vista previa PDF
                 </button>
 
-                <button
-                  onClick={reimprimirSvc}
-                  disabled={!ultimaFechaSvc}
-                  title={ultimaFechaSvc ? `Última impresión: ${new Date(ultimaFechaSvc).toLocaleString('es-MX')}` : 'Sin cotización guardada'}
-                  className="w-full h-10 bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold text-xs rounded-xl disabled:opacity-40 transition-colors flex items-center justify-center gap-2"
-                >
-                  <RefreshCw size={14} /> Reimprimir última cotización
-                  {ultimaFechaSvc && <span className="text-gray-400 font-normal">· {new Date(ultimaFechaSvc).toLocaleString('es-MX')}</span>}
-                </button>
 
                 <button
                   onClick={handleGuardar}
