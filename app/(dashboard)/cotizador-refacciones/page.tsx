@@ -413,9 +413,12 @@ export default function CotizadorRefaccionesPage() {
         html, body { margin: 0; padding: 0; background: white; }
         @page { size: A4 portrait; margin: 5mm; }
         ${estiloDoc}
-        .p-doc { display: block !important; visibility: visible !important;
+        .p-doc { display: flex !important; flex-direction: column !important;
+                 visibility: visible !important;
                  width: 100% !important; max-width: 100% !important;
-                 margin: 0 !important; padding: 4px !important; }
+                 margin: 0 !important; padding: 4px !important;
+                 min-height: calc(297mm - 10mm) !important; }
+        .p-spacer { flex: 1 !important; }
       </style>
     </head><body>${html}</body></html>`);
     win.document.close();
@@ -1106,6 +1109,9 @@ export default function CotizadorRefaccionesPage() {
 
             <hr className="p-hr" />
 
+            {/* Spacer — empuja el footer al fondo de la página */}
+            <div className="p-spacer" />
+
             {/* Footer */}
             <div className="p-footer">
               <div className="p-footer-info" style={{ order: 1 }}>
@@ -1147,11 +1153,13 @@ export default function CotizadorRefaccionesPage() {
             box-sizing: border-box !important;
             background: white !important;
           }
-          .p-doc { display: block !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; }
+          .p-doc { display: flex !important; flex-direction: column !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; min-height: calc(297mm - 10mm) !important; }
+          .p-spacer { flex: 1 !important; }
           .p-logo { width: 200px !important; height: auto !important; }
           .no-print { display: none !important; }
         }
-        .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; min-height: calc(297mm - 10mm); }
+        .p-spacer { flex: 1; }
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .p-logo { height: 150px; width: 150px; object-fit: contain; }
         .p-header-right { text-align: right; }
