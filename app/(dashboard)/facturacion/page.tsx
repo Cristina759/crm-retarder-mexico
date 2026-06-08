@@ -3,7 +3,7 @@
 
 
 import { useEffect, useState } from 'react';
-import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus, Ban } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, Pencil, Check, X, Trash2, Plus, Wallet, Printer, FileMinus, Ban, Search } from 'lucide-react';
 import { obtenerFacturas, actualizarFactura, eliminarFactura, obtenerResumenFacturacion, registrarPago, crearNotaCredito, type FacturaRow } from '@/app/actions/facturacion';
 import { obtenerClientes } from '@/app/actions/clientes';
 
@@ -373,6 +373,7 @@ export default function FacturacionPage() {
   const [resumen, setResumen] = useState({ totalFacturado: 0, totalCobrado: 0, totalNotasCredito: 0, pendientes: 0, vencidas: 0 });
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState('');
 
   useEffect(() => {
     Promise.all([obtenerFacturas(), obtenerResumenFacturacion(), obtenerClientes()])
@@ -426,6 +427,16 @@ export default function FacturacionPage() {
     setRows(prev => prev.filter(r => r.id !== id));
   };
 
+  const q = busqueda.toLowerCase().trim();
+  const rowsFiltrados = q
+    ? rows.filter(r =>
+        (r.numero ?? '').toLowerCase().includes(q) ||
+        (r.numero_factura ?? '').toLowerCase().includes(q) ||
+        (r.empresa_nombre ?? '').toLowerCase().includes(q) ||
+        (r.concepto_factura ?? '').toLowerCase().includes(q)
+      )
+    : rows;
+
   return (
     <div className="space-y-5 pb-10">
       <div className="flex items-center gap-3">
@@ -464,6 +475,23 @@ export default function FacturacionPage() {
         </div>
       </div>
 
+      {/* Buscador */}
+      <div className="relative">
+        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+        <input
+          type="text"
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          placeholder="Buscar por OS, factura #, cliente o concepto…"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
+        />
+        {busqueda && (
+          <button onClick={() => setBusqueda('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       <div className="bg-white rounded-2xl border border-gray-200 overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -479,9 +507,11 @@ export default function FacturacionPage() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-16 text-gray-400 text-sm">Sin facturas registradas</td></tr>
-            ) : [...rows]
+            {rowsFiltrados.length === 0 ? (
+              <tr><td colSpan={8} className="text-center py-16 text-gray-400 text-sm">
+                {q ? `Sin resultados para "${busqueda}"` : 'Sin facturas registradas'}
+              </td></tr>
+            ) : [...rowsFiltrados]
                 .sort((a, b) => {
                   const numOf = (s: string | null) => { const m = s?.match(/(\d+)\s*$/); return m ? parseInt(m[1], 10) : Infinity; };
                   const diff = numOf(a.numero_factura) - numOf(b.numero_factura);
