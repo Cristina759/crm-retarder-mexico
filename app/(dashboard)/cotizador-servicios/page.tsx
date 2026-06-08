@@ -1249,29 +1249,6 @@ export default function CotizadorServiciosPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-1">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Sucursal</label>
-                    <input
-                      type="text"
-                      value={sucursal}
-                      onChange={e => setSucursal(e.target.value)}
-                      placeholder="Ej. CDMX, Monterrey..."
-                      className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">Descripción de la Cotización</label>
-                    <input
-                      type="text"
-                      value={descripcion}
-                      onChange={e => setDescripcion(e.target.value)}
-                      placeholder="Ej. Servicio preventivo unidad..."
-                      className="w-full border border-gray-300 rounded-xl px-3 h-9 text-sm font-semibold text-gray-800 outline-none focus:border-blue-400 transition-colors placeholder:text-gray-300"
-                    />
-                  </div>
-                </div>
-
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-600 block mb-1">
                     Notas adicionales / Observaciones
