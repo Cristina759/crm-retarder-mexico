@@ -1402,10 +1402,27 @@ export default function CotizadorServiciosPage() {
         <div id="print-area" style={{ display: 'none' }}>
           <div className="p-doc">
 
-            {/* Header */}
+            {/* Header: logo izquierda + datos derecha */}
             <div className="p-header">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-retarder.png" alt="Retarder México" className="p-logo" />
+              <div className="p-logos-left">
+                <div className="p-logo-wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/logo-retarder.png"
+                    alt="Retarder"
+                    className="p-logo-img"
+                    style={{ width: '200px', height: 'auto', objectFit: 'contain' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
+                      if (fb) fb.style.display = 'flex';
+                    }}
+                  />
+                  <div className="p-logo-fallback" style={{ display: 'none' }}>
+                    RETARDER<br />MÉXICO
+                  </div>
+                </div>
+              </div>
               <div className="p-header-right">
                 <div className="p-company">RETARDER MÉXICO</div>
                 <div className="p-doc-title">Cotización de Servicios</div>
@@ -1629,11 +1646,14 @@ export default function CotizadorServiciosPage() {
 
         /* ── Header ── */
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .p-logo { height: 150px; width: 150px; object-fit: contain; }
+        .p-logos-left { display: flex; align-items: center; gap: 12px; }
+        .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .p-logo-img { width: 200px; height: auto; object-fit: contain; display: block; }
+        .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-header-right { text-align: right; }
-        .p-company { font-size: 18px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
-        .p-doc-title { font-size: 12px; font-weight: 700; color: #0d2244; margin-top: 2px; }
-        .p-fecha-line { font-size: 10px; color: #555; margin-top: 1px; }
+        .p-company { font-size: 32px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
+        .p-doc-title { font-size: 18px; font-weight: 700; color: #0d2244; margin-top: 4px; }
+        .p-fecha-line { font-size: 14px; color: #555; margin-top: 4px; }
 
         /* ── Separadores ── */
         .p-redline { border: none; border-top: 2.5px solid #c0392b; margin: 3px 0; }
