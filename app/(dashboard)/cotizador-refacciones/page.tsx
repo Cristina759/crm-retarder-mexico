@@ -413,12 +413,15 @@ export default function CotizadorRefaccionesPage() {
         html, body { margin: 0; padding: 0; background: white; }
         @page { size: A4 portrait; margin: 5mm; }
         ${estiloDoc}
+        html, body { margin: 0; padding: 0; height: 100%; }
+        body { display: flex; flex-direction: column; }
         .p-doc { display: flex !important; flex-direction: column !important;
-                 visibility: visible !important;
+                 flex: 1 !important;
                  width: 100% !important; max-width: 100% !important;
                  margin: 0 !important; padding: 4px !important;
+                 box-sizing: border-box !important;
                  min-height: calc(297mm - 10mm) !important; }
-        .p-spacer { flex: 1 !important; }
+        .p-spacer { flex: 1 !important; min-height: 4mm !important; }
       </style>
     </head><body>${html}</body></html>`);
     win.document.close();
@@ -1054,7 +1057,7 @@ export default function CotizadorRefaccionesPage() {
                     <span>
                       {l.descripcion}
                       {l.numeroParte ? ` — P/N: ${l.numeroParte}` : ''}
-                      {l.cantidad > 1 ? ` (×${l.cantidad})` : ''}
+                      {` ×${l.cantidad}`}
                     </span>
                   </div>
                 ))}
@@ -1141,25 +1144,34 @@ export default function CotizadorRefaccionesPage() {
         @page { size: A4 portrait; margin: 5mm; }
         @media print {
           html, body { margin: 0 !important; padding: 0 !important; }
-          header, nav, footer { display: none !important; }
+          header, nav, footer, aside { display: none !important; }
           body * { visibility: hidden !important; }
           #print-area, #print-area * { visibility: visible !important; }
           #print-area {
-            display: block !important;
+            display: flex !important;
+            flex-direction: column !important;
             position: fixed !important;
             top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-            width: 100% !important;
+            width: 100% !important; height: 100% !important;
             margin: 0 !important; padding: 0 !important;
             box-sizing: border-box !important;
             background: white !important;
           }
-          .p-doc { display: flex !important; flex-direction: column !important; visibility: visible !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 4px !important; box-sizing: border-box !important; min-height: calc(297mm - 10mm) !important; }
-          .p-spacer { flex: 1 !important; }
-          .p-logo { width: 200px !important; height: auto !important; }
+          .p-doc {
+            flex: 1 !important;
+            display: flex !important; flex-direction: column !important;
+            visibility: visible !important;
+            width: 100% !important; max-width: 100% !important;
+            margin: 0 !important; padding: 4px !important;
+            box-sizing: border-box !important;
+            min-height: calc(297mm - 10mm) !important;
+          }
+          .p-spacer { flex: 1 !important; display: block !important; max-height: 40mm !important; }
+          .p-logo { width: 150px !important; height: auto !important; }
           .no-print { display: none !important; }
         }
-        .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; min-height: calc(297mm - 10mm); }
-        .p-spacer { flex: 1; }
+        .p-doc { font-family: Arial, sans-serif; font-size: 11px; color: #111; padding: 0; box-sizing: border-box; background: #fff; display: flex; flex-direction: column; min-height: calc(297mm - 10mm); width: 100%; }
+        .p-spacer { flex: 1; min-height: 4mm; }
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .p-logo { height: 150px; width: 150px; object-fit: contain; }
         .p-header-right { text-align: right; }
