@@ -361,6 +361,7 @@ export default function CotizadorRefaccionesPage() {
   });
 
   const imprimirVentana = async () => {
+    // Guardar datos para reimprimir
     try {
       const lineasActivas = lineas.filter(l => l.descripcion.trim());
       const datos = {
@@ -371,10 +372,13 @@ export default function CotizadorRefaccionesPage() {
       localStorage.setItem('ultima_cotizacion_refacciones', JSON.stringify(datos));
       setUltimaFechaRef(datos.fechaImpresion);
     } catch { /* sin localStorage */ }
+    // Guardar HTML con imágenes en base64 para reimpresión
     try {
-      const areaRef = document.getElementById('print-area');
-      if (areaRef) {
-        const clone = areaRef.cloneNode(true) as HTMLElement;
+      const printArea = document.getElementById('print-area');
+      if (printArea) {
+        printArea.style.display = 'block';
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const clone = printArea.cloneNode(true) as HTMLElement;
         const imgs = Array.from(clone.querySelectorAll('img'));
         await Promise.all(imgs.map(async (el) => {
           if (el.src && !el.src.startsWith('data:')) el.src = await imgToBase64Canvas(el.src);
@@ -383,50 +387,11 @@ export default function CotizadorRefaccionesPage() {
           .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
           .join('');
         localStorage.setItem('reimprimir_refacciones', JSON.stringify({ html: clone.outerHTML, estilos, fecha: new Date().toISOString() }));
+        printArea.style.display = 'none';
       }
     } catch { /* sin localStorage */ }
-    const area = document.getElementById('print-area');
-    if (!area) return;
-    // Extraer solo el bloque de estilos del documento (.p-doc, .p-header, etc.)
-    let estiloDoc = Array.from(document.querySelectorAll('style'))
-      .map(s => s.innerHTML)
-      .find(css => css.includes('.p-doc') || css.includes('.p-header')) ?? '';
-    // Eliminar bloque @media print (contaría braces para encontrar el cierre)
-    const mpIdx = estiloDoc.indexOf('@media print');
-    if (mpIdx !== -1) {
-      let depth = 0, i = mpIdx;
-      while (i < estiloDoc.length) {
-        if (estiloDoc[i] === '{') depth++;
-        else if (estiloDoc[i] === '}') { depth--; if (depth === 0) { i++; break; } }
-        i++;
-      }
-      estiloDoc = estiloDoc.slice(0, mpIdx) + estiloDoc.slice(i);
-    }
-    // Hacer absolutas las rutas de imágenes
-    const origin = window.location.origin;
-    const html = area.innerHTML.replace(/src="\//g, `src="${origin}/`);
-    const win = window.open('', '_blank', 'width=900,height=700');
-    if (!win) { window.print(); return; }
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
-      <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; background: white; }
-        @page { size: A4 portrait; margin: 5mm; }
-        ${estiloDoc}
-        html, body { margin: 0; padding: 0; height: 100%; }
-        body { display: flex; flex-direction: column; }
-        .p-doc { display: flex !important; flex-direction: column !important;
-                 flex: 1 !important;
-                 width: 100% !important; max-width: 100% !important;
-                 margin: 0 !important; padding: 4px !important;
-                 box-sizing: border-box !important;
-                 min-height: calc(297mm - 10mm) !important; }
-        .p-spacer { flex: 1 !important; min-height: 4mm !important; }
-      </style>
-    </head><body>${html}</body></html>`);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 800);
+    // Imprimir con window.print() directo — igual que frenos, garantiza hoja completa
+    window.print();
   };
   const [guardando, setGuardando] = useState(false);
   const [guardadoOk, setGuardadoOk] = useState(false);
@@ -854,12 +819,12 @@ export default function CotizadorRefaccionesPage() {
                 onChange={e => changeLinea(l.id, 'cantidad', e.target.value)}
                 className="border border-gray-200 rounded-xl px-3 h-9 text-xs text-center text-gray-800 font-semibold outline-none focus:border-red-400 transition-colors"
               />
-              <div className="flex items-center border border-gray-200 rounded-xl px-2 h-9 gap-1 focus-within:border-red-400 transition-colors">
-                <span className="text-[10px] text-gray-500">$</span>
+              <div className="flex items-center border border-gray-200 rounded-xl px-2 h-9 gap-1 focus-within:border-red-400 transition-colors min-w-0 overflow-hidden">
+                <span className="text-[10px] text-gray-500 flex-shrink-0">$</span>
                 <PriceInput
                   value={l.precioMXN}
                   onChange={v => changeLinea(l.id, 'precioMXN', String(v))}
-                  className="flex-1 outline-none text-xs text-gray-800 font-semibold bg-transparent text-right"
+                  className="min-w-0 w-full outline-none text-xs text-gray-800 font-semibold bg-transparent text-right"
                 />
               </div>
               <button
@@ -1117,21 +1082,23 @@ export default function CotizadorRefaccionesPage() {
 
             {/* Footer */}
             <div className="p-footer">
-              <div className="p-footer-info" style={{ order: 1 }}>
+              <div className="p-footer-info">
                 <div className="p-footer-name">Ing. Cristina Velasco</div>
-                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventas@retardermexico.com</div>
-                <div className="p-footer-detail">Tel: 55 7372 1633 &nbsp;|&nbsp; www.tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Área de Ventas &nbsp;|&nbsp; ventasyservicio@tgrpentarmexico.com</div>
+                <div className="p-footer-detail">Tel: +52 55 7372 1633</div>
+                <div className="p-footer-web">www.tgrpentarmexico.com</div>
               </div>
-              <div style={{ order: 2, textAlign: 'center' }}>
+              <div className="p-footer-logo">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-pentar.png" alt="Pentar" style={{ height: '50px', objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <img src="/logo-pentar.png" alt="Pentar Kloft" style={{ height: '50px', width: 'auto', display: 'block' }}
+                  onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
               </div>
-              <div style={{ order: 3, textAlign: 'right' }}>
-                {qrDataUrl
-                  ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={qrDataUrl} alt="QR" style={{ width: 70, height: 70 }} />
-                  : <div style={{ width: 70, height: 70, border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, color: '#999' }}>QR</div>
-                }
-                <div style={{ fontSize: '6.5px', color: '#888', marginTop: 2, textAlign: 'center' }}>Escanea para más info</div>
+              <div className="p-footer-qr">
+                {qrDataUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={qrDataUrl} alt="QR" className="p-qr-img" />
+                )}
+                <div className="p-qr-label">Escanea para más info</div>
               </div>
             </div>
 
@@ -1202,10 +1169,15 @@ export default function CotizadorRefaccionesPage() {
         .p-obs-two-col > div { flex: 1; }
         .p-obs-pre { font-family: Arial, sans-serif; font-size: 10px; white-space: pre-wrap; color: #444; margin: 3px 0; line-height: 1.5; }
         .p-policy-line { font-size: 10px; font-weight: 700; color: #c0392b; margin-bottom: 2px; }
-        .p-footer { border-top: 1px solid #ddd; padding-top: 8px; margin-top: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .p-footer-info { font-size: 10px; }
-        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 11px; }
+        .p-footer { border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 14px; }
+        .p-footer-logo { flex: 1; display: flex; align-items: center; justify-content: center; order: 2; }
+        .p-footer-info { flex: 1; font-size: 11px; order: 1; }
+        .p-footer-name { font-weight: 900; color: #0d2244; font-size: 13px; }
         .p-footer-detail { color: #555; margin-top: 2px; }
+        .p-footer-web { font-size: 11px; color: #c0392b; font-weight: 700; margin-top: 3px; }
+        .p-footer-qr { flex: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; order: 3; }
+        .p-qr-img { width: 80px; height: 80px; display: block; }
+        .p-qr-label { font-size: 9px; color: #888; text-align: center; }
       `}</style>
     </div>
   );
