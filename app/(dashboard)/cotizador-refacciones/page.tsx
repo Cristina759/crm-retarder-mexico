@@ -105,7 +105,12 @@ function PriceInput({ value, onChange, className }: { value: number; onChange: (
       value={raw}
       placeholder="0.00"
       onFocus={() => setFocused(true)}
-      onBlur={() => { setFocused(false); setRaw(fmt(value)); }}
+      onBlur={() => {
+        setFocused(false);
+        const n = parseFloat(raw) || 0;
+        setRaw(fmt(n));
+        onChange(n);
+      }}
       onChange={e => {
         const v = e.target.value;
         if (v !== '' && !/^-?\d*\.?\d*$/.test(v)) return;
@@ -113,11 +118,6 @@ function PriceInput({ value, onChange, className }: { value: number; onChange: (
         const n = parseFloat(v);
         if (!isNaN(n)) onChange(n);
         else if (v === '') onChange(0);
-      }}
-      onBlur={() => {
-        const n = parseFloat(raw) || 0;
-        setRaw(n === 0 ? '' : String(n));
-        onChange(n);
       }}
       className={className}
     />
