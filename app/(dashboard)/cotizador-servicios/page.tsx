@@ -1402,7 +1402,7 @@ export default function CotizadorServiciosPage() {
                     src="/logo-retarder.png"
                     alt="Retarder"
                     className="p-logo-img"
-                    style={{ width: '200px', height: 'auto', objectFit: 'contain' }}
+                    style={{ width: '250px', height: 'auto', objectFit: 'contain' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                       const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
@@ -1645,7 +1645,7 @@ export default function CotizadorServiciosPage() {
         .p-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
         .p-logos-left { display: flex; align-items: center; gap: 12px; }
         .p-logo-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .p-logo-img { width: 200px; height: auto; object-fit: contain; display: block; }
+        .p-logo-img { width: 250px; height: auto; object-fit: contain; display: block; }
         .p-logo-fallback { font-size: 13px; font-weight: 900; color: #0d2244; text-align: center; line-height: 1.25; display: none; }
         .p-header-right { text-align: right; }
         .p-company { font-size: 32px; font-weight: 900; color: #0d2244; letter-spacing: 0.5px; }
