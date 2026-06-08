@@ -59,13 +59,15 @@ const CATS_REF = ['TODOS', 'ELÉCTRICO', 'NEUMÁTICO', 'TORNILLERÍA', 'MATERIAL
 
 // ── PriceInput: permite escribir decimales sin perder el punto ─────────────────
 function PriceInput({ value, onChange, className }: { value: number; onChange: (v: number) => void; className?: string }) {
-  const [raw, setRaw] = useState(value === 0 ? '' : String(value));
+  const fmt = (n: number) => n === 0 ? '' : n.toFixed(2);
+  const [raw, setRaw] = useState(fmt(value));
+  const [focused, setFocused] = useState(false);
   const prevVal = useRef(value);
 
   useEffect(() => {
     if (value !== prevVal.current) {
       prevVal.current = value;
-      if (parseFloat(raw) !== value) setRaw(value === 0 ? '' : String(value));
+      if (!focused && parseFloat(raw) !== value) setRaw(fmt(value));
     }
   });
 
@@ -75,6 +77,8 @@ function PriceInput({ value, onChange, className }: { value: number; onChange: (
       inputMode="decimal"
       value={raw}
       placeholder="0.00"
+      onFocus={() => setFocused(true)}
+      onBlur={() => { setFocused(false); setRaw(fmt(value)); }}
       onChange={e => {
         const v = e.target.value;
         if (v !== '' && !/^-?\d*\.?\d*$/.test(v)) return;
