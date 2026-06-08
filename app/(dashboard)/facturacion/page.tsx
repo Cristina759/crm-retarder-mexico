@@ -133,7 +133,7 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       <tr className="border-b border-yellow-100 bg-yellow-50/40">
         <td className="px-4 py-2">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-mono font-bold text-gray-700">{row.numero}</span>
+            <span className="text-xs font-mono font-bold text-gray-700 break-all leading-tight" title={row.numero}>{row.numero.replace(/^FACT-/i, '')}</span>
             <input
               type="date"
               value={fechaFactura}
@@ -230,9 +230,11 @@ function FilaFactura({ row, clientes, onUpdated, onDeleted }: { row: FacturaRow;
       onClick={() => setEditing(true)}
       className={`border-b hover:bg-yellow-100/60 transition-colors cursor-pointer ${row.estado_facturacion === 'pago_parcial' ? 'bg-purple-50/20' : ''} ${isCancelada ? 'bg-yellow-50' : ''}`}
     >
-      <td className="px-4 py-3">
+      <td className="px-4 py-3 max-w-[140px]">
         <div className="flex flex-col">
-          <span className="text-xs font-mono font-bold text-gray-700">{row.numero}</span>
+          <span className="text-xs font-mono font-bold text-gray-700 break-all leading-tight" title={row.numero}>
+            {row.numero.replace(/^FACT-/i, '')}
+          </span>
           <span className="text-[11px] font-semibold text-blue-600">{fmtFecha(row.created_at)}</span>
         </div>
       </td>
