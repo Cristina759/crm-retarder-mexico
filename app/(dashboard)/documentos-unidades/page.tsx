@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import {
   Loader2, FolderOpen, Upload, Trash2, Download, Search, X,
-  FileText, File, FileImage, AlertCircle, Truck, Plus,
+  FileText, File, FileImage, AlertCircle, Truck, Plus, Eye,
 } from 'lucide-react';
 import { listarDocsUnidades, subirDocUnidad, eliminarDocUnidad, type DocUnidad } from '@/app/actions/documentos-unidades';
 
@@ -24,6 +24,66 @@ function FileIcon({ nombre }: { nombre: string }) {
   if (['pdf'].includes(ext))
     return <FileText size={18} className="text-red-500" />;
   return <File size={18} className="text-gray-400" />;
+}
+
+// ── Modal Vista Previa ────────────────────────────────────────────────────────
+function ModalVista({ doc, onClose }: { doc: DocUnidad; onClose: () => void }) {
+  const ext = doc.archivo_nombre.split('.').pop()?.toLowerCase() ?? '';
+  const esImagen = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+  const esPDF = ext === 'pdf';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 border-b flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileIcon nombre={doc.archivo_nombre} />
+            <div className="min-w-0">
+              <p className="text-sm font-black text-gray-800 truncate">{doc.nombre}</p>
+              <p className="text-[11px] text-gray-400 truncate">{doc.archivo_nombre}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+            <a href={doc.archivo_url} target="_blank" rel="noopener noreferrer" download={doc.archivo_nombre}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors">
+              <Download size={13} /> Descargar
+            </a>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Contenido */}
+        <div className="flex-1 overflow-hidden rounded-b-2xl bg-gray-50 min-h-0">
+          {esImagen && (
+            <div className="w-full h-full flex items-center justify-center p-4 overflow-auto">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={doc.archivo_url} alt={doc.nombre} className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-lg" />
+            </div>
+          )}
+          {esPDF && (
+            <iframe
+              src={doc.archivo_url + '#toolbar=1&navpanes=0'}
+              className="w-full h-full min-h-[65vh] rounded-b-2xl border-0"
+              title={doc.nombre}
+            />
+          )}
+          {!esImagen && !esPDF && (
+            <div className="flex flex-col items-center justify-center h-64 gap-4 text-gray-400">
+              <File size={48} strokeWidth={1.2} />
+              <p className="text-sm font-semibold">Vista previa no disponible para archivos .{ext}</p>
+              <a href={doc.archivo_url} target="_blank" rel="noopener noreferrer" download={doc.archivo_nombre}
+                className="flex items-center gap-2 px-4 py-2 bg-[#0f2d55] text-white rounded-xl text-sm font-bold hover:bg-blue-900 transition-colors">
+                <Download size={14} /> Descargar archivo
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const TIPOS_DOC = [
@@ -147,6 +207,7 @@ function ModalSubir({ onClose, onSubido, userName }: { onClose: () => void; onSu
 // ── Tarjeta de documento ──────────────────────────────────────────────────────
 function TarjetaDoc({ doc, esAdmin, onEliminar }: { doc: DocUnidad; esAdmin: boolean; onEliminar: (id: string) => void }) {
   const [eliminando, setEliminando] = useState(false);
+  const [vistaPrevia, setVistaPrevia] = useState(false);
 
   const handleEliminar = async () => {
     if (!confirm(`¿Eliminar "${doc.nombre}"? Esta acción no se puede deshacer.`)) return;
@@ -156,6 +217,8 @@ function TarjetaDoc({ doc, esAdmin, onEliminar }: { doc: DocUnidad; esAdmin: boo
   };
 
   return (
+    <>
+    {vistaPrevia && <ModalVista doc={doc} onClose={() => setVistaPrevia(false)} />}
     <div className="bg-white rounded-2xl border border-gray-200 p-4 flex flex-col gap-2 hover:border-blue-200 hover:shadow-sm transition-all">
       <div className="flex items-start gap-3">
         <div className="w-9 h-9 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0">
@@ -188,6 +251,13 @@ function TarjetaDoc({ doc, esAdmin, onEliminar }: { doc: DocUnidad; esAdmin: boo
       <div className="flex items-center justify-between mt-1">
         <span className="text-[10px] text-gray-400">{fmtFecha(doc.created_at)}{doc.subido_por ? ` · ${doc.subido_por}` : ''}</span>
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => setVistaPrevia(true)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-50 hover:bg-green-100 text-green-600 transition-colors"
+            title="Ver documento"
+          >
+            <Eye size={14} />
+          </button>
           <a
             href={doc.archivo_url}
             target="_blank"
@@ -211,6 +281,7 @@ function TarjetaDoc({ doc, esAdmin, onEliminar }: { doc: DocUnidad; esAdmin: boo
         </div>
       </div>
     </div>
+    </>
   );
 }
 
