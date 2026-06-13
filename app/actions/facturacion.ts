@@ -1,4 +1,5 @@
 'use server';
+import { auth } from '@clerk/nextjs/server';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -206,15 +207,21 @@ export async function obtenerResumenFacturacion(): Promise<{
 }
 
 export async function actualizarFactura(id: string, datos: any) {
+  const { userId } = await auth();
+  if (userId) await supabaseAdmin.rpc('set_config', { setting: 'app.current_user', value: userId, is_local: true }).maybeSingle();
   const { error } = await supabaseAdmin.from('ordenes_servicio').update(datos).eq('id', id);
   return { error: error?.message ?? null };
 }
 export async function marcarFacturaPagada(id: string) {
+  const { userId } = await auth();
+  if (userId) await supabaseAdmin.rpc('set_config', { setting: 'app.current_user', value: userId, is_local: true }).maybeSingle();
   const { error } = await supabaseAdmin.from('ordenes_servicio').update({ estado_facturacion: 'pagada' }).eq('id', id);
   return { error: error?.message ?? null };
 }
 export async function registrarPago(id: string, pago: { monto: number, fecha: string, referencia: string }) {
   try {
+    const { userId } = await auth();
+    if (userId) await supabaseAdmin.rpc('set_config', { setting: 'app.current_user', value: userId, is_local: true }).maybeSingle();
     const { data: os } = await supabaseAdmin.from('ordenes_servicio').select('abonos, monto_factura, cotizacion_id').eq('id', id).single();
     if (!os) return { error: 'No se encontró la orden' };
 
