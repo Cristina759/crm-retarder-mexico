@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import {
   Loader2, AlertCircle, ChevronLeft, ChevronRight,
-  Camera, Trash2, Check, X, Pen, Lock, Unlock, ShoppingCart, Receipt, Eye
+  Camera, Trash2, Check, X, Pen, Lock, Unlock, ShoppingCart, Receipt, Eye, MessageCircle
 } from 'lucide-react';
 
 import SignaturePad from 'signature_pad';
@@ -19,7 +19,8 @@ import {
   actualizarDescripcionOS,
   guardarDatosOS,
   guardarOrdenCompra,
-  eliminarOrdenServicio
+  eliminarOrdenServicio,
+  marcarEncuestaEnviada
 } from '@/app/actions/ordenes';
 import { obtenerCotizacionPorId } from '@/app/actions/cotizaciones';
 import { obtenerUsuarios } from '@/app/actions/usuarios';
@@ -65,6 +66,19 @@ const OS_TOTAL = OS_ESTADOS.length;
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// Normaliza a formato E.164 sin '+' para wa.me — asume México (52) si no trae código de país
+function normalizarTelefonoMX(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10) return `52${digits}`;
+  return digits;
+}
+
+function linkEncuestaWhatsApp(telefono: string, empresa: string): string {
+  const encuestaUrl = process.env.NEXT_PUBLIC_ENCUESTA_URL || '';
+  const mensaje = `Hola ${empresa}, en Retarder México valoramos tu opinión. ¿Nos ayudas contestando esta breve encuesta sobre el servicio recibido?${encuestaUrl ? ' ' + encuestaUrl : ''}`;
+  return `https://wa.me/${normalizarTelefonoMX(telefono)}?text=${encodeURIComponent(mensaje)}`;
 }
 
 function fileToBase64(file: File): Promise<string> {
@@ -730,6 +744,38 @@ export default function OSDetallePage() {
           </div>
         )}
       </div>
+
+      {/* ── Envío de encuesta por WhatsApp ── */}
+      {os.estado === 'encuesta_enviada' && (
+        <div className="bg-white rounded-2xl border border-green-200 p-5 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+              <MessageCircle size={18} className="text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Encuesta de satisfacción</p>
+              <p className="text-xs text-gray-400">
+                {os.encuesta_enviada ? 'Ya se marcó como enviada.' : 'Envía la encuesta al cliente por WhatsApp.'}
+              </p>
+            </div>
+          </div>
+          {os.empresas?.telefono ? (
+            <a
+              href={linkEncuestaWhatsApp(os.empresas.telefono, os.empresas?.nombre_comercial ?? '')}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { marcarEncuestaEnviada(os.id); setOs(prev => prev ? { ...prev, encuesta_enviada: true } : prev); }}
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold text-sm px-4 py-2.5 rounded-2xl transition-colors shadow-sm"
+            >
+              <MessageCircle size={15} /> {os.encuesta_enviada ? 'Reenviar por WhatsApp' : 'Enviar por WhatsApp'}
+            </a>
+          ) : (
+            <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 font-medium">
+              Sin teléfono registrado para {os.empresas?.nombre_comercial ?? 'este cliente'}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Grid 2 columnas en desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

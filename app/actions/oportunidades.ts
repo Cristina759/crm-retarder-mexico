@@ -7,9 +7,11 @@ import type { OportunidadEstado, OportunidadRow, CrearOportunidadInput } from '.
 export async function obtenerOportunidades(): Promise<{ data: OportunidadRow[]; error: string | null; }> {
   try {
     // 1. Consulta plana y rápida
-    const { data, error } = await supabaseAdmin
-      .from('oportunidades')
-      .select('id, titulo, estado, probabilidad, monto_estimado, vendedor_id, empresa_id, created_at')
+    // Cast a any: columna `archivada` aun no reflejada en los tipos generados de Supabase
+    const { data, error } = await (supabaseAdmin
+      .from('oportunidades') as any)
+      .select('id, titulo, estado, probabilidad, monto_estimado, vendedor_id, empresa_id, created_at, archivada')
+      .or('archivada.is.null,archivada.eq.false')
       .order('created_at', { ascending: false })
       .limit(200);
 
@@ -17,7 +19,7 @@ export async function obtenerOportunidades(): Promise<{ data: OportunidadRow[]; 
     if (!data || data.length === 0) return { data: [], error: null };
 
     // 2. Carga de nombres de empresas en paralelo (más rápido)
-    const empresaIds = Array.from(new Set(data.map(r => r.empresa_id).filter(Boolean)));
+    const empresaIds: string[] = Array.from(new Set(data.map((r: any) => r.empresa_id).filter(Boolean)));
     const { data: empresas } = await supabaseAdmin
       .from('empresas')
       .select('id, nombre_comercial')
@@ -26,7 +28,7 @@ export async function obtenerOportunidades(): Promise<{ data: OportunidadRow[]; 
     const empresaMap = new Map((empresas ?? []).map(e => [e.id, e.nombre_comercial]));
 
     // 3. Enriquecimiento en memoria
-    const enriched: OportunidadRow[] = data.map(r => ({
+    const enriched: OportunidadRow[] = data.map((r: any) => ({
       ...r,
       titulo: r.titulo || 'Sin título',
       estado: (r.estado as OportunidadEstado) || 'lead',

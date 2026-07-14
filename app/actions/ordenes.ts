@@ -106,8 +106,14 @@ export async function obtenerOrdenesArchivadas(): Promise<{ data: OSRow[]; error
 }
 
 export async function obtenerOrdenPorId(id: string) {
-  const { data, error } = await supabaseAdmin.from('ordenes_servicio').select('*, empresas:empresas(nombre_comercial), tecnico:usuarios(nombre)').eq('id', id).single();
+  const { data, error } = await supabaseAdmin.from('ordenes_servicio').select('*, empresas:empresas(nombre_comercial, telefono), tecnico:usuarios(nombre)').eq('id', id).single();
   return { data: data as unknown as OSRow, error: error?.message ?? null };
+}
+
+// ── marcarEncuestaEnviada ─────────────────────────────────────────────────────
+export async function marcarEncuestaEnviada(id: string) {
+  const { error } = await supabaseAdmin.from('ordenes_servicio').update({ encuesta_enviada: true }).eq('id', id);
+  return { error: error?.message ?? null };
 }
 
 export async function asignarTecnicoOS(id: string, tecnico_id: string) {

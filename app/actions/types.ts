@@ -71,6 +71,7 @@ export interface OportunidadRow {
   vendedor_id: string | null;
   created_at: string;
   updated_at: string;
+  archivada?: boolean;
   empresas: { nombre_comercial: string } | null;
   vendedor: { nombre: string } | null;
 }
@@ -109,7 +110,7 @@ export interface OSRow {
   abonos: any[];
   created_at: string;
   updated_at: string;
-  empresas: { nombre_comercial: string } | null;
+  empresas: { nombre_comercial: string; telefono: string | null } | null;
   tecnico: { nombre: string } | null;
   estado_facturacion: string;
 }
