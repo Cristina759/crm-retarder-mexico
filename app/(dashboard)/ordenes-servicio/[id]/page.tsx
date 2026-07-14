@@ -75,9 +75,10 @@ function normalizarTelefonoMX(raw: string): string {
   return digits;
 }
 
-function linkEncuestaWhatsApp(telefono: string, empresa: string): string {
-  const encuestaUrl = process.env.NEXT_PUBLIC_ENCUESTA_URL || '';
-  const mensaje = `Hola ${empresa}, en Retarder México valoramos tu opinión. ¿Nos ayudas contestando esta breve encuesta sobre el servicio recibido?${encuestaUrl ? ' ' + encuestaUrl : ''}`;
+function linkEncuestaWhatsApp(telefono: string, empresa: string, osId: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const encuestaUrl = `${origin}/encuesta/${osId}`;
+  const mensaje = `Hola ${empresa}, en Retarder México valoramos tu opinión. ¿Nos ayudas contestando esta breve encuesta sobre el servicio recibido? ${encuestaUrl}`;
   return `https://wa.me/${normalizarTelefonoMX(telefono)}?text=${encodeURIComponent(mensaje)}`;
 }
 
@@ -761,7 +762,7 @@ export default function OSDetallePage() {
           </div>
           {os.empresas?.telefono ? (
             <a
-              href={linkEncuestaWhatsApp(os.empresas.telefono, os.empresas?.nombre_comercial ?? '')}
+              href={linkEncuestaWhatsApp(os.empresas.telefono, os.empresas?.nombre_comercial ?? '', os.id)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => { marcarEncuestaEnviada(os.id); setOs(prev => prev ? { ...prev, encuesta_enviada: true } : prev); }}

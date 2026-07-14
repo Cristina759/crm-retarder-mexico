@@ -9,13 +9,14 @@ import {
 import {
   Loader2, TrendingUp, ClipboardCheck, Building2, DollarSign,
   Receipt, Target, Megaphone, BarChart3, Users, CheckCircle2,
-  XCircle, Percent, ArrowUpRight, Printer
+  XCircle, Percent, ArrowUpRight, Printer, Star
 } from 'lucide-react';
 
 import {
   obtenerResumenGeneral, obtenerOSporEstado,
   obtenerResumenVentas, obtenerResumenMarketing,
 } from '@/app/actions/dashboard';
+import { obtenerResumenEncuestas } from '@/app/actions/encuestas';
 
 // ── Paleta institucional ──────────────────────────────────────────────────────
 const NAVY   = '#0f2d55';
@@ -108,12 +109,13 @@ function CustomTooltip({ active, payload, label }: any) {
 
 // ── Tab: General ──────────────────────────────────────────────────────────────
 function TabGeneral() {
-  const [data,   setData]   = useState<any>(null);
-  const [osData, setOsData] = useState<any[]>([]);
+  const [data,      setData]      = useState<any>(null);
+  const [osData,    setOsData]    = useState<any[]>([]);
+  const [encuestas, setEncuestas] = useState<any>(null);
 
   useEffect(() => {
-    Promise.all([obtenerResumenGeneral(), obtenerOSporEstado()])
-      .then(([g, os]) => { setData(g); setOsData(os); });
+    Promise.all([obtenerResumenGeneral(), obtenerOSporEstado(), obtenerResumenEncuestas()])
+      .then(([g, os, enc]) => { setData(g); setOsData(os); setEncuestas(enc); });
   }, []);
 
   if (!data) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#0f2d55]" size={28} /></div>;
@@ -202,6 +204,40 @@ function TabGeneral() {
           </div>
         </div>
       </div>
+
+      {/* Satisfacción del cliente */}
+      {encuestas && encuestas.total > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm font-black text-[#0f2d55]">Satisfacción del Cliente</p>
+            <span className="text-xs font-bold text-gray-400">{encuestas.total} respuesta{encuestas.total !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+            {[
+              { label: 'General',      val: encuestas.promedioGeneral },
+              { label: 'Puntualidad',  val: encuestas.promedioTiempo },
+              { label: 'Calidad',      val: encuestas.promedioCalidad },
+              { label: 'Atención',     val: encuestas.promedioAtencion },
+              { label: 'Recomienda',   val: encuestas.promedioRecomendacion },
+            ].map(m => (
+              <div key={m.label} className="bg-yellow-50 rounded-xl p-3 text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <Star size={13} className="text-yellow-400 fill-yellow-400" />
+                  <span className="text-sm font-black text-yellow-800">{m.val}</span>
+                </div>
+                <p className="text-[10px] text-yellow-700 font-medium mt-0.5">{m.label}</p>
+              </div>
+            ))}
+          </div>
+          {encuestas.comentariosRecientes.length > 0 && (
+            <div className="space-y-2 pt-3 border-t border-gray-100">
+              {encuestas.comentariosRecientes.map((c: { comentario: string; fecha: string }, i: number) => (
+                <p key={i} className="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">&ldquo;{c.comentario}&rdquo;</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
